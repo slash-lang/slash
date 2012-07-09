@@ -1,5 +1,5 @@
 SAPIS=$(shell echo */ | xargs basename)
-CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -I../../inc/
+CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -I../../inc/ -g
 LDFLAGS=-L../../ -lgc -lslash
 
 .PHONY: clean list

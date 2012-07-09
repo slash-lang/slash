@@ -1,6 +1,7 @@
-#ifndef SLASH_H
-#define SLASH_H
+#ifndef SL_SLASH_H
+#define SL_SLASH_H
 
-void slash_init();
+#include "value.h"
+#include "vm.h"
 
 #endif

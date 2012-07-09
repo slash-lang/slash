@@ -1,7 +1,9 @@
-CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -Ideps/gc-7.2/include -iquote ./inc
+CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -Ideps/gc-7.2/include \
+	 	-iquote ./inc -g
 LDFLAGS=
 
-OBJS=src/slash.o
+OBJS=src/class.o src/error.o src/object.o src/st.o src/string.o src/value.o \
+	 src/vm.o
 
 .PHONY=clean default
 
@@ -36,4 +38,6 @@ clean:
 	rm -f libgc.la
 	rm -f libslash.a
 	make -C sapi clean
+
+clean-all: clean
 	make -C deps clean
