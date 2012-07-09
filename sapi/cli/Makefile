@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean describe
 
 slash-cli: cli.o
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
