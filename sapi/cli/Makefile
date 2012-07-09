@@ -6,3 +6,6 @@ slash-cli: cli.o
 clean:
 	rm -f *.o
 	rm -f slash-cli
+
+describe:
+	@echo "Command Line Interface for Slash"

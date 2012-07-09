@@ -3,7 +3,15 @@ LDFLAGS=
 
 OBJS=src/slash.o
 
-.PHONY=clean
+.PHONY=clean default
+
+default:
+	@echo "Please choose something to build. Here are the useful targets:"
+	@echo 
+	@make -C sapi list
+	@tput setaf 2; tput bold; echo "make $$(tput setaf 3)libslash.a"; tput sgr0
+	@echo "- Slash static library"
+	@echo
 
 sapi[%]: libgc.la libslash.a
 	make -C sapi sapi[$*]
