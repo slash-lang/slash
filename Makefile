@@ -13,11 +13,17 @@ default:
 	@echo "- Slash static library"
 	@echo
 
-sapi[%]: libgc.la libslash.a
+sapi[%]: libgc.la libgmp.la libslash.a
 	make -C sapi sapi[$*]
 
 libgc.la: deps/gc-7.2/libgc.la
 	cp $< $@
+
+libgmp.la: deps/gmp-5.0.5/libgmp.la
+	cp $< $@
+
+deps/%:
+	make -C deps $*
 
 libslash.a: $(OBJS)
 	ar r $@ $^
@@ -30,3 +36,4 @@ clean:
 	rm -f libgc.la
 	rm -f libslash.a
 	make -C sapi clean
+	make -C deps clean
