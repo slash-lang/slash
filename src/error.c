@@ -31,12 +31,19 @@ sl_init_error(sl_vm_t* vm)
 {
     vm->lib.Error = sl_define_class(vm, "Error", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
+    vm->lib.SyntaxError = sl_define_class(vm, "SyntaxError", vm->lib.Error);
 }
 
 SLVAL
 sl_make_error(sl_vm_t* vm, SLVAL message)
 {
-    SLVAL err = sl_allocate(vm, vm->lib.Error);
+    return sl_make_error2(vm, vm->lib.Error, message);
+}
+
+SLVAL
+sl_make_error2(sl_vm_t* vm, SLVAL klass, SLVAL message)
+{
+    SLVAL err = sl_allocate(vm, klass);
     sl_expect(vm, message, vm->lib.String);
     get_error(vm, err)->message = message;
     return err;
