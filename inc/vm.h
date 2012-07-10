@@ -10,6 +10,7 @@ typedef struct sl_lib {
     SLVAL Class;
     SLVAL String;
     SLVAL Error;
+    SLVAL SyntaxError;
     
     SLVAL Nil;
     SLVAL nil;
