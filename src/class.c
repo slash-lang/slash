@@ -65,6 +65,7 @@ sl_define_class2(sl_vm_t* vm, SLVAL name, SLVAL super)
     klass->class_variables = st_init_table(&sl_string_hash_type);
     klass->class_methods = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
+    klass->allocator = get_class(vm, super)->allocator;
     return vklass;
 }
 
