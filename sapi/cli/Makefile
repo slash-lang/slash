@@ -1,6 +1,6 @@
 .PHONY: clean describe
 
-slash-cli: cli.o
+slash-cli: cli.o ../../libslash.a
 	$(CC) -o $@ $(CFLAGS) $(LDFLAGS) $^
 
 clean:

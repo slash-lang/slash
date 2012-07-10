@@ -1,20 +1,32 @@
+#include <stdlib.h>
 #include <gc.h>
 #include "st.h"
 #include "value.h"
 #include "vm.h"
 #include "string.h"
 #include "class.h"
+#include "method.h"
 
 static sl_object_t*
-sl_class_allocator()
+allocate_class()
 {
     sl_class_t* klass = GC_MALLOC(sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
     return (sl_object_t*)klass;
 }
 
+static sl_class_t*
+get_class(sl_vm_t* vm, SLVAL klass)
+{
+    if(!sl_is_a(vm, klass, vm->lib.Class)) {
+        /* @TODO error */
+        abort();
+    }
+    return (sl_class_t*)sl_get_ptr(klass);
+}
+
 void
-sl_init_class(sl_vm_t* vm)
+sl_pre_init_class(sl_vm_t* vm)
 {
     sl_class_t* obj = GC_MALLOC(sizeof(sl_class_t));
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
@@ -23,10 +35,16 @@ sl_init_class(sl_vm_t* vm)
     obj->class_variables = st_init_table(&sl_string_hash_type);
     obj->class_methods = st_init_table(&sl_string_hash_type);
     obj->instance_methods = st_init_table(&sl_string_hash_type);
-    obj->allocator = sl_class_allocator;
+    obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
     obj->base.primitive_type = SL_T_CLASS;
     obj->base.instance_variables = st_init_table(&sl_string_hash_type);
+}
+
+void
+sl_init_class(sl_vm_t* vm)
+{
+    (void)vm;
 }
 
 SLVAL
@@ -48,6 +66,38 @@ sl_define_class2(sl_vm_t* vm, SLVAL name, SLVAL super)
     klass->class_methods = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
     return vklass;
+}
+
+void
+sl_class_set_allocator(sl_vm_t* vm, SLVAL klass, sl_object_t*(*allocator)(void))
+{
+    get_class(vm, klass)->allocator = allocator;
+}
+
+void
+sl_define_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)())
+{
+    sl_define_method2(vm, klass, sl_make_cstring(vm, name), arity, func);
+}
+
+void
+sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
+{
+    SLVAL method = sl_make_c_func(vm, name, arity, func);
+    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
+}
+
+void
+sl_define_class_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)())
+{
+    sl_define_class_method2(vm, klass, sl_make_cstring(vm, name), arity, func);
+}
+
+void
+sl_define_class_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
+{
+    SLVAL method = sl_make_c_func(vm, name, arity, func);
+    st_insert(get_class(vm, klass)->class_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
 int
