@@ -6,6 +6,7 @@
 #include "vm.h"
 #include "st.h"
 #include "string.h"
+#include "class.h"
 
 int
 sl_get_int(SLVAL val)
@@ -39,8 +40,18 @@ SLVAL
 sl_make_ptr(sl_object_t* ptr)
 {
     SLVAL v;
-    v.i = (size_t)ptr;
+    v.i = (intptr_t)ptr;
     return v;
+}
+
+SLVAL
+sl_expect(sl_vm_t* vm, SLVAL obj, SLVAL klass)
+{
+    if(!sl_is_a(vm, obj, klass)) {
+        /* @TODO error */
+        abort();
+    }
+    return obj;
 }
 
 sl_primitive_type_t

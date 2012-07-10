@@ -72,17 +72,27 @@ sl_make_cstring(struct sl_vm* vm, char* cstr)
     return sl_make_string(vm, (uint8_t*)cstr, strlen(cstr));
 }
 
+sl_string_t*
+sl_cstring(struct sl_vm* vm, char* cstr)
+{
+    return (sl_string_t*)sl_get_ptr(sl_make_cstring(vm, cstr));
+}
+
 static sl_object_t*
-sl_string_allocator()
+allocate_string()
 {
     return (sl_object_t*)GC_MALLOC(sizeof(sl_object_t));
 }
 
 void
+sl_pre_init_string(sl_vm_t* vm)
+{
+    vm->lib.String = sl_define_class2(vm, vm->lib.nil, vm->lib.Object);
+    sl_class_set_allocator(vm, vm->lib.String, allocate_string);
+}
+
+void
 sl_init_string(sl_vm_t* vm)
 {
-    sl_class_t* klass;
-    vm->lib.String = sl_define_class2(vm, vm->lib.nil, vm->lib.Object);
-    klass = (sl_class_t*)sl_get_ptr(vm->lib.String);
-    klass->allocator = sl_string_allocator;
+    (void)vm;
 }

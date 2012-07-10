@@ -1,9 +1,10 @@
 CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -Ideps/gc-7.2/include \
-	 	-iquote ./inc -g
+	-iquote ./inc -g
 LDFLAGS=
 
-OBJS=src/class.o src/error.o src/object.o src/st.o src/string.o src/value.o \
-	 src/vm.o
+OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
+	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
+	src/lib/bignum.o
 
 .PHONY=clean default
 
