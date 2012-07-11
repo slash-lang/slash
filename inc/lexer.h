@@ -1,6 +1,10 @@
 #ifndef SL_LEXER_H
 #define SL_LEXER_H
 
+#include <stdint.h>
+#include <stddef.h>
+#include "vm.h"
+
 typedef enum sl_token_type {
     SL_TOK_OPEN_TAG,
     SL_TOK_OPEN_ECHO_TAG,
@@ -65,6 +69,6 @@ typedef struct sl_token {
 sl_token_t;
 
 sl_token_t*
-sl_lex(uint8_t* buff, size_t len, size_t* token_count);
+sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count);
 
 #endif
