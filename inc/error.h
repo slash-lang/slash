@@ -18,7 +18,7 @@ SLVAL
 sl_make_error(struct sl_vm* vm, SLVAL message);
 
 SLVAL
-sl_make_error2(sl_vm_t* vm, SLVAL klass, SLVAL message);
+sl_make_error2(struct sl_vm* vm, SLVAL klass, SLVAL message);
 
 void
 sl_try(struct sl_vm* vm, void(*try)(struct sl_vm*, void*), void(*catch)(struct sl_vm*, void*, SLVAL), void* state);
