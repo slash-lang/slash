@@ -29,4 +29,7 @@ sl_throw(struct sl_vm* vm, SLVAL error);
 void
 sl_throw_message(struct sl_vm* vm, char* cstr);
 
+void
+sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
+
 #endif
