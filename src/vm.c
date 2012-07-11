@@ -27,12 +27,15 @@ LIB(number);
 LIB(int);
 LIB(float);
 LIB(bignum);
+LIB(method);
 
 static void
 sl_init_libs(sl_vm_t* vm)
 {
+    LIB_INIT(number);
     LIB_INIT(int);
-    LIB_INIT(method);
+    LIB_INIT(float);
+    LIB_INIT(bignum);
 }
 
 sl_vm_t*
@@ -62,6 +65,7 @@ sl_init()
     Class->name = sl_make_cstring(vm, "Class");
     String->name = sl_make_cstring(vm, "String");
     
+    sl_init_method(vm);
     sl_init_class(vm);
     sl_init_object(vm);
     sl_init_string(vm);

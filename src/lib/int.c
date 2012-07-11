@@ -18,30 +18,31 @@ SLVAL
 sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
-    int b, c;
-    if(SL_IS_INT(a)) {
+    int b;
+    if(SL_IS_INT(self)) {
         b = sl_get_int(other);
         if(highest_set_bit(a) <= 31 && highest_set_bit(b) <= 31) {
-            return sl_make_int(a + b);
+            return sl_make_int(vm, a + b);
         }
-        return sl_bignum_add(vm, sl_make_bignum(vm, a), b);
+        return sl_bignum_add(vm, sl_make_bignum(vm, a), other);
     }
     switch(sl_get_primitive_type(other)) {
         case SL_T_FLOAT:
-            return sl_make_float((double)a + sl_get_float(other));
+            return sl_make_float(vm, (double)a + sl_get_float(vm, other));
         case SL_T_BIGNUM:
             return sl_bignum_add(vm, other, self);
         default:
-            
+            sl_throw_message(vm, "wtf" /* @TODO */);
     }
     (void)vm;
     (void)self;
     (void)other;
+    return vm->lib.nil; /* @TODO */
 }
 
 void
 sl_init_int(sl_vm_t* vm)
 {
     vm->lib.Int = sl_define_class(vm, "Int", vm->lib.Number);
-    sl_define_method(vm, vm->lib.Int, "+", 1, int_add);
+    sl_define_method(vm, vm->lib.Int, "+", 1, sl_int_add);
 }
