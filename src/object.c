@@ -5,6 +5,7 @@
 #include "object.h"
 #include "class.h"
 #include "string.h"
+#include "method.h"
 
 void
 sl_pre_init_object(sl_vm_t* vm)
@@ -14,7 +15,6 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->super = vm->lib.nil;
     klass->name = vm->lib.nil;
     klass->class_variables = st_init_table(&sl_string_hash_type);
-    klass->class_methods = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
     klass->base.klass = vm->lib.Class;
     klass->base.primitive_type = SL_T_CLASS;
@@ -25,6 +25,22 @@ void
 sl_init_object(sl_vm_t* vm)
 {
     (void)vm;
+}
+
+void
+sl_define_singleton_method(sl_vm_t* vm, SLVAL object, char* name, int arity, SLVAL(*func)())
+{
+    sl_define_singleton_method2(vm, object, sl_make_cstring(vm, name), arity, func);
+}
+
+void
+sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SLVAL(*func)())
+{
+    SLVAL method = sl_make_c_func(vm, name, arity, func);
+    if(!sl_get_ptr(object)->singleton_methods) {
+        sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
+    }
+    st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
 SLVAL
@@ -82,7 +98,14 @@ sl_send2(sl_vm_t* vm, SLVAL recv, sl_string_t* id, size_t argc, SLVAL* argv)
     sl_method_t* method;
     SLVAL klass = sl_class_of(vm, recv);
     sl_class_t* klassp;
+    sl_object_t* recvp = sl_get_ptr(recv);
     SLVAL* argv2;
+    
+    if(recvp->singleton_methods) {
+        if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
+            return apply(vm, recv, method, argc, argv);
+        }
+    }
     
     while(sl_get_primitive_type(klass) != SL_T_NIL) {
         klassp = (sl_class_t*)sl_get_ptr(klass);
