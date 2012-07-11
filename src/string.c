@@ -60,7 +60,7 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 {
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
-    sl_utf8_strlen(vm, buff, buff_len);
+    str->char_len = sl_utf8_strlen(vm, buff, buff_len);
     str->buff = GC_MALLOC_ATOMIC(buff_len + 1);
     memcpy(str->buff, buff, buff_len);
     str->buff[buff_len] = 0;
@@ -134,6 +134,19 @@ sl_utf8_strlen(struct sl_vm* vm, uint8_t* buff, size_t len)
     return utf8len;
 }
 
+static sl_string_t*
+get_string(sl_vm_t* vm, SLVAL obj)
+{
+    sl_expect(vm, obj, vm->lib.String);
+    return (sl_string_t*)sl_get_ptr(obj);
+}
+
+SLVAL
+sl_string_length(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, get_string(vm, self)->char_len);
+}
+
 void
 sl_pre_init_string(sl_vm_t* vm)
 {
@@ -144,5 +157,5 @@ sl_pre_init_string(sl_vm_t* vm)
 void
 sl_init_string(sl_vm_t* vm)
 {
-    (void)vm;
+    sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
 }
