@@ -9,8 +9,11 @@ typedef struct sl_lib {
     SLVAL Object;
     SLVAL Class;
     SLVAL String;
+    
     SLVAL Error;
     SLVAL SyntaxError;
+    SLVAL EncodingError;
+    SLVAL TypeError;
     
     SLVAL Nil;
     SLVAL nil;

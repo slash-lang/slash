@@ -32,6 +32,8 @@ sl_init_error(sl_vm_t* vm)
     vm->lib.Error = sl_define_class(vm, "Error", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
     vm->lib.SyntaxError = sl_define_class(vm, "SyntaxError", vm->lib.Error);
+    vm->lib.EncodingError = sl_define_class(vm, "EncodingError", vm->lib.Error);
+    vm->lib.TypeError = sl_define_class(vm, "TypeError", vm->lib.Error);
 }
 
 SLVAL
@@ -78,4 +80,10 @@ void
 sl_throw_message(struct sl_vm* vm, char* cstr)
 {
     sl_throw(vm, sl_make_error(vm, sl_make_cstring(vm, cstr)));
+}
+
+void
+sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr)
+{
+    sl_throw(vm, sl_make_error2(vm, klass, sl_make_cstring(vm, cstr)));
 }
