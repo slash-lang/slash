@@ -33,7 +33,6 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->name = vm->lib.nil;
     obj->super = vm->lib.Object;
     obj->class_variables = st_init_table(&sl_string_hash_type);
-    obj->class_methods = st_init_table(&sl_string_hash_type);
     obj->instance_methods = st_init_table(&sl_string_hash_type);
     obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
@@ -63,7 +62,6 @@ sl_define_class2(sl_vm_t* vm, SLVAL name, SLVAL super)
     /* @TODO assert name is a string */
     klass->name = name;
     klass->class_variables = st_init_table(&sl_string_hash_type);
-    klass->class_methods = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
     klass->allocator = get_class(vm, super)->allocator;
     return vklass;
@@ -86,19 +84,6 @@ sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)(
 {
     SLVAL method = sl_make_c_func(vm, name, arity, func);
     st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
-}
-
-void
-sl_define_class_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)())
-{
-    sl_define_class_method2(vm, klass, sl_make_cstring(vm, name), arity, func);
-}
-
-void
-sl_define_class_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
-{
-    SLVAL method = sl_make_c_func(vm, name, arity, func);
-    st_insert(get_class(vm, klass)->class_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
 int

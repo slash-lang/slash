@@ -24,12 +24,6 @@ sl_define_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)()
 void
 sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)());
 
-void
-sl_define_class_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)());
-
-void
-sl_define_class_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)());
-
 int
 sl_is_a(struct sl_vm* vm, SLVAL obj, SLVAL klass);
 
