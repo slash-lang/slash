@@ -4,7 +4,7 @@ LDFLAGS=
 
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
-	src/lib/bignum.o
+	src/lib/bignum.o src/lexer.o
 
 .PHONY=clean default
 
