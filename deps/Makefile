@@ -9,8 +9,8 @@ gc-7.2/libgc.la: gc-7.2.tar.gz
 	@echo "Making dependency gc-7.2 (logging to make-gc-7.2.log)"
 	@make -C gc-7.2 &> make-gc-7.2.log
 
-gmp-5.0.5/libgmp.la: gmp-5.0.5.tar.xz
-	tar zfx gmp-5.0.5.tar.xz
+gmp-5.0.5/libgmp.la: gmp-5.0.5.tar.bz2
+	tar zfx gmp-5.0.5.tar.bz2
 	@echo "Configuring dependency gmp-5.0.5 (logging to configure-gmp-5.0.5.log)"
 	@cd gmp-5.0.5 && ./configure &> ../configure-gmp-5.0.5.log
 	@echo "Making dependency gmp-5.0.5 (logging to make-gmp-5.0.5.log)"
@@ -19,8 +19,8 @@ gmp-5.0.5/libgmp.la: gmp-5.0.5.tar.xz
 gc-7.2.tar.gz:
 	curl -o $@ http://www.hpl.hp.com/personal/Hans_Boehm/gc/gc_source/gc-7.2.tar.gz
 
-gmp-5.0.5.tar.xz:
-	curl -o $@ ftp://ftp.gmplib.org/pub/gmp-5.0.5/gmp-5.0.5.tar.xz
+gmp-5.0.5.tar.bz2:
+	curl -o $@ ftp://ftp.gmplib.org/pub/gmp-5.0.5/gmp-5.0.5.tar.bz2
 
 clean:
 	rm -rf gc-7.2 gmp-5.0.5
