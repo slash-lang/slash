@@ -20,7 +20,7 @@ sl_init_method(sl_vm_t* vm)
     vm->lib.Method = sl_define_class(vm, "Method", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Method, allocate_method);
     
-    vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.BoundMethod);
+    vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
     sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);
 }
 
