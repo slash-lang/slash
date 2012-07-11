@@ -1,11 +1,12 @@
 SAPIS=$(shell echo */ | xargs basename)
 CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -I../../inc/ -g
-LDFLAGS=-L../../ -lgc -lslash
+LDFLAGS=
+LIBS=../../libgmp.a ../../libgc.a ../../libslash.a
 
 .PHONY: clean list
 
 sapi[%]:
-	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" make -C $*
+	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" LIBS="$(LIBS)" make -C $*
 
 clean:
 	for d in $(SAPIS); do make -C $$d clean; done
