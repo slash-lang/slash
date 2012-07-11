@@ -48,7 +48,7 @@ typedef struct sl_string {
     sl_object_t base;
     /* utf8: */
     uint8_t* buff;
-    size_t len;
+    size_t buff_len;
 }
 sl_string_t;
 
