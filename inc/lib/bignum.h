@@ -2,7 +2,7 @@
 #define SL_LIB_BIGNUM_H
 
 SLVAL
-sl_make_bignum(int n);
+sl_make_bignum(sl_vm_t* vm, int n);
 
 SLVAL
 sl_bignum_add(sl_vm_t* vm, SLVAL self, SLVAL other);
