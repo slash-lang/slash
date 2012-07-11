@@ -1,15 +1,15 @@
 .PHONY: clean
 
-all: gc-7.2/libgc.la gmp-5.0.5/libgmp.la
+all: gc-7.2/.libs/libgc.a gmp-5.0.5/.libs/libgmp.a
 
-gc-7.2/libgc.la: gc-7.2.tar.gz
+gc-7.2/.libs/libgc.a: gc-7.2.tar.gz
 	tar zfx gc-7.2.tar.gz
 	@echo "Configuring dependency gc-7.2 (logging to configure-gc-7.2.log)"
 	@cd gc-7.2 && ./configure &> ../configure-gc-7.2.log
 	@echo "Making dependency gc-7.2 (logging to make-gc-7.2.log)"
 	@make -C gc-7.2 &> make-gc-7.2.log
 
-gmp-5.0.5/libgmp.la: gmp-5.0.5.tar.bz2
+gmp-5.0.5/.libs/libgmp.a: gmp-5.0.5.tar.bz2
 	tar zfx gmp-5.0.5.tar.bz2
 	@echo "Configuring dependency gmp-5.0.5 (logging to configure-gmp-5.0.5.log)"
 	@cd gmp-5.0.5 && ./configure &> ../configure-gmp-5.0.5.log
