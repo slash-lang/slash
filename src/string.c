@@ -84,7 +84,9 @@ sl_cstring(struct sl_vm* vm, char* cstr)
 static sl_object_t*
 allocate_string()
 {
-    return (sl_object_t*)GC_MALLOC(sizeof(sl_object_t));
+    sl_object_t* obj = (sl_object_t*)GC_MALLOC(sizeof(sl_object_t));
+    obj->primitive_type = SL_T_STRING;
+    return obj;
 }
 
 static sl_string_t*

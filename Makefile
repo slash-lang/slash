@@ -4,7 +4,8 @@ LDFLAGS=
 
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
-	src/lib/bignum.o src/lexer.o src/utf8.o
+	src/lib/bignum.o src/utf8.o src/lex.o src/lex_helper.o src/lib/nil.o \
+	src/lib/true.o src/lib/false.o
 
 .PHONY=clean default
 
@@ -34,8 +35,13 @@ deps/%:
 libslash.a: $(OBJS)
 	ar r $@ $^
 
+src/lex.o: CFLAGS += -Wno-unused
+
 %.o: %.c inc/*.h Makefile
 	$(CC) -o $@ $(CFLAGS) -c $<
+
+%.c: %.yy inc/*.h Makefile
+	flex -o $@ $<
 
 clean:
 	rm -f src/*.o

@@ -1,7 +1,9 @@
 #include <alloca.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+#include <gc.h>
 #include "object.h"
 #include "class.h"
 #include "string.h"
@@ -24,7 +26,42 @@ sl_pre_init_object(sl_vm_t* vm)
 void
 sl_init_object(sl_vm_t* vm)
 {
-    (void)vm;
+    sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
+}
+
+SLVAL
+sl_to_s(sl_vm_t* vm, SLVAL obj)
+{
+    SLVAL s = sl_send(vm, obj, "to_s", 0);
+    if(sl_get_primitive_type(s) == SL_T_STRING) {
+        return s;
+    } else {
+        return sl_object_to_s(vm, obj);
+    }
+}
+
+char*
+sl_to_cstr(sl_vm_t* vm, SLVAL obj)
+{
+    SLVAL str = sl_to_s(vm, obj);
+    sl_string_t* strp = (sl_string_t*)sl_get_ptr(str);
+    char* buff = (char*)GC_MALLOC_ATOMIC(strp->buff_len + 1);
+    memcpy(buff, strp->buff, strp->buff_len);
+    buff[strp->buff_len] = 0;
+    return buff;
+}
+
+SLVAL
+sl_object_to_s(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL klass = sl_class_of(vm, self);
+    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+    sl_string_t* name = (sl_string_t*)sl_get_ptr(klassp->name);
+    char* str = (char*)GC_MALLOC_ATOMIC(32 + name->buff_len);
+    strcpy(str, "#<");
+    memcpy(str, name->buff, name->buff_len);
+    sprintf(str + 2 + name->buff_len, ":%p>", (void*)sl_get_ptr(self));
+    return sl_make_cstring(vm, str);
 }
 
 void
@@ -41,6 +78,36 @@ sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SL
         sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
     }
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
+}
+
+SLVAL
+sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
+{
+    return sl_responds_to2(vm, object, sl_cstring(vm, id));
+}
+
+SLVAL
+sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+{
+    sl_object_t* recvp = sl_get_ptr(object);
+    SLVAL klass = sl_class_of(vm, object);
+    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+    
+    if(recvp->singleton_methods) {
+        if(st_lookup(recvp->singleton_methods, (st_data_t)id, NULL)) {
+            return vm->lib.true;
+        }
+    }
+    
+    klassp = (sl_class_t*)sl_get_ptr(klass);
+    while(klassp->base.primitive_type != SL_T_NIL) {
+        if(st_lookup(klassp->instance_methods, (st_data_t)id, NULL)) {
+            return vm->lib.true;
+        }
+        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
+    }
+    
+    return vm->lib.false;
 }
 
 SLVAL
@@ -107,11 +174,12 @@ sl_send2(sl_vm_t* vm, SLVAL recv, sl_string_t* id, size_t argc, SLVAL* argv)
         }
     }
     
-    while(sl_get_primitive_type(klass) != SL_T_NIL) {
-        klassp = (sl_class_t*)sl_get_ptr(klass);
+    klassp = (sl_class_t*)sl_get_ptr(klass);
+    while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
             return apply(vm, recv, method, argc, argv);
         }
+        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
     
     /* look for method_missing method */
@@ -120,12 +188,13 @@ sl_send2(sl_vm_t* vm, SLVAL recv, sl_string_t* id, size_t argc, SLVAL* argv)
     memcpy(argv2 + 1, argv, argc);
     argv2[0] = sl_make_ptr((sl_object_t*)id);
     id = sl_cstring(vm, "method_missing");
-
-    while(sl_get_primitive_type(klass) != SL_T_NIL) {
-        klassp = (sl_class_t*)sl_get_ptr(klass);
+    
+    klassp = (sl_class_t*)sl_get_ptr(klass);
+    while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
             return apply(vm, recv, method, argc, argv);
         }
+        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
     
     /* nope */

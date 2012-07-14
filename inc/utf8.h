@@ -14,6 +14,6 @@ size_t
 sl_utf32_char_to_utf8(sl_vm_t* vm, uint32_t u32c, uint8_t* u8buff);
 
 uint8_t*
-sl_utf32_to_utf8(sl_vm_t* vm, uint32_t* u32, size_t u32_len, size_t* u8_len);
+sl_utf32_to_utf8(sl_vm_t* vm, uint32_t* u32, size_t u32_len, size_t* buff_len);
 
 #endif
