@@ -17,6 +17,7 @@ typedef enum sl_primitive_type {
     SL_T_TRUE,
     SL_T_CLASS,
     SL_T_OBJECT,
+    SL_T_STRING,
     SL_T_INT,
     SL_T_FLOAT,
     SL_T_BIGNUM,

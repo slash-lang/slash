@@ -56,13 +56,15 @@ sl_try(sl_vm_t* vm, void(*try)(sl_vm_t*, void*), void(*catch)(sl_vm_t*, void*, S
 {
     sl_catch_frame_t frame;
     frame.prev = vm->catch_stack;
+    frame.error = vm->lib.nil;
     vm->catch_stack = &frame;
     if(!setjmp(frame.env)) {
         try(vm, state);
+        vm->catch_stack = frame.prev;
     } else {
+        vm->catch_stack = frame.prev;
         catch(vm, state, frame.error);
     }
-    vm->catch_stack = frame.prev;
 }
 
 void

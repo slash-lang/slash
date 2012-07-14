@@ -23,6 +23,9 @@ sl_static_init()
 
 LIB(method);
 
+LIB(true);
+LIB(false);
+LIB(nil);
 LIB(number);
 LIB(int);
 LIB(float);
@@ -32,6 +35,7 @@ LIB(method);
 static void
 sl_init_libs(sl_vm_t* vm)
 {
+    LIB_INIT(nil);
     LIB_INIT(number);
     LIB_INIT(int);
     LIB_INIT(float);
@@ -65,13 +69,13 @@ sl_init()
     Class->name = sl_make_cstring(vm, "Class");
     String->name = sl_make_cstring(vm, "String");
     
+    vm->initializing = 0;
+    
     sl_init_method(vm);
     sl_init_class(vm);
     sl_init_object(vm);
     sl_init_string(vm);
     sl_init_error(vm);
-    
-    vm->initializing = 0;
     
     sl_init_libs(vm);
     

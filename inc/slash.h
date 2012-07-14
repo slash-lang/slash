@@ -3,6 +3,7 @@
 
 #include "value.h"
 #include "vm.h"
-#include "lexer.h"
+#include "lex.h"
+#include "object.h"
 
 #endif

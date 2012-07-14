@@ -18,6 +18,12 @@ typedef struct sl_lib {
     SLVAL Nil;
     SLVAL nil;
     
+    SLVAL True;
+    SLVAL true;
+    
+    SLVAL False;
+    SLVAL false;
+    
     SLVAL Number;
     SLVAL Int;
     SLVAL Float;

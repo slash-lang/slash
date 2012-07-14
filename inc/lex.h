@@ -71,4 +71,8 @@ sl_token_t;
 sl_token_t*
 sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count);
 
+/* helper functions defined in lex_helper.c */
+
+sl_token_t sl_make_token(sl_token_type_t type);
+
 #endif

@@ -40,10 +40,16 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->base.instance_variables = st_init_table(&sl_string_hash_type);
 }
 
+static SLVAL
+sl_class_to_s(sl_vm_t* vm, SLVAL self)
+{
+    return get_class(vm, self)->name;
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
-    (void)vm;
+    sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
 }
 
 SLVAL
