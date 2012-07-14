@@ -50,7 +50,7 @@ sl_string_cmp(sl_string_t* a, sl_string_t* b)
     } else if(a->buff_len > b->buff_len) {
         return 1;
     }
-    return memcmp(a->buff, b->buff, a->buff_len);
+    return memcmp(a->buff, b->buff, a->buff_len) == 0;
 }
 
 struct st_hash_type
@@ -102,6 +102,13 @@ sl_string_length(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, get_string(vm, self)->char_len);
 }
 
+static SLVAL
+sl_string_to_s(sl_vm_t* vm, SLVAL self)
+{
+    (void)vm;
+    return self;
+}
+
 void
 sl_pre_init_string(sl_vm_t* vm)
 {
@@ -113,4 +120,5 @@ void
 sl_init_string(sl_vm_t* vm)
 {
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
+    sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
 }
