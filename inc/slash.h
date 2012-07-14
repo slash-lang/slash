@@ -3,5 +3,6 @@
 
 #include "value.h"
 #include "vm.h"
+#include "lexer.h"
 
 #endif
