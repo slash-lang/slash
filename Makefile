@@ -36,6 +36,7 @@ libslash.a: $(OBJS)
 
 clean:
 	rm -f src/*.o
+	rm -f src/lib/*.o
 	rm -f libgmp.a
 	rm -f libgc.a
 	rm -f libslash.a
