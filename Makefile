@@ -4,7 +4,7 @@ LDFLAGS=
 
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
-	src/lib/bignum.o src/lexer.o
+	src/lib/bignum.o src/lexer.o src/utf8.o
 
 .PHONY=clean default
 
@@ -18,6 +18,9 @@ default:
 
 sapi[%]: libgc.a libgmp.a libslash.a
 	make -C sapi sapi[$*]
+	@tput setaf 2; tput bold
+	@echo "Built $* successfully"
+	@tput sgr0
 
 libgc.a: deps/gc-7.2/.libs/libgc.a
 	cp $< $@

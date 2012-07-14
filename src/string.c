@@ -4,6 +4,7 @@
 #include "value.h"
 #include "vm.h"
 #include "class.h"
+#include "utf8.h"
 
 static int
 sl_string_hash(sl_string_t* str)
@@ -84,54 +85,6 @@ static sl_object_t*
 allocate_string()
 {
     return (sl_object_t*)GC_MALLOC(sizeof(sl_object_t));
-}
-
-static uint32_t utf8_code_point_limit[] = {
-    0,
-    0x000080,
-    0x000800,
-    0x010000,
-    0x200000
-};
-
-size_t
-sl_utf8_strlen(struct sl_vm* vm, uint8_t* buff, size_t len)
-{
-    size_t i, bytes, j, utf8len = 0;
-    uint8_t c;
-    uint32_t c32;
-    for(i = 0; i < len; i++) {
-        c = buff[i];
-        if(c & 0x80) {
-            if((c & 0xe0) == 0xc0) {
-                c32 = c & 0x1f;
-                bytes = 2;
-            } else if((c & 0xf0) == 0xe0) {
-                c32 = c & 0x0f;
-                bytes = 3;
-            } else if((c & 0xf8) == 0xf0) {
-                c32 = c & 0x07;
-                bytes = 4;
-            } else {
-                sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
-            }
-        } else {
-            c32 = c;
-            bytes = 1;
-        }
-        if(i + bytes > len) {
-            sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
-        }
-        for(j = 1; j < bytes; j++) {
-            c32 <<= 6;
-            c32 |= buff[++i] & 0x3f;
-        }
-        if(c32 < utf8_code_point_limit[bytes - 1]) {
-            sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
-        }
-        utf8len++;
-    }
-    return utf8len;
 }
 
 static sl_string_t*
