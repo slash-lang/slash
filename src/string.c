@@ -50,7 +50,7 @@ sl_string_cmp(sl_string_t* a, sl_string_t* b)
     } else if(a->buff_len > b->buff_len) {
         return 1;
     }
-    return memcmp(a->buff, b->buff, a->buff_len) == 0;
+    return memcmp(a->buff, b->buff, a->buff_len);
 }
 
 struct st_hash_type
