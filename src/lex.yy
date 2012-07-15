@@ -1,17 +1,13 @@
-%option noyywrap
-%option reentrant
-%option extra-type="sl_token_buff_t*"
-
 %{
     #include "lex.h"
+%}
+
+%option noyywrap
+%option reentrant
+%option extra-type="sl_lex_state_t*"
+
+%{
     #include <gc.h>
-    
-    typedef struct sl_token_buff {
-        sl_vm_t* vm;
-        sl_token_t* tokens;
-        size_t cap;
-        size_t len;
-    } sl_token_buff_t;
     
     #define ADD_TOKEN(tok) do { \
             if(yyextra->len + 1 >= yyextra->cap) { \
@@ -21,14 +17,24 @@
         } while(0)
 %}
 
+%x SLASH
+
 %%
 
-"nil"       { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
-"true"      { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
-"false"     { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
-"self"      { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
+<INITIAL>"<%="  { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));       BEGIN(SLASH); }
+<INITIAL>"<%!!" { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
+<INITIAL>"<%"   { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
-.           { sl_throw_message2(yyextra->vm, yyextra->vm->lib.SyntaxError, "Illegal character"); }
+<INITIAL>.      { sl_lex_append_to_raw(yyextra, yytext, 1); }
+
+<SLASH>"nil"    { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
+<SLASH>"true"   { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
+<SLASH>"false"  { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
+<SLASH>"self"   { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
+
+<SLASH>\s       { /* ignore */ }
+
+<SLASH>.        { sl_throw_message2(yyextra->vm, yyextra->vm->lib.SyntaxError, "Illegal character"); }
 
 %%
 
@@ -37,13 +43,13 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
 {
     yyscan_t yyscanner;
     YY_BUFFER_STATE buff_state;
-    sl_token_buff_t token_buff;
-    token_buff.vm = vm;
-    token_buff.cap = 8;
-    token_buff.len = 0;
-    token_buff.tokens = GC_MALLOC(sizeof(sl_token_t) * token_buff.cap);
+    sl_lex_state_t ls;
+    ls.vm = vm;
+    ls.cap = 8;
+    ls.len = 0;
+    ls.tokens = GC_MALLOC(sizeof(sl_token_t) * ls.cap);
     
-    yylex_init_extra(&token_buff, &yyscanner);
+    yylex_init_extra(&ls, &yyscanner);
     buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
     yylex(yyscanner);
     yy_delete_buffer(buff_state, yyscanner);
