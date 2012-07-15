@@ -26,11 +26,31 @@ get_error(sl_vm_t* vm, SLVAL object)
     return (sl_error_t*)sl_get_ptr(object);
 }
 
+static SLVAL
+sl_error_name(sl_vm_t* vm, SLVAL self)
+{
+    sl_class_t* klass = (sl_class_t*)sl_get_ptr(sl_class_of(vm, self));
+    return klass->name;
+}
+
+static SLVAL
+sl_error_to_s(sl_vm_t* vm, SLVAL self)
+{
+    sl_error_t* error = get_error(vm, self);
+    SLVAL name = sl_error_name(vm, self);
+    return sl_string_concat(vm, name,
+        sl_string_concat(vm, sl_make_cstring(vm, ": "),
+            error->message));
+}
+
 void
 sl_init_error(sl_vm_t* vm)
 {
     vm->lib.Error = sl_define_class(vm, "Error", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
+    sl_define_method(vm, vm->lib.Error, "name", 0, sl_error_name);
+    sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
+    
     vm->lib.SyntaxError = sl_define_class(vm, "SyntaxError", vm->lib.Error);
     vm->lib.EncodingError = sl_define_class(vm, "EncodingError", vm->lib.Error);
     vm->lib.TypeError = sl_define_class(vm, "TypeError", vm->lib.Error);
