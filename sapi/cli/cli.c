@@ -6,9 +6,10 @@
 static void lex(sl_vm_t* vm, void* state)
 {    
     size_t token_count;
-    char* src = "hello world <%=\n true\n %>";
+    sl_token_t* tokens;
+    char* src = "one plus two is: <%= 1 + 2 %>";
     (void)state;
-    sl_lex(vm, (uint8_t*)"-", (uint8_t*)src, strlen(src), &token_count);
+    tokens = sl_lex(vm, (uint8_t*)"-", (uint8_t*)src, strlen(src), &token_count);
 }
 
 static void syntax_error(sl_vm_t* vm, void* state, SLVAL error)

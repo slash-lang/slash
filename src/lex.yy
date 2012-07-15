@@ -20,25 +20,67 @@
 
 %x SLASH
 
+/* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
+KW  [^a-zA-Z_0-9]
+
 %%
 
-<INITIAL>"<%="  { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));       BEGIN(SLASH); }
-<INITIAL>"<%!!" { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
-<INITIAL>"<%"   { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
+<INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));       BEGIN(SLASH); }
+<INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
+<INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
-<INITIAL>.      { sl_lex_append_to_raw(yyextra, yytext, 1); }
+<INITIAL>.          { sl_lex_append_to_raw(yyextra, yytext, 1); }
 
-<SLASH>"%>"     { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
-<SLASH>"nil"    { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
-<SLASH>"true"   { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
-<SLASH>"false"  { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
-<SLASH>"self"   { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
+<SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
 
-<SLASH>" "      { /* ignore */ }
-<SLASH>\t       { /* ignore */ }
-<SLASH>\n       { /* ignore */ }
+<SLASH>[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }
+<SLASH>[0-9]+("."[0-9]+)("e"[+-]?[0-9]+)?   { ADD_TOKEN(sl_make_float_token(yytext)); }
 
-<SLASH>.        { sl_lex_error(yyextra, yytext, yylineno); }
+<SLASH>[0-9]+           { ADD_TOKEN(sl_make_string_token(SL_TOK_INTEGER, yytext, yyleng)); }
+
+<SLASH>"nil"/{KW}       { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
+<SLASH>"true"/{KW}      { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
+<SLASH>"false"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
+<SLASH>"self"/{KW}      { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
+<SLASH>"class"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_CLASS)); }
+<SLASH>"extends"/{KW}   { ADD_TOKEN(sl_make_token(SL_TOK_EXTENDS)); }
+<SLASH>"def"/{KW}       { ADD_TOKEN(sl_make_token(SL_TOK_DEF)); }
+<SLASH>"if"/{KW}        { ADD_TOKEN(sl_make_token(SL_TOK_IF)); }
+<SLASH>"else"/{KW}      { ADD_TOKEN(sl_make_token(SL_TOK_ELSE)); }
+<SLASH>"unless"/{KW}    { ADD_TOKEN(sl_make_token(SL_TOK_UNLESS)); }
+<SLASH>"for"/{KW}       { ADD_TOKEN(sl_make_token(SL_TOK_FOR)); }
+<SLASH>"in"/{KW}        { ADD_TOKEN(sl_make_token(SL_TOK_IN)); }
+<SLASH>"while"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_WHILE)); }
+<SLASH>"until"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_UNTIL)); }
+
+<SLASH>"("          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_PAREN)); }
+<SLASH>")"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_PAREN)); }
+<SLASH>"["          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_BRACKET)); }
+<SLASH>"]"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACKET)); }
+<SLASH>"{"          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_BRACE)); }
+<SLASH>"}"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE)); }
+
+<SLASH>","          { ADD_TOKEN(sl_make_token(SL_TOK_COMMA)); }
+<SLASH>"=="         { ADD_TOKEN(sl_make_token(SL_TOK_DBL_EQUALS)); }
+<SLASH>"="          { ADD_TOKEN(sl_make_token(SL_TOK_EQUALS)); }
+<SLASH>"<="         { ADD_TOKEN(sl_make_token(SL_TOK_LTE)); }
+<SLASH>"<"          { ADD_TOKEN(sl_make_token(SL_TOK_LT)); }
+<SLASH>">="         { ADD_TOKEN(sl_make_token(SL_TOK_GTE)); }
+<SLASH>">"          { ADD_TOKEN(sl_make_token(SL_TOK_GT)); }
+
+<SLASH>"+"          { ADD_TOKEN(sl_make_token(SL_TOK_PLUS)); }
+<SLASH>"-"          { ADD_TOKEN(sl_make_token(SL_TOK_MINUS)); }
+<SLASH>"*"          { ADD_TOKEN(sl_make_token(SL_TOK_TIMES)); }
+<SLASH>"/"          { ADD_TOKEN(sl_make_token(SL_TOK_DIVIDE)); }
+<SLASH>"%"          { ADD_TOKEN(sl_make_token(SL_TOK_MOD)); }
+
+<SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
+
+<SLASH>" "          { /* ignore */ }
+<SLASH>\t           { /* ignore */ }
+<SLASH>\n           { /* ignore */ }
+
+<SLASH>.            { sl_lex_error(yyextra, yytext, yylineno); }
 
 %%
 
@@ -60,10 +102,6 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     yy_delete_buffer(buff_state, yyscanner);
     yylex_destroy(yyscanner);
     
-    (void)vm;
-    (void)filename;
-    (void)buff;
-    (void)len;
-    (void)token_count;
-    return NULL;
+    *token_count = ls.len;
+    return ls.tokens;
 }
