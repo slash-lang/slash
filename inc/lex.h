@@ -57,7 +57,8 @@ typedef enum sl_token_type {
     SL_TOK_DIVIDE,
     SL_TOK_MOD,
     
-    SL_TOK_DOT
+    SL_TOK_DOT,
+    SL_TOK_END
 }
 sl_token_type_t;
 
@@ -80,7 +81,8 @@ typedef struct sl_lex_state {
     size_t cap;
     size_t len;
     uint8_t* filename;
-} sl_lex_state_t;
+}
+sl_lex_state_t;
 
 sl_token_t*
 sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count);

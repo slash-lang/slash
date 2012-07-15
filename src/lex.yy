@@ -2,17 +2,15 @@
     #include "lex.h"
 %}
 
-%option noyywrap
-%option yylineno
-%option reentrant
+%option noyywrap yylineno reentrant nounistd never-interactive
 %option extra-type="sl_lex_state_t*"
 
 %{
     #include <gc.h>
     
     #define ADD_TOKEN(tok) do { \
-            if(yyextra->len + 1 >= yyextra->cap) { \
-                yyextra->tokens = GC_REALLOC(yyextra->tokens, yyextra->cap *= 2); \
+            if(yyextra->len + 2 >= yyextra->cap) { \
+                yyextra->tokens = GC_REALLOC(yyextra->tokens, sizeof(sl_token_t) * (yyextra->cap *= 2)); \
             } \
             yyextra->tokens[yyextra->len++] = (tok); \
         } while(0)
@@ -76,9 +74,7 @@ KW  [^a-zA-Z_0-9]
 
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 
-<SLASH>" "          { /* ignore */ }
-<SLASH>\t           { /* ignore */ }
-<SLASH>\n           { /* ignore */ }
+<SLASH>[ \t\r\n]    { /* ignore */ }
 
 <SLASH>.            { sl_lex_error(yyextra, yytext, yylineno); }
 
@@ -102,6 +98,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     yy_delete_buffer(buff_state, yyscanner);
     yylex_destroy(yyscanner);
     
+    ls.tokens[ls.len++].type = SL_TOK_END;
     *token_count = ls.len;
     return ls.tokens;
 }
