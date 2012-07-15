@@ -1,12 +1,14 @@
-#include <slash.h>
+#include "slash.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void lex(sl_vm_t* vm, void* state)
 {    
     size_t token_count;
+    char* src = "hello world <%%>";
     (void)state;
-    sl_lex(vm, (uint8_t*)"-", (uint8_t*)"Justice - †", 13, &token_count);
+    sl_lex(vm, (uint8_t*)"-", (uint8_t*)src, strlen(src), &token_count);
 }
 
 static void syntax_error(sl_vm_t* vm, void* state, SLVAL error)

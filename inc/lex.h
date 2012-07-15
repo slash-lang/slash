@@ -60,6 +60,7 @@ typedef struct sl_token {
         struct {
             uint8_t* buff;
             size_t len;
+            size_t cap;
         } str;
         struct {
             double n;
@@ -68,11 +69,25 @@ typedef struct sl_token {
 }
 sl_token_t;
 
+typedef struct sl_lex_state {
+    sl_vm_t* vm;
+    sl_token_t* tokens;
+    size_t cap;
+    size_t len;
+} sl_lex_state_t;
+
 sl_token_t*
 sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count);
 
 /* helper functions defined in lex_helper.c */
 
-sl_token_t sl_make_token(sl_token_type_t type);
+sl_token_t
+sl_make_token(sl_token_type_t type);
+
+sl_token_t
+sl_make_string_token(sl_token_type_t type, char* buff, size_t len);
+
+void
+sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len);
 
 #endif
