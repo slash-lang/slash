@@ -74,6 +74,7 @@ typedef struct sl_lex_state {
     sl_token_t* tokens;
     size_t cap;
     size_t len;
+    uint8_t* filename;
 } sl_lex_state_t;
 
 sl_token_t*
@@ -89,5 +90,8 @@ sl_make_string_token(sl_token_type_t type, char* buff, size_t len);
 
 void
 sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len);
+
+void
+sl_lex_error(sl_lex_state_t* st, char* text, int lineno);
 
 #endif
