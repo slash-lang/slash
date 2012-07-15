@@ -1,6 +1,7 @@
 #include "lex.h"
 #include <gc.h>
 #include <string.h>
+#include <stdio.h>
 
 sl_token_t
 sl_make_token(sl_token_type_t type)
@@ -39,4 +40,13 @@ sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len)
     }
     memcpy(raw_token->as.str.buff + raw_token->as.str.len, buff, len);
     raw_token->as.str.len += len;
+}
+
+void
+sl_lex_error(sl_lex_state_t* st, char* text, int lineno)
+{
+    size_t filename_len = strlen((char*)st->filename);
+    char* buff = GC_MALLOC(128 + filename_len);
+    sprintf(buff, "Unexpected character '%c' in %s, line %d", text[0] /* todo utf 8 fix :\ */, st->filename, lineno);
+    sl_throw_message2(st->vm, st->vm->lib.SyntaxError, buff);
 }
