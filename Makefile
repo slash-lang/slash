@@ -35,7 +35,7 @@ deps/%:
 libslash.a: $(OBJS)
 	ar r $@ $^
 
-src/lex.o: CFLAGS += -Wno-unused
+src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter
 
 %.o: %.c inc/*.h Makefile
 	$(CC) -o $@ $(CFLAGS) -c $<
