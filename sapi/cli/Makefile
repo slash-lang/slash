@@ -5,6 +5,7 @@ slash-cli: cli.o $(LIBS)
 
 clean:
 	rm -f *.o
+	rm -rf *.dSYM
 	rm -f slash-cli
 
 describe:
