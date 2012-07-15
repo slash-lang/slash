@@ -10,16 +10,6 @@
 /* slash modification: use boehm gc */
 #include <gc.h>
 
-typedef struct st_table_entry st_table_entry;
-
-struct st_table_entry
-{
-    unsigned int hash;
-    st_data_t key;
-    st_data_t record;
-    st_table_entry *next;
-};
-
 #define ST_DEFAULT_MAX_DENSITY 5
 #define ST_DEFAULT_INIT_TABLE_SIZE 11
 
