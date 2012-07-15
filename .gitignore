@@ -2,3 +2,4 @@
 *.a
 *.la
 *.dSYM
+*.supp
