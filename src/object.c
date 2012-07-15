@@ -59,7 +59,7 @@ sl_object_to_s(sl_vm_t* vm, SLVAL self)
     sl_string_t* name = (sl_string_t*)sl_get_ptr(klassp->name);
     char* str = (char*)GC_MALLOC_ATOMIC(32 + name->buff_len);
     strcpy(str, "#<");
-    memcpy(str, name->buff, name->buff_len);
+    memcpy(str + 2, name->buff, name->buff_len);
     sprintf(str + 2 + name->buff_len, ":%p>", (void*)sl_get_ptr(self));
     return sl_make_cstring(vm, str);
 }
@@ -77,6 +77,7 @@ sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SL
     if(!sl_get_ptr(object)->singleton_methods) {
         sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
     }
+    name = sl_to_s(vm, name);
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
