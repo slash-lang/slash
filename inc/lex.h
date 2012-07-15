@@ -32,8 +32,9 @@ typedef enum sl_token_type {
     SL_TOK_ELSE,
     SL_TOK_UNLESS,
     SL_TOK_FOR,
-    SL_TOK_WHILE,
     SL_TOK_IN,
+    SL_TOK_WHILE,
+    SL_TOK_UNTIL,
     
     SL_TOK_OPEN_PAREN,
     SL_TOK_CLOSE_PAREN,
@@ -50,6 +51,12 @@ typedef enum sl_token_type {
     SL_TOK_GT,
     SL_TOK_GTE,
     
+    SL_TOK_PLUS,
+    SL_TOK_MINUS,
+    SL_TOK_TIMES,
+    SL_TOK_DIVIDE,
+    SL_TOK_MOD,
+    
     SL_TOK_DOT
 }
 sl_token_type_t;
@@ -62,9 +69,7 @@ typedef struct sl_token {
             size_t len;
             size_t cap;
         } str;
-        struct {
-            double n;
-        } dbl;
+        double dbl;
     } as;
 }
 sl_token_t;
@@ -87,6 +92,9 @@ sl_make_token(sl_token_type_t type);
 
 sl_token_t
 sl_make_string_token(sl_token_type_t type, char* buff, size_t len);
+
+sl_token_t
+sl_make_float_token(char* text);
 
 void
 sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len);

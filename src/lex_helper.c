@@ -2,6 +2,7 @@
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 sl_token_t
 sl_make_token(sl_token_type_t type)
@@ -21,6 +22,15 @@ sl_make_string_token(sl_token_type_t type, char* buff, size_t len)
     token.as.str.len = len;
     token.as.str.cap = cap;
     memcpy(token.as.str.buff, buff, len);
+    return token;
+}
+
+sl_token_t
+sl_make_float_token(char* text)
+{
+    sl_token_t token;
+    token.type = SL_TOK_FLOAT;
+    token.as.dbl = atof(text);
     return token;
 }
 
