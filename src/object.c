@@ -23,10 +23,20 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->base.instance_variables = st_init_table(&sl_string_hash_type);
 }
 
+static SLVAL
+sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
+    sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
+}
+
+static SLVAL
+sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    return sl_send2(vm, self, argv[0], argc - 1, argv + 1);
 }
 
 SLVAL
@@ -122,7 +132,7 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
         argv[i] = va_arg(va, SLVAL);
     }
     va_end(va);
-    return sl_send2(vm, recv, sl_cstring(vm, id), argc, argv);
+    return sl_send2(vm, recv, sl_make_cstring(vm, id), argc, argv);
 }
 
 static SLVAL
@@ -161,13 +171,17 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 }
 
 SLVAL
-sl_send2(sl_vm_t* vm, SLVAL recv, sl_string_t* id, size_t argc, SLVAL* argv)
+sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
 {
     sl_method_t* method;
     SLVAL klass = sl_class_of(vm, recv);
     sl_class_t* klassp;
     sl_object_t* recvp = sl_get_ptr(recv);
     SLVAL* argv2;
+    sl_string_t* id;
+    
+    sl_expect(vm, idv, vm->lib.String);
+    id = (sl_string_t*)sl_get_ptr(idv);
     
     if(recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
