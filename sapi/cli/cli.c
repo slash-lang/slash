@@ -6,7 +6,7 @@
 static void lex(sl_vm_t* vm, void* state)
 {    
     size_t token_count;
-    char* src = "hello world <%%>";
+    char* src = "hello world <%=\n true\n %>";
     (void)state;
     sl_lex(vm, (uint8_t*)"-", (uint8_t*)src, strlen(src), &token_count);
 }
@@ -17,6 +17,7 @@ static void syntax_error(sl_vm_t* vm, void* state, SLVAL error)
     sl_string_t* str = (sl_string_t*)sl_get_ptr(error_str);
     (void)state;
     fwrite(str->buff, str->buff_len, 1, stderr);
+    puts("\n");
     exit(1);
 }
 

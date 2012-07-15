@@ -3,6 +3,7 @@
 %}
 
 %option noyywrap
+%option yylineno
 %option reentrant
 %option extra-type="sl_lex_state_t*"
 
@@ -27,14 +28,17 @@
 
 <INITIAL>.      { sl_lex_append_to_raw(yyextra, yytext, 1); }
 
+<SLASH>"%>"     { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
 <SLASH>"nil"    { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
 <SLASH>"true"   { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
 <SLASH>"false"  { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
 <SLASH>"self"   { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
 
-<SLASH>\s       { /* ignore */ }
+<SLASH>" "      { /* ignore */ }
+<SLASH>\t       { /* ignore */ }
+<SLASH>\n       { /* ignore */ }
 
-<SLASH>.        { sl_throw_message2(yyextra->vm, yyextra->vm->lib.SyntaxError, "Illegal character"); }
+<SLASH>.        { sl_lex_error(yyextra, yytext, yylineno); }
 
 %%
 
@@ -48,6 +52,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.cap = 8;
     ls.len = 0;
     ls.tokens = GC_MALLOC(sizeof(sl_token_t) * ls.cap);
+    ls.filename = filename;
     
     yylex_init_extra(&ls, &yyscanner);
     buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
