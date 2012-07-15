@@ -102,6 +102,17 @@ sl_string_length(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, get_string(vm, self)->char_len);
 }
 
+SLVAL
+sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_string_t* a = get_string(vm, self);
+    sl_string_t* b = get_string(vm, other);
+    uint8_t* buff = (uint8_t*)GC_MALLOC(a->buff_len + b->buff_len);
+    memcpy(buff, a->buff, a->buff_len);
+    memcpy(buff + a->buff_len, b->buff, b->buff_len);
+    return sl_make_string(vm, buff, a->buff_len + b->buff_len);
+}
+
 static SLVAL
 sl_string_to_s(sl_vm_t* vm, SLVAL self)
 {
@@ -120,5 +131,7 @@ void
 sl_init_string(sl_vm_t* vm)
 {
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
+    sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
+    sl_define_method(vm, vm->lib.String, "+", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
 }

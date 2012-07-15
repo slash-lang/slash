@@ -18,6 +18,9 @@ sl_cstring(struct sl_vm* vm, char* cstr);
 SLVAL
 sl_string_length(sl_vm_t* vm, SLVAL self);
 
+SLVAL
+sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other);
+
 void
 sl_init_string(sl_vm_t* vm);
 
