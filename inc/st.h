@@ -29,6 +29,16 @@ struct st_table {
     struct st_table_entry **bins;
 };
 
+typedef struct st_table_entry st_table_entry;
+
+struct st_table_entry
+{
+    unsigned int hash;
+    st_data_t key;
+    st_data_t record;
+    st_table_entry *next;
+};
+
 #define st_is_member(table,key) st_lookup(table,key,(st_data_t *)0)
 
 enum st_retval {ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK};
