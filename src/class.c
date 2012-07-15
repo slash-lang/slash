@@ -89,6 +89,7 @@ void
 sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
 {
     SLVAL method = sl_make_c_func(vm, name, arity, func);
+    sl_expect(vm, name, vm->lib.String);
     st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
