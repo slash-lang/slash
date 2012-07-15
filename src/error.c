@@ -34,6 +34,13 @@ sl_error_name(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+sl_error_message(sl_vm_t* vm, SLVAL self)
+{
+    sl_error_t* error = get_error(vm, self);
+    return error->message;
+}
+
+static SLVAL
 sl_error_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_error_t* error = get_error(vm, self);
@@ -49,6 +56,7 @@ sl_init_error(sl_vm_t* vm)
     vm->lib.Error = sl_define_class(vm, "Error", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
     sl_define_method(vm, vm->lib.Error, "name", 0, sl_error_name);
+    sl_define_method(vm, vm->lib.Error, "message", 0, sl_error_message);
     sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
     
     vm->lib.SyntaxError = sl_define_class(vm, "SyntaxError", vm->lib.Error);
