@@ -183,7 +183,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     sl_expect(vm, idv, vm->lib.String);
     id = (sl_string_t*)sl_get_ptr(idv);
     
-    if(recvp->singleton_methods) {
+    if(sl_get_primitive_type(recv) != SL_T_INT && recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
             return apply(vm, recv, method, argc, argv);
         }
