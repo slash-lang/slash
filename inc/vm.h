@@ -15,6 +15,8 @@ typedef struct sl_lib {
     SLVAL EncodingError;
     SLVAL TypeError;
     SLVAL NoMethodError;
+    SLVAL ZeroDivisionError;
+    SLVAL NameError;
     
     SLVAL Nil;
     SLVAL nil;
@@ -43,6 +45,8 @@ typedef struct sl_vm {
     void(*output)(struct sl_vm* ctx, char* buff, size_t len);
 }
 sl_vm_t;
+
+#include "eval.h"
 
 void
 sl_static_init();

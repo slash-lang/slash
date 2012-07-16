@@ -1,7 +1,12 @@
 #include <gc.h>
+#include <limits.h>
+#include <stdio.h>
+#include "string.h"
 #include "class.h"
 #include "value.h"
 #include "lib/float.h"
+#include "lib/bignum.h"
+#include "math.h"
 
 typedef struct sl_float {
     sl_object_t base;
@@ -24,13 +29,47 @@ get_float(sl_vm_t* vm, SLVAL val)
     return (sl_float_t*)sl_get_ptr(val);
 }
 
+static SLVAL
+sl_float_to_s(sl_vm_t* vm, SLVAL self)
+{
+    double d = sl_get_float(vm, self);
+    char buff[128];
+    snprintf(buff, 127, "%lf", d);
+    return sl_make_cstring(vm, buff);
+}
+
+static SLVAL
+sl_float_to_i(sl_vm_t* vm, SLVAL self)
+{
+    double d = sl_get_float(vm, self);
+    if(d > INT_MAX / 2 || d < INT_MIN / 2) {
+        return sl_make_bignum_f(vm, d);
+    } else {
+        return sl_make_int(vm, (int)d);
+    }
+}
+
+static SLVAL
+sl_float_to_f(sl_vm_t* vm, SLVAL self)
+{
+    (void)vm;
+    return self;
+}
+
 void
 sl_init_float(sl_vm_t* vm)
 {
     vm->lib.Float = sl_define_class(vm, "Float", vm->lib.Number);
     sl_class_set_allocator(vm, vm->lib.Float, allocate_float);
+    sl_define_method(vm, vm->lib.Float, "to_s", 0, sl_float_to_s);
+    sl_define_method(vm, vm->lib.Float, "to_i", 0, sl_float_to_i);
+    sl_define_method(vm, vm->lib.Float, "to_f", 0, sl_float_to_f);
+    sl_define_method(vm, vm->lib.Float, "+", 1, sl_float_add);
+    sl_define_method(vm, vm->lib.Float, "-", 1, sl_float_sub);
+    sl_define_method(vm, vm->lib.Float, "*", 1, sl_float_mul);
+    sl_define_method(vm, vm->lib.Float, "/", 1, sl_float_div);
+    sl_define_method(vm, vm->lib.Float, "%", 1, sl_float_mod);
 }
-
 
 SLVAL
 sl_make_float(sl_vm_t* vm, double d)
@@ -44,4 +83,64 @@ double
 sl_get_float(sl_vm_t* vm, SLVAL f)
 {
     return get_float(vm, f)->d;
+}
+
+SLVAL
+sl_float_add(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_float_add(vm, self, sl_bignum_to_f(vm, other));
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_add(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    return sl_make_float(vm, sl_get_float(vm, self) + sl_get_float(vm, other));
+}
+
+SLVAL
+sl_float_sub(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_float_sub(vm, self, sl_bignum_to_f(vm, other));
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_sub(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    return sl_make_float(vm, sl_get_float(vm, self) - sl_get_float(vm, other));
+}
+
+SLVAL
+sl_float_mul(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_float_mul(vm, self, sl_bignum_to_f(vm, other));
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_mul(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    return sl_make_float(vm, sl_get_float(vm, self) * sl_get_float(vm, other));
+}
+
+SLVAL
+sl_float_div(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_float_div(vm, self, sl_bignum_to_f(vm, other));
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_div(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    return sl_make_float(vm, sl_get_float(vm, self) / sl_get_float(vm, other));
+}
+
+SLVAL
+sl_float_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_float_mod(vm, self, sl_bignum_to_f(vm, other));
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_mod(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    return sl_make_float(vm, fmod(sl_get_float(vm, self), sl_get_float(vm, other)));
 }
