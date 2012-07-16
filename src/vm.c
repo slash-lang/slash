@@ -53,8 +53,6 @@ sl_init()
     vm = GC_MALLOC(sizeof(sl_vm_t));
     vm->initializing = 1;
     
-    vm->globals = st_init_table(&sl_string_hash_type);
-    
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
     

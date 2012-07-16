@@ -38,7 +38,6 @@ typedef struct sl_lib {
 sl_lib_t;
 
 typedef struct sl_vm {
-    st_table_t* globals;
     int initializing;
     sl_lib_t lib;
     struct sl_catch_frame* catch_stack;
