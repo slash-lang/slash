@@ -1,5 +1,5 @@
 SAPIS=$(shell echo */ | xargs basename)
-CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -iquote../../inc/ -g
+CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -iquote../../inc/ -I../../deps/gc-7.2/include -g
 LDFLAGS=
 LIBS=../../libgmp.a ../../libgc.a ../../libslash.a
 
