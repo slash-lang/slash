@@ -33,12 +33,13 @@ typedef struct sl_node_base {
 }
 sl_node_base_t;
 
-typedef SLVAL(*sl_node_eval_fn_t)(struct sl_node_base* node, struct sl_eval_ctx*);
+typedef SLVAL(*sl_node_eval_fn_t)(sl_node_base_t*, struct sl_eval_ctx*);
 
 typedef struct sl_node_seq {
     sl_node_base_t base;
-    sl_node_base_t** exprs;
-    size_t expr_count;
+    sl_node_base_t** nodes;
+    size_t node_count;
+    size_t node_capacity;
 }
 sl_node_seq_t;
 

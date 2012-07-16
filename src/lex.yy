@@ -92,6 +92,8 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.tokens = GC_MALLOC(sizeof(sl_token_t) * ls.cap);
     ls.filename = filename;
     
+    ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
+    
     yylex_init_extra(&ls, &yyscanner);
     buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
     yylex(yyscanner);
