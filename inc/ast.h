@@ -8,6 +8,7 @@ typedef enum sl_node_type {
     SL_NODE_RAW,
     SL_NODE_ECHO,
     SL_NODE_ECHO_RAW,
+    SL_NODE_CONSTANT,
     SL_NODE_VAR,
     SL_NODE_IVAR,
     SL_NODE_CVAR,

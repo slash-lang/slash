@@ -13,6 +13,7 @@ typedef enum sl_token_type {
     SL_TOK_RAW,
     
     SL_TOK_WHITESPACE,
+    SL_TOK_CONSTANT,
     SL_TOK_IDENTIFIER,
     SL_TOK_IVAR,
     SL_TOK_CVAR,
@@ -66,6 +67,7 @@ typedef enum sl_token_type {
     SL_TOK_NOT,
     
     SL_TOK_DOT,
+    SL_TOK_PAAMAYIM_NEKUDOTAYIM,
     SL_TOK_END
 }
 sl_token_type_t;

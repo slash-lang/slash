@@ -25,12 +25,10 @@ run(sl_vm_t* vm, void* state)
     sl_token_t* tokens;
     sl_node_base_t* ast;
     cli_state_t* st = state;
-    sl_eval_ctx_t ctx;
+    sl_eval_ctx_t* ctx = sl_make_eval_ctx(vm);
     tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
     ast = sl_parse(vm, tokens, token_count, st->filename);
-    ctx.vm = vm;
-    ctx.self = vm->lib.Object;
-    ast->eval(ast, &ctx);
+    ast->eval(ast, ctx);
 }
 
 static void

@@ -14,7 +14,7 @@ sl_make_node(sl_node_type_t type, sl_node_eval_fn_t eval, size_t size)
 }
 
 #define MAKE_NODE(t, eval, type, block) do { \
-        type* node = (type*)sl_make_node((t), (sl_node_eval_fn_t)&(eval), sizeof(type)); \
+        type* node = (type*)sl_make_node((t), (sl_node_eval_fn_t)(eval), sizeof(type)); \
         block; \
         return (sl_node_base_t*)node; \
     } while(0)
@@ -98,5 +98,13 @@ sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, char* id, size_t a
         node->arg_count = argc;
         node->args = GC_MALLOC(sizeof(sl_node_base_t*) * argc);
         memcpy(node->args, argv, sizeof(sl_node_base_t*) * argc);
+    });
+}
+
+sl_node_base_t*
+sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL(*eval)(sl_node_var_t*,sl_eval_ctx_t*), SLVAL id)
+{
+    MAKE_NODE(type, eval, sl_node_var_t, {
+        node->name = (sl_string_t*)sl_get_ptr(sl_expect(ps->vm, id, ps->vm->lib.String));
     });
 }
