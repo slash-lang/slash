@@ -46,22 +46,32 @@ sl_eval_echo_raw(sl_node_echo_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_and(sl_node_binary_t* node, sl_eval_ctx_t* ctx)
 {
-    (void)node;
-    return ctx->vm->lib.nil;
+    SLVAL val = node->left->eval(node->left, ctx);
+    if(sl_is_truthy(val)) {
+        return node->right->eval(node->right, ctx);
+    }
+    return val;
 }
 
 SLVAL
 sl_eval_or(sl_node_binary_t* node, sl_eval_ctx_t* ctx)
 {
-    (void)node;
-    return ctx->vm->lib.nil;
+    SLVAL val = node->left->eval(node->left, ctx);
+    if(sl_is_truthy(val)) {
+        return val;
+    }
+    return node->right->eval(node->right, ctx);
 }
 
 SLVAL
 sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx)
 {
-    (void)node;
-    return ctx->vm->lib.nil;
+    SLVAL val = node->expr->eval(node->expr, ctx);
+    if(sl_is_truthy(val)) {
+        return ctx->vm->lib.false;
+    } else {
+        return ctx->vm->lib.true;
+    }
 }
 
 SLVAL

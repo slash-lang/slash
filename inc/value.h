@@ -102,4 +102,7 @@ sl_get_primitive_type(SLVAL val);
 SLVAL
 sl_allocate(struct sl_vm* vm, SLVAL klass);
 
+int
+sl_is_truthy(SLVAL val);
+
 #endif

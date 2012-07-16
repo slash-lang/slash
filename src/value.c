@@ -88,3 +88,14 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
     obj->instance_variables = st_init_table(&sl_string_hash_type);
     return sl_make_ptr(obj);
 }
+
+int
+sl_is_truthy(SLVAL val)
+{
+    sl_primitive_type_t type = sl_get_primitive_type(val);
+    if(type == SL_T_NIL || type == SL_T_FALSE) {
+        return 0;
+    } else {
+        return 1;
+    }
+}
