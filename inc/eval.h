@@ -23,4 +23,22 @@ sl_eval_echo(sl_node_echo_t* node, sl_eval_ctx_t* ctx);
 SLVAL
 sl_eval_echo_raw(sl_node_echo_t* node, sl_eval_ctx_t* ctx);
 
+SLVAL
+sl_eval_and(sl_node_binary_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_or(sl_node_binary_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_assign(sl_node_binary_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_immediate(sl_node_immediate_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx);
+
 #endif
