@@ -27,7 +27,7 @@ KW  [^a-zA-Z_0-9]
 <INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
 <INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
-<INITIAL>.          { sl_lex_append_to_raw(yyextra, yytext, 1); }
+<INITIAL>.|\n       { sl_lex_append_to_raw(yyextra, yytext, 1); }
 
 <SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
 
