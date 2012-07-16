@@ -32,6 +32,7 @@ sl_pre_init_class(sl_vm_t* vm)
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
     obj->name = vm->lib.nil;
     obj->super = vm->lib.Object;
+    obj->constants = st_init_table(&sl_string_hash_type);
     obj->class_variables = st_init_table(&sl_string_hash_type);
     obj->instance_methods = st_init_table(&sl_string_hash_type);
     obj->allocator = allocate_class;
@@ -49,6 +50,8 @@ sl_class_to_s(sl_vm_t* vm, SLVAL self)
 void
 sl_init_class(sl_vm_t* vm)
 {
+    st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
+        (st_data_t)sl_cstring(vm, "Class"), (st_data_t)vm->lib.Class.i);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
 }
 
@@ -67,9 +70,14 @@ sl_define_class2(sl_vm_t* vm, SLVAL name, SLVAL super)
     klass->super = super;
     /* @TODO assert name is a string */
     klass->name = name;
+    klass->constants = st_init_table(&sl_string_hash_type);
     klass->class_variables = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
     klass->allocator = get_class(vm, super)->allocator;
+    if(!vm->initializing) {
+        st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
+            (st_data_t)name.i, (st_data_t)vklass.i);
+    }
     return vklass;
 }
 
@@ -91,6 +99,48 @@ sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)(
     SLVAL method = sl_make_c_func(vm, name, arity, func);
     sl_expect(vm, name, vm->lib.String);
     st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
+}
+
+int
+sl_class_has_const(sl_vm_t* vm, SLVAL klass, char* name)
+{
+    return sl_class_has_const2(vm, klass, sl_make_cstring(vm, name));
+}
+
+int
+sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
+{
+    sl_class_t* klassp;
+    if(!sl_is_a(vm, klass, vm->lib.Class)) {
+        klass = sl_class_of(vm, klass);
+    }
+    klassp = get_class(vm, klass);
+    return st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL);
+}
+
+SLVAL
+sl_class_get_const(sl_vm_t* vm, SLVAL klass, char* name)
+{
+    return sl_class_get_const2(vm, klass, sl_make_cstring(vm, name));
+}
+
+SLVAL
+sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
+{
+    sl_class_t* klassp;
+    SLVAL val, err;
+    if(!sl_is_a(vm, klass, vm->lib.Class)) {
+        klass = sl_class_of(vm, klass);
+    }
+    klassp = get_class(vm, klass);
+    if(st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), (st_data_t*)&val)) {
+        return val;
+    }
+    err = sl_make_cstring(vm, "Undefined constant '");
+    err = sl_string_concat(vm, err, name);
+    err = sl_string_concat(vm, err, sl_make_cstring(vm, "'"));
+    sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
+    return vm->lib.nil;
 }
 
 int

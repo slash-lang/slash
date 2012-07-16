@@ -165,6 +165,8 @@ sl_pre_init_string(sl_vm_t* vm)
 void
 sl_init_string(sl_vm_t* vm)
 {
+    st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
+        (st_data_t)sl_cstring(vm, "String"), (st_data_t)vm->lib.String.i);
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 0, sl_string_concat);

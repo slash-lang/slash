@@ -4,6 +4,7 @@
 #include "eval.h"
 #include "lib/float.h"
 #include "lib/number.h"
+#include "string.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -92,12 +93,22 @@ static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
+    sl_node_base_t* node;
     switch(peek_token(ps)->type) {
         case SL_TOK_INTEGER:
             tok = next_token(ps);
             return sl_make_immediate_node(sl_number_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_FLOAT:
             return sl_make_immediate_node(sl_make_float(ps->vm, next_token(ps)->as.dbl));
+        case SL_TOK_CONSTANT:
+            tok = next_token(ps);
+            return sl_make_var_node(ps, SL_NODE_CONSTANT, sl_eval_constant,
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+        case SL_TOK_IDENTIFIER:
+            tok = next_token(ps);
+            node = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var,
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return node;
         default:
             error(ps, "Unexpected token: @TODO [primary_expression]");
             return NULL;

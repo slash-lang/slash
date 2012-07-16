@@ -25,6 +25,18 @@ void
 sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)());
 
 int
+sl_class_has_const(sl_vm_t* vm, SLVAL klass, char* name);
+
+int
+sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name);
+
+SLVAL
+sl_class_get_const(sl_vm_t* vm, SLVAL klass, char* name);
+
+SLVAL
+sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name); 
+
+int
 sl_is_a(struct sl_vm* vm, SLVAL obj, SLVAL klass);
 
 SLVAL
