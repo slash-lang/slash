@@ -179,6 +179,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     sl_object_t* recvp = sl_get_ptr(recv);
     SLVAL* argv2;
     sl_string_t* id;
+    SLVAL error;
     
     sl_expect(vm, idv, vm->lib.String);
     id = (sl_string_t*)sl_get_ptr(idv);
@@ -214,6 +215,10 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     
     /* nope */
     
-    sl_throw_message(vm, "Undefined method");
+    error = sl_make_cstring(vm, "Undefined method '");
+    error = sl_string_concat(vm, error, idv);
+    error = sl_string_concat(vm, error, sl_make_cstring(vm, "' on "));
+    error = sl_string_concat(vm, error, sl_object_to_s(vm, recv));
+    sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, error));
     return vm->lib.nil; /* shutup gcc */
 }
