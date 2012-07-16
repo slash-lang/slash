@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <gc.h>
+#include "lib/bignum.h"
 #include "value.h"
 #include "vm.h"
 #include "st.h"
@@ -28,9 +29,7 @@ sl_make_int(sl_vm_t* vm, int n)
 {
     SLVAL v;
     if(n > INT_MAX / 2 || n < INT_MIN / 2) {
-        /* return bignum instead... @TODO */
-        (void)vm;
-        abort();
+        return sl_make_bignum(vm, n);
     }
     v.i = n * 2 | 1;
     return v;
