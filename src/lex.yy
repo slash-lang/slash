@@ -50,6 +50,9 @@ KW  [^a-zA-Z_0-9]
 <SLASH>"in"/{KW}        { ADD_TOKEN(sl_make_token(SL_TOK_IN)); }
 <SLASH>"while"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_WHILE)); }
 <SLASH>"until"/{KW}     { ADD_TOKEN(sl_make_token(SL_TOK_UNTIL)); }
+<SLASH>"and"/{KW}       { ADD_TOKEN(sl_make_token(SL_TOK_LP_AND)); }
+<SLASH>"or"/{KW}        { ADD_TOKEN(sl_make_token(SL_TOK_LP_OR)); }
+<SLASH>"not"/{KW}       { ADD_TOKEN(sl_make_token(SL_TOK_LP_NOT)); }
 
 <SLASH>"("          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_PAREN)); }
 <SLASH>")"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_PAREN)); }
@@ -71,6 +74,10 @@ KW  [^a-zA-Z_0-9]
 <SLASH>"*"          { ADD_TOKEN(sl_make_token(SL_TOK_TIMES)); }
 <SLASH>"/"          { ADD_TOKEN(sl_make_token(SL_TOK_DIVIDE)); }
 <SLASH>"%"          { ADD_TOKEN(sl_make_token(SL_TOK_MOD)); }
+
+<SLASH>"&&"         { ADD_TOKEN(sl_make_token(SL_TOK_AND)); }
+<SLASH>"||"         { ADD_TOKEN(sl_make_token(SL_TOK_OR)); }
+<SLASH>"!"          { ADD_TOKEN(sl_make_token(SL_TOK_NOT)); }
 
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 

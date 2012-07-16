@@ -57,6 +57,14 @@ typedef enum sl_token_type {
     SL_TOK_DIVIDE,
     SL_TOK_MOD,
     
+    SL_TOK_LP_OR,
+    SL_TOK_LP_AND,
+    SL_TOK_LP_NOT,
+    
+    SL_TOK_OR,
+    SL_TOK_AND,
+    SL_TOK_NOT,
+    
     SL_TOK_DOT,
     SL_TOK_END
 }
