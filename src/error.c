@@ -63,6 +63,8 @@ sl_init_error(sl_vm_t* vm)
     vm->lib.EncodingError = sl_define_class(vm, "EncodingError", vm->lib.Error);
     vm->lib.TypeError = sl_define_class(vm, "TypeError", vm->lib.Error);
     vm->lib.NoMethodError = sl_define_class(vm, "NoMethodError", vm->lib.Error);
+    vm->lib.ZeroDivisionError = sl_define_class(vm, "ZeroDivisionError", vm->lib.Error);
+    vm->lib.NameError = sl_define_class(vm, "NameError", vm->lib.Error);
 }
 
 SLVAL

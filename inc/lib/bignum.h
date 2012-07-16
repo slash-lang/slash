@@ -1,8 +1,20 @@
 #ifndef SL_LIB_BIGNUM_H
 #define SL_LIB_BIGNUM_H
 
+#include "value.h"
+#include "vm.h"
+
 SLVAL
 sl_make_bignum(sl_vm_t* vm, int n);
+
+SLVAL
+sl_make_bignum_s(sl_vm_t* vm, char* s);
+
+SLVAL
+sl_make_bignum_f(sl_vm_t* vm, double n);
+
+SLVAL
+sl_bignum_to_f(sl_vm_t* vm, SLVAL self);
 
 SLVAL
 sl_bignum_add(sl_vm_t* vm, SLVAL self, SLVAL other);
