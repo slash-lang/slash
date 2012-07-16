@@ -128,8 +128,23 @@ unary_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 mul_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return unary_expression(ps);
+    sl_node_base_t* left = unary_expression(ps);
+    sl_node_base_t* right;
+    sl_token_t* tok;
+    char* id;
+    while(peek_token(ps)->type == SL_TOK_TIMES || peek_token(ps)->type == SL_TOK_DIVIDE ||
+            peek_token(ps)->type == SL_TOK_MOD) {
+        tok = next_token(ps);
+        right = unary_expression(ps);
+        switch(tok->type) {
+            case SL_TOK_TIMES:  id = "*"; break;
+            case SL_TOK_DIVIDE: id = "/"; break;
+            case SL_TOK_MOD:    id = "%"; break;
+            default: /* wtf? */ break;
+        }
+        left = sl_make_send_node(ps, left, id, 1, &right);
+    }
+    return left;
 }
 
 static sl_node_base_t*
