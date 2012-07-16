@@ -13,7 +13,7 @@ static uint32_t utf8_code_point_limit[] = {
 size_t
 sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
 {
-    size_t i, bytes, j, utf8len = 0;
+    size_t i, bytes = 0, j, utf8len = 0;
     uint8_t c;
     uint32_t c32;
     for(i = 0; i < len; i++) {
@@ -137,7 +137,7 @@ uint8_t*
 sl_utf32_to_utf8(sl_vm_t* vm, uint32_t* u32, size_t u32_len, size_t* buff_len)
 {
     size_t cap = 8;
-    size_t len;
+    size_t len = 0;
     uint8_t* buff = GC_MALLOC(cap);
     size_t i;
     for(i = 0; i < u32_len; i++) {
