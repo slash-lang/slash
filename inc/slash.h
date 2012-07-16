@@ -5,5 +5,6 @@
 #include "vm.h"
 #include "lex.h"
 #include "object.h"
+#include "parse.h"
 
 #endif

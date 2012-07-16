@@ -20,7 +20,11 @@ typedef enum sl_node_type {
     SL_NODE_FOR,
     SL_NODE_WHILE,
     SL_NODE_UNTIL,
-    SL_NODE_SEND
+    SL_NODE_SEND,
+    SL_NODE_AND,
+    SL_NODE_OR,
+    SL_NODE_NOT,
+    SL_NODE_ASSIGN
 }
 sl_node_type_t;
 
@@ -117,5 +121,18 @@ typedef struct sl_node_send {
     size_t arg_count;
 }
 sl_node_send_t;
+
+typedef struct sl_node_binary {
+    sl_node_base_t base;
+    sl_node_base_t* left;
+    sl_node_base_t* right;
+}
+sl_node_binary_t;
+
+typedef struct sl_node_unary {
+    sl_node_base_t base;
+    sl_node_base_t* expr;
+}
+sl_node_unary_t;
 
 #endif
