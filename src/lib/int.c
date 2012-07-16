@@ -2,6 +2,8 @@
 #include "value.h"
 #include "lib/bignum.h"
 #include "lib/float.h"
+#include <stdio.h>
+#include "string.h"
 
 static int
 highest_set_bit(intptr_t t)
@@ -40,9 +42,19 @@ sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
     return vm->lib.nil; /* @TODO */
 }
 
+static SLVAL
+sl_int_to_s(sl_vm_t* vm, SLVAL self)
+{
+    int a = sl_get_int(self);
+    char buff[32];
+    snprintf(buff, 31, "%d", a);
+    return sl_make_cstring(vm, buff);
+}
+
 void
 sl_init_int(sl_vm_t* vm)
 {
     vm->lib.Int = sl_define_class(vm, "Int", vm->lib.Number);
     sl_define_method(vm, vm->lib.Int, "+", 1, sl_int_add);
+    sl_define_method(vm, vm->lib.Int, "to_s", 0, sl_int_to_s);
 }
