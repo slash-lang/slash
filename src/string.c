@@ -113,6 +113,41 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
     return sl_make_string(vm, buff, a->buff_len + b->buff_len);
 }
 
+SLVAL
+sl_string_html_escape(sl_vm_t* vm, SLVAL self)
+{
+    sl_string_t* str = get_string(vm, self);
+    size_t out_cap = 32;
+    size_t out_len = 0;
+    size_t str_i;
+    uint8_t* out = GC_MALLOC(out_cap);
+    for(str_i = 0; str_i < str->buff_len; str_i++) {
+        if(out_len + 8 >= out_cap) {
+            out_cap *= 2;
+            out = GC_REALLOC(out, out_cap);
+        }
+        if(str->buff[str_i] == '<') {
+            memcpy(out + out_len, "&lt;", 4);
+            out_len += 4;
+        } else if(str->buff[str_i] == '>') {
+            memcpy(out + out_len, "&gt;", 4);
+            out_len += 4;
+        } else if(str->buff[str_i] == '"') {
+            memcpy(out + out_len, "&quot;", 6);
+            out_len += 6;
+        } else if(str->buff[str_i] == '\'') {
+            memcpy(out + out_len, "&#039;", 6);
+            out_len += 6;
+        } else if(str->buff[str_i] == '&') {
+            memcpy(out + out_len, "&amp;", 5);
+            out_len += 5;
+        } else {
+            out[out_len++] = str->buff[str_i];
+        }
+    }
+    return sl_make_string(vm, out, out_len);
+}
+
 static SLVAL
 sl_string_to_s(sl_vm_t* vm, SLVAL self)
 {
@@ -134,4 +169,5 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
+    sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
 }
