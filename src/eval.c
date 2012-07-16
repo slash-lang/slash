@@ -106,6 +106,12 @@ sl_eval_immediate(sl_node_immediate_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
 {
-    (void)node;
-    return ctx->vm->lib.nil;
+    SLVAL recv = node->recv->eval(node->recv, ctx);
+    SLVAL* args = GC_MALLOC(sizeof(SLVAL) * node->arg_count);
+    size_t i;
+    for(i = 0; i < node->arg_count; i++) {
+        /* @TODO splat would go here... */
+        args[i] = node->args[i]->eval(node->args[i], ctx);
+    }
+    return sl_send2(ctx->vm, recv, sl_make_ptr((sl_object_t*)node->id), node->arg_count, args);
 }
