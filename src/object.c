@@ -102,7 +102,7 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
 {
     sl_object_t* recvp = sl_get_ptr(object);
     SLVAL klass = sl_class_of(vm, object);
-    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+    sl_class_t* klassp = NULL;
     
     if(recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, NULL)) {
@@ -205,7 +205,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     /* look for method_missing method */
     
     argv2 = alloca((argc + 1) * sizeof(SLVAL));
-    memcpy(argv2 + 1, argv, argc);
+    memcpy(argv2 + 1, argv, sizeof(SLVAL) * argc);
     argv2[0] = sl_make_ptr((sl_object_t*)id);
     id = sl_cstring(vm, "method_missing");
     
