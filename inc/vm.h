@@ -39,6 +39,7 @@ typedef struct sl_vm {
     int initializing;
     sl_lib_t lib;
     struct sl_catch_frame* catch_stack;
+    void(*output)(struct sl_vm* ctx, char* buff, size_t len);
 }
 sl_vm_t;
 
