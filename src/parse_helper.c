@@ -97,6 +97,6 @@ sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, char* id, size_t a
         node->id = sl_cstring(ps->vm, id);
         node->arg_count = argc;
         node->args = GC_MALLOC(sizeof(sl_node_base_t*) * argc);
-        memcpy(node->args, argv, argc);
+        memcpy(node->args, argv, sizeof(sl_node_base_t*) * argc);
     });
 }
