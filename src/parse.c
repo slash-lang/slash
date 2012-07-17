@@ -131,6 +131,9 @@ primary_expression(sl_parse_state_t* ps)
         case SL_TOK_FALSE:
             next_token(ps);
             return sl_make_immediate_node(ps->vm->lib._false);
+        case SL_TOK_NIL:
+            next_token(ps);
+            return sl_make_immediate_node(ps->vm->lib.nil);
         case SL_TOK_IVAR:
             tok = next_token(ps);
             node = sl_make_var_node(ps, SL_NODE_IVAR, sl_eval_ivar,
