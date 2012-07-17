@@ -43,6 +43,7 @@ typedef enum sl_token_type {
     SL_TOK_CLOSE_BRACKET,
     SL_TOK_OPEN_BRACE,
     SL_TOK_CLOSE_BRACE,
+    SL_TOK_SEMICOLON,
     
     SL_TOK_COMMA,
     SL_TOK_EQUALS,

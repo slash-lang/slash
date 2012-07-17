@@ -41,29 +41,47 @@ error(sl_parse_state_t* ps, char* fmt, ...)
 }
 
 static void
-unexpected(sl_parse_state_t* ps)
+unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 {
     SLVAL err = sl_make_cstring(ps->vm, "Unexpected '");
-    err = sl_string_concat(ps->vm, err, peek_token(ps)->str);
+    err = sl_string_concat(ps->vm, err, tok->str);
     err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
     sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
 }
+
+static sl_node_base_t*
+expression(sl_parse_state_t* ps);
 
 static sl_token_t*
 expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 {
     sl_token_t* tok = next_token(ps);
     if(tok->type != type) {
-        unexpected(ps);
+        unexpected(ps, tok);
     }
     return tok;
 }
 
 static sl_node_base_t*
+body_expression(sl_parse_state_t* ps)
+{
+    sl_node_seq_t* seq = sl_make_seq_node();
+    expect_token(ps, SL_TOK_OPEN_BRACE);
+    while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
+        sl_seq_node_append(seq, statement(ps));
+    }
+    expect_token(ps, SL_TOK_CLOSE_BRACE);
+    return (sl_node_base_t*)seq;
+}
+
+static sl_node_base_t*
 if_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    (void)ps;
+    sl_node_base_t* condition, if_true;
+    expect_token(ps, SL_TOK_IF);
+    condition = expression(ps);
+    if_true = body_expression(ps);
+    // @TODO
     return NULL;
 }
 
@@ -98,9 +116,6 @@ def_expression(sl_parse_state_t* ps)
     (void)ps;
     return NULL;
 }
-
-static sl_node_base_t*
-expression(sl_parse_state_t* ps);
 
 static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
@@ -145,7 +160,7 @@ primary_expression(sl_parse_state_t* ps)
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
         default:
-            unexpected(ps);
+            unexpected(ps, peek_token(ps));
             return NULL;
     }
 }
@@ -383,7 +398,6 @@ inline_raw(sl_parse_state_t* ps)
             case SL_TOK_END:
                 return (sl_node_base_t*)seq;
             case SL_TOK_OPEN_TAG:
-                next_token(ps);
                 return (sl_node_base_t*)seq;
             default:
                 error(ps, "Should never happen");
@@ -404,8 +418,11 @@ statement(sl_parse_state_t* ps)
             }
             return node;
         default:
-            error(ps, "wtf lol");
-            return NULL;
+            node = expression(ps);
+            if(peek_token(ps)->type != SL_TOK_CLOSE_TAG) {
+                expect_token(ps, SL_TOK_SEMICOLON);
+            }
+            return node;
     }
 }
 
