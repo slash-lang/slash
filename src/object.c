@@ -109,19 +109,19 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
     
     if(recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, NULL)) {
-            return vm->lib.true;
+            return vm->lib._true;
         }
     }
     
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, NULL)) {
-            return vm->lib.true;
+            return vm->lib._true;
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
     
-    return vm->lib.false;
+    return vm->lib._false;
 }
 
 SLVAL

@@ -22,10 +22,10 @@ typedef struct sl_lib {
     SLVAL nil;
     
     SLVAL True;
-    SLVAL true;
+    SLVAL _true;
     
     SLVAL False;
-    SLVAL false;
+    SLVAL _false;
     
     SLVAL Number;
     SLVAL Int;

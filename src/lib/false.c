@@ -16,5 +16,5 @@ sl_init_true(sl_vm_t* vm)
 {
     vm->lib.False = sl_define_class(vm, "False", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.False, allocate_false);
-    vm->lib.false = sl_allocate(vm, vm->lib.False);
+    vm->lib._false = sl_allocate(vm, vm->lib.False);
 }
