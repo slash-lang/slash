@@ -40,12 +40,21 @@ error(sl_parse_state_t* ps, char* fmt, ...)
     sl_throw_message2(ps->vm, ps->vm->lib.SyntaxError, buff);
 }
 
+static void
+unexpected(sl_parse_state_t* ps)
+{
+    SLVAL err = sl_make_cstring(ps->vm, "Unexpected '");
+    err = sl_string_concat(ps->vm, err, peek_token(ps)->str);
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
+    sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
+}
+
 static sl_token_t*
 expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 {
     sl_token_t* tok = next_token(ps);
     if(tok->type != type) {
-        error(ps, "Unexpected token: @TODO [expect_token]");
+        unexpected(ps);
     }
     return tok;
 }
@@ -133,7 +142,7 @@ primary_expression(sl_parse_state_t* ps)
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
         default:
-            error(ps, "Unexpected token: @TODO [primary_expression]");
+            unexpected(ps);
             return NULL;
     }
 }
