@@ -36,6 +36,7 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
         frame.error = vm->lib.nil; \
         frame.prev = vm->catch_stack; \
         frame.error = vm->lib.nil; \
+        vm->catch_stack = &frame; \
         if(!setjmp(frame.env)) { \
             try_block; \
             vm->catch_stack = frame.prev; \
