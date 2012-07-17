@@ -90,11 +90,11 @@ sl_make_immediate_node(SLVAL val)
 }
 
 sl_node_base_t*
-sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, char* id, size_t argc, sl_node_base_t** argv)
+sl_make_send_node(sl_node_base_t* recv, SLVAL id, size_t argc, sl_node_base_t** argv)
 {
     MAKE_NODE(SL_NODE_SEND, sl_eval_send, sl_node_send_t, {
         node->recv = recv;
-        node->id = sl_cstring(ps->vm, id);
+        node->id = id;
         node->arg_count = argc;
         node->args = GC_MALLOC(sizeof(sl_node_base_t*) * argc);
         memcpy(node->args, argv, sizeof(sl_node_base_t*) * argc);
@@ -106,5 +106,14 @@ sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL(*eval)(sl_node
 {
     MAKE_NODE(type, eval, sl_node_var_t, {
         node->name = (sl_string_t*)sl_get_ptr(sl_expect(ps->vm, id, ps->vm->lib.String));
+    });
+}
+
+sl_node_base_t*
+sl_make_const_node(sl_node_base_t* obj, SLVAL id)
+{
+    MAKE_NODE(SL_NODE_CONST, sl_eval_const, sl_node_const_t, {
+        node->obj = obj;
+        node->id = id;
     });
 }

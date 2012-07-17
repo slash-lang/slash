@@ -102,7 +102,7 @@ primary_expression(sl_parse_state_t* ps)
             return sl_make_immediate_node(sl_make_float(ps->vm, next_token(ps)->as.dbl));
         case SL_TOK_CONSTANT:
             tok = next_token(ps);
-            return sl_make_var_node(ps, SL_NODE_CONSTANT, sl_eval_constant,
+            return sl_make_const_node(sl_make_immediate_node(ps->vm->lib.Object),
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_IDENTIFIER:
             tok = next_token(ps);
@@ -118,8 +118,19 @@ primary_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 call_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return primary_expression(ps);
+    sl_node_base_t* left = primary_expression(ps);
+    sl_token_t* tok;
+    while(peek_token(ps)->type == SL_TOK_DOT
+        || peek_token(ps)->type == SL_TOK_PAAMAYIM_NEKUDOTAYIM) {
+        tok = next_token(ps);
+        if(tok->type == SL_TOK_DOT) {
+            /* todo */
+        } else {
+            tok = expect_token(ps, SL_TOK_CONSTANT);
+            left = sl_make_const_node(left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+        }
+    }
+    return left;
 }
 
 static sl_node_base_t*
@@ -153,7 +164,7 @@ mul_expression(sl_parse_state_t* ps)
             case SL_TOK_MOD:    id = "%"; break;
             default: /* wtf? */ break;
         }
-        left = sl_make_send_node(ps, left, id, 1, &right);
+        left = sl_make_send_node(left, sl_make_cstring(ps->vm, id), 1, &right);
     }
     return left;
 }
@@ -164,10 +175,12 @@ add_expression(sl_parse_state_t* ps)
     sl_node_base_t* left = mul_expression(ps);
     sl_node_base_t* right;
     sl_token_t* tok;
+    SLVAL id;
     while(peek_token(ps)->type == SL_TOK_PLUS || peek_token(ps)->type == SL_TOK_MINUS) {
         tok = next_token(ps);
         right = mul_expression(ps);
-        left = sl_make_send_node(ps, left, tok->type == SL_TOK_PLUS ? "+" : "-", 1, &right);
+        id = sl_make_cstring(ps->vm, tok->type == SL_TOK_PLUS ? "+" : "-");
+        left = sl_make_send_node(left, id, 1, &right);
     }
     return left;
 }

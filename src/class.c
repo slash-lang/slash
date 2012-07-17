@@ -6,6 +6,7 @@
 #include "string.h"
 #include "class.h"
 #include "method.h"
+#include "object.h"
 
 static sl_object_t*
 allocate_class()
@@ -138,7 +139,8 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
     }
     err = sl_make_cstring(vm, "Undefined constant '");
     err = sl_string_concat(vm, err, name);
-    err = sl_string_concat(vm, err, sl_make_cstring(vm, "'"));
+    err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
+    err = sl_string_concat(vm, err, sl_to_s(vm, klass));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
     return vm->lib.nil;
 }
