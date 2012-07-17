@@ -1,5 +1,5 @@
 CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -Ideps/gc-7.2/include \
-	-iquote ./inc -g -Ideps/gmp-5.0.5
+	-iquote ./inc -g -Ideps/gmp-5.0.5 -fPIC
 LDFLAGS=
 
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
