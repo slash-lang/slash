@@ -83,6 +83,7 @@ HEX [0-9a-fA-F]
 <SLASH>"]"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACKET)); }
 <SLASH>"{"          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_BRACE)); }
 <SLASH>"}"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE)); }
+<SLASH>";"          { ADD_TOKEN(sl_make_token(SL_TOK_SEMICOLON)); }
 
 <SLASH>","          { ADD_TOKEN(sl_make_token(SL_TOK_COMMA)); }
 <SLASH>"=="         { ADD_TOKEN(sl_make_token(SL_TOK_DBL_EQUALS)); }
