@@ -8,7 +8,6 @@ typedef enum sl_node_type {
     SL_NODE_RAW,
     SL_NODE_ECHO,
     SL_NODE_ECHO_RAW,
-    SL_NODE_CONSTANT,
     SL_NODE_VAR,
     SL_NODE_IVAR,
     SL_NODE_CVAR,
@@ -22,6 +21,7 @@ typedef enum sl_node_type {
     SL_NODE_WHILE,
     SL_NODE_UNTIL,
     SL_NODE_SEND,
+    SL_NODE_CONST,
     SL_NODE_AND,
     SL_NODE_OR,
     SL_NODE_NOT,
@@ -117,11 +117,18 @@ sl_node_while_t;
 typedef struct sl_node_send {
     sl_node_base_t base;
     sl_node_base_t* recv;
-    sl_string_t* id;
+    SLVAL id;
     sl_node_base_t** args;
     size_t arg_count;
 }
 sl_node_send_t;
+
+typedef struct sl_node_const_get {
+    sl_node_base_t base;
+    sl_node_base_t* obj;
+    SLVAL id;
+}
+sl_node_const_t;
 
 typedef struct sl_node_binary {
     sl_node_base_t base;

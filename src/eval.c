@@ -140,14 +140,14 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
         /* @TODO splat would go here... */
         args[i] = node->args[i]->eval(node->args[i], ctx);
     }
-    return sl_send2(ctx->vm, recv, sl_make_ptr((sl_object_t*)node->id), node->arg_count, args);
+    return sl_send2(ctx->vm, recv, node->id, node->arg_count, args);
 }
 
 SLVAL
-sl_eval_constant(sl_node_var_t* node, sl_eval_ctx_t* ctx)
+sl_eval_const(sl_node_const_t* node, sl_eval_ctx_t* ctx)
 {
     /* @TODO look up constants in nested scopes */
-    return sl_class_get_const2(ctx->vm, ctx->self, sl_make_ptr((sl_object_t*)node->name));
+    return sl_class_get_const2(ctx->vm, node->obj->eval(node->obj, ctx), node->id);
 }
 
 SLVAL

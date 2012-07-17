@@ -55,7 +55,7 @@ ID  [a-z_][a-zA-Z0-9_]*
 <SLASH>"or"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_LP_OR)); }
 <SLASH>"not"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_LP_NOT)); }
 
-<SLASH>[A-Z]{ID}    { ADD_TOKEN(sl_make_string_token(SL_TOK_CONSTANT, yytext, yyleng)); }
+<SLASH>[A-Z]{ID}?   { ADD_TOKEN(sl_make_string_token(SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng)); }
 <SLASH>@{ID}        { ADD_TOKEN(sl_make_string_token(SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
 <SLASH>@@{ID}       { ADD_TOKEN(sl_make_string_token(SL_TOK_CVAR, yytext + 2, yyleng - 2)); }

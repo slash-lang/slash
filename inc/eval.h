@@ -49,7 +49,7 @@ SLVAL
 sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
-sl_eval_constant(sl_node_var_t* node, sl_eval_ctx_t* ctx);
+sl_eval_const(sl_node_const_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
 sl_eval_var(sl_node_var_t* node, sl_eval_ctx_t* ctx);
