@@ -74,6 +74,7 @@ sl_token_type_t;
 
 typedef struct sl_token {
     sl_token_type_t type;
+    SLVAL str;
     union {
         struct {
             uint8_t* buff;

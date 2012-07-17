@@ -1,5 +1,6 @@
 %{
     #include "lex.h"
+    #include "string.h"
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive
@@ -12,7 +13,9 @@
             if(yyextra->len + 2 >= yyextra->cap) { \
                 yyextra->tokens = GC_REALLOC(yyextra->tokens, sizeof(sl_token_t) * (yyextra->cap *= 2)); \
             } \
-            yyextra->tokens[yyextra->len++] = (tok); \
+            yyextra->tokens[yyextra->len] = (tok); \
+            yyextra->tokens[yyextra->len].str = sl_make_string(yyextra->vm, (uint8_t*)yytext, yyleng); \
+            yyextra->len++; \
         } while(0)
 %}
 
