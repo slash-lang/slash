@@ -170,7 +170,13 @@ sl_eval_var(sl_node_var_t* node, sl_eval_ctx_t* ctx)
 }
 
 SLVAL
-sl_eval_ivar(sl_node_var_t* node, sl_eval_ctx_t* ctx);
+sl_eval_ivar(sl_node_var_t* node, sl_eval_ctx_t* ctx)
+{
+    return sl_get_ivar(ctx->vm, ctx->self, node->name);
+}
 
 SLVAL
-sl_eval_cvar(sl_node_var_t* node, sl_eval_ctx_t* ctx);
+sl_eval_cvar(sl_node_var_t* node, sl_eval_ctx_t* ctx)
+{
+    return sl_get_cvar(ctx->vm, ctx->self, node->name);
+}
