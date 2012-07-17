@@ -59,12 +59,15 @@ sl_init_error(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Error, "message", 0, sl_error_message);
     sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
     
-    vm->lib.SyntaxError = sl_define_class(vm, "SyntaxError", vm->lib.Error);
-    vm->lib.EncodingError = sl_define_class(vm, "EncodingError", vm->lib.Error);
-    vm->lib.TypeError = sl_define_class(vm, "TypeError", vm->lib.Error);
-    vm->lib.NoMethodError = sl_define_class(vm, "NoMethodError", vm->lib.Error);
-    vm->lib.ZeroDivisionError = sl_define_class(vm, "ZeroDivisionError", vm->lib.Error);
-    vm->lib.NameError = sl_define_class(vm, "NameError", vm->lib.Error);
+    #define ERROR(klass) vm->lib.klass = sl_define_class(vm, #klass, vm->lib.Error)
+    ERROR(ArgumentError);
+    ERROR(EncodingError);
+    ERROR(NameError);
+    ERROR(NoMethodError);
+    ERROR(SyntaxError);
+    ERROR(TypeError);
+    ERROR(ZeroDivisionError);
+    #undef ERROR
 }
 
 SLVAL

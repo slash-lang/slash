@@ -11,12 +11,13 @@ typedef struct sl_lib {
     SLVAL String;
     
     SLVAL Error;
-    SLVAL SyntaxError;
+    SLVAL ArgumentError;
     SLVAL EncodingError;
-    SLVAL TypeError;
-    SLVAL NoMethodError;
-    SLVAL ZeroDivisionError;
     SLVAL NameError;
+    SLVAL NoMethodError;
+    SLVAL SyntaxError;
+    SLVAL TypeError;
+    SLVAL ZeroDivisionError;
     
     SLVAL Nil;
     SLVAL nil;

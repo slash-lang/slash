@@ -1,4 +1,5 @@
 #include "lex.h"
+#include "utf8.h"
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
@@ -50,6 +51,47 @@ sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len)
     }
     memcpy(raw_token->as.str.buff + raw_token->as.str.len, buff, len);
     raw_token->as.str.len += len;
+}
+
+void
+sl_lex_append_to_string(sl_lex_state_t* st, uint32_t c)
+{
+    sl_token_t* str_token = &st->tokens[st->len - 1];
+    if(str_token->as.str.len + 4 >= str_token->as.str.cap) {
+        str_token->as.str.buff = GC_REALLOC(str_token->as.str.buff, str_token->as.str.cap *= 2);
+    }
+    str_token->as.str.len += sl_utf32_char_to_utf8(
+        st->vm, c, str_token->as.str.buff + str_token->as.str.len);
+}
+
+void
+sl_lex_append_byte_to_string(sl_lex_state_t* st, char c)
+{
+    sl_token_t* str_token = &st->tokens[st->len - 1];
+    if(str_token->as.str.len + 4 >= str_token->as.str.cap) {
+        str_token->as.str.buff = GC_REALLOC(str_token->as.str.buff, str_token->as.str.cap *= 2);
+    }
+    str_token->as.str.buff[str_token->as.str.len++] = c;
+}
+
+void
+sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
+{
+    size_t i;
+    uint32_t c = 0;
+    for(i = 1; hex[i]; i++) {
+        c *= 16;
+        if('0' <= hex[i] && hex[i] <= '9') {
+            c += hex[i] - '0';
+        }
+        if('a' <= hex[i] && hex[i] <= 'f') {
+            c += hex[i] - 'a' + 10;
+        }
+        if('A' <= hex[i] && hex[i] <= 'F') {
+            c += hex[i] - 'A' + 10;
+        }
+    }
+    sl_lex_append_to_string(st, c);
 }
 
 void

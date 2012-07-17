@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <gc.h>
 
 /*
 static sl_token_t*
@@ -90,6 +91,9 @@ def_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+expression(sl_parse_state_t* ps);
+
+static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
@@ -100,6 +104,9 @@ primary_expression(sl_parse_state_t* ps)
             return sl_make_immediate_node(sl_number_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_FLOAT:
             return sl_make_immediate_node(sl_make_float(ps->vm, next_token(ps)->as.dbl));
+        case SL_TOK_STRING:
+            tok = next_token(ps);
+            return sl_make_immediate_node(sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_CONSTANT:
             tok = next_token(ps);
             return sl_make_const_node(sl_make_immediate_node(ps->vm->lib.Object),
@@ -116,6 +123,33 @@ primary_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+send_expression(sl_parse_state_t* ps, sl_node_base_t* recv)
+{
+    SLVAL id;
+    sl_token_t* tok;
+    size_t argc = 0, cap = 2;
+    sl_node_base_t** argv = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    tok = expect_token(ps, SL_TOK_IDENTIFIER);
+    id = sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len);
+    if(peek_token(ps)->type != SL_TOK_OPEN_PAREN) {
+        return sl_make_send_node(recv, id, 0, NULL);
+    }
+    expect_token(ps, SL_TOK_OPEN_PAREN);
+    while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+        if(argc >= cap) {
+            cap *= 2;
+            argv = GC_REALLOC(argv, sizeof(sl_node_base_t*) * cap);
+        }
+        argv[argc++] = expression(ps);
+        if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+            expect_token(ps, SL_TOK_COMMA);
+        }
+    }
+    expect_token(ps, SL_TOK_CLOSE_PAREN);
+    return sl_make_send_node(recv, id, argc, argv);
+}
+
+static sl_node_base_t*
 call_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* left = primary_expression(ps);
@@ -124,7 +158,7 @@ call_expression(sl_parse_state_t* ps)
         || peek_token(ps)->type == SL_TOK_PAAMAYIM_NEKUDOTAYIM) {
         tok = next_token(ps);
         if(tok->type == SL_TOK_DOT) {
-            /* todo */
+            left = send_expression(ps, left);
         } else {
             tok = expect_token(ps, SL_TOK_CONSTANT);
             left = sl_make_const_node(left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));

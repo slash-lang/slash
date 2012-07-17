@@ -112,6 +112,15 @@ void
 sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len);
 
 void
+sl_lex_append_to_string(sl_lex_state_t* st, uint32_t c);
+
+void
+sl_lex_append_byte_to_string(sl_lex_state_t* st, char c);
+
+void
+sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex);
+
+void
 sl_lex_error(sl_lex_state_t* st, char* text, int lineno);
 
 #endif
