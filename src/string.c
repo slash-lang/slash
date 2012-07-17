@@ -155,6 +155,40 @@ sl_string_to_s(sl_vm_t* vm, SLVAL self)
     return self;
 }
 
+static SLVAL
+sl_string_inspect(sl_vm_t* vm, SLVAL self)
+{
+    sl_string_t* str = get_string(vm, self);
+    size_t out_cap = 32;
+    size_t out_len = 0;
+    size_t str_i;
+    uint8_t* out = GC_MALLOC(out_cap);
+    out[out_len++] = '"';
+    for(str_i = 0; str_i < str->buff_len; str_i++) {
+        if(out_len + 8 >= out_cap) {
+            out_cap *= 2;
+            out = GC_REALLOC(out, out_cap);
+        }
+        if(str->buff[str_i] == '"') {
+            memcpy(out + out_len, "\\\"", 2);
+            out_len += 2;
+        } else if(str->buff[str_i] < 0x20) {
+            out[out_len++] = '\\';
+            out[out_len++] = 'x';
+            out[out_len++] = '0' + str->buff[str_i] / 0x10;
+            if(str->buff[str_i] % 0x10 < 10) {
+                out[out_len++] = '0' + str->buff[str_i] % 0x10;
+            } else {
+                out[out_len++] = 'A' + (str->buff[str_i] % 0x10) - 10;
+            }
+        } else {
+            out[out_len++] = str->buff[str_i];
+        }
+    }
+    out[out_len++] = '"';
+    return sl_make_string(vm, out, out_len);
+}
+
 void
 sl_pre_init_string(sl_vm_t* vm)
 {
@@ -171,5 +205,6 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
+    sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
 }
