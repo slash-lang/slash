@@ -2,8 +2,11 @@
 #include "object.h"
 #include "string.h"
 #include "class.h"
+#include "lex.h"
+#include "parse.h"
 #include <gc.h>
 #include <string.h>
+#include <stdio.h>
 
 sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm)
 {
@@ -13,6 +16,34 @@ sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm)
     ctx->vars = st_init_table(&sl_string_hash_type);
     ctx->parent = NULL;
     return ctx;
+}
+
+SLVAL
+sl_do_file(sl_vm_t* vm, uint8_t* filename)
+{
+    FILE* f = fopen((char*)filename, "rb");
+    char buff[1024];
+    uint8_t* src;
+    size_t file_size;
+    size_t token_count;
+    sl_token_t* tokens;
+    sl_node_base_t* ast;
+    sl_eval_ctx_t* ctx = sl_make_eval_ctx(vm);
+    
+    if(!f) {
+        snprintf(buff, 1023, "Could not load file: %s", filename);
+        sl_throw_message2(vm, vm->lib.Error, buff);
+    }
+    fseek(f, 0, SEEK_END);
+    file_size = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    src = GC_MALLOC(file_size);
+    fread(src, file_size, 1, f);
+    fclose(f);
+    
+    tokens = sl_lex(vm, filename, src, file_size, &token_count);
+    ast = sl_parse(vm, tokens, token_count, filename);
+    return ast->eval(ast, ctx);
 }
 
 SLVAL
