@@ -13,6 +13,9 @@ sl_eval_ctx_t;
 
 sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm);
 
+SLVAL
+sl_do_file(sl_vm_t* vm, uint8_t* filename);
+
 #include "ast.h"
 
 SLVAL
