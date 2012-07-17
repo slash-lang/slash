@@ -31,6 +31,12 @@ SLVAL
 sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id);
 
 SLVAL
+sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+
+SLVAL
+sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+
+SLVAL
 sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);
 
 SLVAL

@@ -33,6 +33,7 @@ sl_init_object(sl_vm_t* vm)
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "Object"), (st_data_t)vm->lib.Object.i);
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
+    sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
 }
 
@@ -122,6 +123,39 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
     }
     
     return vm->lib._false;
+}
+
+SLVAL
+sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+{
+    sl_object_t* p;
+    SLVAL val;
+    if(sl_is_a(vm, object, vm->lib.Int)) {
+        return vm->lib.nil;
+    }
+    p = sl_get_ptr(object);
+    if(st_lookup(p->instance_variables, (st_data_t)id, (st_data_t*)&val)) {
+        return val;
+    }
+    return vm->lib.nil;
+}
+
+SLVAL
+sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+{
+    sl_class_t* p;
+    SLVAL val;
+    if(sl_is_a(vm, object, vm->lib.Int)) {
+        return vm->lib.nil;
+    }
+    if(!sl_is_a(vm, object, vm->lib.Class)) {
+        val = sl_class_of(vm, val);
+    }
+    p = (sl_class_t*)sl_get_ptr(object);
+    if(st_lookup(p->class_variables, (st_data_t)id, (st_data_t*)&val)) {
+        return val;
+    }
+    return vm->lib.nil;
 }
 
 SLVAL

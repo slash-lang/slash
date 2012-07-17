@@ -116,6 +116,16 @@ primary_expression(sl_parse_state_t* ps)
             node = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
+        case SL_TOK_IVAR:
+            tok = next_token(ps);
+            node = sl_make_var_node(ps, SL_NODE_IVAR, sl_eval_ivar,
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return node;
+        case SL_TOK_CVAR:
+            tok = next_token(ps);
+            node = sl_make_var_node(ps, SL_NODE_CVAR, sl_eval_cvar,
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return node;
         default:
             error(ps, "Unexpected token: @TODO [primary_expression]");
             return NULL;
