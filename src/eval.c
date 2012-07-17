@@ -79,9 +79,9 @@ sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx)
 {
     SLVAL val = node->expr->eval(node->expr, ctx);
     if(sl_is_truthy(val)) {
-        return ctx->vm->lib.false;
+        return ctx->vm->lib._false;
     } else {
-        return ctx->vm->lib.true;
+        return ctx->vm->lib._true;
     }
 }
 
