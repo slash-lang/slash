@@ -145,16 +145,16 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
     if(method->arity < 0) {
         if((size_t)(-method->arity - 1) > argc) {
             snprintf(errstr, 127, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), argc);
-            sl_throw_message(vm, errstr);
+            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     } else {
         if((size_t)method->arity > argc) {
             snprintf(errstr, 127, "Too few arguments. Expected %d, received %lu.", method->arity, argc);
-            sl_throw_message(vm, errstr);
+            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
         if((size_t)method->arity < argc) {
             snprintf(errstr, 127, "Too many arguments. Expected %d, received %lu.", method->arity, argc);
-            sl_throw_message(vm, errstr);
+            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     }
     if(method->is_c_func) {

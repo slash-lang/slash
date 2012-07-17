@@ -16,11 +16,12 @@
         } while(0)
 %}
 
-%x SLASH
+%x SLASH STRING STRE
 
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]
 ID  [a-z_][a-zA-Z0-9_]*
+HEX [0-9a-fA-F]
 
 %%
 
@@ -29,6 +30,19 @@ ID  [a-z_][a-zA-Z0-9_]*
 <INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
 <INITIAL>.|\n       { sl_lex_append_to_raw(yyextra, yytext, 1); }
+
+<STRING>"\\"        { BEGIN(STRE); }
+<STRING>"\""        { BEGIN(SLASH); }
+<STRING>.|\n        { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
+
+<STRE>"n"           { sl_lex_append_byte_to_string(yyextra, '\n');          BEGIN(STRING); }
+<STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');          BEGIN(STRING); }
+<STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');          BEGIN(STRING); }
+<STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');        BEGIN(STRING); }
+<STRE>"x"{HEX}{1,6} { sl_lex_append_hex_to_string(yyextra, yytext);         BEGIN(STRING); }
+<STRE>.|\n          { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); }
+
+<SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
 
 <SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
 
