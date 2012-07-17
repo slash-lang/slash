@@ -40,6 +40,8 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(int);
     LIB_INIT(float);
     LIB_INIT(bignum);
+    LIB_INIT(true);
+    LIB_INIT(false);
 }
 
 sl_vm_t*
