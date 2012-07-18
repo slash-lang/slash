@@ -88,10 +88,6 @@ void
 sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SLVAL(*func)())
 {
     SLVAL method = sl_make_c_func(vm, name, arity, func);
-    if(!sl_get_ptr(object)->singleton_methods) {
-        sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
-    }
-    name = sl_to_s(vm, name);
     sl_define_singleton_method3(vm, object, name, method);
 }
 
@@ -100,6 +96,9 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
 {
     sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, method, vm->lib.Method);
+    if(!sl_get_ptr(object)->singleton_methods) {
+        sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
+    }
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
