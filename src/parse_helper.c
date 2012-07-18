@@ -160,3 +160,9 @@ sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t ar
         node->body = body;
     });
 }
+
+sl_node_base_t*
+sl_make_self_node()
+{
+    MAKE_NODE(SL_NODE_SELF, sl_eval_self, sl_node_base_t, {});
+}

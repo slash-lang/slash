@@ -265,3 +265,10 @@ sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx)
     definer(ctx->vm, on, node->name, method);
     return method;
 }
+
+SLVAL
+sl_eval_self(sl_node_base_t* node, sl_eval_ctx_t* ctx)
+{
+    (void)node;
+    return ctx->self;
+}
