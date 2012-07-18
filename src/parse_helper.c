@@ -117,3 +117,13 @@ sl_make_const_node(sl_node_base_t* obj, SLVAL id)
         node->id = id;
     });
 }
+
+sl_node_base_t*
+sl_make_if_node(sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* if_false)
+{
+    MAKE_NODE(SL_NODE_IF, sl_eval_if, sl_node_if_t, {
+        node->condition = cond;
+        node->body = if_true;
+        node->else_body = if_false;
+    });
+}

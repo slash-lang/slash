@@ -180,3 +180,23 @@ sl_eval_cvar(sl_node_var_t* node, sl_eval_ctx_t* ctx)
 {
     return sl_get_cvar(ctx->vm, ctx->self, node->name);
 }
+
+SLVAL
+sl_eval_if(sl_node_if_t* node, sl_eval_ctx_t* ctx)
+{
+    if(sl_is_truthy(node->condition->eval(node->condition, ctx))) {
+        return node->body->eval(node->body, ctx);
+    } else {
+        if(node->else_body) {
+            return node->else_body->eval(node->else_body, ctx);
+        } else {
+            return ctx->vm->lib.nil;
+        }
+    }
+}
+
+SLVAL
+sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx);

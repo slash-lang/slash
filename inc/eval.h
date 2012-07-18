@@ -60,4 +60,13 @@ sl_eval_ivar(sl_node_var_t* node, sl_eval_ctx_t* ctx);
 SLVAL
 sl_eval_cvar(sl_node_var_t* node, sl_eval_ctx_t* ctx);
 
+SLVAL
+sl_eval_if(sl_node_if_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx);
+
 #endif
