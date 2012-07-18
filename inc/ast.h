@@ -109,7 +109,7 @@ sl_node_for_t;
 
 typedef struct sl_node_while {
     sl_node_base_t base;
-    sl_node_base_t* condition;
+    sl_node_base_t* expr;
     sl_node_base_t* body;
 }
 sl_node_while_t;
