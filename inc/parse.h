@@ -53,4 +53,7 @@ sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL(*eval)(sl_node
 sl_node_base_t*
 sl_make_const_node(sl_node_base_t* obj, SLVAL id);
 
+sl_node_base_t*
+sl_make_if_node(sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* if_false);
+
 #endif

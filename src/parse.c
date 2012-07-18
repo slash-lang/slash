@@ -52,6 +52,9 @@ unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 static sl_node_base_t*
 expression(sl_parse_state_t* ps);
 
+static sl_node_base_t*
+statement(sl_parse_state_t* ps);
+
 static sl_token_t*
 expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 {
@@ -77,12 +80,15 @@ body_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 if_expression(sl_parse_state_t* ps)
 {
-    sl_node_base_t* condition, if_true;
+    sl_node_base_t *condition, *if_true, *if_false = NULL;
     expect_token(ps, SL_TOK_IF);
     condition = expression(ps);
     if_true = body_expression(ps);
-    // @TODO
-    return NULL;
+    if(peek_token(ps)->type == SL_TOK_ELSE) {
+        next_token(ps);
+        if_false = body_expression(ps);
+    }
+    return sl_make_if_node(condition, if_true, if_false);
 }
 
 static sl_node_base_t*
@@ -419,7 +425,8 @@ statement(sl_parse_state_t* ps)
             return node;
         default:
             node = expression(ps);
-            if(peek_token(ps)->type != SL_TOK_CLOSE_TAG) {
+            if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
+                && peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
                 expect_token(ps, SL_TOK_SEMICOLON);
             }
             return node;
