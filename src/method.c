@@ -39,3 +39,18 @@ sl_make_c_func(sl_vm_t* vm, SLVAL name, int arity, SLVAL(*c_func)())
     methp->as.c.func = c_func;
     return method;
 }
+
+SLVAL
+sl_make_method(sl_vm_t* vm, SLVAL name, int arity, size_t arg_count, sl_string_t** args, sl_node_base_t* body, sl_eval_ctx_t* ctx)
+{
+    SLVAL method = sl_allocate(vm, vm->lib.Method);
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    methp->name = sl_expect(vm, name, vm->lib.String);
+    methp->is_c_func = 0;
+    methp->arity = arity;
+    methp->as.sl.argc = arg_count;
+    methp->as.sl.argv = args;
+    methp->as.sl.body = body;
+    methp->as.sl.ctx = ctx;
+    return method;
+}

@@ -92,6 +92,14 @@ sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SL
         sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
     }
     name = sl_to_s(vm, name);
+    sl_define_singleton_method3(vm, object, name, method);
+}
+
+void
+sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
+{
+    sl_expect(vm, name, vm->lib.String);
+    sl_expect(vm, method, vm->lib.Method);
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
@@ -176,6 +184,9 @@ static SLVAL
 apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     char errstr[128];
+    sl_eval_ctx_t* ctx;
+    size_t i;
+    SLVAL arg;
     if(method->arity < 0) {
         if((size_t)(-method->arity - 1) > argc) {
             snprintf(errstr, 127, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), argc);
@@ -205,8 +216,14 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
                 sl_throw_message(vm, "Too many arguments for C function");
         }
     } else {
-        /* wat @TODO */
-        abort();
+        ctx = sl_close_eval_ctx(vm, method->as.sl.ctx);
+        ctx->self = recv;
+        for(i = 0; i < method->as.sl.argc; i++) {
+            arg = argv[i];
+            st_insert(ctx->vars,
+                (st_data_t)method->as.sl.argv[i], (st_data_t)sl_get_ptr(arg));
+        }
+        return method->as.sl.body->eval(method->as.sl.body, ctx);
     }
     return vm->lib.nil;
 }

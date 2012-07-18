@@ -53,6 +53,9 @@ static sl_node_base_t*
 expression(sl_parse_state_t* ps);
 
 static sl_node_base_t*
+primary_expression(sl_parse_state_t* ps);
+
+static sl_node_base_t*
 statement(sl_parse_state_t* ps);
 
 static sl_token_t*
@@ -121,17 +124,62 @@ for_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 class_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    (void)ps;
-    return NULL;
+    SLVAL name;
+    sl_node_base_t *extends, *body;
+    sl_token_t* tok;
+    expect_token(ps, SL_TOK_CLASS);
+    tok = expect_token(ps, SL_TOK_CONSTANT);
+    name = sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len);
+    if(peek_token(ps)->type == SL_TOK_EXTENDS) {
+        next_token(ps);
+        extends = expression(ps);
+    } else {
+        extends = NULL;
+    }
+    body = body_expression(ps);
+    return sl_make_class_node(ps, name, extends, body);
 }
 
 static sl_node_base_t*
 def_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    (void)ps;
-    return NULL;
+    SLVAL name;
+    sl_node_base_t* on;
+    sl_node_base_t* body;
+    sl_token_t* tok;
+    size_t arg_count = 0, arg_cap = 2;
+    sl_string_t** args = GC_MALLOC(sizeof(sl_string_t*) * arg_cap);
+    expect_token(ps, SL_TOK_DEF);
+    on = primary_expression(ps);
+    if(peek_token(ps)->type == SL_TOK_DOT) {
+        next_token(ps);
+        tok = expect_token(ps, SL_TOK_IDENTIFIER);
+        name = sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len);
+    } else {
+        if(on->type != SL_NODE_VAR) {
+            expect_token(ps, SL_TOK_DOT);
+        }
+        name = sl_make_ptr((sl_object_t*)((sl_node_var_t*)on)->name);
+        on = NULL;
+    }
+    if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
+        expect_token(ps, SL_TOK_OPEN_PAREN);
+        while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+            if(arg_count >= arg_cap) {
+                arg_cap *= 2;
+                args = GC_REALLOC(args, sizeof(sl_string_t*) * arg_cap);
+            }
+            tok = expect_token(ps, SL_TOK_IDENTIFIER);
+            args[arg_count++] = (sl_string_t*)sl_get_ptr(
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+                expect_token(ps, SL_TOK_COMMA);
+            }
+        }
+        expect_token(ps, SL_TOK_CLOSE_PAREN);
+    }
+    body = body_expression(ps);
+    return sl_make_def_node(ps, name, on, arg_count, args, body);
 }
 
 static sl_node_base_t*
@@ -176,6 +224,18 @@ primary_expression(sl_parse_state_t* ps)
             node = sl_make_var_node(ps, SL_NODE_CVAR, sl_eval_cvar,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
+        case SL_TOK_IF:
+        case SL_TOK_UNLESS:
+            return if_expression(ps);
+        case SL_TOK_WHILE:
+        case SL_TOK_UNTIL:
+            return while_expression(ps);
+        case SL_TOK_FOR:
+            return for_expression(ps);
+        case SL_TOK_CLASS:
+            return class_expression(ps);
+        case SL_TOK_DEF:
+            return def_expression(ps);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;
@@ -357,24 +417,7 @@ low_precedence_logical_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 expression(sl_parse_state_t* ps)
 {
-    sl_token_type_t type = peek_token(ps)->type;
-    switch(type) {
-        case SL_TOK_IF:
-        case SL_TOK_UNLESS:
-            return if_expression(ps);
-        case SL_TOK_WHILE:
-        case SL_TOK_UNTIL:
-            return while_expression(ps);
-        case SL_TOK_FOR:
-            return for_expression(ps);
-        case SL_TOK_CLASS:
-            return class_expression(ps);
-        case SL_TOK_DEF:
-            return def_expression(ps);
-        default:
-            return low_precedence_logical_expression(ps);
-    }
-    return NULL;
+    return low_precedence_logical_expression(ps);
 }
 
 static sl_node_base_t*
