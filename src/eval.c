@@ -199,4 +199,10 @@ SLVAL
 sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
-sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx);
+sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx)
+{
+    while(sl_is_truthy(node->expr->eval(node->expr, ctx))) {
+        node->body->eval(node->body, ctx);
+    }
+    return ctx->vm->lib.nil;
+}

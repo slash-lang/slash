@@ -94,9 +94,20 @@ if_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 while_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    (void)ps;
-    return NULL;
+    sl_node_base_t *condition, *body;
+    int until = 0;
+    if(peek_token(ps)->type == SL_TOK_UNTIL) {
+        next_token(ps);
+        until = 1;
+    } else {
+        expect_token(ps, SL_TOK_WHILE);
+    }
+    condition = expression(ps);
+    if(until) {
+        condition = sl_make_unary_node(condition, SL_NODE_NOT, sl_eval_not);
+    }
+    body = body_expression(ps);
+    return sl_make_while_node(condition, body);
 }
 
 static sl_node_base_t*

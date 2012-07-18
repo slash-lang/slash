@@ -127,3 +127,12 @@ sl_make_if_node(sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* i
         node->else_body = if_false;
     });
 }
+
+sl_node_base_t*
+sl_make_while_node(sl_node_base_t* expr, sl_node_base_t* body)
+{
+    MAKE_NODE(SL_NODE_WHILE, sl_eval_while, sl_node_while_t, {
+        node->expr = expr;
+        node->body = body;
+    });
+}
