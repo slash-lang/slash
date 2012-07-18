@@ -59,4 +59,10 @@ sl_make_if_node(sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* i
 sl_node_base_t*
 sl_make_while_node(sl_node_base_t* expr, sl_node_base_t* body);
 
+sl_node_base_t*
+sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl_node_base_t* body);
+
+sl_node_base_t*
+sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body);
+
 #endif

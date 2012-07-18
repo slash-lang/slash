@@ -11,7 +11,11 @@ typedef struct sl_eval_ctx {
 }
 sl_eval_ctx_t;
 
-sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm);
+sl_eval_ctx_t*
+sl_make_eval_ctx(sl_vm_t* vm);
+
+sl_eval_ctx_t*
+sl_close_eval_ctx(sl_vm_t* vm, sl_eval_ctx_t* ctx);
 
 SLVAL
 sl_do_file(sl_vm_t* vm, uint8_t* filename);
@@ -68,5 +72,11 @@ sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
 sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_class(sl_node_class_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx);
 
 #endif

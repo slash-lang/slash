@@ -24,6 +24,9 @@ sl_define_singleton_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVA
 void
 sl_define_singleton_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)());
 
+void
+sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method);
+
 SLVAL
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id);
 

@@ -62,8 +62,10 @@ typedef struct sl_method {
     int arity;
     union {
         struct {
-            /**/
-            int dummy;
+            size_t argc;
+            sl_string_t** argv;
+            struct sl_eval_ctx* ctx;
+            struct sl_node_base* body;
         } sl;
         struct {
             SLVAL(*func)(/* vm, self, ... */);

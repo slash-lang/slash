@@ -136,3 +136,27 @@ sl_make_while_node(sl_node_base_t* expr, sl_node_base_t* body)
         node->body = body;
     });
 }
+
+sl_node_base_t*
+sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl_node_base_t* body)
+{
+    MAKE_NODE(SL_NODE_CLASS, sl_eval_class, sl_node_class_t, {
+        sl_expect(ps->vm, name, ps->vm->lib.String);
+        node->name = name;
+        node->extends = extends;
+        node->body = body;
+    });
+}
+
+sl_node_base_t*
+sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body)
+{
+    MAKE_NODE(SL_NODE_DEF, sl_eval_def, sl_node_def_t, {
+        sl_expect(ps->vm, name, ps->vm->lib.String);
+        node->name = name;
+        node->on = on;
+        node->args = args;
+        node->arg_count = arg_count;
+        node->body = body;
+    });
+}

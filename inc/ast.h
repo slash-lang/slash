@@ -74,8 +74,8 @@ sl_node_immediate_t;
 
 typedef struct sl_node_class {
     sl_node_base_t base;
-    sl_string_t* name;
-    SLVAL extends;
+    SLVAL name;
+    sl_node_base_t* extends;
     sl_node_base_t* body;
 }
 sl_node_class_t;
@@ -83,7 +83,7 @@ sl_node_class_t;
 typedef struct sl_node_def {
     sl_node_base_t base;
     sl_node_base_t* on;
-    sl_string_t* name;
+    SLVAL name;
     sl_string_t** args;
     size_t arg_count;
     sl_node_base_t* body;

@@ -4,11 +4,13 @@
 #include "class.h"
 #include "lex.h"
 #include "parse.h"
+#include "method.h"
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
 
-sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm)
+sl_eval_ctx_t*
+sl_make_eval_ctx(sl_vm_t* vm)
 {
     sl_eval_ctx_t* ctx = GC_MALLOC(sizeof(sl_eval_ctx_t));
     ctx->vm = vm;
@@ -16,6 +18,15 @@ sl_eval_ctx_t* sl_make_eval_ctx(sl_vm_t* vm)
     ctx->vars = st_init_table(&sl_string_hash_type);
     ctx->parent = NULL;
     return ctx;
+}
+
+sl_eval_ctx_t*
+sl_close_eval_ctx(sl_vm_t* vm, sl_eval_ctx_t* ctx)
+{
+    sl_eval_ctx_t* subctx = sl_make_eval_ctx(vm);
+    subctx->self = ctx->self;
+    subctx->parent = ctx;
+    return subctx;
 }
 
 SLVAL
@@ -205,4 +216,52 @@ sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx)
         node->body->eval(node->body, ctx);
     }
     return ctx->vm->lib.nil;
+}
+
+SLVAL
+sl_eval_class(sl_node_class_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL klass, in, super;
+    sl_eval_ctx_t* kctx;
+    if(sl_class_has_const2(ctx->vm, ctx->self, node->name)) {
+        klass = sl_class_get_const2(ctx->vm, ctx->self, node->name);
+        sl_expect(ctx->vm, klass, ctx->vm->lib.Class);
+        /* @TODO verify superclass is the same */
+    } else {
+        in = ctx->self;
+        if(!sl_is_a(ctx->vm, in, ctx->vm->lib.Class)) {
+            in = sl_class_of(ctx->vm, in);
+        }
+        if(node->extends != NULL) {
+            super = node->extends->eval(node->extends, ctx);
+        } else {
+            super = ctx->vm->lib.Object;
+        }
+        klass = sl_define_class3(ctx->vm, node->name, super, in);
+    }
+    kctx = sl_close_eval_ctx(ctx->vm, ctx);
+    kctx->self = klass;
+    node->body->eval(node->body, kctx);
+    return klass;
+}
+
+SLVAL
+sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL on, method;
+    void(*definer)(sl_vm_t*, SLVAL, SLVAL, SLVAL);
+    if(node->on) {
+        on = node->on->eval(node->on, ctx);
+        definer = sl_define_singleton_method3;
+    } else {
+        on = ctx->self;
+        if(!sl_is_a(ctx->vm, on, ctx->vm->lib.Class)) {
+            on = sl_class_of(ctx->vm, on);
+        }
+        definer = sl_define_method3;
+    }
+    method = sl_make_method(ctx->vm, node->name, node->arg_count,
+        node->arg_count, node->args, node->body, ctx);
+    definer(ctx->vm, on, node->name, method);
+    return method;
 }
