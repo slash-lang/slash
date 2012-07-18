@@ -1,6 +1,7 @@
 %{
     #include "lex.h"
     #include "string.h"
+    #include "error.h"
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive
@@ -118,6 +119,8 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     yyscan_t yyscanner;
     YY_BUFFER_STATE buff_state;
     sl_lex_state_t ls;
+    sl_catch_frame_t frame;
+    SLVAL err;
     ls.vm = vm;
     ls.cap = 8;
     ls.len = 0;
@@ -127,8 +130,16 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
     
     yylex_init_extra(&ls, &yyscanner);
-    buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
-    yylex(yyscanner);
+    SL_TRY(frame, {
+        buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
+        yylex(yyscanner);
+    }, err, {
+        /* clean up to avoid memory leaks */
+        yy_delete_buffer(buff_state, yyscanner);
+        yylex_destroy(yyscanner);
+        /* and rethrow */
+        sl_throw(vm, err);
+    });
     yy_delete_buffer(buff_state, yyscanner);
     yylex_destroy(yyscanner);
     
