@@ -8,6 +8,7 @@
 #include "st.h"
 #include "string.h"
 #include "class.h"
+#include "object.h"
 
 int
 sl_get_int(SLVAL val)
@@ -46,9 +47,13 @@ sl_make_ptr(sl_object_t* ptr)
 SLVAL
 sl_expect(sl_vm_t* vm, SLVAL obj, SLVAL klass)
 {
+    SLVAL err;
     if(!sl_is_a(vm, obj, klass)) {
-        /* @TODO error */
-        abort();
+        err = sl_make_cstring(vm, "Expected ");
+        err = sl_string_concat(vm, err, sl_inspect(vm, klass));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, ", instead have "));
+        err = sl_string_concat(vm, err, sl_inspect(vm, obj));
+        sl_throw(vm, sl_make_error2(vm, vm->lib.TypeError, err));
     }
     return obj;
 }

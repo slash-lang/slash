@@ -12,6 +12,9 @@ sl_pre_init_object(sl_vm_t* vm);
 SLVAL
 sl_to_s(sl_vm_t* vm, SLVAL obj);
 
+SLVAL
+sl_inspect(sl_vm_t* vm, SLVAL obj);
+
 char*
 sl_to_cstr(sl_vm_t* vm, SLVAL obj);
 
@@ -38,6 +41,12 @@ sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
 
 SLVAL
 sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+
+void
+sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
+
+void
+sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
 
 SLVAL
 sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);

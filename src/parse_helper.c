@@ -166,3 +166,39 @@ sl_make_self_node()
 {
     MAKE_NODE(SL_NODE_SELF, sl_eval_self, sl_node_base_t, {});
 }
+
+sl_node_base_t*
+sl_make_assign_var_node(sl_node_var_t* lval, sl_node_base_t* rval)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_VAR, sl_eval_assign_var, sl_node_assign_var_t, {
+        node->lval = lval;
+        node->rval = rval;
+    });
+}
+
+sl_node_base_t*
+sl_make_assign_ivar_node(sl_node_var_t* lval, sl_node_base_t* rval)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_IVAR, sl_eval_assign_ivar, sl_node_assign_ivar_t, {
+        node->lval = lval;
+        node->rval = rval;
+    });
+}
+
+sl_node_base_t*
+sl_make_assign_cvar_node(sl_node_var_t* lval, sl_node_base_t* rval)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_CVAR, sl_eval_assign_cvar, sl_node_assign_cvar_t, {
+        node->lval = lval;
+        node->rval = rval;
+    });
+}
+
+sl_node_base_t*
+sl_make_assign_const_node(sl_node_const_t* lval, sl_node_base_t* rval)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_CONST, sl_eval_assign_const, sl_node_assign_const_t, {
+        node->lval = lval;
+        node->rval = rval;
+    });
+}

@@ -381,11 +381,35 @@ assignment_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* left = range_expression(ps);
     if(left->type == SL_NODE_SEND || left->type == SL_NODE_VAR ||
-        left->type == SL_NODE_IVAR || left->type == SL_NODE_CVAR) {
+        left->type == SL_NODE_IVAR || left->type == SL_NODE_CVAR ||
+        left->type == SL_NODE_CONST) {
         /* valid lvals */
         if(peek_token(ps)->type == SL_TOK_EQUALS) {
-            next_token(ps);
-            return sl_make_binary_node(left, assignment_expression(ps), SL_NODE_ASSIGN, sl_eval_assign);
+            switch(left->type) {
+                case SL_NODE_VAR:
+                    next_token(ps);
+                    left = sl_make_assign_var_node((sl_node_var_t*)left, assignment_expression(ps));
+                    break;
+                case SL_NODE_IVAR:
+                    next_token(ps);
+                    left = sl_make_assign_ivar_node((sl_node_var_t*)left, assignment_expression(ps));
+                    break;
+                case SL_NODE_CVAR:
+                    next_token(ps);
+                    left = sl_make_assign_cvar_node((sl_node_var_t*)left, assignment_expression(ps));
+                    break;
+                case SL_NODE_SEND:
+                    next_token(ps);
+                    /* @TODO */
+                    break;
+                case SL_NODE_CONST:
+                    next_token(ps);
+                    left = sl_make_assign_const_node((sl_node_const_t*)left, assignment_expression(ps));
+                    break;
+                default:
+                    unexpected(ps, next_token(ps));
+                    break;
+            }
         }
     }
     return left;

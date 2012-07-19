@@ -68,4 +68,16 @@ sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t ar
 sl_node_base_t*
 sl_make_self_node();
 
+sl_node_base_t*
+sl_make_assign_var_node(sl_node_var_t* lval, sl_node_base_t* rval);
+
+sl_node_base_t*
+sl_make_assign_ivar_node(sl_node_var_t* lval, sl_node_base_t* rval);
+
+sl_node_base_t*
+sl_make_assign_cvar_node(sl_node_var_t* lval, sl_node_base_t* rval);
+
+sl_node_base_t*
+sl_make_assign_const_node(sl_node_const_t* lval, sl_node_base_t* rval);
+
 #endif
