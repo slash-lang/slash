@@ -33,6 +33,9 @@ typedef struct sl_lib {
     SLVAL Float;
     SLVAL Bignum;
     
+    SLVAL Array;
+    SLVAL Hash;
+    
     SLVAL Method;
     SLVAL BoundMethod;
 }
