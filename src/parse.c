@@ -198,8 +198,7 @@ primary_expression(sl_parse_state_t* ps)
             return sl_make_immediate_node(sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_CONSTANT:
             tok = next_token(ps);
-            return sl_make_const_node(sl_make_immediate_node(ps->vm->lib.Object),
-                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return sl_make_const_node(NULL, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_IDENTIFIER:
             tok = next_token(ps);
             node = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var,

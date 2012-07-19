@@ -157,8 +157,20 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_const(sl_node_const_t* node, sl_eval_ctx_t* ctx)
 {
-    /* @TODO look up constants in nested scopes */
-    return sl_class_get_const2(ctx->vm, node->obj->eval(node->obj, ctx), node->id);
+    sl_vm_t* vm = ctx->vm;
+    SLVAL self = ctx->self;
+    if(node->obj) {
+        return sl_class_get_const2(ctx->vm, node->obj->eval(node->obj, ctx), node->id);
+    } else {
+        while(ctx) {
+            if(sl_class_has_const2(vm, ctx->self, node->id)) {
+                return sl_class_get_const2(vm, ctx->self, node->id);
+            }
+            ctx = ctx->parent;
+        }
+        /* not found */
+        return sl_class_get_const2(vm, self, node->id);
+    }
 }
 
 SLVAL
