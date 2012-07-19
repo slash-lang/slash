@@ -39,6 +39,7 @@ typedef struct sl_class {
     sl_object_t base;
     SLVAL name;
     SLVAL super;
+    SLVAL in;
     st_table_t* constants;
     st_table_t* class_variables;
     st_table_t* instance_methods;

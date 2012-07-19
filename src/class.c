@@ -33,6 +33,7 @@ sl_pre_init_class(sl_vm_t* vm)
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
     obj->name = vm->lib.nil;
     obj->super = vm->lib.Object;
+    obj->in = vm->lib.Object;
     obj->constants = st_init_table(&sl_string_hash_type);
     obj->class_variables = st_init_table(&sl_string_hash_type);
     obj->instance_methods = st_init_table(&sl_string_hash_type);
@@ -45,7 +46,35 @@ sl_pre_init_class(sl_vm_t* vm)
 static SLVAL
 sl_class_to_s(sl_vm_t* vm, SLVAL self)
 {
+    sl_class_t* klass = get_class(vm, self);
+    sl_class_t* object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
+    if(klass == object | sl_get_ptr(klass->in) == (sl_object_t*)object) {
+        return get_class(vm, self)->name;
+    } else {
+        return sl_string_concat(vm,
+            sl_class_to_s(vm, klass->in),
+            sl_string_concat(vm,
+                sl_make_cstring(vm, "::"),
+                klass->name));
+    }
+}
+
+static SLVAL
+sl_class_name(sl_vm_t* vm, SLVAL self)
+{
     return get_class(vm, self)->name;
+}
+
+static SLVAL
+sl_class_in(sl_vm_t* vm, SLVAL self)
+{
+    return get_class(vm, self)->in;
+}
+
+static SLVAL
+sl_class_super(sl_vm_t* vm, SLVAL self)
+{
+    return get_class(vm, self)->super;
 }
 
 void
@@ -54,6 +83,9 @@ sl_init_class(sl_vm_t* vm)
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "Class"), (st_data_t)vm->lib.Class.i);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
+    sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
+    sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
+    sl_define_method(vm, vm->lib.Class, "super", 0, sl_class_super);
     sl_define_method(vm, vm->lib.Class, "inspect", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "new", -1, sl_new);
 }
@@ -75,10 +107,9 @@ sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in)
 {
     SLVAL vklass = sl_allocate(vm, vm->lib.Class);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
-    /* @TODO assert super is a class */
-    klass->super = super;
-    /* @TODO assert name is a string */
-    klass->name = name;
+    klass->super = sl_expect(vm, super, vm->lib.Class);
+    klass->name = sl_expect(vm, name, vm->lib.String);
+    klass->in = sl_expect(vm, in, vm->lib.Class);
     klass->constants = st_init_table(&sl_string_hash_type);
     klass->class_variables = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);

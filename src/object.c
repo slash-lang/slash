@@ -16,6 +16,7 @@ sl_pre_init_object(sl_vm_t* vm)
     klass = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     klass->super = vm->lib.nil;
     klass->name = vm->lib.nil;
+    klass->in = vm->lib.nil;
     klass->constants = st_init_table(&sl_string_hash_type);
     klass->class_variables = st_init_table(&sl_string_hash_type);
     klass->instance_methods = st_init_table(&sl_string_hash_type);
