@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include <gc.h>
 
 /*
@@ -280,15 +281,40 @@ static sl_node_base_t*
 call_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* left = primary_expression(ps);
+    sl_node_base_t** nodes;
+    size_t node_len;
+    size_t node_cap;
     sl_token_t* tok;
     while(peek_token(ps)->type == SL_TOK_DOT
-        || peek_token(ps)->type == SL_TOK_PAAMAYIM_NEKUDOTAYIM) {
+        || peek_token(ps)->type == SL_TOK_PAAMAYIM_NEKUDOTAYIM
+        || peek_token(ps)->type == SL_TOK_OPEN_BRACKET) {
         tok = next_token(ps);
-        if(tok->type == SL_TOK_DOT) {
-            left = send_expression(ps, left);
-        } else {
-            tok = expect_token(ps, SL_TOK_CONSTANT);
-            left = sl_make_const_node(left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+        switch(tok->type) {
+            case SL_TOK_DOT:
+                left = send_expression(ps, left);
+                break;
+            case SL_TOK_PAAMAYIM_NEKUDOTAYIM:
+                tok = expect_token(ps, SL_TOK_CONSTANT);
+                left = sl_make_const_node(left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+                break;
+            case SL_TOK_OPEN_BRACKET:
+                node_cap = 1;
+                node_len = 0;
+                nodes = GC_MALLOC(sizeof(SLVAL) * node_cap);
+                while(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
+                    if(node_len >= node_cap) {
+                        node_cap *= 2;
+                        nodes = GC_REALLOC(nodes, sizeof(SLVAL) * node_cap);
+                    }
+                    nodes[node_len++] = expression(ps);
+                    if(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
+                        expect_token(ps, SL_TOK_COMMA);
+                    }
+                }
+                expect_token(ps, SL_TOK_CLOSE_BRACKET);
+                left = sl_make_send_node(left, sl_make_cstring(ps->vm, "[]"), node_len, nodes);
+                break;
+            default: break;
         }
     }
     return left;
@@ -384,6 +410,8 @@ range_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 assignment_expression(sl_parse_state_t* ps)
 {
+    sl_node_send_t* send;
+    sl_node_base_t** argv;
     sl_node_base_t* left = range_expression(ps);
     if(left->type == SL_NODE_SEND || left->type == SL_NODE_VAR ||
         left->type == SL_NODE_IVAR || left->type == SL_NODE_CVAR ||
@@ -405,7 +433,13 @@ assignment_expression(sl_parse_state_t* ps)
                     break;
                 case SL_NODE_SEND:
                     next_token(ps);
-                    /* @TODO */
+                    send = (sl_node_send_t*)left;
+                    argv = GC_MALLOC(sizeof(sl_node_base_t*) * (send->arg_count + 1));
+                    memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
+                    argv[send->arg_count] = assignment_expression(ps);
+                    left = sl_make_send_node(send->recv,
+                        sl_string_concat(ps->vm, send->id, sl_make_cstring(ps->vm, "=")),
+                        send->arg_count + 1, argv);
                     break;
                 case SL_NODE_CONST:
                     next_token(ps);
