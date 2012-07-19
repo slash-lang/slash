@@ -19,7 +19,7 @@ SLVAL
 sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in);
 
 void
-sl_class_set_allocator(sl_vm_t* vm, SLVAL klass, sl_object_t*(*allocator)(void));
+sl_class_set_allocator(sl_vm_t* vm, SLVAL klass, sl_object_t*(*allocator)(sl_vm_t*));
 
 void
 sl_define_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)());

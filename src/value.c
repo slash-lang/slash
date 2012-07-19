@@ -80,7 +80,7 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
     }
     klass = (sl_class_t*)sl_get_ptr(vklass);
     if(klass->allocator) {
-        obj = klass->allocator();
+        obj = klass->allocator(vm);
         if(obj->primitive_type == SL_T__INVALID) {
             obj->primitive_type = SL_T_OBJECT;
         }

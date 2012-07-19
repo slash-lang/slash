@@ -5,6 +5,8 @@
 #include <stdint.h>
 #include "st.h"
 
+struct sl_vm;
+
 typedef union slval {
     intptr_t i;
 }
@@ -43,7 +45,7 @@ typedef struct sl_class {
     st_table_t* constants;
     st_table_t* class_variables;
     st_table_t* instance_methods;
-    sl_object_t*(*allocator)(void);
+    sl_object_t*(*allocator)(struct sl_vm*);
 }
 sl_class_t;
 
@@ -80,8 +82,6 @@ typedef struct sl_bound_method {
     SLVAL self;
 }
 sl_bound_method_t;
-
-struct sl_vm;
 
 #define SL_IS_INT(val) ((val).i & 1)
 
