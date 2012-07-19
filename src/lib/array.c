@@ -12,12 +12,16 @@ typedef struct {
 sl_array_t;
 
 static sl_object_t*
-allocate_array()
+allocate_array(sl_vm_t* vm)
 {
+    size_t i;
     sl_array_t* ary = GC_MALLOC(sizeof(sl_array_t));
     ary->capacity = 2;
     ary->count = 0;
     ary->items = GC_MALLOC(sizeof(SLVAL) * ary->capacity);
+    for(i = 0; i < ary->capacity; i++) {
+        ary->items[i] = vm->lib.nil;
+    }
     return (sl_object_t*)ary;
 }
 
@@ -60,6 +64,8 @@ sl_array_init(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items)
     aryp->count = count;
     aryp->capacity = count > 2 ? count : 2;
     aryp->items = GC_MALLOC(sizeof(SLVAL) * aryp->capacity);
+    aryp->items[0] = vm->lib.nil;
+    aryp->items[1] = vm->lib.nil;
     memcpy(aryp->items, items, sizeof(SLVAL) * count);
     return vm->lib.nil;
 }
