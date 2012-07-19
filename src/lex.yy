@@ -20,7 +20,7 @@
         } while(0)
 %}
 
-%x SLASH STRING STRE
+%x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG
 
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]
@@ -31,9 +31,19 @@ HEX [0-9a-fA-F]
 
 <INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));       BEGIN(SLASH); }
 <INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
+<INITIAL>"<%#"      {                                                       BEGIN(COMMENT_TAG); }
 <INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
 <INITIAL>.|\n       { sl_lex_append_to_raw(yyextra, yytext, 1); }
+
+<COMMENT_TAG>"%>"   {                                                       BEGIN(INITIAL); }
+<COMMENT_TAG>.|\n   { }
+
+<COMMENT_LINE>.     { }
+<COMMENT_LINE>\n    {                                                       BEGIN(SLASH); }
+
+<COMMENT_ML_C>"*/"  {                                                       BEGIN(SLASH); }
+<COMMENT_ML_C>.|\n  { }
 
 <STRING>"\\"        { BEGIN(STRE); }
 <STRING>"\""        { BEGIN(SLASH); }
@@ -48,6 +58,8 @@ HEX [0-9a-fA-F]
 
 <SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
 
+<SLASH>"/*"         {                                                       BEGIN(COMMENT_ML_C); }
+<SLASH>"#"|"//"     {                                                       BEGIN(COMMENT_LINE); }
 <SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
 
 <SLASH>[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }

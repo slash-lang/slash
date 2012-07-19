@@ -43,9 +43,14 @@ error(sl_parse_state_t* ps, char* fmt, ...)
 static void
 unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 {
-    SLVAL err = sl_make_cstring(ps->vm, "Unexpected '");
-    err = sl_string_concat(ps->vm, err, tok->str);
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
+    SLVAL err;
+    if(tok->type != SL_TOK_END) {
+        err = sl_make_cstring(ps->vm, "Unexpected '");
+        err = sl_string_concat(ps->vm, err, tok->str);
+        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
+    } else {
+        err = sl_make_cstring(ps->vm, "Unexpected end of file");
+    }
     sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
 }
 
