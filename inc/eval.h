@@ -44,7 +44,16 @@ SLVAL
 sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
-sl_eval_assign(sl_node_binary_t* node, sl_eval_ctx_t* ctx);
+sl_eval_assign_var(sl_node_assign_var_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_assign_ivar(sl_node_assign_ivar_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_assign_cvar(sl_node_assign_cvar_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_assign_const(sl_node_assign_const_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
 sl_eval_immediate(sl_node_immediate_t* node, sl_eval_ctx_t* ctx);

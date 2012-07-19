@@ -25,7 +25,11 @@ typedef enum sl_node_type {
     SL_NODE_AND,
     SL_NODE_OR,
     SL_NODE_NOT,
-    SL_NODE_ASSIGN
+    SL_NODE_ASSIGN_VAR,
+    SL_NODE_ASSIGN_IVAR,
+    SL_NODE_ASSIGN_CVAR,
+    SL_NODE_ASSIGN_SEND,
+    SL_NODE_ASSIGN_CONST
 }
 sl_node_type_t;
 
@@ -142,5 +146,40 @@ typedef struct sl_node_unary {
     sl_node_base_t* expr;
 }
 sl_node_unary_t;
+
+typedef struct sl_node_assign_var {
+    sl_node_base_t base;
+    sl_node_var_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_var_t;
+
+typedef struct sl_node_assign_ivar {
+    sl_node_base_t base;
+    sl_node_var_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_ivar_t;
+
+typedef struct sl_node_assign_cvar {
+    sl_node_base_t base;
+    sl_node_var_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_cvar_t;
+
+typedef struct sl_node_assign_send {
+    sl_node_base_t base;
+    sl_node_send_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_send_t;
+
+typedef struct sl_node_assign_const {
+    sl_node_base_t base;
+    sl_node_const_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_const_t;
 
 #endif

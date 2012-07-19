@@ -186,7 +186,7 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
     err = sl_make_cstring(vm, "Undefined constant '");
     err = sl_string_concat(vm, err, name);
     err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
-    err = sl_string_concat(vm, err, sl_to_s(vm, klass));
+    err = sl_string_concat(vm, err, sl_inspect(vm, klass));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
     return vm->lib.nil;
 }
@@ -206,12 +206,12 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val)
         err = sl_make_cstring(vm, "Constant '");
         err = sl_string_concat(vm, err, name);
         err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
-        err = sl_string_concat(vm, err, sl_to_s(vm, klass));
+        err = sl_string_concat(vm, err, sl_inspect(vm, klass));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, " already defined"));
         sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
     }
     klassp = get_class(vm, klass);
-    sl_expect(vm, klass, vm->lib.String);
+    sl_expect(vm, klass, vm->lib.Class);
     st_insert(klassp->constants, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(val));
 }
 
