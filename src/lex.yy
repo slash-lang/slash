@@ -105,6 +105,7 @@ HEX [0-9a-fA-F]
 <SLASH>"!"          { ADD_TOKEN(sl_make_token(SL_TOK_NOT)); }
 
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
+<SLASH>"."{ID}      { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext + 1, yyleng - 1)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
 
 <SLASH>[ \t\r\n]    { /* ignore */ }
