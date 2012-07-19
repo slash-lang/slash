@@ -6,5 +6,8 @@
 #include "lex.h"
 #include "object.h"
 #include "parse.h"
+#include "class.h"
+#include "string.h"
+#include "lib/array.h"
 
 #endif
