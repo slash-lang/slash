@@ -61,6 +61,7 @@ sl_string_t;
 typedef struct sl_method {
     sl_object_t base;
     SLVAL name;
+    SLVAL klass;
     int is_c_func;
     int arity;
     union {

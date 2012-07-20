@@ -29,25 +29,27 @@ sl_init_method(sl_vm_t* vm)
 }
 
 SLVAL
-sl_make_c_func(sl_vm_t* vm, SLVAL name, int arity, SLVAL(*c_func)())
+sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*c_func)())
 {
     SLVAL method = sl_allocate(vm, vm->lib.Method);
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
     methp->name = sl_expect(vm, name, vm->lib.String);
     methp->is_c_func = 1;
     methp->arity = arity;
+    methp->klass = sl_expect(vm, klass, vm->lib.Class);
     methp->as.c.func = c_func;
     return method;
 }
 
 SLVAL
-sl_make_method(sl_vm_t* vm, SLVAL name, int arity, size_t arg_count, sl_string_t** args, sl_node_base_t* body, sl_eval_ctx_t* ctx)
+sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, size_t arg_count, sl_string_t** args, sl_node_base_t* body, sl_eval_ctx_t* ctx)
 {
     SLVAL method = sl_allocate(vm, vm->lib.Method);
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
     methp->name = sl_expect(vm, name, vm->lib.String);
     methp->is_c_func = 0;
     methp->arity = arity;
+    methp->klass = sl_expect(vm, klass, vm->lib.Class);
     methp->as.sl.argc = arg_count;
     methp->as.sl.argv = args;
     methp->as.sl.body = body;

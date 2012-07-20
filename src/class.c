@@ -136,7 +136,7 @@ sl_define_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)()
 void
 sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
 {
-    SLVAL method = sl_make_c_func(vm, name, arity, func);
+    SLVAL method = sl_make_c_func(vm, klass, name, arity, func);
     sl_define_method3(vm, klass, name, method);
 }
 

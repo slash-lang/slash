@@ -91,4 +91,7 @@ sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx);
 SLVAL
 sl_eval_self(sl_node_base_t* node, sl_eval_ctx_t* ctx);
 
+SLVAL
+sl_eval_array(sl_node_array_t* node, sl_eval_ctx_t* ctx);
+
 #endif

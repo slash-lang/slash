@@ -80,4 +80,7 @@ sl_make_assign_cvar_node(sl_node_var_t* lval, sl_node_base_t* rval);
 sl_node_base_t*
 sl_make_assign_const_node(sl_node_const_t* lval, sl_node_base_t* rval);
 
+sl_node_base_t*
+sl_make_array_node(size_t node_count, sl_node_base_t** nodes);
+
 #endif

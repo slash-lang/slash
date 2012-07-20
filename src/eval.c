@@ -5,6 +5,7 @@
 #include "lex.h"
 #include "parse.h"
 #include "method.h"
+#include "lib/array.h"
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
@@ -302,19 +303,24 @@ sl_eval_class(sl_node_class_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx)
 {
-    SLVAL on, method;
-    void(*definer)(sl_vm_t*, SLVAL, SLVAL, SLVAL);
+    SLVAL on, method, mklass;
+    void(*definer)(sl_vm_t*, SLVAL, SLVAL, SLVAL) = NULL;
     if(node->on) {
         on = node->on->eval(node->on, ctx);
+        mklass = on;
+        if(!sl_is_a(ctx->vm, mklass, ctx->vm->lib.Class)) {
+            mklass = sl_class_of(ctx->vm, mklass);
+        }
         definer = sl_define_singleton_method3;
     } else {
         on = ctx->self;
         if(!sl_is_a(ctx->vm, on, ctx->vm->lib.Class)) {
             on = sl_class_of(ctx->vm, on);
         }
+        mklass = on;
         definer = sl_define_method3;
     }
-    method = sl_make_method(ctx->vm, node->name, node->arg_count,
+    method = sl_make_method(ctx->vm, mklass, node->name, node->arg_count,
         node->arg_count, node->args, node->body, ctx);
     definer(ctx->vm, on, node->name, method);
     return method;
@@ -325,4 +331,15 @@ sl_eval_self(sl_node_base_t* node, sl_eval_ctx_t* ctx)
 {
     (void)node;
     return ctx->self;
+}
+
+SLVAL
+sl_eval_array(sl_node_array_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL* items = GC_MALLOC(sizeof(SLVAL) * node->node_count);
+    size_t i;
+    for(i = 0; i < node->node_count; i++) {
+        items[i] = node->nodes[i]->eval(node->nodes[i], ctx);
+    }
+    return sl_make_array(ctx->vm, node->node_count, items);
 }
