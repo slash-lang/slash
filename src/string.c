@@ -189,6 +189,25 @@ sl_string_inspect(sl_vm_t* vm, SLVAL self)
     return sl_make_string(vm, out, out_len);
 }
 
+static SLVAL
+sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(!sl_is_a(vm, other, vm->lib.String)) {
+        return vm->lib._false;
+    }
+    if(sl_string_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
+static SLVAL
+sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    return sl_make_int(vm, sl_string_cmp(get_string(vm, self), get_string(vm, other)));
+}
+
 void
 sl_pre_init_string(sl_vm_t* vm)
 {
@@ -207,4 +226,6 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
+    sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
+    sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
 }
