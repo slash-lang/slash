@@ -232,6 +232,16 @@ array_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+bracketed_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t* node;
+    expect_token(ps, SL_TOK_OPEN_PAREN);
+    node = expression(ps);
+    expect_token(ps, SL_TOK_CLOSE_PAREN);
+    return node;
+}
+
+static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
@@ -288,6 +298,8 @@ primary_expression(sl_parse_state_t* ps)
             return def_expression(ps);
         case SL_TOK_OPEN_BRACKET:
             return array_expression(ps);
+        case SL_TOK_OPEN_PAREN:
+            return bracketed_expression(ps);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;
