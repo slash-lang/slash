@@ -128,7 +128,7 @@ sl_define_singleton_method(sl_vm_t* vm, SLVAL object, char* name, int arity, SLV
 void
 sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SLVAL(*func)())
 {
-    SLVAL method = sl_make_c_func(vm, name, arity, func);
+    SLVAL method = sl_make_c_func(vm, sl_class_of(vm, object), name, arity, func);
     sl_define_singleton_method3(vm, object, name, method);
 }
 
@@ -137,6 +137,9 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
 {
     sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, method, vm->lib.Method);
+    if(sl_is_a(vm, object, vm->lib.Int)) {
+        sl_throw_message2(vm, vm->lib.TypeError, "Can't define singleton method on Int object");
+    }
     if(!sl_get_ptr(object)->singleton_methods) {
         sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
     }

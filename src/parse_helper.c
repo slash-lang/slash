@@ -1,6 +1,7 @@
 #include "parse.h"
 #include "eval.h"
 #include "string.h"
+#include "class.h"
 #include <gc.h>
 #include <string.h>
 
@@ -152,6 +153,9 @@ sl_node_base_t*
 sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_DEF, sl_eval_def, sl_node_def_t, {
+        if(sl_is_a(ps->vm, name, ps->vm->lib.Nil)) {
+            name = sl_make_cstring(ps->vm, "(anonymous function)");
+        }
         sl_expect(ps->vm, name, ps->vm->lib.String);
         node->name = name;
         node->on = on;
@@ -200,5 +204,14 @@ sl_make_assign_const_node(sl_node_const_t* lval, sl_node_base_t* rval)
     MAKE_NODE(SL_NODE_ASSIGN_CONST, sl_eval_assign_const, sl_node_assign_const_t, {
         node->lval = lval;
         node->rval = rval;
+    });
+}
+
+sl_node_base_t*
+sl_make_array_node(size_t node_count, sl_node_base_t** nodes)
+{
+    MAKE_NODE(SL_NODE_ARRAY, sl_eval_array, sl_node_array_t, {
+        node->node_count = node_count;
+        node->nodes = nodes;
     });
 }

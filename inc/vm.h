@@ -28,6 +28,7 @@ typedef struct sl_lib {
     SLVAL False;
     SLVAL _false;
     
+    SLVAL Comparable;
     SLVAL Number;
     SLVAL Int;
     SLVAL Float;
