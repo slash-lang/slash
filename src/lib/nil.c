@@ -15,6 +15,17 @@ nil_inspect(sl_vm_t* vm)
     return sl_make_cstring(vm, "nil");
 }
 
+static SLVAL
+nil_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    (void)self;
+    if(sl_is_a(vm, other, vm->lib.Nil)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 void
 sl_init_nil(sl_vm_t* vm)
 {
@@ -27,4 +38,5 @@ sl_init_nil(sl_vm_t* vm)
     
     sl_define_method(vm, vm->lib.Nil, "to_s", 0, nil_to_s);
     sl_define_method(vm, vm->lib.Nil, "inspect", 0, nil_inspect);
+    sl_define_method(vm, vm->lib.Nil, "==", 1, nil_eq);
 }
