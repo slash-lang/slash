@@ -2,7 +2,7 @@
 #include "slash.h"
 
 static SLVAL
-io_puts(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+io_print(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     size_t i;
     sl_string_t* str;
@@ -17,5 +17,5 @@ io_puts(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 void
 sl_init_io(sl_vm_t* vm)
 {
-    sl_define_method(vm, vm->lib.Object, "puts", -1, io_puts);
+    sl_define_method(vm, vm->lib.Object, "print", -1, io_print);
 }
