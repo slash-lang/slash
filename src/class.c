@@ -48,7 +48,7 @@ sl_class_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_class_t* klass = get_class(vm, self);
     sl_class_t* object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
-    if(klass == object | sl_get_ptr(klass->in) == (sl_object_t*)object) {
+    if(klass == object || sl_get_ptr(klass->in) == (sl_object_t*)object) {
         return get_class(vm, self)->name;
     } else {
         return sl_string_concat(vm,
