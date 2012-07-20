@@ -17,7 +17,7 @@ sl_get_int(SLVAL val)
         /* throw type error... @TODO */
         abort();
     }
-    return val.i / 2;
+    return val.i >> 1;
 }
 
 sl_object_t* sl_get_ptr(SLVAL val)
@@ -32,7 +32,7 @@ sl_make_int(sl_vm_t* vm, int n)
     if(n > INT_MAX / 2 || n < INT_MIN / 2) {
         return sl_make_bignum(vm, n);
     }
-    v.i = n * 2 | 1;
+    v.i = (n << 1) | 1;
     return v;
 }
 
