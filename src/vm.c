@@ -85,5 +85,7 @@ sl_init()
     
     sl_init_libs(vm);
     
+    String->super = vm->lib.Comparable;
+    
     return vm;
 }
