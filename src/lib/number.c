@@ -31,5 +31,5 @@ sl_number_parse(sl_vm_t* vm, uint8_t* str, size_t len)
 void
 sl_init_number(sl_vm_t* vm)
 {
-    vm->lib.Number = sl_define_class(vm, "Number", vm->lib.Object);
+    vm->lib.Number = sl_define_class(vm, "Number", vm->lib.Comparable);
 }

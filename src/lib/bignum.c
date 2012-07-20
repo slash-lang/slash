@@ -56,7 +56,7 @@ sl_bignum_to_i(sl_vm_t* vm, SLVAL val)
 void
 sl_init_bignum(sl_vm_t* vm)
 {
-    vm->lib.Bignum = sl_define_class(vm, "Bignum", vm->lib.Number);
+    vm->lib.Bignum = sl_define_class(vm, "Bignum", vm->lib.Comparable);
     sl_class_set_allocator(vm, vm->lib.Bignum, allocate_bignum);
     sl_define_method(vm, vm->lib.Bignum, "to_s", 0, sl_bignum_to_s);
     sl_define_method(vm, vm->lib.Bignum, "inspect", 0, sl_bignum_to_s);
@@ -68,6 +68,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "/", 1, sl_bignum_div);
     sl_define_method(vm, vm->lib.Bignum, "%", 1, sl_bignum_mod);
     sl_define_method(vm, vm->lib.Bignum, "==", 1, sl_bignum_eq);
+    sl_define_method(vm, vm->lib.Bignum, "<=>", 1, sl_bignum_cmp);
 }
 
 SLVAL
@@ -224,13 +225,14 @@ sl_bignum_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
-sl_bignum_lt(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_bignum_gt(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_bignum_lte(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_bignum_gte(sl_vm_t* vm, SLVAL self, SLVAL other);
+sl_bignum_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_cmp(vm, self, sl_make_bignum(vm, sl_get_int(other)));
+    }
+    if(sl_is_a(vm, other, vm->lib.Float)) {
+        return sl_make_int(vm, mpz_cmp_d(get_bignum(vm, self)->mpz, sl_get_float(vm, other)));
+    }
+    sl_expect(vm, other, vm->lib.Bignum);
+    return sl_make_int(vm, mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz));
+}

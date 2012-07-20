@@ -60,7 +60,7 @@ sl_float_to_f(sl_vm_t* vm, SLVAL self)
 void
 sl_init_float(sl_vm_t* vm)
 {
-    vm->lib.Float = sl_define_class(vm, "Float", vm->lib.Number);
+    vm->lib.Float = sl_define_class(vm, "Float", vm->lib.Comparable);
     sl_class_set_allocator(vm, vm->lib.Float, allocate_float);
     sl_define_method(vm, vm->lib.Float, "to_s", 0, sl_float_to_s);
     sl_define_method(vm, vm->lib.Float, "inspect", 0, sl_float_to_s);
@@ -72,6 +72,7 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "/", 1, sl_float_div);
     sl_define_method(vm, vm->lib.Float, "%", 1, sl_float_mod);
     sl_define_method(vm, vm->lib.Float, "==", 1, sl_float_eq);
+    sl_define_method(vm, vm->lib.Float, "<=>", 1, sl_float_cmp);
 }
 
 SLVAL
@@ -172,13 +173,20 @@ sl_float_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
-sl_float_lt(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_float_gt(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_float_lte(sl_vm_t* vm, SLVAL self, SLVAL other);
-
-SLVAL
-sl_float_gte(sl_vm_t* vm, SLVAL self, SLVAL other);
+sl_float_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_float_cmp(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_make_int(vm, -sl_get_int(sl_bignum_cmp(vm, other, self)));
+    }
+    sl_expect(vm, other, vm->lib.Float);
+    if(sl_get_float(vm, self) < sl_get_float(vm, other)) {
+        return sl_make_int(vm, -1);
+    } else if(sl_get_float(vm, self) > sl_get_float(vm, other)) {
+        return sl_make_int(vm, 1);
+    } else {
+        return sl_make_int(vm, 0);
+    }
+}

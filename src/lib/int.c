@@ -151,6 +151,25 @@ sl_int_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
 }
 
+static SLVAL
+sl_int_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Float)) {
+        return sl_float_cmp(vm, sl_make_float(vm, sl_get_int(self)), other);
+    }
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_cmp(vm, sl_make_bignum(vm, sl_get_int(self)), other);
+    }
+    sl_expect(vm, other, vm->lib.Int);
+    if(sl_get_int(self) < sl_get_int(other)) {
+        return sl_make_int(vm, -1);
+    } else if(sl_get_int(self) > sl_get_int(other)) {
+        return sl_make_int(vm, 1);
+    } else {
+        return sl_make_int(vm, 0);
+    }
+}
+
 void
 sl_init_int(sl_vm_t* vm)
 {
@@ -165,4 +184,5 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, "to_i", 0, sl_int_to_i);
     sl_define_method(vm, vm->lib.Int, "to_f", 0, sl_int_to_f);
     sl_define_method(vm, vm->lib.Int, "==", 1, sl_int_eq);
+    sl_define_method(vm, vm->lib.Int, "<=>", 1, sl_int_cmp);
 }

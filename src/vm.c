@@ -26,6 +26,7 @@ LIB(method);
 LIB(true);
 LIB(false);
 LIB(nil);
+LIB(comparable);
 LIB(number);
 LIB(int);
 LIB(float);
@@ -38,6 +39,7 @@ static void
 sl_init_libs(sl_vm_t* vm)
 {
     LIB_INIT(nil);
+    LIB_INIT(comparable);
     LIB_INIT(number);
     LIB_INIT(int);
     LIB_INIT(float);
