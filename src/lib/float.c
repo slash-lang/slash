@@ -1,6 +1,7 @@
 #include <gc.h>
 #include <limits.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "string.h"
 #include "class.h"
 #include "value.h"
@@ -70,6 +71,7 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "*", 1, sl_float_mul);
     sl_define_method(vm, vm->lib.Float, "/", 1, sl_float_div);
     sl_define_method(vm, vm->lib.Float, "%", 1, sl_float_mod);
+    sl_define_method(vm, vm->lib.Float, "==", 1, sl_float_eq);
 }
 
 SLVAL
@@ -145,3 +147,38 @@ sl_float_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     return sl_make_float(vm, fmod(sl_get_float(vm, self), sl_get_float(vm, other)));
 }
+
+SLVAL
+sl_float_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_float_eq(vm, self, sl_make_float(vm, sl_get_int(other)));
+    }
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        if(fmod(sl_get_float(vm, self), 1.0) == 0.0) {
+            return sl_bignum_eq(vm, sl_make_bignum_f(vm, sl_get_float(vm, self)), other);
+        } else {
+            return vm->lib._false;
+        }
+    }
+    if(!sl_is_a(vm, other, vm->lib.Float)) {
+        return vm->lib._false;
+    }
+    if(sl_get_float(vm, self) == sl_get_float(vm, other)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
+SLVAL
+sl_float_lt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_gt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_lte(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_gte(sl_vm_t* vm, SLVAL self, SLVAL other);

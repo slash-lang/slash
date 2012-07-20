@@ -24,4 +24,19 @@ sl_float_div(sl_vm_t* vm, SLVAL self, SLVAL other);
 SLVAL
 sl_float_mod(sl_vm_t* vm, SLVAL self, SLVAL other);
 
+SLVAL
+sl_float_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_lt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_gt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_lte(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_float_gte(sl_vm_t* vm, SLVAL self, SLVAL other);
+
 #endif
