@@ -389,8 +389,23 @@ bitwise_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 relational_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return bitwise_expression(ps);
+    sl_node_base_t* left = bitwise_expression(ps);
+    sl_token_t* tok;
+    sl_node_base_t* right;
+    switch(peek_token(ps)->type) {
+        case SL_TOK_DBL_EQUALS:
+        case SL_TOK_NOT_EQUALS:
+        case SL_TOK_LT:
+        case SL_TOK_GT:
+        case SL_TOK_LTE:
+        case SL_TOK_GTE:
+        case SL_TOK_SPACESHIP:
+            tok = next_token(ps);
+            right = bitwise_expression(ps);
+            return sl_make_send_node(left, tok->str, 1, &right);
+        default:
+            return left;
+    }
 }
 
 static sl_node_base_t*

@@ -67,6 +67,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "*", 1, sl_bignum_mul);
     sl_define_method(vm, vm->lib.Bignum, "/", 1, sl_bignum_div);
     sl_define_method(vm, vm->lib.Bignum, "%", 1, sl_bignum_mod);
+    sl_define_method(vm, vm->lib.Bignum, "==", 1, sl_bignum_eq);
 }
 
 SLVAL
@@ -198,3 +199,38 @@ sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     mpz_tdiv_r(c->mpz, a->mpz, b->mpz);
     return sl_make_ptr((sl_object_t*)c); 
 }
+
+SLVAL
+sl_bignum_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_eq(vm, self, sl_make_bignum(vm, sl_get_int(other)));
+    }
+    if(sl_is_a(vm, other, vm->lib.Float)) {
+        if(mpz_cmp_d(get_bignum(vm, self)->mpz, sl_get_float(vm, other)) == 0) {
+            return vm->lib._true;
+        } else {
+            return vm->lib._false;
+        }
+    }
+    if(!sl_is_a(vm, other, vm->lib.Bignum)) {
+        return vm->lib._false;
+    }
+    if(mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz) == 0) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
+SLVAL
+sl_bignum_lt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_bignum_gt(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_bignum_lte(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_bignum_gte(sl_vm_t* vm, SLVAL self, SLVAL other);

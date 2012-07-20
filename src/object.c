@@ -28,6 +28,12 @@ sl_pre_init_object(sl_vm_t* vm)
 static SLVAL
 sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
 
+static SLVAL
+sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+static SLVAL
+sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -37,12 +43,34 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
+    sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
+    sl_define_method(vm, vm->lib.Object, "!=", 1, sl_object_ne);
 }
 
 static SLVAL
 sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     return sl_send2(vm, self, argv[0], argc - 1, argv + 1);
+}
+
+static SLVAL
+sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_get_ptr(self) == sl_get_ptr(other)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
+static SLVAL
+sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_truthy(sl_send(vm, self, "==", 1, other))) {
+        return vm->lib._false;
+    } else {
+        return vm->lib._true;
+    }
 }
 
 SLVAL
