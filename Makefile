@@ -1,5 +1,4 @@
-CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -Ideps/gc-7.2/include \
-	-iquote ./inc -g -Ideps/gmp-5.0.5 -fPIC
+CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -iquote ./inc -g -fPIC
 LDFLAGS=
 
 PLATFORM=posix
@@ -26,20 +25,11 @@ default:
 test: sapi[cli]
 	sapi/cli/slash-cli test/driver.sl
 
-sapi[%]: libgc.a libgmp.a libslash.a
+sapi[%]: libslash.a
 	make -C sapi sapi[$*]
 	@tput setaf 2; tput bold
 	@echo "Built $* successfully"
 	@tput sgr0
-
-libgc.a: deps/gc-7.2/.libs/libgc.a
-	cp $< $@
-
-libgmp.a: deps/gmp-5.0.5/.libs/libgmp.a
-	cp $< $@
-
-deps/%:
-	make -C deps $*
 
 libslash.a: $(OBJS)
 	ar r $@ $^
@@ -56,8 +46,6 @@ clean:
 	rm -f src/*.o
 	rm -f src/lib/*.o
 	rm -f platform/*.o
-	rm -f libgmp.a
-	rm -f libgc.a
 	rm -f libslash.a
 	make -C sapi clean
 

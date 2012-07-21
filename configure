@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+
+#
+# This configure script just checks that all the right dependencies are
+# available. It does not (yet) generate any Makefiles or header files...
+#
+
+use strict;
+use File::Temp qw(tempfile tempdir);
+
+sub compile {
+    my ($flags, $src) = @_;
+    my ($fh, $filename) = tempfile SUFFIX => ".c";
+    my $binary = $filename;
+    $binary =~ s/\.c$//;
+    print $fh $src;
+    close $fh;
+    `$ENV{CC} $flags -o $binary $filename &>/dev/null`;
+    !$?;
+};
+
+sub check_lib {
+    my ($lib, $src) = @_;
+    print "Checking for lib$lib... ";
+    if(compile "-l$lib", $src) {
+        print "ok\n";
+    } else {
+        print "failed\n";
+        print "\n\e[31mCould not find lib$lib (used -l$lib)\nPlease make sure it is available before building Slash\n\e[0m";
+        exit 1;
+    }
+};
+
+sub check_prog {
+    my ($cmd, $expect) = @_;
+    my ($prog) = split / /, $cmd;
+    print "Checking for $prog... ";
+    ($_) = `$cmd 2>&1`;
+    chomp;
+    if(/$expect/) {
+        print "$_\n";
+    } else {
+        print "failed\n";
+        print "\n\e[31mCould not find $prog (used $cmd)\nPlease make sure it is available before building Slash\n\e[0m";
+        exit 1;
+    }
+}
+
+if(!defined $ENV{CC}) {
+    print "\n\e[31mCC environment variable not set!\n\e[0m";
+    die;
+}
+check_prog "$ENV{CC} --version";
+
+check_prog "flex --version", /flex 2/;
+
+check_lib "gmp", <<C;
+#include <gmp.h>
+
+int main() {
+    mpz_t mpz;
+    mpz_init(mpz);
+}
+C
+
+check_lib "gc", <<C;
+#include <gc.h>
+
+int main() {
+    GC_INIT();
+}
+C
+
+print "\n\e[32mReady to build\n\e[0m";
