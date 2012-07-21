@@ -47,8 +47,8 @@ sub check_prog {
 }
 
 if(!defined $ENV{CC}) {
-    print "\n\e[31mCC environment variable not set!\n\e[0m";
-    exit 1;
+    print "\e[33mCC environment variable not set, falling back to 'cc'...\n\e[0m";
+    $ENV{CC} = "cc";
 }
 check_prog "$ENV{CC} --version";
 
