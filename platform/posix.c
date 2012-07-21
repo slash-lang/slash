@@ -1,3 +1,4 @@
+#define _POSIX_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
