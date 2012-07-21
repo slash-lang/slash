@@ -2,4 +2,5 @@ gc-7.2
 gmp-5.0.5
 *.gz
 *.bz2
+*.tar
 *.log
