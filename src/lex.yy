@@ -133,7 +133,7 @@ sl_token_t*
 sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count)
 {
     yyscan_t yyscanner;
-    YY_BUFFER_STATE buff_state;
+    YY_BUFFER_STATE buff_state = 0;
     sl_lex_state_t ls;
     sl_catch_frame_t frame;
     SLVAL err;
