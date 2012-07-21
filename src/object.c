@@ -251,16 +251,16 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
     SLVAL arg;
     if(method->arity < 0) {
         if((size_t)(-method->arity - 1) > argc) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), argc);
+            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), (unsigned long)argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     } else {
         if((size_t)method->arity > argc) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", method->arity, argc);
+            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", method->arity, (unsigned long)argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
         if((size_t)method->arity < argc) {
-            sprintf(errstr, "Too many arguments. Expected %d, received %lu.", method->arity, argc);
+            sprintf(errstr, "Too many arguments. Expected %d, received %lu.", method->arity, (unsigned long)argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     }
