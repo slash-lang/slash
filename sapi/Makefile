@@ -1,6 +1,6 @@
 SAPIS=$(shell find . -depth -type d | cut -c 3-)
 CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -iquote../../inc/ -I../../deps/gc-7.2/include -g
-LDFLAGS=
+LDFLAGS=-lpthread
 LIBS=../../libgmp.a ../../libgc.a ../../libslash.a
 
 .PHONY: clean list
