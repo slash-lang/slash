@@ -114,8 +114,8 @@ static SLVAL
 sl_int_to_s(sl_vm_t* vm, SLVAL self)
 {
     int a = sl_get_int(self);
-    char buff[32];
-    snprintf(buff, 31, "%d", a);
+    char buff[128];
+    sprintf(buff, "%d", a);
     return sl_make_cstring(vm, buff);
 }
 

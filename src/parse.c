@@ -32,16 +32,6 @@ next_token(sl_parse_state_t* ps)
 }
 
 static void
-error(sl_parse_state_t* ps, char* fmt, ...)
-{
-    char buff[1024];
-    va_list va;
-    va_start(va, fmt);
-    vsnprintf(buff, 1023, fmt, va);
-    sl_throw_message2(ps->vm, ps->vm->lib.SyntaxError, buff);
-}
-
-static void
 unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 {
     SLVAL err;
@@ -585,8 +575,7 @@ inline_raw(sl_parse_state_t* ps)
                 return (sl_node_base_t*)seq;
             case SL_TOK_OPEN_TAG:
                 return (sl_node_base_t*)seq;
-            default:
-                error(ps, "Should never happen");
+            default: break;
         }
     }
 }
