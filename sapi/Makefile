@@ -1,6 +1,6 @@
 SAPIS=$(shell find . -depth -type d | cut -c 3-)
 CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -iquote../../inc/ -g
-LDFLAGS=-lpthread -lgmp -lgc
+LDFLAGS=-lpthread -lgmp -lgc -lm
 LIBS=../../libslash.a
 
 .PHONY: clean list
