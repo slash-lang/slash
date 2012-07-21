@@ -15,8 +15,9 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    `$ENV{CC} $flags -o $binary $filename &>/dev/null`;
-    !$?;
+    my $output = `$ENV{CC} $flags -o $binary $filename 2>&1`;
+    chomp $output;
+    $? == 0 && !$output;
 };
 
 sub check_lib {
