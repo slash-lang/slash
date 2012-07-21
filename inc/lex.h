@@ -59,6 +59,7 @@ typedef enum sl_token_type {
     
     SL_TOK_PLUS,
     SL_TOK_MINUS,
+    SL_TOK_POW,
     SL_TOK_TIMES,
     SL_TOK_DIVIDE,
     SL_TOK_MOD,
@@ -71,6 +72,13 @@ typedef enum sl_token_type {
     SL_TOK_AND,
     SL_TOK_NOT,
     
+    SL_TOK_BIT_OR,
+    SL_TOK_BIT_AND,
+    SL_TOK_CARET,
+    SL_TOK_TILDE,
+    
+    SL_TOK_RANGE_EX,
+    SL_TOK_RANGE,
     SL_TOK_DOT,
     SL_TOK_PAAMAYIM_NEKUDOTAYIM,
     SL_TOK_END

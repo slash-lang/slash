@@ -113,14 +113,21 @@ HEX [0-9a-fA-F]
 
 <SLASH>"+"          { ADD_TOKEN(sl_make_token(SL_TOK_PLUS)); }
 <SLASH>"-"          { ADD_TOKEN(sl_make_token(SL_TOK_MINUS)); }
+<SLASH>"**"         { ADD_TOKEN(sl_make_token(SL_TOK_POW)); }
 <SLASH>"*"          { ADD_TOKEN(sl_make_token(SL_TOK_TIMES)); }
 <SLASH>"/"          { ADD_TOKEN(sl_make_token(SL_TOK_DIVIDE)); }
 <SLASH>"%"          { ADD_TOKEN(sl_make_token(SL_TOK_MOD)); }
 
+<SLASH>"^"          { ADD_TOKEN(sl_make_token(SL_TOK_CARET)); }
+<SLASH>"~"          { ADD_TOKEN(sl_make_token(SL_TOK_TILDE)); }
+<SLASH>"&"          { ADD_TOKEN(sl_make_token(SL_TOK_BIT_AND)); }
 <SLASH>"&&"         { ADD_TOKEN(sl_make_token(SL_TOK_AND)); }
+<SLASH>"|"          { ADD_TOKEN(sl_make_token(SL_TOK_BIT_OR)); }
 <SLASH>"||"         { ADD_TOKEN(sl_make_token(SL_TOK_OR)); }
 <SLASH>"!"          { ADD_TOKEN(sl_make_token(SL_TOK_NOT)); }
 
+<SLASH>"..."        { ADD_TOKEN(sl_make_token(SL_TOK_RANGE_EX)); }
+<SLASH>".."         { ADD_TOKEN(sl_make_token(SL_TOK_RANGE)); }
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 <SLASH>"."{ID}      { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext + 1, yyleng - 1)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }

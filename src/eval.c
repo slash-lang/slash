@@ -9,6 +9,7 @@
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 sl_eval_ctx_t*
 sl_make_eval_ctx(sl_vm_t* vm)
@@ -57,6 +58,119 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     tokens = sl_lex(vm, filename, src, file_size, &token_count);
     ast = sl_parse(vm, tokens, token_count, filename);
     return ast->eval(ast, ctx);
+}
+
+static void
+assign_var(sl_node_var_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    sl_eval_ctx_t* octx = ctx;
+    while(ctx) {
+        if(st_lookup(ctx->vars, (st_data_t)node->name, NULL)) {
+            st_insert(ctx->vars, (st_data_t)node->name, (st_data_t)sl_get_ptr(val));
+            return;
+        }
+        ctx = ctx->parent;
+    }
+    st_insert(octx->vars, (st_data_t)node->name, (st_data_t)sl_get_ptr(val));
+}
+
+SLVAL
+sl_eval_assign_var(sl_node_assign_var_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL val = node->rval->eval(node->rval, ctx);
+    assign_var(node->lval, ctx, val);
+    return val;
+}
+
+static void
+assign_ivar(sl_node_var_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    sl_set_ivar(ctx->vm, ctx->self, node->name, val);
+}
+
+SLVAL
+sl_eval_assign_ivar(sl_node_assign_ivar_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL val = node->rval->eval(node->rval, ctx);
+    assign_ivar(node->lval, ctx, val);
+    return val;
+}
+
+static void
+assign_cvar(sl_node_var_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    sl_set_cvar(ctx->vm, ctx->self, node->name, val);
+}
+
+SLVAL
+sl_eval_assign_cvar(sl_node_assign_cvar_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL val = node->rval->eval(node->rval, ctx);
+    assign_cvar(node->lval, ctx, val);
+    return val;
+}
+
+static void
+assign_const(sl_node_const_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    SLVAL obj;
+    if(node->obj) {
+        obj = node->obj->eval(node->obj, ctx);
+    } else {
+        obj = ctx->self;
+        if(!sl_is_a(ctx->vm, obj, ctx->vm->lib.Class)) {
+            obj = sl_class_of(ctx->vm, obj);
+        }
+    }
+    sl_class_set_const2(ctx->vm, obj, node->id, val);
+}
+
+SLVAL
+sl_eval_assign_const(sl_node_assign_const_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL val = node->rval->eval(node->rval, ctx);
+    assign_const(node->lval, ctx, val);
+    return val;
+}
+
+static void
+assign_send(sl_node_send_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    sl_node_send_t n;
+    sl_node_immediate_t imm;
+    sl_node_base_t** args;
+    imm.base.eval = (sl_node_eval_fn_t)sl_eval_immediate;
+    imm.base.type = SL_NODE_IMMEDIATE;
+    imm.value = val;
+    memcpy(&n, node, sizeof(n));
+    n.id = sl_string_concat(ctx->vm, n.id, sl_make_cstring(ctx->vm, "="));
+    args = alloca(sizeof(sl_node_base_t*) * (n.arg_count + 1));
+    args[n.arg_count++] = &imm.base;
+    sl_eval_send(&n, ctx);
+}
+
+static void
+set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    switch(node->type) {
+        case SL_NODE_VAR:
+            assign_var((sl_node_var_t*)node, ctx, val);
+            break;
+        case SL_NODE_IVAR:
+            assign_ivar((sl_node_var_t*)node, ctx, val);
+            break;
+        case SL_NODE_CVAR:
+            assign_cvar((sl_node_var_t*)node, ctx, val);
+            break;
+        case SL_NODE_CONST:
+            assign_const((sl_node_const_t*)node, ctx, val);
+            break;
+        case SL_NODE_SEND:
+            assign_send((sl_node_send_t*)node, ctx, val);
+            break;
+        default:
+            sl_throw_message2(ctx->vm, ctx->vm->lib.TypeError, "Invalid lval in assignment");
+    }
 }
 
 SLVAL
@@ -127,55 +241,6 @@ sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx)
     } else {
         return ctx->vm->lib._true;
     }
-}
-
-SLVAL
-sl_eval_assign_var(sl_node_assign_var_t* node, sl_eval_ctx_t* ctx)
-{
-    sl_eval_ctx_t* octx = ctx;
-    SLVAL val = node->rval->eval(node->rval, ctx);
-    while(ctx) {
-        if(st_lookup(ctx->vars, (st_data_t)node->lval->name, NULL)) {
-            st_insert(ctx->vars, (st_data_t)node->lval->name, (st_data_t)sl_get_ptr(val));
-            return val;
-        }
-        ctx = ctx->parent;
-    }
-    st_insert(octx->vars, (st_data_t)node->lval->name, (st_data_t)sl_get_ptr(val));
-    return val;
-}
-
-SLVAL
-sl_eval_assign_ivar(sl_node_assign_ivar_t* node, sl_eval_ctx_t* ctx)
-{
-    SLVAL val = node->rval->eval(node->rval, ctx);
-    sl_set_ivar(ctx->vm, ctx->self, node->lval->name, val);
-    return val;
-}
-
-SLVAL
-sl_eval_assign_cvar(sl_node_assign_cvar_t* node, sl_eval_ctx_t* ctx)
-{
-    SLVAL val = node->rval->eval(node->rval, ctx);
-    sl_set_cvar(ctx->vm, ctx->self, node->lval->name, val);
-    return val;
-}
-
-SLVAL
-sl_eval_assign_const(sl_node_assign_const_t* node, sl_eval_ctx_t* ctx)
-{
-    SLVAL obj, val;
-    if(node->lval->obj) {
-        obj = node->lval->obj->eval(node->lval->obj, ctx);
-    } else {
-        obj = ctx->self;
-        if(!sl_is_a(ctx->vm, obj, ctx->vm->lib.Class)) {
-            obj = sl_class_of(ctx->vm, obj);
-        }
-    }
-    val = node->rval->eval(node->rval, ctx);
-    sl_class_set_const2(ctx->vm, obj, node->lval->id, val);
-    return val;
 }
 
 SLVAL
@@ -263,7 +328,23 @@ sl_eval_if(sl_node_if_t* node, sl_eval_ctx_t* ctx)
 }
 
 SLVAL
-sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx);
+sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL enumerable = node->expr->eval(node->expr, ctx);
+    SLVAL enumerator = sl_send(ctx->vm, enumerable, "enumerate", 0, NULL);
+    SLVAL val;
+    int iterated = 0;
+    while(sl_is_truthy(sl_send(ctx->vm, enumerator, "next", 0, NULL))) {
+        val = sl_send(ctx->vm, enumerator, "current", 0, NULL);
+        set_lval(node->lval, ctx, val);
+        iterated = 1;
+        node->body->eval(node->body, ctx);
+    }
+    if(!iterated) {
+        node->else_body->eval(node->else_body, ctx);
+    }
+    return enumerable;
+}
 
 SLVAL
 sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx)

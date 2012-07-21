@@ -11,6 +11,14 @@ typedef struct {
 }
 sl_array_t;
 
+typedef struct {
+    sl_object_t base;
+    SLVAL* items;
+    size_t count;
+    size_t at;
+}
+sl_array_enumerator_t;
+
 static sl_object_t*
 allocate_array(sl_vm_t* vm)
 {
@@ -23,6 +31,12 @@ allocate_array(sl_vm_t* vm)
         ary->items[i] = vm->lib.nil;
     }
     return (sl_object_t*)ary;
+}
+
+static sl_object_t*
+allocate_array_enumerator()
+{
+    return GC_MALLOC(sizeof(sl_array_enumerator_t));
 }
 
 static sl_array_t*
@@ -86,12 +100,57 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     return str;
 }
 
+static SLVAL
+sl_array_enumerate(sl_vm_t* vm, SLVAL array)
+{
+    return sl_new(vm, vm->lib.Array_Enumerator, 1, &array);
+}
+
+static SLVAL
+sl_array_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL array)
+{
+    sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
+    sl_array_t* a = get_array(vm, array);
+    e->items = a->items;
+    e->at = 0;
+    e->count = a->count;
+    return vm->lib.nil;
+}
+
+static SLVAL
+sl_array_enumerator_next(sl_vm_t* vm, SLVAL self)
+{
+    sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
+    if(!e->items) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+    }
+    if(++e->at > e->count) {
+        return vm->lib._false;
+    } else {
+        return vm->lib._true;
+    }
+}
+
+static SLVAL
+sl_array_enumerator_current(sl_vm_t* vm, SLVAL self)
+{
+    sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
+    if(!e->items) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+    }
+    if(e->at == 0 || e->at > e->count) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+    }
+    return e->items[e->at - 1];
+}
+
 void
 sl_init_array(sl_vm_t* vm)
 {
     vm->lib.Array = sl_define_class(vm, "Array", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Array, allocate_array);
     sl_define_method(vm, vm->lib.Array, "init", -1, sl_array_init);
+    sl_define_method(vm, vm->lib.Array, "enumerate", 0, sl_array_enumerate);
     sl_define_method(vm, vm->lib.Array, "[]", 1, sl_array_get2);
     sl_define_method(vm, vm->lib.Array, "[]=", 2, sl_array_set2);
     sl_define_method(vm, vm->lib.Array, "length", 0, sl_array_length);
@@ -101,6 +160,14 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "shift", 0, sl_array_shift);
     sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_array_to_s);
+    
+    vm->lib.Array_Enumerator = sl_define_class3(
+        vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
+        
+    sl_class_set_allocator(vm, vm->lib.Array_Enumerator, allocate_array_enumerator);
+    sl_define_method(vm, vm->lib.Array_Enumerator, "init", 1, sl_array_enumerator_init);
+    sl_define_method(vm, vm->lib.Array_Enumerator, "next", 0, sl_array_enumerator_next);
+    sl_define_method(vm, vm->lib.Array_Enumerator, "current", 0, sl_array_enumerator_current);
 }
 
 SLVAL

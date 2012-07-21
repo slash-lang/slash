@@ -113,9 +113,20 @@ while_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 for_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    (void)ps;
-    return NULL;
+    sl_node_base_t *lval, *expr, *body, *else_body = NULL;
+    sl_token_t* tok;
+    expect_token(ps, SL_TOK_FOR);
+    /* @TODO allow other lvals */
+    tok = expect_token(ps, SL_TOK_IDENTIFIER);
+    lval = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var, tok->str);
+    expect_token(ps, SL_TOK_IN);
+    expr = expression(ps);
+    body = body_expression(ps);
+    if(peek_token(ps)->type == SL_TOK_ELSE) {
+        next_token(ps);
+        else_body = body_expression(ps);
+    }
+    return sl_make_for_node(lval, expr, body, else_body);
 }
 
 static sl_node_base_t*
@@ -357,15 +368,40 @@ call_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 power_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return call_expression(ps);
+    sl_node_base_t* left = call_expression(ps);
+    sl_node_base_t* right;
+    SLVAL id;
+    if(peek_token(ps)->type == SL_TOK_POW) {
+        id = next_token(ps)->str;
+        right = power_expression(ps);
+        left = sl_make_send_node(left, id, 1, &right);
+    }
+    return left;
 }
 
 static sl_node_base_t*
 unary_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return power_expression(ps);
+    sl_node_base_t* expr;
+    SLVAL id;
+    switch(peek_token(ps)->type) {
+        case SL_TOK_MINUS:
+            next_token(ps);
+            id = sl_make_cstring(ps->vm, "negate");
+            expr = unary_expression(ps);
+            return sl_make_send_node(expr, id, 0, NULL);
+        case SL_TOK_TILDE:
+            next_token(ps);
+            id = sl_make_cstring(ps->vm, "~");
+            expr = unary_expression(ps);
+            return sl_make_send_node(expr, id, 0, NULL);
+        case SL_TOK_NOT:
+            next_token(ps);
+            expr = unary_expression(ps);
+            return sl_make_unary_node(expr, SL_NODE_NOT, sl_eval_not);
+        default:
+            return power_expression(ps);
+    }
 }
 
 static sl_node_base_t*
@@ -414,8 +450,22 @@ shift_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 bitwise_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return shift_expression(ps);
+    sl_node_base_t* left = shift_expression(ps);
+    sl_node_base_t* right;
+    SLVAL id;
+    while(1) {
+        switch(peek_token(ps)->type) {
+            case SL_TOK_BIT_OR:
+            case SL_TOK_BIT_AND:
+            case SL_TOK_CARET:
+                id = next_token(ps)->str;
+                right = shift_expression(ps);
+                left = sl_make_send_node(left, id, 1, &right);
+                break;
+            default:
+                return left;
+        }
+    }
 }
 
 static sl_node_base_t*
@@ -443,8 +493,24 @@ relational_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 logical_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return relational_expression(ps);
+    sl_node_base_t* left = relational_expression(ps);
+    sl_node_base_t* right;
+    while(1) {
+        switch(peek_token(ps)->type) {
+            case SL_TOK_OR:
+                next_token(ps);
+                right = relational_expression(ps);
+                left = sl_make_binary_node(left, right, SL_NODE_OR, sl_eval_or);
+                break;
+            case SL_TOK_AND:
+                next_token(ps);
+                right = relational_expression(ps);
+                left = sl_make_binary_node(left, right, SL_NODE_AND, sl_eval_and);
+                break;
+            default:
+                return left;
+        }
+    }
 }
 
 static sl_node_base_t*
