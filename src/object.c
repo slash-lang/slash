@@ -109,14 +109,13 @@ sl_to_cstr(sl_vm_t* vm, SLVAL obj)
 SLVAL
 sl_object_to_s(sl_vm_t* vm, SLVAL self)
 {
+    char buff[128];
     SLVAL klass = sl_class_of(vm, self);
-    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
-    sl_string_t* name = (sl_string_t*)sl_get_ptr(klassp->name);
-    char* str = (char*)GC_MALLOC_ATOMIC(32 + name->buff_len);
-    strcpy(str, "#<");
-    memcpy(str + 2, name->buff, name->buff_len);
-    sprintf(str + 2 + name->buff_len, ":%p>", (void*)sl_get_ptr(self));
-    return sl_make_cstring(vm, str);
+    SLVAL str = sl_make_cstring(vm, "#<");
+    str = sl_string_concat(vm, str, sl_to_s(vm, klass));
+    sprintf(buff, ":%p>", (void*)sl_get_ptr(self));
+    str = sl_string_concat(vm, str, sl_make_cstring(vm, buff));
+    return str;
 }
 
 void
