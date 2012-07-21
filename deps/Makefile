@@ -10,7 +10,8 @@ gc-7.2/.libs/libgc.a: gc-7.2.tar.gz
 	@make -C gc-7.2 &> make-gc-7.2.log
 
 gmp-5.0.5/.libs/libgmp.a: gmp-5.0.5.tar.bz2
-	tar zfx gmp-5.0.5.tar.bz2
+	bzip2 -d gmp-5.0.5.tar.bz2
+	tar fx gmp-5.0.5.tar
 	@echo "Configuring dependency gmp-5.0.5 (logging to configure-gmp-5.0.5.log)"
 	@cd gmp-5.0.5 && ./configure --enable-static --disable-shared --with-pic &> ../configure-gmp-5.0.5.log
 	@echo "Making dependency gmp-5.0.5 (logging to make-gmp-5.0.5.log)"
