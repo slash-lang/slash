@@ -7,6 +7,16 @@
 
 use strict;
 use File::Temp qw(tempfile tempdir);
+use Getopt::Long;
+
+exit 1 unless GetOptions "with-gc-dir=s" => \my $gc_dir, "with-gmp-dir=s" => \my $gmp_dir;
+my $CFLAGS = "";
+if($gc_dir) {
+    $CFLAGS .= " -I$gc_dir/include -L$gc_dir/lib";
+}
+if($gmp_dir) {
+    $CFLAGS .= " -I$gmp_dir/include -L$gmp_dir/lib";
+}
 
 sub compile {
     my ($flags, $src) = @_;
@@ -15,7 +25,7 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    my $output = `$ENV{CC} $flags -o $binary $filename 2>&1`;
+    my $output = `$ENV{CC} $CFLAGS $flags -o $binary $filename 2>&1`;
     chomp $output;
     $? == 0 && !$output;
 };
@@ -71,5 +81,9 @@ int main() {
     GC_INIT();
 }
 C
+
+open my $mf, ">local.mk";
+print $mf "CFLAGS+=$CFLAGS\n";
+close $mf;
 
 print "\n\e[32mReady to build\n\e[0m";
