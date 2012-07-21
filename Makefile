@@ -1,6 +1,8 @@
 CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -iquote ./inc -g -fPIC
 LDFLAGS=
 
+include local.mk
+
 PLATFORM=posix
 
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \

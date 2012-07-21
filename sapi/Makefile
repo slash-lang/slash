@@ -3,6 +3,8 @@ CFLAGS=-Wall -Wextra -pedantic -ansi -Werror -iquote../../inc/ -g
 LDFLAGS=-lpthread -lgmp -lgc -lm
 LIBS=../../libslash.a
 
+include ../local.mk
+
 .PHONY: clean list
 
 sapi[%]:
