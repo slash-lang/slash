@@ -3,3 +3,4 @@
 *.la
 *.dSYM
 *.supp
+*.mk
