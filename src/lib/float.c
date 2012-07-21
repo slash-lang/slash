@@ -34,8 +34,8 @@ static SLVAL
 sl_float_to_s(sl_vm_t* vm, SLVAL self)
 {
     double d = sl_get_float(vm, self);
-    char buff[128];
-    snprintf(buff, 127, "%f", d);
+    char buff[1024];
+    sprintf(buff, "%f", d);
     return sl_make_cstring(vm, buff);
 }
 
