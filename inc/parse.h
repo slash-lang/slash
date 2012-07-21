@@ -60,6 +60,9 @@ sl_node_base_t*
 sl_make_while_node(sl_node_base_t* expr, sl_node_base_t* body);
 
 sl_node_base_t*
+sl_make_for_node(sl_node_base_t* lval, sl_node_base_t* expr, sl_node_base_t* body, sl_node_base_t* else_body);
+
+sl_node_base_t*
 sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl_node_base_t* body);
 
 sl_node_base_t*

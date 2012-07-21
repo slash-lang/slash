@@ -35,6 +35,7 @@ typedef struct sl_lib {
     SLVAL Bignum;
     
     SLVAL Array;
+    SLVAL Array_Enumerator;
     SLVAL Hash;
     
     SLVAL Method;
