@@ -99,6 +99,8 @@ HEX [0-9a-fA-F]
 <SLASH>"}"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE)); }
 <SLASH>";"          { ADD_TOKEN(sl_make_token(SL_TOK_SEMICOLON)); }
 
+<SLASH>"<<"         { ADD_TOKEN(sl_make_token(SL_TOK_SHIFT_LEFT)); }
+<SLASH>">>"         { ADD_TOKEN(sl_make_token(SL_TOK_SHIFT_RIGHT)); }
 <SLASH>","          { ADD_TOKEN(sl_make_token(SL_TOK_COMMA)); }
 <SLASH>"=="         { ADD_TOKEN(sl_make_token(SL_TOK_DBL_EQUALS)); }
 <SLASH>"!="         { ADD_TOKEN(sl_make_token(SL_TOK_NOT_EQUALS)); }

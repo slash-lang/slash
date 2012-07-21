@@ -11,13 +11,11 @@
 #include <string.h>
 #include <gc.h>
 
-/*
 static sl_token_t*
 token(sl_parse_state_t* ps)
 {
     return &ps->tokens[ps->current_token - 1];
 }
-*/
 
 static sl_token_t*
 peek_token(sl_parse_state_t* ps)
@@ -375,19 +373,12 @@ mul_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* left = unary_expression(ps);
     sl_node_base_t* right;
-    sl_token_t* tok;
-    char* id;
+    SLVAL id;
     while(peek_token(ps)->type == SL_TOK_TIMES || peek_token(ps)->type == SL_TOK_DIVIDE ||
             peek_token(ps)->type == SL_TOK_MOD) {
-        tok = next_token(ps);
+        id = next_token(ps)->str;
         right = unary_expression(ps);
-        switch(tok->type) {
-            case SL_TOK_TIMES:  id = "*"; break;
-            case SL_TOK_DIVIDE: id = "/"; break;
-            case SL_TOK_MOD:    id = "%"; break;
-            default: /* wtf? */ break;
-        }
-        left = sl_make_send_node(left, sl_make_cstring(ps->vm, id), 1, &right);
+        left = sl_make_send_node(left, id, 1, &right);
     }
     return left;
 }
@@ -397,12 +388,10 @@ add_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* left = mul_expression(ps);
     sl_node_base_t* right;
-    sl_token_t* tok;
     SLVAL id;
     while(peek_token(ps)->type == SL_TOK_PLUS || peek_token(ps)->type == SL_TOK_MINUS) {
-        tok = next_token(ps);
+        id = next_token(ps)->str;
         right = mul_expression(ps);
-        id = sl_make_cstring(ps->vm, tok->type == SL_TOK_PLUS ? "+" : "-");
         left = sl_make_send_node(left, id, 1, &right);
     }
     return left;
@@ -411,8 +400,15 @@ add_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 shift_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return add_expression(ps);
+    sl_node_base_t* left = add_expression(ps);
+    sl_node_base_t* right;
+    SLVAL id;
+    while(peek_token(ps)->type == SL_TOK_SHIFT_LEFT || peek_token(ps)->type == SL_TOK_SHIFT_RIGHT) {
+        id = next_token(ps)->str;
+        right = add_expression(ps);
+        left = sl_make_send_node(left, id, 1, &right);
+    }
+    return left;
 }
 
 static sl_node_base_t*
@@ -592,20 +588,11 @@ statement(sl_parse_state_t* ps)
                 expect_token(ps, SL_TOK_OPEN_TAG);
             }
             return node;
-        case SL_TOK_IF:
-        case SL_TOK_UNLESS:
-        case SL_TOK_WHILE:
-        case SL_TOK_UNTIL:
-        case SL_TOK_FOR:
-        case SL_TOK_CLASS:
-        case SL_TOK_DEF:
-            /*  we don't require a semicolon after these if they're used as a
-                statement, so short-circuit here... */
-            return primary_expression(ps);
         default:
             node = expression(ps);
             if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
-                && peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
+                && peek_token(ps)->type != SL_TOK_CLOSE_BRACE
+                && token(ps)->type != SL_TOK_CLOSE_BRACE) {
                 expect_token(ps, SL_TOK_SEMICOLON);
             }
             return node;
