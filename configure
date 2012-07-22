@@ -6,6 +6,7 @@
 #
 
 use strict;
+use Switch;
 use File::Temp qw(tempfile tempdir);
 use Getopt::Long;
 
