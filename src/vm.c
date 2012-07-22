@@ -10,12 +10,16 @@ static int
 sl_statically_initialized;
 
 void
+sl_static_init_exts();
+
+void
 sl_static_init()
 {
     if(sl_statically_initialized) {
         return;
     }
     GC_INIT();
+    sl_static_init_exts();
 }
 
 #define LIB(lib) void sl_init_##lib(sl_vm_t*)

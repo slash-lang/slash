@@ -101,12 +101,19 @@ if($platforms{$^O}) {
     exit 1;
 }
 
-my ($ext_decls, $ext_inits);
+my ($ext_decls, $ext_inits, $ext_static_inits);
+
+my $CURRENT_EXT;
+sub needs_static_init {
+    $ext_decls .= "void sl_static_init_ext_$CURRENT_EXT();";
+    $ext_static_inits .= "sl_static_init_ext_$CURRENT_EXT();";
+};
 
 print "\n";
 for my $ext (@exts) {
     print "\e[1mConfiguring ext/$ext\e[0m\n";
     my $conf = "ext/$ext/configure.pl";
+    $CURRENT_EXT = $ext;
     require $conf if -e $conf;
     $ext_decls .= "void sl_init_ext_$ext(sl_vm_t* vm);";
     $ext_inits .= "sl_init_ext_$ext(vm);";
@@ -118,6 +125,12 @@ print $init_exts <<"C";
 #include "slash.h"
 
 $ext_decls
+
+void
+sl_static_init_exts()
+{
+    $ext_static_inits
+}
 
 void
 sl_init_exts(sl_vm_t* vm)
