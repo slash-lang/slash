@@ -315,6 +315,18 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
         }
     }
     
+    if(sl_get_primitive_type(recv) != SL_T_INT && recvp->primitive_type == SL_T_CLASS) {
+        klassp = (sl_class_t*)recvp;
+        while(klassp->base.primitive_type != SL_T_NIL) {
+            if(klassp->base.singleton_methods) {
+                if(st_lookup(klassp->base.singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
+                    return apply(vm, recv, method, argc, argv);
+                }
+            }
+            klassp = (sl_class_t*)sl_get_ptr(klassp->super);
+        }
+    }
+    
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
