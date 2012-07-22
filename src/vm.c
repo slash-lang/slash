@@ -76,6 +76,7 @@ sl_init()
     
     vm = GC_MALLOC(sizeof(sl_vm_t));
     vm->initializing = 1;
+    vm->store = st_init_numtable();
     
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
@@ -104,4 +105,18 @@ sl_init()
     String->super = vm->lib.Comparable;
     
     return vm;
+}
+
+SLVAL
+sl_vm_store_get(sl_vm_t* vm, void* key)
+{
+    SLVAL val = vm->lib.nil;
+    st_lookup(vm->store, (st_data_t)key, (st_data_t*)&val);
+    return val;
+}
+
+void
+sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val)
+{
+    st_insert(vm->store, (st_data_t)key, (st_data_t)sl_get_ptr(val));
 }

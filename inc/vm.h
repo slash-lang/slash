@@ -54,6 +54,7 @@ typedef struct sl_vm {
     struct sl_catch_frame* catch_stack;
     void* data;
     void(*output)(struct sl_vm* ctx, char* buff, size_t len);
+    st_table_t* store;
 }
 sl_vm_t;
 
@@ -64,5 +65,11 @@ sl_static_init();
 
 sl_vm_t*
 sl_init();
+
+SLVAL
+sl_vm_store_get(sl_vm_t* vm, void* key);
+
+void
+sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val);
 
 #endif
