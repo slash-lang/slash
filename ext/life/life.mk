@@ -1,0 +1,1 @@
+OBJS+= ext/life/life.o
