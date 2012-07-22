@@ -40,6 +40,8 @@ typedef struct sl_lib {
     SLVAL Array_Enumerator;
     SLVAL Hash;
     
+    SLVAL File;
+    
     SLVAL Method;
     SLVAL BoundMethod;
     SLVAL Lambda;

@@ -37,6 +37,7 @@ LIB(enumerable);
 LIB(array);
 LIB(require);
 LIB(lambda);
+LIB(file);
 
 static void
 sl_init_libs(sl_vm_t* vm)
@@ -54,6 +55,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(array);
     LIB_INIT(require);
     LIB_INIT(lambda);
+    LIB_INIT(file);
 }
 
 sl_vm_t*
