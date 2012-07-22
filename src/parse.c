@@ -191,6 +191,34 @@ def_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+lambda_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t* body;
+    sl_token_t* tok;
+    size_t arg_count = 0, arg_cap = 2;
+    sl_string_t** args = GC_MALLOC(sizeof(sl_string_t*) * arg_cap);
+    expect_token(ps, SL_TOK_LAMBDA);
+    if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
+        expect_token(ps, SL_TOK_OPEN_PAREN);
+        while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+            if(arg_count >= arg_cap) {
+                arg_cap *= 2;
+                args = GC_REALLOC(args, sizeof(sl_string_t*) * arg_cap);
+            }
+            tok = expect_token(ps, SL_TOK_IDENTIFIER);
+            args[arg_count++] = (sl_string_t*)sl_get_ptr(
+                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+                expect_token(ps, SL_TOK_COMMA);
+            }
+        }
+        expect_token(ps, SL_TOK_CLOSE_PAREN);
+    }
+    body = body_expression(ps);
+    return sl_make_lambda_node(arg_count, args, body);
+}
+
+static sl_node_base_t*
 send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
 {
     size_t argc = 0, cap = 2;
@@ -295,6 +323,8 @@ primary_expression(sl_parse_state_t* ps)
             return class_expression(ps);
         case SL_TOK_DEF:
             return def_expression(ps);
+        case SL_TOK_LAMBDA:
+            return lambda_expression(ps);
         case SL_TOK_OPEN_BRACKET:
             return array_expression(ps);
         case SL_TOK_OPEN_PAREN:

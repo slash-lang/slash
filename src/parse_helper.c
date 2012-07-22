@@ -2,6 +2,7 @@
 #include "eval.h"
 #include "string.h"
 #include "class.h"
+#include "lib/lambda.h"
 #include <gc.h>
 #include <string.h>
 
@@ -164,12 +165,19 @@ sl_node_base_t*
 sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_DEF, sl_eval_def, sl_node_def_t, {
-        if(sl_is_a(ps->vm, name, ps->vm->lib.Nil)) {
-            name = sl_make_cstring(ps->vm, "(anonymous function)");
-        }
         sl_expect(ps->vm, name, ps->vm->lib.String);
         node->name = name;
         node->on = on;
+        node->args = args;
+        node->arg_count = arg_count;
+        node->body = body;
+    });
+}
+
+sl_node_base_t*
+sl_make_lambda_node(size_t arg_count, sl_string_t** args, sl_node_base_t* body)
+{
+    MAKE_NODE(SL_NODE_LAMBDA, sl_make_lambda, sl_node_lambda_t, {
         node->args = args;
         node->arg_count = arg_count;
         node->body = body;
