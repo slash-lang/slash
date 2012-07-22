@@ -6,7 +6,6 @@
 #
 
 use strict;
-use Switch;
 use File::Temp qw(tempfile tempdir);
 use Getopt::Long;
 
@@ -87,12 +86,14 @@ C
 open my $mf, ">local.mk";
 print $mf "CFLAGS+= $CFLAGS\n";
 
-switch($^O) {
-    case "darwin" { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; }
-    else {
-        print "\n\e[31mUnknown system {$^O}. Please file an issue at https://github.com/haileysome/slash/issues.\n\e[0m";
-        exit 1;
-    }
+my %platforms = (
+    darwin => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; }
+);
+if($platforms{$^O}) {
+    $platforms{$^O}->();
+} else {    
+    print "\n\e[31mUnknown system {$^O}. Please file an issue at https://github.com/haileysome/slash/issues.\n\e[0m";
+    exit 1;
 }
 
 close $mf;
