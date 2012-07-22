@@ -36,6 +36,7 @@ typedef enum sl_token_type {
     SL_TOK_IN,
     SL_TOK_WHILE,
     SL_TOK_UNTIL,
+    SL_TOK_LAMBDA,
     
     SL_TOK_OPEN_PAREN,
     SL_TOK_CLOSE_PAREN,

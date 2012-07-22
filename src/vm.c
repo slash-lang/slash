@@ -33,8 +33,10 @@ LIB(float);
 LIB(bignum);
 LIB(method);
 LIB(io);
+LIB(enumerable);
 LIB(array);
 LIB(require);
+LIB(lambda);
 
 static void
 sl_init_libs(sl_vm_t* vm)
@@ -48,8 +50,10 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(true);
     LIB_INIT(false);
     LIB_INIT(io);
+    LIB_INIT(enumerable);
     LIB_INIT(array);
     LIB_INIT(require);
+    LIB_INIT(lambda);
 }
 
 sl_vm_t*

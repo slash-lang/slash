@@ -31,6 +31,12 @@ get_float(sl_vm_t* vm, SLVAL val)
 }
 
 static SLVAL
+sl_float_succ(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_float(vm, sl_get_float(vm, self) + 1.0);
+}
+
+static SLVAL
 sl_float_to_s(sl_vm_t* vm, SLVAL self)
 {
     double d = sl_get_float(vm, self);
@@ -66,6 +72,7 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "inspect", 0, sl_float_to_s);
     sl_define_method(vm, vm->lib.Float, "to_i", 0, sl_float_to_i);
     sl_define_method(vm, vm->lib.Float, "to_f", 0, sl_float_to_f);
+    sl_define_method(vm, vm->lib.Float, "succ", 0, sl_float_succ);
     sl_define_method(vm, vm->lib.Float, "+", 1, sl_float_add);
     sl_define_method(vm, vm->lib.Float, "-", 1, sl_float_sub);
     sl_define_method(vm, vm->lib.Float, "*", 1, sl_float_mul);

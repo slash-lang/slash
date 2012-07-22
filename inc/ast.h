@@ -15,6 +15,7 @@ typedef enum sl_node_type {
     SL_NODE_SELF,
     SL_NODE_CLASS,
     SL_NODE_DEF,
+    SL_NODE_LAMBDA,
     SL_NODE_IF,
     SL_NODE_UNLESS,
     SL_NODE_FOR,
@@ -94,6 +95,14 @@ typedef struct sl_node_def {
     sl_node_base_t* body;
 }
 sl_node_def_t;
+
+typedef struct sl_node_lambda {
+    sl_node_base_t base;
+    sl_string_t** args;
+    size_t arg_count;
+    sl_node_base_t* body;
+}
+sl_node_lambda_t;
 
 typedef struct sl_node_if {
     sl_node_base_t base;

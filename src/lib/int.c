@@ -18,6 +18,12 @@ highest_set_bit(intptr_t t)
 }
 
 SLVAL
+sl_int_succ(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, sl_get_int(self) + 1);
+}
+
+SLVAL
 sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
@@ -174,6 +180,7 @@ void
 sl_init_int(sl_vm_t* vm)
 {
     vm->lib.Int = sl_define_class(vm, "Int", vm->lib.Number);
+    sl_define_method(vm, vm->lib.Int, "succ", 0, sl_int_succ);
     sl_define_method(vm, vm->lib.Int, "+", 1, sl_int_add);
     sl_define_method(vm, vm->lib.Int, "-", 1, sl_int_sub);
     sl_define_method(vm, vm->lib.Int, "*", 1, sl_int_mul);

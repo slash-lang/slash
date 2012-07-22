@@ -147,7 +147,7 @@ sl_array_enumerator_current(sl_vm_t* vm, SLVAL self)
 void
 sl_init_array(sl_vm_t* vm)
 {
-    vm->lib.Array = sl_define_class(vm, "Array", vm->lib.Object);
+    vm->lib.Array = sl_define_class(vm, "Array", vm->lib.Enumerable);
     sl_class_set_allocator(vm, vm->lib.Array, allocate_array);
     sl_define_method(vm, vm->lib.Array, "init", -1, sl_array_init);
     sl_define_method(vm, vm->lib.Array, "enumerate", 0, sl_array_enumerate);

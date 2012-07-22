@@ -6,7 +6,7 @@ OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/lib/bignum.o src/utf8.o src/lex.o src/lex_helper.o src/lib/nil.o \
 	src/lib/true.o src/lib/false.o src/eval.o src/parse.o src/parse_helper.o \
 	src/eval.o src/lib/io.o src/lib/array.o src/lib/comparable.o \
-	src/lib/require.o
+	src/lib/require.o src/lib/lambda.o src/lib/enumerable.o
 
 include local.mk
 
