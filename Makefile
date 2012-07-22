@@ -1,10 +1,6 @@
 CFLAGS=-Wall -Wextra -pedantic -Werror -ansi -iquote ./inc -g -fPIC
 LDFLAGS=
 
-include local.mk
-
-PLATFORM=posix
-
 OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
 	src/lib/bignum.o src/utf8.o src/lex.o src/lex_helper.o src/lib/nil.o \
@@ -12,7 +8,7 @@ OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/eval.o src/lib/io.o src/lib/array.o src/lib/comparable.o \
 	src/lib/require.o
 
-OBJS += platform/$(PLATFORM).o
+include local.mk
 
 .PHONY=clean default test
 
