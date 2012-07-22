@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <gc.h>
+#include "lib/array.h"
+#include "lib/enumerable.h"
 #include "string.h"
 #include "error.h"
 #include "value.h"
@@ -10,13 +12,17 @@
 typedef struct sl_error {
     sl_object_t base;
     SLVAL message;
+    SLVAL backtrace;
 }
 sl_error_t;
 
 static sl_object_t*
-allocate_error()
+allocate_error(sl_vm_t* vm)
 {
-    return (sl_object_t*)GC_MALLOC(sizeof(sl_error_t));
+    sl_error_t* err = GC_MALLOC(sizeof(sl_error_t));
+    err->message = vm->lib.nil;
+    err->backtrace = sl_make_array(vm, 0, NULL);
+    return (sl_object_t*)err;
 }
 
 static sl_error_t*
@@ -41,13 +47,23 @@ sl_error_message(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+sl_error_backtrace(sl_vm_t* vm, SLVAL self)
+{
+    sl_error_t* error = get_error(vm, self);
+    return error->backtrace;
+}
+
+static SLVAL
 sl_error_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_error_t* error = get_error(vm, self);
-    SLVAL name = sl_error_name(vm, self);
-    return sl_string_concat(vm, name,
-        sl_string_concat(vm, sl_make_cstring(vm, ": "),
-            error->message));
+    SLVAL str = sl_error_name(vm, self);
+    SLVAL nl = sl_make_cstring(vm, "\n");
+    str = sl_string_concat(vm, str, sl_make_cstring(vm, ": "));
+    str = sl_string_concat(vm, str, error->message);
+    str = sl_string_concat(vm, str, nl);
+    str = sl_string_concat(vm, str, sl_enumerable_join(vm, error->backtrace, 1, &nl));
+    return str;
 }
 
 void
@@ -57,6 +73,7 @@ sl_init_error(sl_vm_t* vm)
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
     sl_define_method(vm, vm->lib.Error, "name", 0, sl_error_name);
     sl_define_method(vm, vm->lib.Error, "message", 0, sl_error_message);
+    sl_define_method(vm, vm->lib.Error, "backtrace", 0, sl_error_backtrace);
     sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
     
     #define ERROR(klass) vm->lib.klass = sl_define_class(vm, #klass, vm->lib.Error)
