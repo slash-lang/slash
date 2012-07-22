@@ -9,7 +9,7 @@ sl_stack_limit()
     void* addr;
     size_t size;
     pthread_getattr_np(self, &attr);
-    addr = pthread_attr_getstackaddr(&attr);
-    size = pthread_attr_getstacksize(&attr);
+    pthread_attr_getstackaddr(&attr, &addr);
+    pthread_attr_getstacksize(&attr, &size);
     return (void*)((size_t)addr - size + 65536);
 }
