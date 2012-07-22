@@ -4,4 +4,6 @@
 char* sl_realpath(char* path);
 int sl_file_exists(char* path);
 
+void* sl_stack_limit();
+
 #endif

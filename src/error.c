@@ -64,6 +64,7 @@ sl_init_error(sl_vm_t* vm)
     ERROR(EncodingError);
     ERROR(NameError);
     ERROR(NoMethodError);
+    ERROR(StackOverflowError);
     ERROR(SyntaxError);
     ERROR(TypeError);
     ERROR(ZeroDivisionError);

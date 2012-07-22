@@ -8,6 +8,7 @@
 #include "class.h"
 #include "string.h"
 #include "method.h"
+#include "platform.h"
 
 void
 sl_pre_init_object(sl_vm_t* vm)
@@ -248,6 +249,11 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
     sl_eval_ctx_t* ctx;
     size_t i;
     SLVAL arg;
+    /* @TODO - investigate performance implications of calling this all the time: */
+    if((void*)&arg < sl_stack_limit()) {
+        /* we're about to blow the stack */
+        sl_throw_message2(vm, vm->lib.StackOverflowError, "Stack Overflow");
+    }
     if(method->arity < 0) {
         if((size_t)(-method->arity - 1) > argc) {
             sprintf(errstr, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), (unsigned long)argc);

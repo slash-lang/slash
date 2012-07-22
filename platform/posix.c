@@ -7,7 +7,8 @@
 #include <string.h>
 #include "platform.h"
 
-char* sl_realpath(char* path)
+char*
+sl_realpath(char* path)
 {
     #ifdef PATH_MAX
         char* cpath = GC_MALLOC(PATH_MAX + 1);
@@ -21,8 +22,24 @@ char* sl_realpath(char* path)
     #endif
 }
 
-int sl_file_exists(char* path)
+int
+sl_file_exists(char* path)
 {
     struct stat s;
     return !stat(path, &s);
+}
+
+void*
+pthread_get_stackaddr_np(pthread_t);
+
+void*
+pthread_get_stackaddr_np(pthread_t);
+
+void*
+sl_stack_limit()
+{
+    pthread_t self = pthread_self();
+    void* addr = pthread_get_stackaddr_np(self);
+    size_t size = pthread_get_stacksize_np(self);
+    return (void*)((size_t)addr - size + 65536);
 }
