@@ -3,4 +3,4 @@
 *.la
 *.dSYM
 *.supp
-*.mk
+local.mk
