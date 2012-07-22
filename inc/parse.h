@@ -69,6 +69,9 @@ sl_node_base_t*
 sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body);
 
 sl_node_base_t*
+sl_make_lambda_node(size_t arg_count, sl_string_t** args, sl_node_base_t* body);
+
+sl_node_base_t*
 sl_make_self_node();
 
 sl_node_base_t*
