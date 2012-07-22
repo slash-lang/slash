@@ -92,7 +92,7 @@ my %platforms = (
 if($platforms{$^O}) {
     $platforms{$^O}->();
 } else {    
-    print "\n\e[31mUnknown system {$^O}. Please file an issue at https://github.com/haileysome/slash/issues.\n\e[0m";
+    print "\n\e[31mUnknown system $^O. Please file an issue at https://github.com/haileysome/slash/issues.\n\e[0m";
     exit 1;
 }
 
