@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <alloca.h>
 
 sl_eval_ctx_t*
 sl_make_eval_ctx(sl_vm_t* vm)
