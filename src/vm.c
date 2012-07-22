@@ -39,6 +39,8 @@ LIB(require);
 LIB(lambda);
 LIB(file);
 
+void sl_init_exts(sl_vm_t* vm);
+
 static void
 sl_init_libs(sl_vm_t* vm)
 {
@@ -56,6 +58,8 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(require);
     LIB_INIT(lambda);
     LIB_INIT(file);
+    
+    sl_init_exts(vm);
 }
 
 sl_vm_t*
