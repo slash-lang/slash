@@ -34,10 +34,10 @@ libslash.a: $(OBJS)
 
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
-%.o: %.c inc/*.h Makefile
+%.o: %.c inc/*.h Makefile local.mk
 	$(CC) -o $@ $(CFLAGS) -c $<
 
-%.c: %.yy inc/*.h Makefile
+%.c: %.yy inc/*.h Makefile local.mk
 	flex -o $@ $<
 
 clean:

@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <gc.h>
 #include <string.h>
+#include <pthread.h>
 #include "platform.h"
 
 char*
@@ -32,8 +33,8 @@ sl_file_exists(char* path)
 void*
 pthread_get_stackaddr_np(pthread_t);
 
-void*
-pthread_get_stackaddr_np(pthread_t);
+size_t
+pthread_get_stacksize_np(pthread_t);
 
 void*
 sl_stack_limit()
