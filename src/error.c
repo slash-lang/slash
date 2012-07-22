@@ -35,8 +35,7 @@ get_error(sl_vm_t* vm, SLVAL object)
 static SLVAL
 sl_error_name(sl_vm_t* vm, SLVAL self)
 {
-    sl_class_t* klass = (sl_class_t*)sl_get_ptr(sl_class_of(vm, self));
-    return klass->name;
+    return sl_to_s(vm, sl_class_of(vm, self));
 }
 
 static SLVAL
