@@ -222,7 +222,7 @@ sl_init_string(sl_vm_t* vm)
         (st_data_t)sl_cstring(vm, "String"), (st_data_t)vm->lib.String.i);
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
-    sl_define_method(vm, vm->lib.String, "+", 0, sl_string_concat);
+    sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
