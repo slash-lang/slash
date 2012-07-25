@@ -12,17 +12,8 @@ typedef struct {
 }
 mysql_t;
 
-typedef struct {
-    sl_object_t base;
-    int valid;
-    mysql_t* mysql;
-    MYSQL_STMT* stmt;
-}
-stmt_t;
-
 static int cMySQL;
 static int cMySQL_Error;
-static int cMySQL_Statement;
 
 void
 sl_static_init_ext_mysql()
@@ -45,20 +36,6 @@ allocate_mysql()
     return (sl_object_t*)mysql;
 }
 
-static void
-free_mysql_statement(stmt_t* stmt)
-{
-    mysql_stmt_close(stmt->stmt);
-}
-
-static sl_object_t*
-allocate_mysql_statement()
-{
-    sl_object_t* stmt = GC_MALLOC(sizeof(stmt_t));
-    GC_register_finalizer(stmt, (void(*)(void*,void*))free_mysql_statement, NULL, NULL, NULL);
-    return stmt;
-}
-
 static mysql_t*
 get_mysql(sl_vm_t* vm, SLVAL obj)
 {
@@ -69,18 +46,6 @@ get_mysql(sl_vm_t* vm, SLVAL obj)
         sl_throw_message2(vm, vm->lib.ArgumentError, "Invalid MySQL instance");
     }
     return mysql;
-}
-
-static stmt_t*
-get_stmt(sl_vm_t* vm, SLVAL obj)
-{
-    stmt_t* stmt;
-    sl_expect(vm, obj, sl_vm_store_get(vm, &cMySQL_Statement));
-    stmt = (stmt_t*)sl_get_ptr(obj);
-    if(!stmt->valid) {
-        sl_throw_message2(vm, vm->lib.ArgumentError, "Invalid MySQL::Statement instance");
-    }
-    return stmt;
 }
 
 static void
@@ -127,107 +92,67 @@ sl_mysql_init(sl_vm_t* vm, SLVAL self, SLVAL host, SLVAL user, SLVAL password)
 static SLVAL
 sl_mysql_use(sl_vm_t* vm, SLVAL self, SLVAL db)
 {
-    mysql_t* mysql = (mysql_t*)sl_get_ptr(self);
+    mysql_t* mysql = get_mysql(vm, self);
     mysql_select_db(&mysql->mysql, sl_to_cstr(vm, sl_expect(vm, db, vm->lib.String)));
     sl_mysql_check_error(vm, &mysql->mysql);
     return vm->lib._true;
 }
 
 static SLVAL
-sl_mysql_prepare(sl_vm_t* vm, SLVAL self, SLVAL query)
+sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
-    SLVAL argv[2];
-    argv[0] = self;
-    argv[1] = query;
-    return sl_new(vm, sl_vm_store_get(vm, &cMySQL_Statement), 2, argv);
-}
-
-static SLVAL
-sl_mysql_statement_init(sl_vm_t* vm, SLVAL self, SLVAL mysql, SLVAL query)
-{
-    stmt_t* stmt = (stmt_t*)sl_get_ptr(self);
-    sl_string_t* q;
-    stmt->mysql = get_mysql(vm, mysql);
-    stmt->stmt = mysql_stmt_init(&stmt->mysql->mysql);
-    sl_mysql_check_error(vm, &stmt->mysql->mysql);
-    q = (sl_string_t*)sl_get_ptr(sl_expect(vm, query, vm->lib.String));
-    mysql_stmt_prepare(stmt->stmt, (char*)q->buff, q->buff_len);
-    sl_mysql_check_error(vm, &stmt->mysql->mysql);
-    stmt->valid = 1;
-    return self;
-}
-
-static SLVAL
-sl_mysql_statement_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
-{
-    size_t i, j, len;
-    stmt_t* stmt = get_stmt(vm, self);
-    sl_string_t* str;
-    SLVAL* results;
-    SLVAL* cells;
-    size_t num_rows, field_count;
-    MYSQL_BIND* bind = alloca(sizeof(MYSQL_BIND) * argc);
-    MYSQL_BIND out_bind;
-    memset(bind, 0, sizeof(MYSQL_BIND) * argc);
-    for(i = 0; i < argc; i++) {
-        str = (sl_string_t*)sl_get_ptr(sl_to_s(vm, argv[i]));
-        if(sl_get_primitive_type(argv[i]) == SL_T_NIL) {
-            bind[i].buffer_type = MYSQL_TYPE_NULL;
-        } else {
-            bind[i].buffer_type = MYSQL_TYPE_STRING;
-            bind[i].buffer = str->buff;
-            bind[i].buffer_length = str->buff_len;
-        }
+    mysql_t* mysql = get_mysql(vm, self);
+    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, query, vm->lib.String));
+    MYSQL_RES* result;
+    MYSQL_ROW row;
+    size_t ncolumns, nrows;
+    SLVAL* rows;
+    SLVAL* fields;
+    size_t i, j;
+    size_t* lengths;
+    if(mysql_real_query(&mysql->mysql, (char*)str->buff, str->buff_len)) {
+        sl_mysql_check_error(vm, &mysql->mysql);
     }
-    if(mysql_stmt_bind_param(stmt->stmt, bind)) {
-        sl_mysql_check_error(vm, &stmt->mysql->mysql);
-    }
-    if(mysql_stmt_execute(stmt->stmt)) {
-        sl_mysql_check_error(vm, &stmt->mysql->mysql);
-    }
-    if(mysql_stmt_store_result(stmt->stmt)) {
-        sl_mysql_check_error(vm, &stmt->mysql->mysql);
-    }
-    num_rows = mysql_stmt_num_rows(stmt->stmt);
-    field_count = mysql_stmt_field_count(stmt->stmt);
-    results = GC_MALLOC(sizeof(SLVAL) * num_rows);
-    for(i = 0; i < num_rows; i++) {
-        cells = GC_MALLOC(sizeof(SLVAL) * field_count);
-        mysql_stmt_fetch(stmt->stmt);
-        for(j = 0; j < field_count; j++) {
-            memset(&out_bind, 0, sizeof(out_bind));
-            out_bind.buffer_type = MYSQL_TYPE_STRING;
-            out_bind.buffer = GC_MALLOC(65536);
-            out_bind.buffer_length = 65536;
-            out_bind.length = &len;
-            if(mysql_stmt_fetch_column(stmt->stmt, &out_bind, j, 0)) {
-                sl_mysql_check_error(vm, &stmt->mysql->mysql);
+    if((result = mysql_store_result(&mysql->mysql))) {
+        /* do shit */
+        ncolumns = mysql_num_fields(result);
+        nrows = mysql_num_rows(result);
+        rows = GC_MALLOC(sizeof(SLVAL) * nrows);
+        for(i = 0; i < nrows; i++) {
+            fields = GC_MALLOC(sizeof(SLVAL) * ncolumns);
+            row = mysql_fetch_row(result);
+            lengths = mysql_fetch_lengths(result);
+            for(j = 0; j < ncolumns; j++) {
+                if(row[j]) {
+                    fields[j] = sl_make_string(vm, (uint8_t*)row[j], lengths[j]);
+                } else {
+                    fields[j] = vm->lib.nil;
+                }
             }
-            cells[j] = sl_make_string(vm, out_bind.buffer, len);
+            rows[i] = sl_make_array(vm, ncolumns, fields);
         }
-        results[i] = sl_make_array(vm, field_count, cells);
+        mysql_free_result(result);
+        return sl_make_array(vm, nrows, rows);
+    } else {
+        if(mysql_field_count(&mysql->mysql) != 0) {
+            sl_mysql_check_error(vm, &mysql->mysql);
+        }
+        return sl_make_int(vm, mysql_affected_rows(&mysql->mysql));
     }
-    return sl_make_array(vm, num_rows, results);
 }
 
 void
 sl_init_ext_mysql(sl_vm_t* vm)
 {
-    SLVAL MySQL, MySQL_Statement, MySQL_Error;
+    SLVAL MySQL, MySQL_Error;
     MySQL = sl_define_class(vm, "MySQL", vm->lib.Object);
     sl_class_set_allocator(vm, MySQL, allocate_mysql);
     sl_define_method(vm, MySQL, "init", 3, sl_mysql_init);
     sl_define_method(vm, MySQL, "use", 1, sl_mysql_use);
-    sl_define_method(vm, MySQL, "prepare", 1, sl_mysql_prepare);
+    sl_define_method(vm, MySQL, "query", 1, sl_mysql_query);
     
     MySQL_Error = sl_define_class3(vm, sl_make_cstring(vm, "Error"), vm->lib.Error, MySQL);
     
-    MySQL_Statement = sl_define_class3(vm, sl_make_cstring(vm, "Statement"), vm->lib.Error, MySQL);
-    sl_class_set_allocator(vm, MySQL_Statement, allocate_mysql_statement);
-    sl_define_method(vm, MySQL_Statement, "init", 2, sl_mysql_statement_init);
-    sl_define_method(vm, MySQL_Statement, "execute", -1, sl_mysql_statement_execute);
-    
     sl_vm_store_put(vm, &cMySQL, MySQL);
     sl_vm_store_put(vm, &cMySQL_Error, MySQL_Error);
-    sl_vm_store_put(vm, &cMySQL_Statement, MySQL_Statement);
 }
