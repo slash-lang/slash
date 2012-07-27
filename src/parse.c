@@ -116,9 +116,12 @@ for_expression(sl_parse_state_t* ps)
     sl_node_base_t *lval, *expr, *body, *else_body = NULL;
     sl_token_t* tok;
     expect_token(ps, SL_TOK_FOR);
-    /* @TODO allow other lvals */
-    tok = expect_token(ps, SL_TOK_IDENTIFIER);
-    lval = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var, tok->str);
+    /* save current token to allow rewinding and erroring */
+    tok = peek_token(ps);
+    lval = primary_expression(ps);
+    if(!sl_node_is_lval(lval)) {
+        unexpected(ps, tok);
+    }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
     body = body_expression(ps);
