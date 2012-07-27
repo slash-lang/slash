@@ -20,6 +20,9 @@ sl_parse_state_t;
 sl_node_base_t*
 sl_parse(sl_vm_t* vm, sl_token_t* tokens, size_t token_count, uint8_t* filename);
 
+int
+sl_node_is_lval(sl_node_base_t* node);
+
 sl_node_seq_t*
 sl_make_seq_node();
 
