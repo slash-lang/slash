@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <time.h>
 #include <gc.h>
 #include <string.h>
 #include "platform.h"
@@ -27,4 +29,11 @@ sl_file_exists(char* path)
 {
     struct stat s;
     return !stat(path, &s);
+}
+
+int sl_seed()
+{
+    struct timeval a;
+    gettimeofday(&a, NULL);
+    return (int)(a.tv_usec ^ a.tv_sec);
 }

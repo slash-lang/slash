@@ -38,7 +38,8 @@ typedef struct sl_lib {
     SLVAL Enumerable;
     SLVAL Array;
     SLVAL Array_Enumerator;
-    SLVAL Hash;
+    SLVAL Dict;
+    SLVAL Dict_Enumerator;
     
     SLVAL File;
     
@@ -55,6 +56,7 @@ typedef struct sl_vm {
     void* data;
     void(*output)(struct sl_vm* ctx, char* buff, size_t len);
     st_table_t* store;
+    int hash_seed;
 }
 sl_vm_t;
 
