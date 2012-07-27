@@ -1,4 +1,7 @@
 #include <gc.h>
+#include <stdlib.h>
+#include <time.h>
+#include "lib/rand.h"
 #include "value.h"
 #include "vm.h"
 #include "string.h"
@@ -42,12 +45,14 @@ LIB(array);
 LIB(require);
 LIB(lambda);
 LIB(file);
+LIB(dict);
+LIB(rand);
 
 void sl_init_exts(sl_vm_t* vm);
 
 static void
 sl_init_libs(sl_vm_t* vm)
-{
+{    
     LIB_INIT(nil);
     LIB_INIT(comparable);
     LIB_INIT(number);
@@ -62,6 +67,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(require);
     LIB_INIT(lambda);
     LIB_INIT(file);
+    /*LIB_INIT(dict);*/
     
     sl_init_exts(vm);
 }
@@ -77,6 +83,8 @@ sl_init()
     vm = GC_MALLOC(sizeof(sl_vm_t));
     vm->initializing = 1;
     vm->store = st_init_numtable();
+    LIB_INIT(rand);
+    vm->hash_seed = sl_rand(vm);
     
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
