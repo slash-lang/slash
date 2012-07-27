@@ -144,6 +144,18 @@ sl_array_enumerator_current(sl_vm_t* vm, SLVAL self)
     return e->items[e->at - 1];
 }
 
+static SLVAL
+sl_array_hash(sl_vm_t* vm, SLVAL self)
+{
+    sl_array_t* ary = get_array(vm, self);
+    int hash = 0;
+    size_t i;
+    for(i = 0; i < ary->count; i++) {
+        hash ^= sl_hash(vm, ary->items[i]);
+    }
+    return sl_make_int(vm, hash % SL_MAX_INT);
+}
+
 void
 sl_init_array(sl_vm_t* vm)
 {
@@ -160,6 +172,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "shift", 0, sl_array_shift);
     sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_array_to_s);
+    sl_define_method(vm, vm->lib.Array, "hash", 0, sl_array_hash);
     
     vm->lib.Array_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);

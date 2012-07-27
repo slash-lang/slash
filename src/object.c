@@ -35,6 +35,9 @@ sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
 static SLVAL
 sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other);
 
+static SLVAL
+sl_object_hash(sl_vm_t* vm, SLVAL self);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -44,6 +47,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
+    sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
     sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
     sl_define_method(vm, vm->lib.Object, "!=", 1, sl_object_ne);
 }
@@ -72,6 +76,12 @@ sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other)
     } else {
         return vm->lib._true;
     }
+}
+
+static SLVAL
+sl_object_hash(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, (int)(intptr_t)sl_get_ptr(self));
 }
 
 SLVAL

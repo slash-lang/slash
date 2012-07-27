@@ -3,9 +3,13 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <limits.h>
 #include "st.h"
 
 struct sl_vm;
+
+#define SL_MAX_INT (INT_MAX / 2)
+#define SL_MIN_INT (INT_MIN / 2)
 
 typedef union slval {
     intptr_t i;
@@ -109,5 +113,8 @@ sl_allocate(struct sl_vm* vm, SLVAL klass);
 
 int
 sl_is_truthy(SLVAL val);
+
+int
+sl_hash(struct sl_vm* vm, SLVAL val);
 
 #endif
