@@ -84,6 +84,10 @@ sl_mysql_init(sl_vm_t* vm, SLVAL self, SLVAL host, SLVAL user, SLVAL password)
         sl_mysql_check_error(vm, &mysql->mysql);
     }
     
+    if(!mysql_set_character_set(&mysql->mysql, "utf8")) {
+        sl_mysql_check_error(vm, &mysql->mysql);
+    }
+    
     mysql->valid = 1;
     
     return self;
