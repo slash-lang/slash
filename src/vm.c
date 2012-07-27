@@ -68,6 +68,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(lambda);
     LIB_INIT(file);
     /*LIB_INIT(dict);*/
+    LIB_INIT(rand);
     
     sl_init_exts(vm);
 }
@@ -83,7 +84,7 @@ sl_init()
     vm = GC_MALLOC(sizeof(sl_vm_t));
     vm->initializing = 1;
     vm->store = st_init_numtable();
-    LIB_INIT(rand);
+    sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
     
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
