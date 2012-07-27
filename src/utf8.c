@@ -29,21 +29,21 @@ sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
                 c32 = c & 0x07;
                 bytes = 4;
             } else {
-                sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
+                sl_throw(vm, sl_make_error2(vm, vm->lib.EncodingError, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
             }
         } else {
             c32 = c;
             bytes = 1;
         }
         if(i + bytes > len) {
-            sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
+            sl_throw(vm, sl_make_error2(vm, vm->lib.EncodingError, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
         }
         for(j = 1; j < bytes; j++) {
             c32 <<= 6;
             c32 |= buff[++i] & 0x3f;
         }
         if(c32 < utf8_code_point_limit[bytes - 1]) {
-            sl_throw(vm, sl_make_error2(vm, vm->lib.SyntaxError /* @TODO maybe EncodingError? */, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
+            sl_throw(vm, sl_make_error2(vm, vm->lib.EncodingError, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
         }
         utf8len++;
     }
