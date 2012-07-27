@@ -80,6 +80,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "%", 1, sl_bignum_mod);
     sl_define_method(vm, vm->lib.Bignum, "==", 1, sl_bignum_eq);
     sl_define_method(vm, vm->lib.Bignum, "<=>", 1, sl_bignum_cmp);
+    sl_define_method(vm, vm->lib.Bignum, "hash", 0, sl_bignum_hash);
 }
 
 SLVAL
@@ -246,4 +247,15 @@ sl_bignum_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     sl_expect(vm, other, vm->lib.Bignum);
     return sl_make_int(vm, mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz));
+}
+
+SLVAL
+sl_bignum_hash(sl_vm_t* vm, SLVAL self)
+{
+    sl_bignum_t* bn = get_bignum(vm, self);
+    unsigned long i = mpz_get_ui(bn->mpz);
+    if(i >= SL_MAX_INT) {
+        i %= SL_MAX_INT;
+    }
+    return sl_make_int(vm, i);
 }

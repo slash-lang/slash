@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include <limits.h>
 #include <gc.h>
 #include "lib/bignum.h"
 #include "value.h"
@@ -29,7 +28,7 @@ SLVAL
 sl_make_int(sl_vm_t* vm, int n)
 {
     SLVAL v;
-    if(n > INT_MAX / 2 || n < INT_MIN / 2) {
+    if(n > SL_MAX_INT || n < SL_MIN_INT) {
         return sl_make_bignum(vm, n);
     }
     v.i = (n << 1) | 1;
@@ -102,4 +101,19 @@ sl_is_truthy(SLVAL val)
     } else {
         return 1;
     }
+}
+
+int
+sl_hash(sl_vm_t* vm, SLVAL val)
+{
+    SLVAL hash = sl_send(vm, val, "hash", 0);
+    switch(sl_get_primitive_type(val)) {
+        case SL_T_INT:
+            return sl_get_int(hash) ^ vm->hash_seed;
+        case SL_T_BIGNUM:
+            return sl_get_int(sl_bignum_hash(vm, val)) ^ vm->hash_seed;
+        default:
+            sl_throw_message2(vm, vm->lib.TypeError, "Expected #hash method to return Int or Bignum");
+    }
+    return 0;
 }

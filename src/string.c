@@ -10,7 +10,7 @@
 #include "utf8.h"
 
 static int
-sl_string_hash(sl_string_t* str)
+str_hash(sl_string_t* str)
 {
     uint32_t m = 0x5bd1e995;
     uint32_t r = 24;
@@ -46,7 +46,7 @@ sl_string_hash(sl_string_t* str)
 }
 
 static int
-sl_string_cmp(sl_string_t* a, sl_string_t* b)
+str_cmp(sl_string_t* a, sl_string_t* b)
 {
     if(a->buff_len < b->buff_len) {
         return -1;
@@ -57,7 +57,7 @@ sl_string_cmp(sl_string_t* a, sl_string_t* b)
 }
 
 struct st_hash_type
-sl_string_hash_type = { sl_string_cmp, sl_string_hash };
+sl_string_hash_type = { str_cmp, str_hash };
 
 SLVAL
 sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
@@ -230,7 +230,7 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     if(!sl_is_a(vm, other, vm->lib.String)) {
         return vm->lib._false;
     }
-    if(sl_string_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
+    if(str_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -240,7 +240,13 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    return sl_make_int(vm, sl_string_cmp(get_string(vm, self), get_string(vm, other)));
+    return sl_make_int(vm, str_cmp(get_string(vm, self), get_string(vm, other)));
+}
+
+static SLVAL
+sl_string_hash(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, str_hash(get_string(vm, self)));
 }
 
 void
@@ -263,4 +269,5 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
+    sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
 }

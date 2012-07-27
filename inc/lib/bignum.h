@@ -37,4 +37,7 @@ sl_bignum_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
 SLVAL
 sl_bignum_cmp(sl_vm_t* vm, SLVAL self, SLVAL other);
 
+SLVAL
+sl_bignum_hash(sl_vm_t* vm, SLVAL self);
+
 #endif
