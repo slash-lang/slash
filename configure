@@ -87,6 +87,14 @@ int main() {
 }
 C
 
+check_lib "iconv", <<C;
+#include <iconv.h>
+
+int main() {
+    iconv_open("UTF-8", "ISO-8859-1");
+}
+C
+
 open my $mf, ">local.mk";
 print $mf "CFLAGS+= $CFLAGS\n";
 
