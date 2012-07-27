@@ -6,6 +6,20 @@
 #include <gc.h>
 #include <string.h>
 
+int
+sl_node_is_lval(sl_node_base_t* node)
+{
+    switch(node->type) {
+        case SL_NODE_VAR:   return 1;
+        case SL_NODE_IVAR:  return 1;
+        case SL_NODE_CVAR:  return 1;
+        case SL_NODE_CONST: return 1;
+        case SL_NODE_SEND:  return 1;
+        default:
+            return 0;
+    }
+}
+
 static sl_node_base_t*
 sl_make_node(sl_node_type_t type, sl_node_eval_fn_t eval, size_t size)
 {
