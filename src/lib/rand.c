@@ -1,6 +1,7 @@
 #include <time.h>
 #include <gc.h>
 #include "lib/rand.h"
+#include "lib/float.h"
 #include "slash.h"
 #include "platform.h"
 
@@ -43,7 +44,7 @@ sl_rand(sl_vm_t* vm)
 }
 
 void
-sl_init_rand(sl_vm_t* vm)
+sl_rand_init_mt(sl_vm_t* vm)
 {
     sl_mt_state_t* state = GC_MALLOC_ATOMIC(sizeof(sl_mt_state_t));
     int seed = sl_seed(), i;
@@ -52,4 +53,16 @@ sl_init_rand(sl_vm_t* vm)
         state->mt[i] = 1812433253 * (state->mt[i - 1] ^ (state->mt[i - 1] >> 30)) + 1;
     }
     sl_vm_store_put(vm, &mt, sl_make_ptr((sl_object_t*)state));
+}
+
+static SLVAL
+sl_rand_v(sl_vm_t* vm)
+{
+    return sl_make_float(vm, sl_rand(vm) / (double)INT_MAX);
+}
+
+void
+sl_init_rand(sl_vm_t* vm)
+{
+    sl_define_method(vm, vm->lib.Object, "rand", 0, sl_rand_v);
 }
