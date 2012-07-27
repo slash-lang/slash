@@ -1,5 +1,8 @@
 #include <string.h>
 #include <gc.h>
+#include <iconv.h>
+#include <errno.h>
+#include <stdio.h>
 #include "string.h"
 #include "value.h"
 #include "vm.h"
@@ -67,6 +70,38 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
     str->buff[buff_len] = 0;
     str->buff_len = buff_len;
     return vstr;
+}
+
+SLVAL
+sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding)
+{
+    size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
+    char *inbuff = buff, *outbuf = GC_MALLOC_ATOMIC(out_bytes_left), *retn_outbuf = outbuf;
+    size_t ret;
+    iconv_t cd = iconv_open("UTF-8", encoding);
+    if(cd == (iconv_t)(-1)) {
+        sl_throw_message2(vm, vm->lib.EncodingError, "Unknown source encoding");
+    }
+    while(1) {
+        ret = iconv(cd, &inbuff, &in_bytes_left, &outbuf, &out_bytes_left);
+        
+        if(ret != (size_t)-1) {
+            break;
+        }
+        if(errno == E2BIG) {
+            out_bytes_left = buff_len;
+            cap += buff_len;
+            outbuf = GC_REALLOC(outbuf, cap);
+            continue;
+        }
+        
+        if(errno == EILSEQ || errno == EINVAL) {
+            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid source string");
+        }
+        break;
+    }
+    iconv_close(cd);
+    return sl_make_string(vm, (uint8_t*)retn_outbuf, cap - out_bytes_left);
 }
 
 SLVAL
