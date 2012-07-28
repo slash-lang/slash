@@ -1,3 +1,6 @@
+#ifndef SL_LIB_ARRAY_H
+#define SL_LIB_ARRAY_H
+
 #include "slash.h"
 
 SLVAL
@@ -29,3 +32,5 @@ sl_array_unshift(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items);
 
 SLVAL
 sl_array_shift(sl_vm_t* vm, SLVAL array);
+
+#endif
