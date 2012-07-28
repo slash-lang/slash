@@ -138,9 +138,13 @@ sl_array_enumerator_next(sl_vm_t* vm, SLVAL self)
     if(!e->items) {
         sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Array::Enumerator");
     }
-    if(++e->at > e->count) {
+    if(e->at > e->count) {
+        return vm->lib._false;
+    } else if(e->at == e->count) {
+        e->at++;
         return vm->lib._false;
     } else {
+        e->at++;
         return vm->lib._true;
     }
 }
@@ -153,7 +157,7 @@ sl_array_enumerator_current(sl_vm_t* vm, SLVAL self)
         sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Array::Enumerator");
     }
     if(e->at == 0 || e->at > e->count) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Array::Enumerator");
     }
     return e->items[e->at - 1];
 }
