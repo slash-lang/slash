@@ -3,6 +3,7 @@
 #include <iconv.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "string.h"
 #include "value.h"
 #include "vm.h"
@@ -183,6 +184,43 @@ sl_string_html_escape(sl_vm_t* vm, SLVAL self)
     return sl_make_string(vm, out, out_len);
 }
 
+static int
+is_hex_char(uint8_t c)
+{
+    return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+SLVAL
+sl_string_url_decode(sl_vm_t* vm, SLVAL self)
+{
+    sl_string_t* str = get_string(vm, self);
+    size_t out_cap = 32;
+    size_t out_len = 0;
+    uint8_t* out = GC_MALLOC(out_cap);
+    size_t str_i;
+    char tmp[3];
+    for(str_i = 0; str_i < str->buff_len; str_i++) {
+        if(out_len + 8 >= out_cap) {
+            out_cap *= 2;
+            out = GC_REALLOC(out, out_cap);
+        }
+        if(str->buff[str_i] == '%') {
+            if(str_i + 2 < str->buff_len) {
+                if(is_hex_char(str->buff[str_i + 1]) && is_hex_char(str->buff[str_i + 2])) {
+                    tmp[0] = str->buff[str_i + 1];
+                    tmp[1] = str->buff[str_i + 2];
+                    tmp[2] = 0;
+                    out[out_len++] = strtol(tmp, NULL, 16);
+                    str_i += 2;
+                    continue;
+                }
+            }
+        }    
+        out[out_len++] = str->buff[str_i];
+    }
+    return sl_make_string(vm, out, out_len);
+}
+
 static SLVAL
 sl_string_to_s(sl_vm_t* vm, SLVAL self)
 {
@@ -267,6 +305,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
+    sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
