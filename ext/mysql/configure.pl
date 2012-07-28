@@ -1,9 +1,9 @@
 check_lib "mysqlclient", <<C;
-    #include <my_global.h>
-    #include <my_sys.h>
+    #include <mysql.h>
     
     int main() {
-        my_init();
+        MYSQL mysql;
+        mysql_init(&mysql);
     }
 C
 
