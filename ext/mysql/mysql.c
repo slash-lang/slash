@@ -108,10 +108,11 @@ sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
     mysql_t* mysql = get_mysql(vm, self);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, query, vm->lib.String));
     MYSQL_RES* result;
+    MYSQL_FIELD* fields;
     MYSQL_ROW row;
     size_t ncolumns, nrows;
     SLVAL* rows;
-    SLVAL* fields;
+    SLVAL* cells;
     size_t i, j;
     size_t* lengths;
     if(mysql_real_query(&mysql->mysql, (char*)str->buff, str->buff_len)) {
@@ -122,18 +123,20 @@ sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
         ncolumns = mysql_num_fields(result);
         nrows = mysql_num_rows(result);
         rows = GC_MALLOC(sizeof(SLVAL) * nrows);
+        fields = mysql_fetch_fields(result);
         for(i = 0; i < nrows; i++) {
-            fields = GC_MALLOC(sizeof(SLVAL) * ncolumns);
+            cells = GC_MALLOC(sizeof(SLVAL) * ncolumns * 2);
             row = mysql_fetch_row(result);
             lengths = mysql_fetch_lengths(result);
             for(j = 0; j < ncolumns; j++) {
+                cells[j * 2] = sl_make_cstring(vm, fields[j].name);
                 if(row[j]) {
-                    fields[j] = sl_make_string(vm, (uint8_t*)row[j], lengths[j]);
+                    cells[j * 2 + 1] = sl_make_string(vm, (uint8_t*)row[j], lengths[j]);
                 } else {
-                    fields[j] = vm->lib.nil;
+                    cells[j * 2 + 1] = vm->lib.nil;
                 }
             }
-            rows[i] = sl_make_array(vm, ncolumns, fields);
+            rows[i] = sl_make_dict(vm, ncolumns, cells);
         }
         mysql_free_result(result);
         return sl_make_array(vm, nrows, rows);
