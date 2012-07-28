@@ -148,6 +148,23 @@ sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
     }
 }
 
+static SLVAL
+sl_mysql_escape(sl_vm_t* vm, SLVAL self, SLVAL str)
+{
+    mysql_t* mysql = get_mysql(vm, self);
+    sl_string_t* s = (sl_string_t*)sl_get_ptr(sl_expect(vm, str, vm->lib.String));
+    char* esc = GC_MALLOC(s->buff_len * 2 + 1);
+    size_t esc_len = mysql_real_escape_string(&mysql->mysql, esc, (char*)s->buff, s->buff_len);
+    return sl_make_string(vm, (uint8_t*)esc, esc_len);
+}
+
+static SLVAL
+sl_mysql_insert_id(sl_vm_t* vm, SLVAL self)
+{
+    mysql_t* mysql = get_mysql(vm, self);
+    return sl_make_int(vm, mysql_insert_id(&mysql->mysql));
+}
+
 void
 sl_init_ext_mysql(sl_vm_t* vm)
 {
@@ -157,6 +174,8 @@ sl_init_ext_mysql(sl_vm_t* vm)
     sl_define_method(vm, MySQL, "init", 3, sl_mysql_init);
     sl_define_method(vm, MySQL, "use", 1, sl_mysql_use);
     sl_define_method(vm, MySQL, "query", 1, sl_mysql_query);
+    sl_define_method(vm, MySQL, "escape", 1, sl_mysql_escape);
+    sl_define_method(vm, MySQL, "insert_id", 0, sl_mysql_insert_id);
     
     MySQL_Error = sl_define_class3(vm, sl_make_cstring(vm, "Error"), vm->lib.Error, MySQL);
     
