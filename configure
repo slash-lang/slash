@@ -116,12 +116,10 @@ int main() {
 C
 
 open my $mf, ">local.mk";
-print $mf "CFLAGS+= $CFLAGS\n";
-print $mf "LDFLAGS+= $LDFLAGS\n";
 
 my %platforms = (
     darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; },
-    linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\nCFLAGS+= -I/usr/include/mysql"; },
+    linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\n"; $CFLAGS .= " -I/usr/include/mysql" },
 );
 if($platforms{$^O}) {
     $platforms{$^O}->();
@@ -129,6 +127,9 @@ if($platforms{$^O}) {
     print "\n\e[31mUnknown system $^O. Please file an issue at https://github.com/charliesome/slash/issues.\n\e[0m";
     exit 1;
 }
+
+print $mf "CFLAGS+= $CFLAGS\n";
+print $mf "LDFLAGS+= $LDFLAGS\n";
 
 my ($ext_decls, $ext_inits, $ext_static_inits);
 
