@@ -32,7 +32,7 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, uint8_t* query_string)
     uint8_t *key = query_string, *value = NULL;
     size_t key_len = 0, value_len = 0;
     size_t i, len = strlen((char*)query_string) + 1;
-    SLVAL addee = dict, k;
+    SLVAL addee = dict, k, v;
     int bracket_mode = 0, in_bracket = 0;
     for(i = 0; i < len; i++) {
         if(query_string[i] == '=' && !value) {
@@ -41,7 +41,11 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, uint8_t* query_string)
         }
         if(query_string[i] == '&' || query_string[i] == 0) {
             if(key_len > 0) {
-                sl_dict_set(vm, addee, sl_make_string(vm, key, key_len), value ? sl_make_string(vm, value, value_len) : vm->lib.nil);
+                k = sl_string_url_decode(vm, sl_make_string(vm, key, key_len));
+                if(value) {
+                    v = sl_string_url_decode(vm, sl_make_string(vm, value, value_len));
+                }
+                sl_dict_set(vm, addee, k, value ? v : vm->lib.nil);
             }
             key = query_string + i + 1;
             key_len = 0;
