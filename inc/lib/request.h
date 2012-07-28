@@ -13,11 +13,13 @@ sl_request_key_value_t;
 typedef struct {
     char* method;
     char* uri;
+    char* path_info;
+    char* query_string;
     char* remote_addr;
     size_t header_count;
     sl_request_key_value_t* headers;
-    size_t get_count;
-    sl_request_key_value_t* get_params;
+    size_t env_count;
+    sl_request_key_value_t* env;
     size_t post_count;
     sl_request_key_value_t* post_params;
 }
