@@ -5,6 +5,7 @@
 
 typedef struct {
     sl_object_t base;
+    int inspecting;
     st_table_t* st;
 }
 sl_dict_t;
@@ -14,6 +15,15 @@ typedef struct {
     SLVAL key;
 }
 sl_dict_key_t;
+
+typedef struct {
+    sl_object_t base;
+    SLVAL dict;
+    SLVAL* keys;
+    size_t count;
+    size_t at;
+}
+sl_dict_enumerator_t;
 
 static int
 dict_key_cmp(sl_dict_key_t* a, sl_dict_key_t* b)
@@ -104,6 +114,61 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
     }
 }
 
+static int
+dict_enumerate_setup(sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
+{
+    (void)record;
+    e->keys[e->at] = key->key;
+    e->at++;
+    return ST_CONTINUE;
+}
+
+SLVAL
+sl_dict_enumerate(sl_vm_t* vm, SLVAL dict)
+{
+    sl_dict_t* d = get_dict(vm, dict);
+    sl_dict_enumerator_t* e = (sl_dict_enumerator_t*)sl_get_ptr(sl_allocate(vm, vm->lib.Dict_Enumerator));
+    e->count = d->st->num_entries;
+    e->keys = GC_MALLOC(sizeof(SLVAL) * e->count);
+    st_foreach(d->st, dict_enumerate_setup, (st_data_t)e);
+    e->at = 0;
+    return sl_make_ptr((sl_object_t*)e);
+}
+
+static int
+dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
+{
+    if(sl_get_int(sl_string_length(key->vm, *str)) > 2) {
+        *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, ", "));
+    }
+    *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, key->key));
+    *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, " => "));
+    *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, value));
+    return ST_CHECK;
+}
+
+SLVAL
+sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
+{
+    sl_catch_frame_t frame;
+    SLVAL err, str;
+    sl_dict_t* d = get_dict(vm, dict);
+    if(d->inspecting) {
+        return sl_make_cstring(vm, "{ <recursive> }");
+    }
+    SL_TRY(frame, {
+        d->inspecting = 1;
+        str = sl_make_cstring(vm, "{ ");
+        st_foreach(d->st, dict_to_s_iter, (st_data_t)&str);
+        str = sl_string_concat(vm, str, sl_make_cstring(vm, " }"));
+        d->inspecting = 0;
+    }, err, {
+        d->inspecting = 0;
+        sl_throw(vm, err);
+    });
+    return str;
+}
+
 void
 sl_init_dict(sl_vm_t* vm)
 {
@@ -113,10 +178,10 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "[]=", 2, sl_dict_set);
     sl_define_method(vm, vm->lib.Dict, "length", 0, sl_dict_length);
     sl_define_method(vm, vm->lib.Dict, "delete", 1, sl_dict_delete);
+    sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
+    sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
+    sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
     /*
-    sl_define_method(vm, vm->lib.Array, "enumerate", 0, sl_dict_enumerate);
-    sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_dict_to_s);
-    sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_dict_to_s);
     
     vm->lib.Dict_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Dict);

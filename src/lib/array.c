@@ -5,6 +5,7 @@
 
 typedef struct {
     sl_object_t base;
+    int inspecting;
     size_t count;
     size_t capacity;
     SLVAL* items;
@@ -87,16 +88,28 @@ sl_array_init(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items)
 static SLVAL
 sl_array_to_s(sl_vm_t* vm, SLVAL array)
 {
+    sl_catch_frame_t frame;
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
-    SLVAL str = sl_make_cstring(vm, "[");
-    for(i = 0; i < aryp->count; i++) {
-        if(i != 0) {
-            str = sl_string_concat(vm, str, sl_make_cstring(vm, ", "));
-        }
-        str = sl_string_concat(vm, str, sl_inspect(vm, aryp->items[i]));
-    }    
-    str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
+    SLVAL err, str;
+    if(aryp->inspecting) {
+        return sl_make_cstring(vm, "[ <recursive> ]");
+    }
+    SL_TRY(frame, {
+        aryp->inspecting = 1;
+        str = sl_make_cstring(vm, "[");
+        for(i = 0; i < aryp->count; i++) {
+            if(i != 0) {
+                str = sl_string_concat(vm, str, sl_make_cstring(vm, ", "));
+            }
+            str = sl_string_concat(vm, str, sl_inspect(vm, aryp->items[i]));
+        }    
+        str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
+        aryp->inspecting = 0;
+    }, err, {
+        aryp->inspecting = 0;
+        sl_throw(vm, err);
+    });
     return str;
 }
 
@@ -111,7 +124,8 @@ sl_array_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL array)
 {
     sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
     sl_array_t* a = get_array(vm, array);
-    e->items = a->items;
+    e->items = GC_MALLOC(sizeof(SLVAL) * a->count);
+    memcpy(e->items, a->items, sizeof(SLVAL) * a->count);
     e->at = 0;
     e->count = a->count;
     return vm->lib.nil;
@@ -122,7 +136,7 @@ sl_array_enumerator_next(sl_vm_t* vm, SLVAL self)
 {
     sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
     if(!e->items) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Array::Enumerator");
     }
     if(++e->at > e->count) {
         return vm->lib._false;
@@ -136,7 +150,7 @@ sl_array_enumerator_current(sl_vm_t* vm, SLVAL self)
 {
     sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
     if(!e->items) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Array::Enumerator");
     }
     if(e->at == 0 || e->at > e->count) {
         sl_throw_message2(vm, vm->lib.Error, "Invalid operator on Array::Enumerator");
