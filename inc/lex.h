@@ -49,6 +49,7 @@ typedef enum sl_token_type {
     SL_TOK_SHIFT_LEFT,
     SL_TOK_SHIFT_RIGHT,
     SL_TOK_COMMA,
+    SL_TOK_FAT_COMMA,
     SL_TOK_EQUALS,
     SL_TOK_DBL_EQUALS,
     SL_TOK_NOT_EQUALS,

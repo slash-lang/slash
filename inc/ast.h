@@ -31,7 +31,8 @@ typedef enum sl_node_type {
     SL_NODE_ASSIGN_CVAR,
     SL_NODE_ASSIGN_SEND,
     SL_NODE_ASSIGN_CONST,
-    SL_NODE_ARRAY
+    SL_NODE_ARRAY,
+    SL_NODE_DICT
 }
 sl_node_type_t;
 
@@ -198,5 +199,13 @@ typedef struct sl_node_array {
     sl_node_base_t** nodes;
 }
 sl_node_array_t;
+
+typedef struct sl_node_dict {
+    sl_node_base_t base;
+    size_t node_count;
+    sl_node_base_t** keys;
+    sl_node_base_t** vals;
+}
+sl_node_dict_t;
 
 #endif

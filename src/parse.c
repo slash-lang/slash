@@ -262,6 +262,31 @@ array_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+dict_expression(sl_parse_state_t* ps)
+{
+    size_t count = 0, cap = 2;
+    sl_node_base_t** keys = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    sl_node_base_t** vals = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    expect_token(ps, SL_TOK_OPEN_BRACE);
+    while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
+        if(count >= cap) {
+            cap *= 2;
+            keys = GC_REALLOC(keys, sizeof(sl_node_base_t*) * cap);
+            vals = GC_REALLOC(vals, sizeof(sl_node_base_t*) * cap);
+        }
+        keys[count] = expression(ps);
+        expect_token(ps, SL_TOK_FAT_COMMA);
+        vals[count] = expression(ps);
+        count++;
+        if(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
+            expect_token(ps, SL_TOK_COMMA);
+        }
+    }
+    expect_token(ps, SL_TOK_CLOSE_BRACE);
+    return sl_make_dict_node(count, keys, vals);
+}
+
+static sl_node_base_t*
 bracketed_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* node;
@@ -332,6 +357,8 @@ primary_expression(sl_parse_state_t* ps)
             return array_expression(ps);
         case SL_TOK_OPEN_PAREN:
             return bracketed_expression(ps);
+        case SL_TOK_OPEN_BRACE:
+            return dict_expression(ps);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;

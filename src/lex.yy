@@ -105,6 +105,7 @@ HEX [0-9a-fA-F]
 <SLASH>","          { ADD_TOKEN(sl_make_token(SL_TOK_COMMA)); }
 <SLASH>"=="         { ADD_TOKEN(sl_make_token(SL_TOK_DBL_EQUALS)); }
 <SLASH>"!="         { ADD_TOKEN(sl_make_token(SL_TOK_NOT_EQUALS)); }
+<SLASH>"=>"         { ADD_TOKEN(sl_make_token(SL_TOK_FAT_COMMA)); }
 <SLASH>"="          { ADD_TOKEN(sl_make_token(SL_TOK_EQUALS)); }
 <SLASH>"<=>"        { ADD_TOKEN(sl_make_token(SL_TOK_SPACESHIP)); }
 <SLASH>"<="         { ADD_TOKEN(sl_make_token(SL_TOK_LTE)); }
