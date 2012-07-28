@@ -107,11 +107,11 @@ int
 sl_hash(sl_vm_t* vm, SLVAL val)
 {
     SLVAL hash = sl_send(vm, val, "hash", 0);
-    switch(sl_get_primitive_type(val)) {
+    switch(sl_get_primitive_type(hash)) {
         case SL_T_INT:
             return sl_get_int(hash) ^ vm->hash_seed;
         case SL_T_BIGNUM:
-            return sl_get_int(sl_bignum_hash(vm, val)) ^ vm->hash_seed;
+            return sl_get_int(sl_bignum_hash(vm, hash)) ^ vm->hash_seed;
         default:
             sl_throw_message2(vm, vm->lib.TypeError, "Expected #hash method to return Int or Bignum");
     }
