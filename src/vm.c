@@ -67,7 +67,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(require);
     LIB_INIT(lambda);
     LIB_INIT(file);
-    /*LIB_INIT(dict);*/
+    LIB_INIT(dict);
     LIB_INIT(rand);
     
     sl_init_exts(vm);

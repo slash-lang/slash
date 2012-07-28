@@ -9,5 +9,6 @@
 #include "class.h"
 #include "string.h"
 #include "lib/array.h"
+#include "lib/dict.h"
 
 #endif
