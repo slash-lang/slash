@@ -47,6 +47,7 @@ LIB(lambda);
 LIB(file);
 LIB(dict);
 LIB(rand);
+LIB(request);
 
 void sl_init_exts(sl_vm_t* vm);
 
@@ -69,6 +70,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(file);
     LIB_INIT(dict);
     LIB_INIT(rand);
+    LIB_INIT(request);
     
     sl_init_exts(vm);
 }
