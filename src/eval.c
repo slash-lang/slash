@@ -342,7 +342,9 @@ sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx)
         node->body->eval(node->body, ctx);
     }
     if(!iterated) {
-        node->else_body->eval(node->else_body, ctx);
+        if(node->else_body) {
+            node->else_body->eval(node->else_body, ctx);
+        }
     }
     return enumerable;
 }
