@@ -60,6 +60,13 @@ get_dict(sl_vm_t* vm, SLVAL dict)
     return (sl_dict_t*)sl_get_ptr(dict);
 }
 
+static sl_dict_enumerator_t*
+get_dict_enumerator(sl_vm_t* vm, SLVAL e)
+{
+    sl_expect(vm, e, vm->lib.Dict_Enumerator);
+    return (sl_dict_enumerator_t*)sl_get_ptr(e);
+}
+
 SLVAL
 sl_make_dict(sl_vm_t* vm, size_t count, SLVAL* kvs)
 {
@@ -114,25 +121,10 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
     }
 }
 
-static int
-dict_enumerate_setup(sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
-{
-    (void)record;
-    e->keys[e->at] = key->key;
-    e->at++;
-    return ST_CONTINUE;
-}
-
 SLVAL
 sl_dict_enumerate(sl_vm_t* vm, SLVAL dict)
 {
-    sl_dict_t* d = get_dict(vm, dict);
-    sl_dict_enumerator_t* e = (sl_dict_enumerator_t*)sl_get_ptr(sl_allocate(vm, vm->lib.Dict_Enumerator));
-    e->count = d->st->num_entries;
-    e->keys = GC_MALLOC(sizeof(SLVAL) * e->count);
-    st_foreach(d->st, dict_enumerate_setup, (st_data_t)e);
-    e->at = 0;
-    return sl_make_ptr((sl_object_t*)e);
+    return sl_new(vm, vm->lib.Dict_Enumerator, 1, &dict);
 }
 
 static int
@@ -169,6 +161,68 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
     return str;
 }
 
+static sl_object_t*
+allocate_dict_enumerator()
+{
+    return GC_MALLOC(sizeof(sl_dict_enumerator_t));
+}
+
+static int
+dict_enumerator_init_iter(sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
+{
+    (void)record;
+    e->keys[e->at] = key->key;
+    e->at++;
+    return ST_CONTINUE;
+}
+
+static SLVAL
+sl_dict_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL dict)
+{
+    sl_dict_t* d = get_dict(vm, dict);
+    sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
+    e->dict = dict;
+    e->count = d->st->num_entries;
+    e->keys = GC_MALLOC(sizeof(SLVAL) * e->count);
+    st_foreach(d->st, dict_enumerator_init_iter, (st_data_t)e);
+    e->at = 0;
+    return self;
+}
+
+static SLVAL
+sl_dict_enumerator_next(sl_vm_t* vm, SLVAL self)
+{
+    sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
+    if(!e->keys) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+    }
+    if(e->at > e->count) {
+        return vm->lib._false;
+    } else if(e->at == e->count) {
+        e->at++;
+        return vm->lib._false;
+    } else {
+        e->at++;
+        return vm->lib._true;
+    }
+}
+
+static SLVAL
+sl_dict_enumerator_current(sl_vm_t* vm, SLVAL self)
+{
+    sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
+    SLVAL kv[2];
+    if(!e->keys) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+    }
+    if(e->at == 0 || e->at > e->count) {
+        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+    }
+    kv[0] = e->keys[e->at - 1];
+    kv[1] = sl_dict_get(vm, e->dict, kv[0]);
+    return sl_make_array(vm, 2, kv);
+}
+
 void
 sl_init_dict(sl_vm_t* vm)
 {
@@ -181,7 +235,6 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
     sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
-    /*
     
     vm->lib.Dict_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Dict);
@@ -190,5 +243,4 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict_Enumerator, "init", 1, sl_dict_enumerator_init);
     sl_define_method(vm, vm->lib.Dict_Enumerator, "next", 0, sl_dict_enumerator_next);
     sl_define_method(vm, vm->lib.Dict_Enumerator, "current", 0, sl_dict_enumerator_current);
-    */
 }
