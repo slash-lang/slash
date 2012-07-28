@@ -18,6 +18,7 @@ exit 1 unless GetOptions "with-gc-dir=s" => \my $gc_dir,
                          "ext=s" => sub { my $ext = $_[1]; push @exts, $ext },
                          "no-ext=s" => sub { my $ext = $_[1]; @exts = grep { $_ ne $ext } @exts };
 my $CFLAGS = "";
+my $LDFLAGS = "";
 if($gc_dir) {
     $CFLAGS .= " -I$gc_dir/include -L$gc_dir/lib";
 }
@@ -49,11 +50,18 @@ sub check_lib {
     my ($lib, $src) = @_;
     print "Checking for lib$lib... ";
     if(compile "-l$lib", $src) {
+        $LDFLAGS .= " -l$lib";
         print "ok\n";
     } else {
-        print "failed\n";
-        print "\n\e[31mCould not find lib$lib (used -l$lib)\nPlease make sure it is available before building Slash\n\e[0m";
-        exit 1;
+        # some libraries (eg. iconv) are rolled into libc on some systems. see if we can compile without the -liconv switch
+        if(compile "", $src) {
+            print "ok\n";
+        } else {
+            # nope
+            print "failed\n";
+            print "\n\e[31mCould not find lib$lib (used -l$lib)\nPlease make sure it is available before building Slash\n\e[0m";
+            exit 1;
+        }
     }
 };
 
@@ -107,6 +115,7 @@ C
 
 open my $mf, ">local.mk";
 print $mf "CFLAGS+= $CFLAGS\n";
+print $mf "LDFLAGS+= $LDFLAGS\n";
 
 my %platforms = (
     darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; },
