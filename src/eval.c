@@ -426,3 +426,14 @@ sl_eval_array(sl_node_array_t* node, sl_eval_ctx_t* ctx)
     }
     return sl_make_array(ctx->vm, node->node_count, items);
 }
+
+SLVAL
+sl_eval_dict(sl_node_dict_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL dict = sl_make_dict(ctx->vm, 0, NULL);
+    size_t i;
+    for(i = 0; i < node->node_count; i++) {
+        sl_dict_set(ctx->vm, dict, node->keys[i]->eval(node->keys[i], ctx), node->vals[i]->eval(node->vals[i], ctx));
+    }
+    return dict;
+}

@@ -248,3 +248,13 @@ sl_make_array_node(size_t node_count, sl_node_base_t** nodes)
         node->nodes = nodes;
     });
 }
+
+sl_node_base_t*
+sl_make_dict_node(size_t node_count, sl_node_base_t** keys, sl_node_base_t** vals)
+{
+    MAKE_NODE(SL_NODE_DICT, sl_eval_dict, sl_node_dict_t, {
+        node->node_count = node_count;
+        node->keys = keys;
+        node->vals = vals;
+    });
+}
