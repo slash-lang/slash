@@ -121,7 +121,7 @@ print $mf "LDFLAGS+= $LDFLAGS\n";
 
 my %platforms = (
     darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; },
-    linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\n"; },
+    linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\nCFLAGS+= -I/usr/include/mysql"; },
 );
 if($platforms{$^O}) {
     $platforms{$^O}->();
