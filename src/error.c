@@ -151,7 +151,7 @@ sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL receiver, SLVAL method, 
     frame->receiver = receiver;
     frame->method = sl_is_a(vm, method, vm->lib.String) ? method : sl_make_cstring(vm, "");
     frame->file = sl_is_a(vm, file, vm->lib.String) ? file : sl_make_cstring(vm, "");
-    frame->line = sl_is_a(vm, file, vm->lib.Int) ? line : sl_make_int(vm, 0);
+    frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : sl_make_int(vm, 0);
     sl_array_push(vm, e->backtrace, 1, &frv);
 }
 
