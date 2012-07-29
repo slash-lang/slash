@@ -40,7 +40,7 @@ sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len)
 {
     sl_token_t* raw_token;
     if(st->len == 0 || st->tokens[st->len - 1].type != SL_TOK_RAW) {
-        if(st->cap + 1 >= st->len) {
+        if(st->len + 1 >= st->cap) {
             st->tokens = GC_REALLOC(st->tokens, sizeof(sl_token_t) * (st->cap *= 2));
         }
         st->tokens[st->len++] = sl_make_string_token(SL_TOK_RAW, "", 0);
