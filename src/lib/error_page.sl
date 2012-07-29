@@ -51,6 +51,9 @@
     strong {
         font-size:12px;
     }
+    li {
+        margin-bottom:12px;
+    }
     </style>
 </head>
 <body>
@@ -75,13 +78,22 @@
         <h2>Backtrace</h2>
         <ul>
             <% for frame in err.backtrace { %>
-                <li><code><%= frame.receiver %>#<%= frame.method %></code> in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong></li>
+                <li>
+                    <% if Object == frame.receiver { %>
+                        <code>#<%= frame.method %></code>
+                    <% } elsif frame.receiver.is_a(Class) { %>
+                        <code><%= frame.receiver %>.<%= frame.method %></code>
+                    <% } else { %>
+                        <code><%= frame.receiver %>#<%= frame.method %></code>
+                    <% } %>
+                    in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong>
+                </li>
             <% } %>
         </ul>
     </section>
     <section class="info">
         <p>
-            You are seeing this error page because Slash is in <strong>development</strong> mode.
+            You are seeing this page because Slash is set to show descriptive error pages whenever an exception is not caught.
         </p>
         <p>
             To disable descriptive error pages, set <code>Response.descriptive_error_pages</code> to <code>false</code>
