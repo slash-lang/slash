@@ -84,7 +84,7 @@
                     <% } elsif frame.receiver.is_a(Class) { %>
                         <code><%= frame.receiver %>.<%= frame.method %></code>
                     <% } else { %>
-                        <code><%= frame.receiver %>#<%= frame.method %></code>
+                        <code><%= frame.receiver.class %>#<%= frame.method %></code>
                     <% } %>
                     in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong>
                 </li>
