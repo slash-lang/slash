@@ -10,6 +10,7 @@
 typedef struct {
     sl_vm_t* vm;
     request_rec* r;
+    int headers_sent;
 }
 slash_context_t;
 
@@ -20,9 +21,26 @@ struct iter_args {
 };
 
 static void
+flush_headers(slash_context_t* ctx)
+{
+    sl_response_key_value_t* headers;
+    size_t header_count, i;
+    if(!ctx->headers_sent) {
+        ctx->r->status = sl_response_get_status(ctx->vm);
+        ctx->r->status_line = ap_get_status_line(ctx->r->status);
+        headers = sl_response_get_headers(ctx->vm, &header_count);
+        for(i = 0; i < header_count; i++) {
+            apr_table_add(ctx->r->headers_out, headers[i].name, headers[i].value);
+        }
+        ctx->headers_sent = 1;
+    }
+}
+
+static void
 output(sl_vm_t* vm, char* buff, size_t len)
 {
     slash_context_t* ctx = vm->data;
+    flush_headers(ctx);
     ap_rwrite(buff, len, ctx->r);
 }
 
@@ -97,8 +115,9 @@ static void
 setup_response_object(sl_vm_t* vm)
 {
     sl_response_opts_t opts;
-    opts.write    = output;
-    opts.buffered = 1;
+    opts.write                  = output;
+    opts.buffered               = 1;
+    opts.descriptive_error_page = 1;
     sl_response_set_opts(vm, &opts);
 }
 
@@ -112,6 +131,7 @@ run_slash_script(request_rec* r)
     sl_static_init();
     vm = sl_init();
     SL_TRY(frame, {
+        ctx.headers_sent = 0;
         ctx.vm = vm;
         ctx.r = r;
         vm->data = &ctx;
@@ -119,6 +139,7 @@ run_slash_script(request_rec* r)
         setup_response_object(vm);
         ap_set_content_type(r, "text/html; charset=utf-8");
         sl_do_file(vm, (uint8_t*)r->canonical_filename);
+        flush_headers(&ctx);
         sl_response_flush(vm);
     }, error, {    
         ap_set_content_type(r, "text/html; charset=utf-8");

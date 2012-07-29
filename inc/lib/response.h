@@ -11,6 +11,7 @@ typedef struct {
 sl_response_key_value_t;
 
 typedef struct {
+    int descriptive_error_page;
     int buffered;
     void(*write)(sl_vm_t*,char*,size_t);
 }
@@ -24,5 +25,11 @@ sl_response_write(sl_vm_t* vm, SLVAL str);
 
 SLVAL
 sl_response_flush(sl_vm_t* vm);
+
+sl_response_key_value_t*
+sl_response_get_headers(sl_vm_t* vm, size_t* count);
+
+int
+sl_response_get_status(sl_vm_t* vm);
 
 #endif
