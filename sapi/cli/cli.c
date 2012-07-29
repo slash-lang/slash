@@ -1,4 +1,6 @@
 #include "slash.h"
+#include "lib/request.h"
+#include "lib/response.h"
 #include <gc.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -59,6 +61,28 @@ read_all(FILE* f, size_t* length)
     return src;
 }
 
+static void
+setup_request_response(sl_vm_t* vm)
+{
+    sl_request_opts_t req;
+    sl_response_opts_t res;
+    
+    req.method       = "";
+    req.uri          = "";
+    req.path_info    = "";
+    req.query_string = "";
+    req.remote_addr  = "";
+    req.content_type = "";
+    req.header_count = 0;
+    req.env_count    = 0;
+    req.post_length  = 0;
+    sl_request_set_opts(vm, &req);
+    
+    res.buffered = 0;
+    res.write    = output;
+    sl_response_set_opts(vm, &res);
+}
+
 int
 main(int argc, char** argv)
 {
@@ -67,7 +91,7 @@ main(int argc, char** argv)
     sl_vm_t* vm;
     sl_static_init();
     vm = sl_init();
-    vm->output = output;
+    setup_request_response(vm);
     if(argc > 1) {
         state.filename = (uint8_t*)argv[1];
         f = fopen((char*)state.filename, "rb");
