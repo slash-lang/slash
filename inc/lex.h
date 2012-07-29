@@ -30,6 +30,7 @@ typedef enum sl_token_type {
     SL_TOK_EXTENDS,
     SL_TOK_DEF,
     SL_TOK_IF,
+    SL_TOK_ELSIF,
     SL_TOK_ELSE,
     SL_TOK_UNLESS,
     SL_TOK_FOR,
@@ -89,6 +90,7 @@ sl_token_type_t;
 
 typedef struct sl_token {
     sl_token_type_t type;
+    int line;
     SLVAL str;
     union {
         struct {
@@ -107,6 +109,7 @@ typedef struct sl_lex_state {
     size_t cap;
     size_t len;
     uint8_t* filename;
+    int line;
 }
 sl_lex_state_t;
 

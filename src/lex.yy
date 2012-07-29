@@ -16,6 +16,7 @@
             } \
             yyextra->tokens[yyextra->len] = (tok); \
             yyextra->tokens[yyextra->len].str = sl_make_string(yyextra->vm, (uint8_t*)yytext, yyleng); \
+            yyextra->tokens[yyextra->len].line = yyextra->line; \
             yyextra->len++; \
         } while(0)
 %}
@@ -35,27 +36,32 @@ HEX [0-9a-fA-F]
 <INITIAL>"<%#"      {                                                       BEGIN(COMMENT_TAG); }
 <INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
 
-<INITIAL>.|\n       { sl_lex_append_to_raw(yyextra, yytext, 1); }
+<INITIAL>\n         { sl_lex_append_to_raw(yyextra, yytext, 1); yyextra->line++; }
+<INITIAL>.          { sl_lex_append_to_raw(yyextra, yytext, 1); }
 
 <COMMENT_TAG>"%>"   {                                                       BEGIN(INITIAL); }
-<COMMENT_TAG>.|\n   { }
+<COMMENT_TAG>\n     { yyextra->line++; }
+<COMMENT_TAG>.      { }
 
 <COMMENT_LINE>.     { }
-<COMMENT_LINE>\n    {                                                       BEGIN(SLASH); }
+<COMMENT_LINE>\n    { yyextra->line++;                                      BEGIN(SLASH); }
 
 <COMMENT_ML_C>"*/"  {                                                       BEGIN(SLASH); }
-<COMMENT_ML_C>.|\n  { }
+<COMMENT_ML_C>\n    { yyextra->line++; }
+<COMMENT_ML_C>.     { }
 
 <STRING>"\\"        { BEGIN(STRE); }
 <STRING>"\""        { BEGIN(SLASH); }
-<STRING>.|\n        { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
+<STRING>\n          { sl_lex_append_byte_to_string(yyextra, yytext[0]); yyextra->line++; }
+<STRING>.           { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
 
 <STRE>"n"           { sl_lex_append_byte_to_string(yyextra, '\n');          BEGIN(STRING); }
 <STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');          BEGIN(STRING); }
 <STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');          BEGIN(STRING); }
 <STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');        BEGIN(STRING); }
 <STRE>"x"{HEX}{1,6} { sl_lex_append_hex_to_string(yyextra, yytext);         BEGIN(STRING); }
-<STRE>.|\n          { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); }
+<STRE>\n            { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); yyextra->line++; }
+<STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); }
 
 <SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
 
@@ -76,6 +82,7 @@ HEX [0-9a-fA-F]
 <SLASH>"extends"/{NKW}  { ADD_TOKEN(sl_make_token(SL_TOK_EXTENDS)); }
 <SLASH>"def"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_DEF)); }
 <SLASH>"if"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_IF)); }
+<SLASH>"elsif"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_ELSIF)); }
 <SLASH>"else"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_ELSE)); }
 <SLASH>"unless"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_UNLESS)); }
 <SLASH>"for"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_FOR)); }
@@ -134,7 +141,8 @@ HEX [0-9a-fA-F]
 <SLASH>"."{ID}      { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext + 1, yyleng - 1)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
 
-<SLASH>[ \t\r\n]    { /* ignore */ }
+<SLASH>[ \t\r]      { /* ignore */ }
+<SLASH>\n           { yyextra->line++; }
 
 <SLASH>.            { sl_lex_error(yyextra, yytext, yylineno); }
 
@@ -153,7 +161,9 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.len = 0;
     ls.tokens = GC_MALLOC(sizeof(sl_token_t) * ls.cap);
     ls.filename = filename;
+    ls.line = 1;
     
+    ls.tokens[ls.len].line = 1;
     ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
     
     yylex_init_extra(&ls, &yyscanner);
@@ -170,6 +180,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     yy_delete_buffer(buff_state, yyscanner);
     yylex_destroy(yyscanner);
     
+    ls.tokens[ls.len].line = ls.line;
     ls.tokens[ls.len++].type = SL_TOK_END;
     *token_count = ls.len;
     return ls.tokens;
