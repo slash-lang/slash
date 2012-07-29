@@ -93,6 +93,8 @@ HEX [0-9a-fA-F]
 <SLASH>"or"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_LP_OR)); }
 <SLASH>"not"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_LP_NOT)); }
 <SLASH>"lambda"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
+<SLASH>"try"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_TRY)); }
+<SLASH>"catch"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_CATCH)); }
 
 <SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng)); }

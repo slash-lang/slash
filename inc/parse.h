@@ -75,6 +75,9 @@ sl_node_base_t*
 sl_make_lambda_node(size_t arg_count, sl_string_t** args, sl_node_base_t* body);
 
 sl_node_base_t*
+sl_make_try_node(sl_node_base_t* body, sl_node_base_t* lval, sl_node_base_t* catch_body);
+
+sl_node_base_t*
 sl_make_self_node();
 
 sl_node_base_t*
