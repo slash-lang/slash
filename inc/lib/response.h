@@ -32,4 +32,7 @@ sl_response_get_headers(sl_vm_t* vm, size_t* count);
 int
 sl_response_get_status(sl_vm_t* vm);
 
+void
+sl_render_error_page(sl_vm_t* vm, SLVAL err);
+
 #endif

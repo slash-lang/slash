@@ -11,6 +11,7 @@ typedef struct sl_lib {
     SLVAL String;
     
     SLVAL Error;
+    SLVAL Error_Frame;
     SLVAL ArgumentError;
     SLVAL EncodingError;
     SLVAL NameError;

@@ -139,9 +139,9 @@ response_status_set(sl_vm_t* vm, SLVAL self, SLVAL status)
 }
 
 static SLVAL
-response_descriptive_error_pages(sl_vm_t* vm)
+response_descriptive_error_page(sl_vm_t* vm)
 {
-    if(response(vm)->descriptive_error_pages) {
+    if(response(vm)->descriptive_error_page) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -149,11 +149,31 @@ response_descriptive_error_pages(sl_vm_t* vm)
 }
 
 static SLVAL
-response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
+response_descriptive_error_page_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
 {
     (void)self;
-    response(vm)->descriptive_error_pages = sl_is_truthy(enabled);
+    response(vm)->descriptive_error_page = sl_is_truthy(enabled);
     return enabled;
+}
+
+extern char* sl__error_page_src;
+
+void
+sl_render_error_page(sl_vm_t* vm, SLVAL err)
+{
+    sl_catch_frame_t frame;
+    sl_eval_ctx_t* ctx = sl_make_eval_ctx(vm);
+    sl_token_t* tokens;
+    sl_node_base_t* ast;
+    size_t token_len;
+    SL_TRY(frame, {
+        tokens = sl_lex(vm, (uint8_t*)"(error-page)", (uint8_t*)sl__error_page_src, strlen(sl__error_page_src), &token_len);
+        ast = sl_parse(vm, tokens, token_len, (uint8_t*)"(error-page)");
+        st_insert(ctx->vars, (st_data_t)sl_cstring(vm, "err"), (st_data_t)sl_get_ptr(err));
+        ast->eval(ast, ctx);
+    }, err, {
+        sl_response_write(vm, sl_make_cstring(vm, "<h1>Internal Server Error</h1>"));
+    });
 }
 
 void
@@ -170,6 +190,8 @@ sl_init_response(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "set_header", 2, response_set_header);
     sl_define_method(vm, vm->lib.Object, "status", 0, response_status);
     sl_define_method(vm, vm->lib.Object, "status=", 1, response_status_set);
+    sl_define_method(vm, vm->lib.Object, "descriptive_error_page", 0, response_descriptive_error_page);
+    sl_define_method(vm, vm->lib.Object, "descriptive_error_page=", 1, response_descriptive_error_page_set);
     
     sl_class_set_const(vm, vm->lib.Object, "Response", Response);
 }

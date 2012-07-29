@@ -250,14 +250,23 @@ sl_eval_immediate(sl_node_immediate_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
 {
+    sl_catch_frame_t frame;
+    sl_vm_t* vm = ctx->vm;
     SLVAL recv = node->recv->eval(node->recv, ctx);
     SLVAL* args = GC_MALLOC(sizeof(SLVAL) * node->arg_count);
+    SLVAL ret, err;
     size_t i;
     for(i = 0; i < node->arg_count; i++) {
         /* @TODO splat would go here... */
         args[i] = node->args[i]->eval(node->args[i], ctx);
     }
-    return sl_send2(ctx->vm, recv, node->id, node->arg_count, args);
+    SL_TRY(frame, {
+        ret = sl_send2(ctx->vm, recv, node->id, node->arg_count, args);
+    }, err, {
+        sl_error_add_frame(vm, err, recv, node->id, ctx->vm->lib.nil, ctx->vm->lib.nil);
+        sl_throw(vm, err);
+    });
+    return ret;
 }
 
 SLVAL

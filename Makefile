@@ -7,7 +7,8 @@ OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/lib/true.o src/lib/false.o src/eval.o src/parse.o src/parse_helper.o \
 	src/eval.o src/lib/array.o src/lib/comparable.o src/lib/require.o \
 	src/lib/lambda.o src/lib/enumerable.o src/lib/file.o src/init_exts.o \
-	src/lib/rand.o src/lib/dict.o src/lib/request.o src/lib/response.o
+	src/lib/rand.o src/lib/dict.o src/lib/request.o src/lib/response.o \
+	src/lib/error_page.o
 
 include local.mk
 
@@ -44,9 +45,15 @@ src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 %.c: %.yy inc/*.h Makefile local.mk
 	flex -o $@ $<
 
+src/lib/error_page.o: src/lib/error_page.sl
+	perl scripts/txt-to-c.pl sl__error_page_src < $< > $@.c
+	$(CC) -o $@ -c $@.c
+	rm -f $@.c
+
 clean:
 	rm -f src/*.o
 	rm -f src/lib/*.o
+	rm -f ext/*/*.o
 	rm -f platform/*.o
 	rm -f libslash.a
 	make -C sapi clean
