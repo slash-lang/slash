@@ -146,6 +146,7 @@ assign_send(sl_node_send_t* node, sl_eval_ctx_t* ctx, SLVAL val)
     imm.value = val;
     memcpy(&n, node, sizeof(n));
     n.id = sl_string_concat(ctx->vm, n.id, sl_make_cstring(ctx->vm, "="));
+    n.line = node->line;
     args = alloca(sizeof(sl_node_base_t*) * (n.arg_count + 1));
     args[n.arg_count++] = &imm.base;
     sl_eval_send(&n, ctx);
@@ -263,7 +264,7 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
     SL_TRY(frame, {
         ret = sl_send2(ctx->vm, recv, node->id, node->arg_count, args);
     }, err, {
-        sl_error_add_frame(vm, err, recv, node->id, ctx->vm->lib.nil, ctx->vm->lib.nil);
+        sl_error_add_frame(vm, err, recv, node->id, sl_make_cstring(ctx->vm, (char*)node->file), sl_make_int(ctx->vm, node->line));
         sl_throw(vm, err);
     });
     return ret;
