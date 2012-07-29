@@ -96,6 +96,19 @@ sl_to_s(sl_vm_t* vm, SLVAL obj)
 }
 
 SLVAL
+sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj)
+{
+    sl_catch_frame_t frame;
+    SLVAL ret, err;
+    SL_TRY(frame, {
+        ret = sl_to_s(vm, obj);
+    }, err, {
+        ret = sl_object_to_s(vm, obj);
+    });
+    return ret;
+}
+
+SLVAL
 sl_inspect(sl_vm_t* vm, SLVAL obj)
 {
     SLVAL s = sl_send(vm, obj, "inspect", 0);

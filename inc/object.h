@@ -13,6 +13,9 @@ SLVAL
 sl_to_s(sl_vm_t* vm, SLVAL obj);
 
 SLVAL
+sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj);
+
+SLVAL
 sl_inspect(sl_vm_t* vm, SLVAL obj);
 
 char*

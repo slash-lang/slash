@@ -141,10 +141,10 @@ run_slash_script(request_rec* r)
         sl_do_file(vm, (uint8_t*)r->canonical_filename);
         flush_headers(&ctx);
         sl_response_flush(vm);
-    }, error, {    
-        ap_set_content_type(r, "text/html; charset=utf-8");
-        error = sl_string_html_escape(vm, sl_to_s(vm, error));
-        ap_rputs(sl_to_cstr(vm, error), r);
+    }, error, {
+        sl_render_error_page(vm, error);
+        flush_headers(&ctx);
+        sl_response_flush(vm);
     });
     return OK;
 }

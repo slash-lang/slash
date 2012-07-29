@@ -21,6 +21,9 @@ SLVAL
 sl_make_error2(struct sl_vm* vm, SLVAL klass, SLVAL message);
 
 void
+sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL receiver, SLVAL method, SLVAL file, SLVAL line);
+
+void
 sl_try(struct sl_vm* vm, void(*try)(struct sl_vm*, void*), void(*catch)(struct sl_vm*, void*, SLVAL), void* state);
 
 void
