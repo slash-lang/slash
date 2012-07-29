@@ -13,6 +13,7 @@ typedef struct {
     SLVAL env;
     SLVAL get;
     SLVAL post;
+    SLVAL post_data;
     SLVAL params;
 }
 sl_request_internal_opts_t;
@@ -27,19 +28,15 @@ request(sl_vm_t* vm)
 }
 
 static void
-parse_query_string(sl_vm_t* vm, SLVAL dict, uint8_t* query_string)
+parse_query_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* query_string)
 {
     uint8_t *key = query_string, *value = NULL;
     size_t key_len = 0, value_len = 0;
-    size_t i, len = strlen((char*)query_string) + 1;
+    size_t i;
     SLVAL addee = dict, k, v;
     int bracket_mode = 0, in_bracket = 0;
-    for(i = 0; i < len; i++) {
-        if(query_string[i] == '=' && !value) {
-            value = query_string + i + 1;
-            continue;
-        }
-        if(query_string[i] == '&' || query_string[i] == 0) {
+    for(i = 0; i <= len; i++) {
+        if(query_string[i] == '&' || i == len) {
             if(key_len > 0) {
                 k = sl_string_url_decode(vm, sl_make_string(vm, key, key_len));
                 if(value) {
@@ -54,6 +51,10 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, uint8_t* query_string)
             addee = dict;
             in_bracket = 0;
             bracket_mode = 0;
+            continue;
+        }
+        if(query_string[i] == '=' && !value) {
+            value = query_string + i + 1;
             continue;
         }
         if(value) {
@@ -77,7 +78,7 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, uint8_t* query_string)
             }
             if(bracket_mode && !in_bracket) {
                 /* skip until \0, & or = */
-                while(query_string[i + 1] != 0 && query_string[i + 1] != '&' && query_string[i + 1] != '=') {
+                while(i + 1 < len && query_string[i + 1] != '&' && query_string[i + 1] != '=') {
                     i++;
                 }
                 continue;
@@ -102,6 +103,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     req->env          = sl_make_dict(vm, 0, NULL);
     req->get          = sl_make_dict(vm, 0, NULL);
     req->post         = sl_make_dict(vm, 0, NULL);
+    req->post_data    = sl_make_string(vm, (uint8_t*)opts->post_data, opts->post_length);
     req->params       = sl_make_dict(vm, 0, NULL);
     for(i = 0; i < opts->header_count; i++) {
         n = sl_make_cstring(vm, opts->headers[i].name);
@@ -114,13 +116,10 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
         sl_dict_set(vm, req->env, n, v);
     }
     if(opts->query_string) {
-        parse_query_string(vm, req->get, (uint8_t*)opts->query_string);
+        parse_query_string(vm, req->get, strlen(opts->query_string), (uint8_t*)opts->query_string);
     }
-    for(i = 0; i < opts->post_count; i++) {
-        n = sl_make_cstring(vm, opts->post_params[i].name);
-        v = sl_make_cstring(vm, opts->post_params[i].value);
-        sl_dict_set(vm, req->post, n, v);
-        sl_dict_set(vm, req->params, n, v);
+    if(opts->content_type && strcmp(opts->content_type, "application/x-www-form-urlencoded") == 0) {
+        parse_query_string(vm, req->post, opts->post_length, (uint8_t*)opts->post_data);
     }
     sl_vm_store_put(vm, &Request_opts, sl_make_ptr((sl_object_t*)req));
 }
@@ -135,6 +134,12 @@ static SLVAL
 request_post(sl_vm_t* vm)
 {
     return request(vm)->post;
+}
+
+static SLVAL
+request_post_data(sl_vm_t* vm)
+{
+    return request(vm)->post_data;
 }
 
 static SLVAL
@@ -193,6 +198,7 @@ sl_init_request(sl_vm_t* vm)
     sl_vm_store_put(vm, &Request_, Request);
     sl_define_singleton_method(vm, Request, "get", 0, request_get);
     sl_define_singleton_method(vm, Request, "post", 0, request_post);
+    sl_define_singleton_method(vm, Request, "post_data", 0, request_post_data);
     sl_define_singleton_method(vm, Request, "headers", 0, request_headers);
     sl_define_singleton_method(vm, Request, "env", 0, request_env);
     sl_define_singleton_method(vm, Request, "method", 0, request_method);

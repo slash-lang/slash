@@ -16,12 +16,17 @@ typedef struct {
     char* path_info;
     char* query_string;
     char* remote_addr;
+    char* content_type;
     size_t header_count;
     sl_request_key_value_t* headers;
     size_t env_count;
     sl_request_key_value_t* env;
+    size_t post_length;
+    char* post_data;
+    /*
     size_t post_count;
     sl_request_key_value_t* post_params;
+    */
 }
 sl_request_opts_t;
 
