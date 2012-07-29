@@ -215,7 +215,11 @@ sl_string_url_decode(sl_vm_t* vm, SLVAL self)
                     continue;
                 }
             }
-        }    
+        }
+        if(str->buff[str_i] == '+') {
+            out[out_len++] = ' ';
+            continue;
+        }
         out[out_len++] = str->buff[str_i];
     }
     return sl_make_string(vm, out, out_len);
