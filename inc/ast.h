@@ -16,6 +16,7 @@ typedef enum sl_node_type {
     SL_NODE_CLASS,
     SL_NODE_DEF,
     SL_NODE_LAMBDA,
+    SL_NODE_TRY,
     SL_NODE_IF,
     SL_NODE_UNLESS,
     SL_NODE_FOR,
@@ -128,6 +129,14 @@ typedef struct sl_node_while {
     sl_node_base_t* body;
 }
 sl_node_while_t;
+
+typedef struct sl_node_try {
+    sl_node_base_t base;
+    sl_node_base_t* body;
+    sl_node_base_t* lval;
+    sl_node_base_t* catch_body;
+}
+sl_node_try_t;
 
 typedef struct sl_node_send {
     sl_node_base_t base;

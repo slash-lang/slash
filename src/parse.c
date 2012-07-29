@@ -229,6 +229,25 @@ lambda_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+try_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t *body, *lval = NULL, *catch_body = NULL;
+    sl_token_t* tok;
+    expect_token(ps, SL_TOK_TRY);
+    body = body_expression(ps);
+    expect_token(ps, SL_TOK_CATCH);
+    tok = peek_token(ps);
+    if(tok->type != SL_TOK_OPEN_BRACE) {
+        lval = primary_expression(ps);
+        if(!sl_node_is_lval(lval)) {
+            unexpected(ps, tok);
+        }
+    }
+    catch_body = body_expression(ps);
+    return sl_make_try_node(body, lval, catch_body);
+}
+
+static sl_node_base_t*
 send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
 {
     size_t argc = 0, cap = 2;
@@ -360,6 +379,8 @@ primary_expression(sl_parse_state_t* ps)
             return def_expression(ps);
         case SL_TOK_LAMBDA:
             return lambda_expression(ps);
+        case SL_TOK_TRY:
+            return try_expression(ps);
         case SL_TOK_OPEN_BRACKET:
             return array_expression(ps);
         case SL_TOK_OPEN_PAREN:

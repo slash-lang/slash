@@ -254,7 +254,7 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
     sl_catch_frame_t frame;
     sl_vm_t* vm = ctx->vm;
     SLVAL recv = node->recv->eval(node->recv, ctx);
-    SLVAL* args = GC_MALLOC(sizeof(SLVAL) * node->arg_count);
+    SLVAL* args = alloca(sizeof(SLVAL) * node->arg_count);
     SLVAL ret, err;
     size_t i;
     for(i = 0; i < node->arg_count; i++) {
@@ -415,6 +415,23 @@ sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx)
         node->arg_count, node->args, node->body, ctx);
     definer(ctx->vm, on, node->name, method);
     return method;
+}
+
+SLVAL
+sl_eval_try(sl_node_try_t* node, sl_eval_ctx_t* ctx)
+{
+    sl_vm_t* vm = ctx->vm;
+    sl_catch_frame_t frame;
+    SLVAL err, ret;
+    SL_TRY(frame, {
+        ret = node->body->eval(node->body, ctx);
+    }, err, {
+        if(node->lval) {
+            set_lval(node->lval, ctx, err);
+        }
+        ret = node->catch_body->eval(node->catch_body, ctx);
+    });
+    return ret;
 }
 
 SLVAL
