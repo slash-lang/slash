@@ -78,8 +78,9 @@ setup_request_response(sl_vm_t* vm)
     req.post_length  = 0;
     sl_request_set_opts(vm, &req);
     
-    res.buffered = 0;
-    res.write    = output;
+    res.buffered               = 0;
+    res.write                  = output;
+    res.descriptive_error_page = 0;
     sl_response_set_opts(vm, &res);
 }
 
