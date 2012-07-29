@@ -23,10 +23,6 @@ typedef struct {
     sl_request_key_value_t* env;
     size_t post_length;
     char* post_data;
-    /*
-    size_t post_count;
-    sl_request_key_value_t* post_params;
-    */
 }
 sl_request_opts_t;
 
