@@ -21,7 +21,7 @@ sl_request_internal_opts_t;
 static int Request_;
 static int Request_opts;
 
-sl_request_internal_opts_t*
+static sl_request_internal_opts_t*
 request(sl_vm_t* vm)
 {
     return (sl_request_internal_opts_t*)sl_get_ptr(sl_vm_store_get(vm, &Request_opts));
@@ -104,7 +104,6 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     req->get          = sl_make_dict(vm, 0, NULL);
     req->post         = sl_make_dict(vm, 0, NULL);
     req->post_data    = sl_make_string(vm, (uint8_t*)opts->post_data, opts->post_length);
-    req->params       = sl_make_dict(vm, 0, NULL);
     for(i = 0; i < opts->header_count; i++) {
         n = sl_make_cstring(vm, opts->headers[i].name);
         v = sl_make_cstring(vm, opts->headers[i].value);
@@ -121,6 +120,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     if(opts->content_type && strcmp(opts->content_type, "application/x-www-form-urlencoded") == 0) {
         parse_query_string(vm, req->post, opts->post_length, (uint8_t*)opts->post_data);
     }
+    req->params = sl_dict_merge(vm, req->get, req->post);
     sl_vm_store_put(vm, &Request_opts, sl_make_ptr((sl_object_t*)req));
 }
 
