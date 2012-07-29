@@ -241,6 +241,31 @@ sl_dict_enumerator_current(sl_vm_t* vm, SLVAL self)
     return sl_make_array(vm, 2, kv);
 }
 
+struct dict_keys_state {
+    SLVAL* keys;
+    size_t at;
+};
+
+static int
+sl_dict_keys_iter(sl_dict_key_t* key, SLVAL value, struct dict_keys_state* state)
+{
+    (void)value;
+    state->keys[state->at++] = key->key;
+    return ST_CONTINUE;
+}
+
+SLVAL*
+sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
+{
+    sl_dict_t* d = get_dict(vm, dict);
+    struct dict_keys_state state;
+    state.keys = GC_MALLOC(sizeof(SLVAL) * d->st->num_entries);
+    state.at = 0;
+    st_foreach(d->st, sl_dict_keys_iter, (st_data_t)&state);
+    *count = state.at;
+    return state.keys;
+}
+
 void
 sl_init_dict(sl_vm_t* vm)
 {
