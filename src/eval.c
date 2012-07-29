@@ -179,7 +179,7 @@ set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 SLVAL
 sl_eval_seq(sl_node_seq_t* node, sl_eval_ctx_t* ctx)
 {
-    SLVAL retn;
+    SLVAL retn = ctx->vm->lib.nil;
     size_t i;
     for(i = 0; i < node->node_count; i++) {
         retn = node->nodes[i]->eval(node->nodes[i], ctx);
