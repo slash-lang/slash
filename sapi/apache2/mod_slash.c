@@ -5,6 +5,7 @@
 #include <apache2/util_script.h>
 #include "slash.h"
 #include "lib/request.h"
+#include "lib/response.h"
 
 typedef struct {
     sl_vm_t* vm;
@@ -92,6 +93,15 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     sl_request_set_opts(vm, &opts);
 }
 
+static void
+setup_response_object(sl_vm_t* vm)
+{
+    sl_response_opts_t opts;
+    opts.write    = output;
+    opts.buffered = 1;
+    sl_response_set_opts(vm, &opts);
+}
+
 static int
 run_slash_script(request_rec* r)
 {
@@ -105,10 +115,11 @@ run_slash_script(request_rec* r)
         ctx.vm = vm;
         ctx.r = r;
         vm->data = &ctx;
-        vm->output = output;
         setup_request_object(vm, r);
+        setup_response_object(vm);
         ap_set_content_type(r, "text/html; charset=utf-8");
         sl_do_file(vm, (uint8_t*)r->canonical_filename);
+        sl_response_flush(vm);
     }, error, {    
         ap_set_content_type(r, "text/html; charset=utf-8");
         error = sl_string_html_escape(vm, sl_to_s(vm, error));

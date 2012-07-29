@@ -6,6 +6,7 @@
 #include "parse.h"
 #include "method.h"
 #include "lib/array.h"
+#include "lib/response.h"
 #include <gc.h>
 #include <string.h>
 #include <stdio.h>
@@ -188,28 +189,23 @@ sl_eval_seq(sl_node_seq_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_raw(sl_node_raw_t* node, sl_eval_ctx_t* ctx)
 {
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(node->string);
-    ctx->vm->output(ctx->vm, (char*)str->buff, str->buff_len);
+    sl_response_write(ctx->vm, node->string);
     return ctx->vm->lib.nil;
 }
 
 SLVAL
 sl_eval_echo(sl_node_echo_t* node, sl_eval_ctx_t* ctx)
 {
-    SLVAL strv = sl_to_s(ctx->vm, node->expr->eval(node->expr, ctx));
-    sl_string_t* str;
-    strv = sl_string_html_escape(ctx->vm, strv);
-    str = (sl_string_t*)sl_get_ptr(strv);
-    ctx->vm->output(ctx->vm, (char*)str->buff, str->buff_len);
+    SLVAL str = sl_to_s(ctx->vm, node->expr->eval(node->expr, ctx));
+    sl_response_write(ctx->vm, sl_string_html_escape(ctx->vm, str));
     return ctx->vm->lib.nil;
 }
 
 SLVAL
 sl_eval_echo_raw(sl_node_echo_t* node, sl_eval_ctx_t* ctx)
 {
-    SLVAL strv = sl_to_s(ctx->vm, node->expr->eval(node->expr, ctx));
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(strv);
-    ctx->vm->output(ctx->vm, (char*)str->buff, str->buff_len);
+    SLVAL str = sl_to_s(ctx->vm, node->expr->eval(node->expr, ctx));
+    sl_response_write(ctx->vm, str);
     return ctx->vm->lib.nil;
 }
 

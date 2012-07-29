@@ -11,16 +11,18 @@ typedef struct {
 sl_response_key_value_t;
 
 typedef struct {
-    int status;
-    size_t header_count;
-    sl_response_key_value_t* headers;
     int buffered;
-    SLVAL output_buffer;
     void(*write)(sl_vm_t*,char*,size_t);
 }
 sl_response_opts_t;
 
 void
 sl_response_set_opts(sl_vm_t* vm, sl_response_opts_t* opts);
+
+SLVAL
+sl_response_write(sl_vm_t* vm, SLVAL str);
+
+SLVAL
+sl_response_flush(sl_vm_t* vm);
 
 #endif
