@@ -40,6 +40,25 @@ iterate_apr_table(void* rec, const char* name, const char* value)
 }
 
 static void
+read_post_data(sl_request_opts_t* opts, request_rec* r)
+{
+    apr_bucket_brigade* brigade = apr_brigade_create(r->pool, r->connection->bucket_alloc);
+    size_t len = 1024;
+    opts->post_length = 0;
+    opts->post_data = NULL;
+    while(ap_get_brigade(r->input_filters, brigade, AP_MODE_READBYTES, APR_BLOCK_READ, len) == APR_SUCCESS) {
+        opts->post_data = GC_REALLOC(opts->post_data, opts->post_length + len);
+        apr_brigade_flatten(brigade, opts->post_data + opts->post_length, &len);
+        apr_brigade_cleanup(brigade);
+        opts->post_length += len;
+        if(!len) {
+            break;
+        }
+        len = 1024;
+    }
+}
+
+static void
 setup_request_object(sl_vm_t* vm, request_rec* r)
 {
     struct iter_args ia;
@@ -50,6 +69,7 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     opts.path_info    = r->path_info;
     opts.query_string = r->args;
     opts.remote_addr  = r->connection->remote_ip;
+    opts.content_type = (char*)apr_table_get(r->headers_in, "content-type");
     
     ia.count = 0;
     ia.capacity = 4;
@@ -67,8 +87,8 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     opts.env_count = ia.count;
     opts.env = ia.kvs;
     
-    opts.post_count   = 0;
-    opts.post_params  = NULL;
+    read_post_data(&opts, r);
+    
     sl_request_set_opts(vm, &opts);
 }
 
