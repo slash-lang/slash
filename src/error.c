@@ -33,6 +33,16 @@ get_error(sl_vm_t* vm, SLVAL object)
 }
 
 static SLVAL
+sl_error_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    sl_error_t* err = get_error(vm, self);
+    if(argc > 0) {
+        err->message = sl_expect(vm, argv[0], vm->lib.String);
+    }
+    return self;
+}
+
+static SLVAL
 sl_error_name(sl_vm_t* vm, SLVAL self)
 {
     return sl_to_s(vm, sl_class_of(vm, self));
@@ -70,6 +80,7 @@ sl_init_error(sl_vm_t* vm)
 {
     vm->lib.Error = sl_define_class(vm, "Error", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Error, allocate_error);
+    sl_define_method(vm, vm->lib.Error, "init", -1, sl_error_init);
     sl_define_method(vm, vm->lib.Error, "name", 0, sl_error_name);
     sl_define_method(vm, vm->lib.Error, "message", 0, sl_error_message);
     sl_define_method(vm, vm->lib.Error, "backtrace", 0, sl_error_backtrace);
