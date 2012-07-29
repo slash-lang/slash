@@ -18,4 +18,7 @@ sl_dict_length(sl_vm_t* vm, SLVAL dict);
 SLVAL
 sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key);
 
+SLVAL
+sl_dict_merge(sl_vm_t* vm, SLVAL dict, SLVAL other);
+
 #endif

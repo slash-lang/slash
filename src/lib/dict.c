@@ -121,7 +121,25 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
     }
 }
 
+static int
+sl_dict_merge_iter(sl_dict_key_t* key, SLVAL value, SLVAL dict)
+{
+    sl_dict_set(key->vm, dict, key->key, value);
+    return ST_CONTINUE;
+}
+
 SLVAL
+sl_dict_merge(sl_vm_t* vm, SLVAL dict, SLVAL other)
+{
+    sl_dict_t* a = get_dict(vm, dict);
+    sl_dict_t* b = get_dict(vm, other);
+    SLVAL new_dict = sl_new(vm, vm->lib.Dict, 0, NULL);
+    st_foreach(a->st, sl_dict_merge_iter, (st_data_t)sl_get_ptr(new_dict));
+    st_foreach(b->st, sl_dict_merge_iter, (st_data_t)sl_get_ptr(new_dict));
+    return new_dict;
+}
+
+static SLVAL
 sl_dict_enumerate(sl_vm_t* vm, SLVAL dict)
 {
     return sl_new(vm, vm->lib.Dict_Enumerator, 1, &dict);
@@ -139,7 +157,7 @@ dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
     return ST_CHECK;
 }
 
-SLVAL
+static SLVAL
 sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
 {
     sl_catch_frame_t frame;
@@ -232,6 +250,7 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "[]=", 2, sl_dict_set);
     sl_define_method(vm, vm->lib.Dict, "length", 0, sl_dict_length);
     sl_define_method(vm, vm->lib.Dict, "delete", 1, sl_dict_delete);
+    sl_define_method(vm, vm->lib.Dict, "merge", 1, sl_dict_merge);
     sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
     sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
