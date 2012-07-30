@@ -286,8 +286,7 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
     sl_eval_ctx_t* ctx;
     size_t i;
     SLVAL arg;
-    /* @TODO - investigate performance implications of calling this all the time: */
-    if((void*)&arg < sl_stack_limit()) {
+    if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
         sl_throw_message2(vm, vm->lib.StackOverflowError, "Stack Overflow");
     }

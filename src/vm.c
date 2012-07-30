@@ -89,6 +89,7 @@ sl_init()
     vm->store = st_init_numtable();
     sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
+    vm->stack_limit = sl_stack_limit();
     
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
