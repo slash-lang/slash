@@ -1,8 +1,8 @@
 #include <gc.h>
-#include <apache2/httpd.h>
-#include <apache2/http_protocol.h>
-#include <apache2/http_config.h>
-#include <apache2/util_script.h>
+#include <httpd.h>
+#include <http_protocol.h>
+#include <http_config.h>
+#include <util_script.h>
 #include "slash.h"
 #include "lib/request.h"
 #include "lib/response.h"
