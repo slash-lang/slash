@@ -11,7 +11,7 @@ typedef struct {
 sl_response_key_value_t;
 
 typedef struct {
-    int descriptive_error_page;
+    int descriptive_error_pages;
     int buffered;
     void(*write)(sl_vm_t*,char*,size_t);
 }
