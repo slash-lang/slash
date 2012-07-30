@@ -115,9 +115,9 @@ static void
 setup_response_object(sl_vm_t* vm)
 {
     sl_response_opts_t opts;
-    opts.write                  = output;
-    opts.buffered               = 1;
-    opts.descriptive_error_page = 1;
+    opts.write                   = output;
+    opts.buffered                = 1;
+    opts.descriptive_error_pages = 1;
     sl_response_set_opts(vm, &opts);
 }
 
