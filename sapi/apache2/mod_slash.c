@@ -142,6 +142,7 @@ run_slash_script(request_rec* r)
         flush_headers(&ctx);
         sl_response_flush(vm);
     }, error, {
+        sl_response_clear(vm);
         sl_render_error_page(vm, error);
         flush_headers(&ctx);
         sl_response_flush(vm);
