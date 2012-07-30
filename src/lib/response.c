@@ -13,7 +13,9 @@ typedef struct {
     size_t header_cap;
     size_t header_count;
     int buffered;
-    SLVAL output_buffer;
+    size_t output_cap;
+    size_t output_len;
+    SLVAL* output;
     void(*write)(sl_vm_t*,char*,size_t);
 }
 sl_response_internal_opts_t;
@@ -24,7 +26,9 @@ sl_response_set_opts(sl_vm_t* vm, sl_response_opts_t* opts)
     sl_response_internal_opts_t* iopts = GC_MALLOC(sizeof(sl_response_internal_opts_t));
     iopts->status        = 200;
     iopts->buffered      = opts->buffered;
-    iopts->output_buffer = sl_make_string(vm, NULL, 0);
+    iopts->output_cap    = 4;
+    iopts->output_len    = 0;
+    iopts->output        = GC_MALLOC(sizeof(SLVAL) * iopts->output_cap);
     iopts->write         = opts->write;
     iopts->header_cap    = 2;
     iopts->header_count  = 0;
@@ -48,7 +52,11 @@ response_write(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     (void)self;
     if(resp->buffered) {
         for(i = 0; i < argc; i++) {
-            resp->output_buffer = sl_string_concat(vm, resp->output_buffer, sl_to_s(vm, argv[i]));
+            if(resp->output_len >= resp->output_cap) {
+                resp->output_cap *= 2;
+                resp->output = GC_REALLOC(resp->output, sizeof(SLVAL) * resp->output_cap);
+            }
+            resp->output[resp->output_len++] = sl_to_s(vm, argv[i]);
         }
     } else {
         for(i = 0; i < argc; i++) {
@@ -69,11 +77,21 @@ SLVAL
 sl_response_flush(sl_vm_t* vm)
 {
     sl_response_internal_opts_t* resp = response(vm);
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(resp->output_buffer);
-    if(str->buff_len) {
-        resp->write(vm, (char*)str->buff, str->buff_len);
+    size_t i, total_size = 0, offset = 0;
+    char* output_buffer;
+    sl_string_t* str;
+    for(i = 0; i < resp->output_len; i++) {
+        str = (sl_string_t*)sl_get_ptr(resp->output[i]);
+        total_size += str->buff_len;
     }
-    resp->output_buffer = sl_make_string(vm, NULL, 0);
+    output_buffer = GC_MALLOC(total_size + 1);
+    for(i = 0; i < resp->output_len; i++) {
+        str = (sl_string_t*)sl_get_ptr(resp->output[i]);
+        memcpy(output_buffer + offset, str->buff, str->buff_len);
+        offset += str->buff_len;
+    }
+    resp->write(vm, output_buffer, total_size);
+    resp->output_len = 0;
     return vm->lib.nil;
 }
 
