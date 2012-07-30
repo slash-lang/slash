@@ -5,7 +5,10 @@ APXS=apxs
 
 SO_EXT=$(shell $(APR)-config --apr-so-ext)
 
-mod_slash.$(SO_EXT): mod_slash.c $(LIBS)
+mod_slash.so: .libs/mod_slash.so
+	cp $< $@
+
+.libs/mod_slash.so: mod_slash.c $(LIBS)
 	$(APXS) -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $^
 
 clean:
