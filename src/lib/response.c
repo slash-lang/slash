@@ -95,6 +95,12 @@ sl_response_flush(sl_vm_t* vm)
     return vm->lib.nil;
 }
 
+void
+sl_response_clear(sl_vm_t* vm)
+{
+    response(vm)->output_len = 0;
+}
+
 static SLVAL
 response_unbuffer(sl_vm_t* vm)
 {

@@ -26,6 +26,9 @@ sl_response_write(sl_vm_t* vm, SLVAL str);
 SLVAL
 sl_response_flush(sl_vm_t* vm);
 
+void
+sl_response_clear(sl_vm_t* vm);
+
 sl_response_key_value_t*
 sl_response_get_headers(sl_vm_t* vm, size_t* count);
 
