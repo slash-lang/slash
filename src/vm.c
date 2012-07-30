@@ -21,6 +21,7 @@ sl_static_init()
     if(sl_statically_initialized) {
         return;
     }
+    sl_statically_initialized = 1;
     GC_INIT();
     sl_static_init_exts();
 }
