@@ -9,7 +9,7 @@ mod_slash.$(SO_EXT): mod_slash.c $(LIBS)
 	$(APXS) -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $^
 
 clean:
-	rm -f *.o *.so
+	rm -f *.o *.so *.$(SO_EXT)
 	rm -rf *.dSYM .libs
 
 describe:
