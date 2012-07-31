@@ -36,7 +36,7 @@ get_bignum(sl_vm_t* vm, SLVAL val)
     return (sl_bignum_t*)sl_get_ptr(val);
 }
 
-static SLVAL
+SLVAL
 sl_bignum_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_bignum_t* bn = get_bignum(vm, self);

@@ -10,6 +10,9 @@ double
 sl_get_float(sl_vm_t* vm, SLVAL f);
 
 SLVAL
+sl_float_to_s(sl_vm_t* vm, SLVAL self);
+
+SLVAL
 sl_float_add(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL

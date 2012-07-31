@@ -17,6 +17,9 @@ SLVAL
 sl_bignum_to_f(sl_vm_t* vm, SLVAL self);
 
 SLVAL
+sl_bignum_to_s(sl_vm_t* vm, SLVAL self);
+
+SLVAL
 sl_bignum_add(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL
