@@ -15,6 +15,7 @@ typedef struct {
     SLVAL post;
     SLVAL post_data;
     SLVAL params;
+    SLVAL cookies;
 }
 sl_request_internal_opts_t;
 
@@ -36,7 +37,7 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* query_string)
     SLVAL addee = dict, k, v;
     int bracket_mode = 0, in_bracket = 0;
     for(i = 0; i <= len; i++) {
-        if(query_string[i] == '&' || i == len) {
+        if(i == len || query_string[i] == '&') {
             if(key_len > 0) {
                 k = sl_string_url_decode(vm, sl_make_string(vm, key, key_len));
                 if(value) {
@@ -88,11 +89,47 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* query_string)
     }
 }
 
+static void
+parse_cookie_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* cookies)
+{
+    uint8_t *key = NULL, *value = NULL;
+    size_t key_len = 0, value_len = 0;
+    size_t i;
+    for(i = 0; i <= len; i++) {
+        if(i == len || cookies[i] == ';') {
+            if(key_len) {
+                sl_dict_set(vm, dict,
+                    sl_string_url_decode(vm, sl_make_string(vm, key, key_len)),
+                    sl_string_url_decode(vm, sl_make_string(vm, value, value_len)));
+            }
+            key_len = 0;
+            value_len = 0;
+            key = NULL;
+            value = NULL;
+        }
+        if(cookies[i] != ' ' && !key) {
+            key = cookies + i;
+            key_len++;
+            continue;
+        }
+        if(cookies[i] == '=' && !value) {
+            value = cookies + i + 1;
+            continue;
+        }
+        if(!value) {
+            key_len++;
+        } else {
+            value_len++;
+        }
+    }
+}
+
 void
 sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
 {
     size_t i;
-    SLVAL n, v;
+    SLVAL n, v, cookies;
+    sl_string_t* str;
     sl_request_internal_opts_t* req = GC_MALLOC(sizeof(sl_request_internal_opts_t));
     req->method       = sl_make_cstring(vm, opts->method);
     req->uri          = sl_make_cstring(vm, opts->uri);
@@ -104,6 +141,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     req->get          = sl_make_dict(vm, 0, NULL);
     req->post         = sl_make_dict(vm, 0, NULL);
     req->post_data    = sl_make_string(vm, (uint8_t*)opts->post_data, opts->post_length);
+    req->cookies      = sl_make_dict(vm, 0, NULL);
     for(i = 0; i < opts->header_count; i++) {
         n = sl_make_cstring(vm, opts->headers[i].name);
         v = sl_make_cstring(vm, opts->headers[i].value);
@@ -119,6 +157,11 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     }
     if(opts->content_type && strcmp(opts->content_type, "application/x-www-form-urlencoded") == 0) {
         parse_query_string(vm, req->post, opts->post_length, (uint8_t*)opts->post_data);
+    }
+    cookies = sl_dict_get(vm, req->headers, sl_make_cstring(vm, "Cookie"));
+    if(sl_is_a(vm, cookies, vm->lib.String)) {
+        str = (sl_string_t*)sl_get_ptr(cookies);
+        parse_cookie_string(vm, req->cookies, str->buff_len, str->buff);
     }
     req->params = sl_dict_merge(vm, req->get, req->post);
     sl_vm_store_put(vm, &Request_opts, sl_make_ptr((sl_object_t*)req));
@@ -152,6 +195,12 @@ static SLVAL
 request_env(sl_vm_t* vm)
 {
     return request(vm)->env;
+}
+
+static SLVAL
+request_cookies(sl_vm_t* vm)
+{
+    return request(vm)->cookies;
 }
 
 static SLVAL
@@ -201,6 +250,7 @@ sl_init_request(sl_vm_t* vm)
     sl_define_singleton_method(vm, Request, "post_data", 0, request_post_data);
     sl_define_singleton_method(vm, Request, "headers", 0, request_headers);
     sl_define_singleton_method(vm, Request, "env", 0, request_env);
+    sl_define_singleton_method(vm, Request, "cookies", 0, request_cookies);
     sl_define_singleton_method(vm, Request, "method", 0, request_method);
     sl_define_singleton_method(vm, Request, "uri", 0, request_uri);
     sl_define_singleton_method(vm, Request, "path_info", 0, request_path_info);
