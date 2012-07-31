@@ -12,5 +12,6 @@
 #include "lib/dict.h"
 #include "lib/bignum.h"
 #include "lib/float.h"
+#include "lib/int.h"
 
 #endif

@@ -25,6 +25,9 @@ SLVAL
 sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL
+sl_string_inspect(sl_vm_t* vm, SLVAL self);
+
+SLVAL
 sl_string_html_escape(sl_vm_t* vm, SLVAL self);
 
 SLVAL
