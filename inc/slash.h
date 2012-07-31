@@ -10,5 +10,7 @@
 #include "string.h"
 #include "lib/array.h"
 #include "lib/dict.h"
+#include "lib/bignum.h"
+#include "lib/float.h"
 
 #endif
