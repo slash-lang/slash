@@ -213,7 +213,7 @@ sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yaj
 static SLVAL
 sl_json_parse(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(argv[0]);
+    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
     json_parse_t json;
     json.vm = vm;
     json.max_depth = 32;
