@@ -190,6 +190,41 @@ class_expression(sl_parse_state_t* ps)
     return sl_make_class_node(ps, name, extends, body);
 }
 
+static SLVAL
+def_expression_method_name(sl_parse_state_t* ps)
+{
+    switch(peek_token(ps)->type) {
+        case SL_TOK_SHIFT_LEFT:
+        case SL_TOK_SHIFT_RIGHT:
+        case SL_TOK_DBL_EQUALS:
+        case SL_TOK_NOT_EQUALS:
+        case SL_TOK_SPACESHIP:
+        case SL_TOK_LTE:
+        case SL_TOK_LT:
+        case SL_TOK_GTE:
+        case SL_TOK_GT:
+        case SL_TOK_PLUS:
+        case SL_TOK_MINUS:
+        case SL_TOK_POW:
+        case SL_TOK_TIMES:
+        case SL_TOK_DIVIDE:
+        case SL_TOK_MOD:
+        case SL_TOK_CARET:
+        case SL_TOK_TILDE:
+        case SL_TOK_BIT_AND:
+        case SL_TOK_BIT_OR:
+            return next_token(ps)->str;
+        case SL_TOK_OPEN_BRACKET:
+            if(peek_token_n(ps, 2)->type == SL_TOK_CLOSE_BRACKET) {
+                next_token(ps);
+                next_token(ps);
+                return sl_make_cstring(ps->vm, "[]");
+            }
+        default:
+            unexpected(ps, next_token(ps));
+    }
+}
+
 static sl_node_base_t*
 def_expression(sl_parse_state_t* ps)
 {
@@ -205,10 +240,10 @@ def_expression(sl_parse_state_t* ps)
             if(peek_token_n(ps, 2)->type == SL_TOK_DOT) {
                 on = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var, next_token(ps)->str);
                 next_token(ps);
-                name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+                name = def_expression_method_name(ps);
             } else {
                 on = NULL;
-                name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+                name = def_expression_method_name(ps);
             }
             break;
         case SL_TOK_SELF:
@@ -217,10 +252,10 @@ def_expression(sl_parse_state_t* ps)
         case SL_TOK_CONSTANT:
             on = primary_expression(ps);
             expect_token(ps, SL_TOK_DOT);
-            name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+            name = def_expression_method_name(ps);
             break;
         default:
-            unexpected(ps, next_token(ps));
+            name = def_expression_method_name(ps);
     }
     if(peek_token(ps)->type == SL_TOK_EQUALS) {
         next_token(ps);
