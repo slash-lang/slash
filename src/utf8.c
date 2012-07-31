@@ -30,6 +30,7 @@ sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
                 bytes = 4;
             } else {
                 sl_throw(vm, sl_make_error2(vm, vm->lib.EncodingError, sl_make_cstring(vm, "Invalid UTF-8 sequence")));
+                return 0; /* never reached */
             }
         } else {
             c32 = c;
