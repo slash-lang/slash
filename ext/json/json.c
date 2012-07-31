@@ -11,6 +11,7 @@
 
 static int cJSON;
 static int cJSON_ParseError;
+static int cJSON_DumpError;
 
 typedef struct {
     size_t max_depth;
@@ -235,13 +236,153 @@ sl_json_parse(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     (void)self;
 }
 
+typedef struct {
+    sl_vm_t* vm;
+    size_t buffer_len;
+    size_t buffer_cap;
+    uint8_t* buffer;
+    size_t seen_len;
+    size_t seen_cap;
+    void** seen_ptrs;
+}
+json_dump_t;
+
+#define JSON_DUMP_NEED_BYTES(b) do { \
+        if(state->buffer_len + b >= state->buffer_cap) { \
+            state->buffer_cap *= 2; \
+            state->buffer = GC_REALLOC(state->buffer, state->buffer_cap); \
+        } \
+    } while(0)
+
+#define JSON_CHECK_RECURSION(obj) do { \
+        for(i = 0; i < state->seen_len; i++) { \
+            if(state->seen_ptrs[i] == sl_get_ptr((obj))) { \
+                sl_throw_message2(state->vm, sl_vm_store_get(state->vm, &cJSON_DumpError), "Can't dump recursive data structure to JSON"); \
+            } \
+        } \
+        if(state->seen_len >= state->seen_cap) { \
+            state->seen_cap *= 2; \
+            state->seen_ptrs = GC_REALLOC(state->seen_ptrs, sizeof(void*) * state->seen_cap); \
+        } \
+        state->seen_ptrs[state->seen_len++] = sl_get_ptr((obj)); \
+    } while(0)
+
+#define JSON_END_CHECK_RECURSION() do { \
+        state->seen_len--; \
+    } while(0)
+
+static void
+json_dump(json_dump_t* state, SLVAL object)
+{
+    sl_string_t* str;
+    size_t i, len;
+    SLVAL* keys;
+    switch(sl_get_primitive_type(object)) {
+        case SL_T_NIL:
+            JSON_DUMP_NEED_BYTES(4);
+            memcpy(state->buffer + state->buffer_len, "null", 4);
+            state->buffer_len += 4;
+            break;
+        case SL_T_TRUE:
+            JSON_DUMP_NEED_BYTES(4);
+            memcpy(state->buffer + state->buffer_len, "true", 4);
+            state->buffer_len += 4;
+            break;
+        case SL_T_FALSE:
+            JSON_DUMP_NEED_BYTES(5);
+            memcpy(state->buffer + state->buffer_len, "false", 5);
+            state->buffer_len += 5;
+            break;
+        case SL_T_INT:
+            str = (sl_string_t*)sl_get_ptr(sl_int_to_s(state->vm, object));
+            JSON_DUMP_NEED_BYTES(str->buff_len);
+            memcpy(state->buffer + state->buffer_len, str->buff, str->buff_len);
+            state->buffer_len += state->buffer_len;
+            break;
+        case SL_T_FLOAT:
+            str = (sl_string_t*)sl_get_ptr(sl_float_to_s(state->vm, object));
+            JSON_DUMP_NEED_BYTES(str->buff_len);
+            memcpy(state->buffer + state->buffer_len, str->buff, str->buff_len);
+            state->buffer_len += state->buffer_len;
+            break;
+        case SL_T_BIGNUM:
+            str = (sl_string_t*)sl_get_ptr(sl_bignum_to_s(state->vm, object));
+            JSON_DUMP_NEED_BYTES(str->buff_len);
+            memcpy(state->buffer + state->buffer_len, str->buff, str->buff_len);
+            state->buffer_len += state->buffer_len;
+            break;
+        case SL_T_STRING:
+            str = (sl_string_t*)sl_get_ptr(sl_string_inspect(state->vm, object));
+            JSON_DUMP_NEED_BYTES(str->buff_len);
+            memcpy(state->buffer + state->buffer_len, str->buff, str->buff_len);
+            state->buffer_len += state->buffer_len;
+            break;
+        case SL_T_ARRAY:
+            JSON_CHECK_RECURSION(object);
+            JSON_DUMP_NEED_BYTES(1);
+            state->buffer[state->buffer_len++] = '[';
+            len = sl_get_int(sl_array_length(state->vm, object));
+            for(i = 0; i < len; i++) {
+                if(i) {
+                    JSON_DUMP_NEED_BYTES(1);
+                    state->buffer[state->buffer_len++] = ',';
+                }
+                json_dump(state, sl_array_get(state->vm, object, i));
+            }
+            JSON_DUMP_NEED_BYTES(1);
+            state->buffer[state->buffer_len++] = ']';
+            JSON_END_CHECK_RECURSION();
+            break;
+        case SL_T_DICT:
+            JSON_CHECK_RECURSION(object);
+            JSON_DUMP_NEED_BYTES(1);
+            state->buffer[state->buffer_len++] = '{';
+            keys = sl_dict_keys(state->vm, object, &len);
+            for(i = 0; i < len; i++) {
+                if(i) {
+                    JSON_DUMP_NEED_BYTES(1);
+                    state->buffer[state->buffer_len++] = ',';
+                }
+                json_dump(state, sl_to_s(state->vm, keys[i]));
+                JSON_DUMP_NEED_BYTES(1);
+                state->buffer[state->buffer_len++] = ':';
+                json_dump(state, sl_dict_get(state->vm, object, keys[i]));
+            }
+            JSON_DUMP_NEED_BYTES(1);
+            state->buffer[state->buffer_len++] = '}';
+            JSON_END_CHECK_RECURSION();
+            break;
+        default:
+            sl_throw_message2(state->vm, sl_vm_store_get(state->vm, &cJSON_DumpError), "Unknown type in JSON.dump");
+    }
+}
+
+static SLVAL
+sl_json_dump(sl_vm_t* vm, SLVAL self, SLVAL object)
+{
+    json_dump_t dump;
+    dump.vm = vm;
+    dump.buffer_len = 0;
+    dump.buffer_cap = 32;
+    dump.buffer = GC_MALLOC_ATOMIC(dump.buffer_cap);
+    dump.seen_len = 0;
+    dump.seen_cap = 32;
+    dump.seen_ptrs = GC_MALLOC_ATOMIC(sizeof(void*) * dump.seen_cap);
+    json_dump(&dump, object);
+    return sl_make_string(vm, dump.buffer, dump.buffer_len);
+    (void)self;
+}
+
 void
 sl_init_ext_json(sl_vm_t* vm)
 {
     SLVAL JSON = sl_define_class(vm, "JSON", vm->lib.Object);
     SLVAL JSON_ParseError = sl_define_class3(vm, sl_make_cstring(vm, "ParseError"), vm->lib.SyntaxError, JSON);
+    SLVAL JSON_DumpError = sl_define_class3(vm, sl_make_cstring(vm, "DumpError"), vm->lib.SyntaxError, JSON);
     sl_define_singleton_method(vm, JSON, "parse", -2, sl_json_parse);
+    sl_define_singleton_method(vm, JSON, "dump", 1, sl_json_dump);
     
     sl_vm_store_put(vm, &cJSON, JSON);
     sl_vm_store_put(vm, &cJSON_ParseError, JSON_ParseError);
+    sl_vm_store_put(vm, &cJSON_DumpError, JSON_DumpError);
 }
