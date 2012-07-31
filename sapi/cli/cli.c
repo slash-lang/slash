@@ -90,6 +90,8 @@ main(int argc, char** argv)
     cli_state_t state;
     FILE* f;
     sl_vm_t* vm;
+    sl_catch_frame_t exit_frame, exception_frame;
+    SLVAL err;
     sl_static_init();
     vm = sl_init();
     setup_request_response(vm);
@@ -105,6 +107,14 @@ main(int argc, char** argv)
         f = stdin;
     }
     state.src = read_all(f, &state.len);
-    sl_try(vm, run, on_error, &state);
+    SL_TRY(exit_frame, SL_UNWIND_EXIT, {
+        SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
+            run(vm, &state);
+        }, err, {
+            on_error(vm, &state, err);
+        });
+    }, err, {
+        exit(sl_get_int(err));
+    });
     return 0;
 }

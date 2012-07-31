@@ -291,11 +291,11 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
         /* @TODO splat would go here... */
         args[i] = node->args[i]->eval(node->args[i], ctx);
     }
-    SL_TRY(frame, {
+    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         ret = sl_send2(ctx->vm, recv, node->id, node->arg_count, args);
     }, err, {
         sl_error_add_frame(vm, err, recv, node->id, sl_make_cstring(ctx->vm, (char*)node->file), sl_make_int(ctx->vm, node->line));
-        sl_throw(vm, err);
+        sl_rethrow(vm, &frame);
         return err; /* never reached */
     });
     return ret;
@@ -454,7 +454,7 @@ sl_eval_try(sl_node_try_t* node, sl_eval_ctx_t* ctx)
     sl_vm_t* vm = ctx->vm;
     sl_catch_frame_t frame;
     SLVAL err, ret;
-    SL_TRY(frame, {
+    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         ret = node->body->eval(node->body, ctx);
     }, err, {
         if(node->lval) {

@@ -126,27 +126,27 @@ run_slash_script(request_rec* r)
 {
     sl_vm_t* vm;
     slash_context_t ctx;
-    sl_catch_frame_t frame;
+    sl_catch_frame_t exit_frame, exception_frame;
     SLVAL error;
     sl_static_init();
     vm = sl_init();
-    SL_TRY(frame, {
-        ctx.headers_sent = 0;
-        ctx.vm = vm;
-        ctx.r = r;
-        vm->data = &ctx;
-        setup_request_object(vm, r);
-        setup_response_object(vm);
-        ap_set_content_type(r, "text/html; charset=utf-8");
-        sl_do_file(vm, (uint8_t*)r->canonical_filename);
-        flush_headers(&ctx);
-        sl_response_flush(vm);
-    }, error, {
-        sl_response_clear(vm);
-        sl_render_error_page(vm, error);
-        flush_headers(&ctx);
-        sl_response_flush(vm);
-    });
+    SL_TRY(exit_frame, SL_UNWIND_ALL, {
+        SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
+            ctx.headers_sent = 0;
+            ctx.vm = vm;
+            ctx.r = r;
+            vm->data = &ctx;
+            setup_request_object(vm, r);
+            setup_response_object(vm);
+            ap_set_content_type(r, "text/html; charset=utf-8");
+            sl_do_file(vm, (uint8_t*)r->canonical_filename);
+        }, error, {
+            sl_response_clear(vm);
+            sl_render_error_page(vm, error);
+        });
+    }, error, {});
+    flush_headers(&ctx);
+    sl_response_flush(vm);
     return OK;
 }
 
