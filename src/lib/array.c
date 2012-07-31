@@ -109,6 +109,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     }, err, {
         aryp->inspecting = 0;
         sl_rethrow(vm, &frame);
+        return vm->lib.nil; /* never reached */
     });
     return str;
 }
