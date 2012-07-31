@@ -25,6 +25,12 @@ peek_token(sl_parse_state_t* ps)
 }
 
 static sl_token_t*
+peek_token_n(sl_parse_state_t* ps, int n)
+{
+    return &ps->tokens[ps->current_token + n - 1];
+}
+
+static sl_token_t*
 next_token(sl_parse_state_t* ps)
 {
     return &ps->tokens[ps->current_token++];
@@ -194,17 +200,31 @@ def_expression(sl_parse_state_t* ps)
     size_t arg_count = 0, arg_cap = 2;
     sl_string_t** args = GC_MALLOC(sizeof(sl_string_t*) * arg_cap);
     expect_token(ps, SL_TOK_DEF);
-    on = primary_expression(ps);
-    if(peek_token(ps)->type == SL_TOK_DOT) {
-        next_token(ps);
-        tok = expect_token(ps, SL_TOK_IDENTIFIER);
-        name = sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len);
-    } else {
-        if(on->type != SL_NODE_VAR) {
+    switch(peek_token(ps)->type) {
+        case SL_TOK_IDENTIFIER:
+            if(peek_token_n(ps, 2)->type == SL_TOK_DOT) {
+                on = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var, next_token(ps)->str);
+                next_token(ps);
+                name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+            } else {
+                on = NULL;
+                name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+            }
+            break;
+        case SL_TOK_SELF:
+        case SL_TOK_IVAR:
+        case SL_TOK_CVAR:
+        case SL_TOK_CONSTANT:
+            on = primary_expression(ps);
             expect_token(ps, SL_TOK_DOT);
-        }
-        name = sl_make_ptr((sl_object_t*)((sl_node_var_t*)on)->name);
-        on = NULL;
+            name = expect_token(ps, SL_TOK_IDENTIFIER)->str;
+            break;
+        default:
+            unexpected(ps, next_token(ps));
+    }
+    if(peek_token(ps)->type == SL_TOK_EQUALS) {
+        next_token(ps);
+        name = sl_string_concat(ps->vm, name, sl_make_cstring(ps->vm, "="));
     }
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
