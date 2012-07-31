@@ -4,6 +4,7 @@
 #include <http_config.h>
 #include <util_script.h>
 #include "slash.h"
+#include "platform.h"
 #include "lib/request.h"
 #include "lib/response.h"
 
@@ -154,6 +155,9 @@ static int
 slash_handler(request_rec* r)
 {
     if(!r->handler || strcmp(r->handler, "slash") != 0) {
+        return DECLINED;
+    }
+    if(!sl_file_exists(r->canonical_filename)) {
         return DECLINED;
     }
     return run_slash_script(r);
