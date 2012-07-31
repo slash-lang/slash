@@ -49,6 +49,7 @@ static sl_object_t*
 allocate_dict()
 {
     sl_dict_t* dict = GC_MALLOC(sizeof(sl_dict_t));
+    dict->base.primitive_type = SL_T_ARRAY;
     dict->st = st_init_table(&dict_hash_type);
     return (sl_object_t*)dict;
 }

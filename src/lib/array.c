@@ -28,6 +28,7 @@ allocate_array(sl_vm_t* vm)
     ary->capacity = 2;
     ary->count = 0;
     ary->items = GC_MALLOC(sizeof(SLVAL) * ary->capacity);
+    ary->base.primitive_type = SL_T_ARRAY;
     for(i = 0; i < ary->capacity; i++) {
         ary->items[i] = vm->lib.nil;
     }
