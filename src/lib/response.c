@@ -199,7 +199,12 @@ sl_render_error_page(sl_vm_t* vm, SLVAL err)
             st_insert(ctx->vars, (st_data_t)sl_cstring(vm, "err"), (st_data_t)sl_get_ptr(err));
             ast->eval(ast, ctx);
         }, err, {
-            sl_response_write(vm, sl_make_cstring(vm, "<h1>Internal Server Error</h1>"));
+            sl_response_write(vm, 
+                sl_string_concat(vm,
+                    sl_make_cstring(vm, "<h1>Internal Server Error</h1><pre>"),
+                    sl_string_concat(vm,
+                        sl_string_html_escape(vm, sl_to_s_no_throw(vm, err)),
+                        sl_make_cstring(vm, "</pre>"))));
         });
     } else {
         sl_response_write(vm, sl_make_cstring(vm, "<h1>Internal Server Error</h1>"));
