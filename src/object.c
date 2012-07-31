@@ -183,10 +183,10 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }
 
-SLVAL
+int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 {
-    return sl_responds_to2(vm, object, sl_cstring(vm, id));
+    return sl_is_truthy(sl_responds_to2(vm, object, sl_cstring(vm, id)));
 }
 
 SLVAL

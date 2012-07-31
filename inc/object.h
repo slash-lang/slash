@@ -33,7 +33,7 @@ sl_define_singleton_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLV
 void
 sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method);
 
-SLVAL
+int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id);
 
 SLVAL
