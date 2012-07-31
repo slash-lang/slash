@@ -71,6 +71,39 @@ enumerable_length(sl_vm_t* vm, SLVAL self)
     return i;
 }
 
+static SLVAL
+enumerable_empty(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
+static SLVAL
+enumerable_any(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    SLVAL val;
+    if(argc == 0) {
+        if(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+            return vm->lib._true;
+        } else {
+            return vm->lib._false;
+        }
+    }
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        val = sl_send(vm, argv[0], "call", 1, val);
+        if(sl_is_truthy(val)) {
+            return vm->lib._true;
+        }
+    }
+    return vm->lib._false;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -79,4 +112,6 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "reduce", -2, enumerable_reduce);
     sl_define_method(vm, vm->lib.Enumerable, "join", -1, sl_enumerable_join);
     sl_define_method(vm, vm->lib.Enumerable, "length", 0, enumerable_length);
+    sl_define_method(vm, vm->lib.Enumerable, "empty", 0, enumerable_empty);
+    sl_define_method(vm, vm->lib.Enumerable, "any", -1, enumerable_any);
 }
