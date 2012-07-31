@@ -166,7 +166,7 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
     if(d->inspecting) {
         return sl_make_cstring(vm, "{ <recursive> }");
     }
-    SL_TRY(frame, {
+    SL_TRY(frame, SL_UNWIND_ALL, {
         d->inspecting = 1;
         str = sl_make_cstring(vm, "{ ");
         st_foreach(d->st, dict_to_s_iter, (st_data_t)&str);
@@ -174,7 +174,7 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
         d->inspecting = 0;
     }, err, {
         d->inspecting = 0;
-        sl_throw(vm, err);
+        sl_rethrow(vm, &frame);
     });
     return str;
 }

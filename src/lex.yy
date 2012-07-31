@@ -171,7 +171,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
     
     yylex_init_extra(&ls, &yyscanner);
-    SL_TRY(frame, {
+    SL_TRY(frame, SL_UNWIND_ALL, {
         buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
         yylex(yyscanner);
     }, err, {
@@ -179,7 +179,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
         yy_delete_buffer(buff_state, yyscanner);
         yylex_destroy(yyscanner);
         /* and rethrow */
-        sl_throw(vm, err);
+        sl_rethrow(vm, &frame);
     });
     yy_delete_buffer(buff_state, yyscanner);
     yylex_destroy(yyscanner);

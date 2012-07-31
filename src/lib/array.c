@@ -95,7 +95,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     if(aryp->inspecting) {
         return sl_make_cstring(vm, "[ <recursive> ]");
     }
-    SL_TRY(frame, {
+    SL_TRY(frame, SL_UNWIND_ALL, {
         aryp->inspecting = 1;
         str = sl_make_cstring(vm, "[");
         for(i = 0; i < aryp->count; i++) {
@@ -108,7 +108,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
         aryp->inspecting = 0;
     }, err, {
         aryp->inspecting = 0;
-        sl_throw(vm, err);
+        sl_rethrow(vm, &frame);
     });
     return str;
 }

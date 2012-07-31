@@ -193,7 +193,7 @@ sl_render_error_page(sl_vm_t* vm, SLVAL err)
     sl_response_internal_opts_t* resp = response(vm);
     resp->status = 500;
     if(resp->descriptive_error_pages) {
-        SL_TRY(frame, {
+        SL_TRY(frame, SL_UNWIND_EXCEPTION, {
             tokens = sl_lex(vm, (uint8_t*)"(error-page)", (uint8_t*)sl__error_page_src, strlen(sl__error_page_src), &token_len);
             ast = sl_parse(vm, tokens, token_len, (uint8_t*)"(error-page)");
             st_insert(ctx->vars, (st_data_t)sl_cstring(vm, "err"), (st_data_t)sl_get_ptr(err));

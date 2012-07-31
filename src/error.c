@@ -201,31 +201,40 @@ sl_make_error2(sl_vm_t* vm, SLVAL klass, SLVAL message)
     return err;
 }
 
-void
-sl_try(sl_vm_t* vm, void(*try)(sl_vm_t*, void*), void(*catch)(sl_vm_t*, void*, SLVAL), void* state)
+static void
+sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
 {
-    sl_catch_frame_t frame;
-    frame.prev = vm->catch_stack;
-    frame.error = vm->lib.nil;
-    vm->catch_stack = &frame;
-    if(!setjmp(frame.env)) {
-        try(vm, state);
-        vm->catch_stack = frame.prev;
-    } else {
-        vm->catch_stack = frame.prev;
-        catch(vm, state, frame.error);
+    if(vm->catch_stack == NULL) {
+        fprintf(stderr, "Attempting to unwind stack with no handler\n");
+        abort();
     }
+    vm->catch_stack->value = value;
+    vm->catch_stack->type = type;
+    longjmp(vm->catch_stack->env, 1);
 }
 
 void
 sl_throw(sl_vm_t* vm, SLVAL error)
 {
-    if(vm->catch_stack == NULL) {
-        fprintf(stderr, "Unhandled exception\n");
-        abort();
-    }
-    vm->catch_stack->error = error;
-    longjmp(vm->catch_stack->env, 1);
+    sl_unwind(vm, error, SL_UNWIND_EXCEPTION);
+}
+
+void
+sl_return(sl_vm_t* vm, SLVAL value)
+{
+    sl_unwind(vm, value, SL_UNWIND_RETURN);
+}
+
+void
+sl_exit(sl_vm_t* vm, SLVAL value)
+{
+    sl_unwind(vm, sl_expect(vm, value, vm->lib.Int), SL_UNWIND_EXIT);
+}
+
+void
+sl_rethrow(struct sl_vm* vm, sl_catch_frame_t* frame)
+{
+    sl_unwind(vm, frame->value, frame->type);
 }
 
 void
