@@ -28,7 +28,9 @@ typedef enum sl_primitive_type {
     SL_T_FLOAT,
     SL_T_BIGNUM,
     SL_T_METHOD,
-    SL_T_BOUND_METHOD
+    SL_T_BOUND_METHOD,
+    SL_T_ARRAY,
+    SL_T_DICT
 }
 sl_primitive_type_t;
 
