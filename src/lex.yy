@@ -25,6 +25,7 @@
 
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]
+SYM [a-zA-Z0-9_]+
 IDT [a-zA-Z0-9_]*
 ID  [a-z_]{IDT}
 HEX [0-9a-fA-F]
@@ -64,6 +65,7 @@ HEX [0-9a-fA-F]
 <STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); }
 
 <SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
+<SLASH>"'"{SYM}     { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, yytext + 1, yyleng - 1)); }
 
 <SLASH>"/*"         {                                                       BEGIN(COMMENT_ML_C); }
 <SLASH>"#"|"//"     {                                                       BEGIN(COMMENT_LINE); }
