@@ -116,7 +116,7 @@ sl_int_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     return sl_make_int(vm, a % b);
 }
 
-static SLVAL
+SLVAL
 sl_int_to_s(sl_vm_t* vm, SLVAL self)
 {
     int a = sl_get_int(self);
