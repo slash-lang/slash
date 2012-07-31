@@ -11,7 +11,7 @@ use File::Spec::Functions qw(rel2abs);
 use File::Basename;
 use Getopt::Long;
 
-my @exts = qw(mysql);
+my @exts = qw(mysql json);
 
 my $CFLAGS = "";
 my $LDFLAGS = "";
