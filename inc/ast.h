@@ -27,6 +27,7 @@ typedef enum sl_node_type {
     SL_NODE_AND,
     SL_NODE_OR,
     SL_NODE_NOT,
+    SL_NODE_ASSIGN_SEQ,
     SL_NODE_ASSIGN_VAR,
     SL_NODE_ASSIGN_IVAR,
     SL_NODE_ASSIGN_CVAR,
@@ -168,6 +169,13 @@ typedef struct sl_node_unary {
     sl_node_base_t* expr;
 }
 sl_node_unary_t;
+
+typedef struct sl_node_assign_seq {
+    sl_node_base_t base;
+    sl_node_seq_t* lval;
+    sl_node_base_t* rval;
+}
+sl_node_assign_seq_t;
 
 typedef struct sl_node_assign_var {
     sl_node_base_t base;

@@ -44,6 +44,9 @@ SLVAL
 sl_eval_not(sl_node_unary_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL
+sl_eval_assign_seq(sl_node_assign_seq_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
 sl_eval_assign_var(sl_node_assign_var_t* node, sl_eval_ctx_t* ctx);
 
 SLVAL

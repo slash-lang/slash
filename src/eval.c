@@ -63,6 +63,33 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
 }
 
 static void
+set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val);
+
+static void
+assign_seq(sl_node_seq_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+{
+    size_t i;
+    if(!sl_is_a(ctx->vm, val, ctx->vm->lib.Array)) {
+        set_lval(node->nodes[0], ctx, val);
+        for(i = 1; i < node->node_count; i++) {
+            set_lval(node->nodes[i], ctx, ctx->vm->lib.nil);
+        }
+    } else {
+        for(i = 0; i < node->node_count; i++) {
+            set_lval(node->nodes[i], ctx, sl_array_get(ctx->vm, val, i));
+        }
+    }
+}
+
+SLVAL
+sl_eval_assign_seq(sl_node_assign_seq_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL val = node->rval->eval(node->rval, ctx);
+    assign_seq(node->lval, ctx, val);
+    return val;
+}
+
+static void
 assign_var(sl_node_var_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 {
     sl_eval_ctx_t* octx = ctx;
@@ -156,6 +183,9 @@ static void
 set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 {
     switch(node->type) {
+        case SL_NODE_SEQ:
+            assign_seq((sl_node_seq_t*)node, ctx, val);
+            break;
         case SL_NODE_VAR:
             assign_var((sl_node_var_t*)node, ctx, val);
             break;
@@ -266,6 +296,7 @@ sl_eval_send(sl_node_send_t* node, sl_eval_ctx_t* ctx)
     }, err, {
         sl_error_add_frame(vm, err, recv, node->id, sl_make_cstring(ctx->vm, (char*)node->file), sl_make_int(ctx->vm, node->line));
         sl_throw(vm, err);
+        return err; /* never reached */
     });
     return ret;
 }
