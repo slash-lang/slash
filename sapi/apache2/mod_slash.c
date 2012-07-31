@@ -131,6 +131,9 @@ run_slash_script(request_rec* r)
     SLVAL error;
     sl_static_init();
     vm = sl_init();
+    vm->cwd = GC_MALLOC(strlen(r->canonical_filename) + 10);
+    strcpy(vm->cwd, r->canonical_filename);
+    strcat(vm->cwd, "/../");
     SL_TRY(exit_frame, SL_UNWIND_ALL, {
         SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
             ctx.headers_sent = 0;
@@ -157,7 +160,7 @@ slash_handler(request_rec* r)
     if(!r->handler || strcmp(r->handler, "slash") != 0) {
         return DECLINED;
     }
-    if(!sl_file_exists(r->canonical_filename)) {
+    if(!sl_abs_file_exists(r->canonical_filename)) {
         return DECLINED;
     }
     return run_slash_script(r);

@@ -87,6 +87,7 @@ sl_init()
     sl_class_t* String;
     
     vm = GC_MALLOC(sizeof(sl_vm_t));
+    vm->cwd = ".";
     vm->initializing = 1;
     vm->store = st_init_numtable();
     sl_rand_init_mt(vm);

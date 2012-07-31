@@ -22,8 +22,8 @@ require(sl_vm_t* vm, SLVAL self, SLVAL file)
             /* path contains a NULL byte, ignore */
             continue;
         }
-        if(sl_file_exists((char*)spath->buff)) {
-            canon_path = sl_realpath((char*)spath->buff);
+        if(sl_file_exists(vm, (char*)spath->buff)) {
+            canon_path = sl_realpath(vm, (char*)spath->buff);
             sl_do_file(vm, (uint8_t*)canon_path);
             return vm->lib._true;
         }

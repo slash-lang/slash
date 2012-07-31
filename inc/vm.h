@@ -4,7 +4,6 @@
 #include "value.h"
 #include "st.h"
 #include "error.h"
-#include "platform.h"
 
 typedef struct sl_lib {
     SLVAL Object;
@@ -59,6 +58,7 @@ typedef struct sl_vm {
     st_table_t* store;
     int hash_seed;
     void* stack_limit;
+    char* cwd;
 }
 sl_vm_t;
 
