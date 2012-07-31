@@ -49,6 +49,7 @@ LIB(dict);
 LIB(rand);
 LIB(request);
 LIB(response);
+LIB(system);
 
 void sl_init_exts(sl_vm_t* vm);
 
@@ -72,6 +73,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(rand);
     LIB_INIT(request);
     LIB_INIT(response);
+    LIB_INIT(system);
     
     sl_init_exts(vm);
 }
