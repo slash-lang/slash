@@ -7,6 +7,8 @@
 
 use strict;
 use File::Temp qw(tempfile tempdir);
+use File::Spec::Functions qw(rel2abs);
+use File::Basename;
 use Getopt::Long;
 
 my @exts = qw(mysql);
@@ -151,7 +153,8 @@ for my $ext (@exts) {
     require $conf if -e $conf;
     $ext_decls .= "void sl_init_ext_$ext(sl_vm_t* vm);";
     $ext_inits .= "sl_init_ext_$ext(vm);";
-    print $mf "include \$(dir \$(lastword \$(MAKEFILE_LIST)))/ext/$ext/$ext.mk\n";
+    my $path = dirname(rel2abs($0));
+    print $mf "include $path/ext/$ext/$ext.mk\n";
 }
 
 open my $init_exts, ">src/init_exts.c";
