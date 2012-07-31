@@ -1,4 +1,3 @@
-<% Response.status = 500; %>
 <!DOCTYPE html>
 <html>
 <head>
