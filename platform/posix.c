@@ -10,24 +10,41 @@
 #include "platform.h"
 
 char*
-sl_realpath(char* path)
+sl_realpath(sl_vm_t* vm, char* path)
 {
+    char *cpath, *gcbuff;
+    if(path[0] != '/') {
+        gcbuff = GC_MALLOC(strlen(vm->cwd) + strlen(path) + 10);
+        strcpy(gcbuff, vm->cwd);
+        strcat(gcbuff, "/");
+        strcat(gcbuff, path);
+        path = gcbuff;
+    }
     #ifdef PATH_MAX
-        char* cpath = GC_MALLOC(PATH_MAX + 1);
+        cpath = GC_MALLOC(PATH_MAX + 1);
         realpath(path, cpath);
         return cpath;
     #else
-        char* cpath = realpath(path, NULL);
-        char* gcbuff = GC_MALLOC(strlen(cpath) + 1);
+        cpath = realpath(path, NULL);
+        gcbuff = GC_MALLOC(strlen(cpath) + 1);
         strcpy(gcbuff, cpath);
         return gcbuff;
     #endif
 }
 
 int
-sl_file_exists(char* path)
+sl_file_exists(sl_vm_t* vm, char* path)
 {
     struct stat s;
+    return !stat(sl_realpath(vm, path), &s);
+}
+
+int sl_abs_file_exists(char* path)
+{
+    struct stat s;
+    if(path[0] != '/') {
+        return 0;
+    }
     return !stat(path, &s);
 }
 
