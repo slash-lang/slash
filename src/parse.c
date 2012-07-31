@@ -121,6 +121,7 @@ static sl_node_base_t*
 for_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t *lval, *expr, *body, *else_body = NULL;
+    sl_node_seq_t* seq_lval;
     sl_token_t* tok;
     expect_token(ps, SL_TOK_FOR);
     /* save current token to allow rewinding and erroring */
@@ -128,6 +129,24 @@ for_expression(sl_parse_state_t* ps)
     lval = primary_expression(ps);
     if(!sl_node_is_lval(lval)) {
         unexpected(ps, tok);
+    }
+    if(peek_token(ps)->type == SL_TOK_COMMA) {
+        seq_lval = sl_make_seq_node();
+        seq_lval->nodes[seq_lval->node_count++] = lval;
+        while(peek_token(ps)->type == SL_TOK_COMMA) {
+            next_token(ps);
+            if(seq_lval->node_count == seq_lval->node_capacity) {
+                seq_lval->node_capacity *= 2;
+                seq_lval->nodes = GC_REALLOC(seq_lval->nodes, sizeof(sl_node_base_t*) * seq_lval->node_capacity);
+            }
+            tok = peek_token(ps);
+            lval = primary_expression(ps);
+            if(!sl_node_is_lval(lval)) {
+                unexpected(ps, tok);
+            }
+            seq_lval->nodes[seq_lval->node_count++] = lval;
+        }
+        lval = (sl_node_base_t*)seq_lval;
     }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
