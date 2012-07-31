@@ -232,7 +232,7 @@ sl_string_to_s(sl_vm_t* vm, SLVAL self)
     return self;
 }
 
-static SLVAL
+SLVAL
 sl_string_inspect(sl_vm_t* vm, SLVAL self)
 {
     sl_string_t* str = get_string(vm, self);
