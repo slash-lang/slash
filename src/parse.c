@@ -5,6 +5,7 @@
 #include "lib/float.h"
 #include "lib/number.h"
 #include "string.h"
+#include "object.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -36,10 +37,13 @@ unexpected(sl_parse_state_t* ps, sl_token_t* tok)
     if(tok->type != SL_TOK_END) {
         err = sl_make_cstring(ps->vm, "Unexpected '");
         err = sl_string_concat(ps->vm, err, tok->str);
-        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
+        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "' in "));
     } else {
-        err = sl_make_cstring(ps->vm, "Unexpected end of file");
-    }
+        err = sl_make_cstring(ps->vm, "Unexpected end of file in");
+    }    
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, (char*)ps->filename));
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, ", line "));
+    err = sl_string_concat(ps->vm, err, sl_to_s(ps->vm, sl_make_int(ps->vm, tok->line)));
     sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
 }
 
