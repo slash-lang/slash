@@ -64,14 +64,16 @@
                 <th>Message</th>
                 <td><%= err.message %></td>
             </tr>
-            <tr>
-                <th>File</th>
-                <td><%= err.backtrace[0].file %></td>
-            </tr>
-            <tr>
-                <th>Line</th>
-                <td><%= err.backtrace[0].line %></td>
-            </tr>
+            <% if err.backtrace.any { %>
+                <tr>
+                    <th>File</th>
+                    <td><%= err.backtrace[0].file %></td>
+                </tr>
+                <tr>
+                    <th>Line</th>
+                    <td><%= err.backtrace[0].line %></td>
+                </tr>
+            <% } %>
         </table>
     </header>
     <section class="backtrace">
