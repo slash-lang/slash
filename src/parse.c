@@ -59,6 +59,9 @@ statement(sl_parse_state_t* ps);
 static sl_node_base_t*
 send_expression(sl_parse_state_t* ps, sl_node_base_t* recv);
 
+static sl_node_base_t*
+low_precedence_logical_expression(sl_parse_state_t* ps);
+
 static sl_token_t*
 expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 {
@@ -438,7 +441,7 @@ call_expression(sl_parse_state_t* ps)
     size_t node_cap;
     sl_token_t* tok;
     if(left->type == SL_NODE_VAR && peek_token(ps)->type == SL_TOK_OPEN_PAREN) {
-        return send_with_args_expression(ps, sl_make_self_node(),
+        left = send_with_args_expression(ps, sl_make_self_node(),
             sl_make_ptr((sl_object_t*)((sl_node_var_t*)left)->name));
     }
     while(peek_token(ps)->type == SL_TOK_DOT
@@ -511,6 +514,17 @@ unary_expression(sl_parse_state_t* ps)
             next_token(ps);
             expr = unary_expression(ps);
             return sl_make_unary_node(expr, SL_NODE_NOT, sl_eval_not);
+        case SL_TOK_RETURN:
+            next_token(ps);
+            switch(peek_token(ps)->type) {
+                case SL_TOK_SEMICOLON:
+                case SL_TOK_CLOSE_BRACE:
+                case SL_TOK_CLOSE_TAG:
+                    return sl_make_unary_node(sl_make_immediate_node(ps->vm->lib.nil), SL_NODE_RETURN, sl_eval_return);
+                default:
+                    return sl_make_unary_node(low_precedence_logical_expression(ps), SL_NODE_RETURN, sl_eval_return);
+            }
+            if(peek_token(ps)->type == SL_TOK_SEMICOLON || peek_token(ps)->type == SL_TOK_CLOSE_BRACE)
         default:
             return power_expression(ps);
     }

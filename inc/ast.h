@@ -34,7 +34,8 @@ typedef enum sl_node_type {
     SL_NODE_ASSIGN_SEND,
     SL_NODE_ASSIGN_CONST,
     SL_NODE_ARRAY,
-    SL_NODE_DICT
+    SL_NODE_DICT,
+    SL_NODE_RETURN
 }
 sl_node_type_t;
 

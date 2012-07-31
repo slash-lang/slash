@@ -21,7 +21,7 @@
         } while(0)
 %}
 
-%x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG
+%x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG NKW_ID
 
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]
@@ -97,6 +97,7 @@ HEX [0-9a-fA-F]
 <SLASH>"lambda"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 <SLASH>"try"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_TRY)); }
 <SLASH>"catch"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_CATCH)); }
+<SLASH>"return"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_RETURN)); }
 
 <SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng)); }
@@ -141,8 +142,9 @@ HEX [0-9a-fA-F]
 
 <SLASH>"..."        { ADD_TOKEN(sl_make_token(SL_TOK_RANGE_EX)); }
 <SLASH>".."         { ADD_TOKEN(sl_make_token(SL_TOK_RANGE)); }
+<SLASH>"."/{ID}     { ADD_TOKEN(sl_make_token(SL_TOK_DOT));                                         BEGIN(NKW_ID); }
+<NKW_ID>{ID}        { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng));           BEGIN(SLASH); }
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
-<SLASH>"."{ID}      { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext + 1, yyleng - 1)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
 
 <SLASH>[ \t\r]      { /* ignore */ }

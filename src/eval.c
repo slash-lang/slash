@@ -493,3 +493,10 @@ sl_eval_dict(sl_node_dict_t* node, sl_eval_ctx_t* ctx)
     }
     return dict;
 }
+
+SLVAL
+sl_eval_return(sl_node_unary_t* node, sl_eval_ctx_t* ctx)
+{
+    sl_return(ctx->vm, node->expr->eval(node->expr, ctx));
+    return ctx->vm->lib.nil; /* never reached */
+}

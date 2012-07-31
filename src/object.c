@@ -285,7 +285,8 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
     char errstr[1024];
     sl_eval_ctx_t* ctx;
     size_t i;
-    SLVAL arg;
+    SLVAL arg, ret;
+    sl_catch_frame_t frame;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
         sl_throw_message2(vm, vm->lib.StackOverflowError, "Stack Overflow");
@@ -326,7 +327,10 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
             st_insert(ctx->vars,
                 (st_data_t)method->as.sl.argv[i], (st_data_t)sl_get_ptr(arg));
         }
-        return method->as.sl.body->eval(method->as.sl.body, ctx);
+        SL_TRY(frame, SL_UNWIND_RETURN, {
+            ret = method->as.sl.body->eval(method->as.sl.body, ctx);
+        }, ret, {});
+        return ret;
     }
     return vm->lib.nil;
 }
