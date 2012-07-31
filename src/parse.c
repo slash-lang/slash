@@ -194,6 +194,8 @@ static SLVAL
 def_expression_method_name(sl_parse_state_t* ps)
 {
     switch(peek_token(ps)->type) {
+        case SL_TOK_IDENTIFIER:
+            return next_token(ps)->str;
         case SL_TOK_SHIFT_LEFT:
         case SL_TOK_SHIFT_RIGHT:
         case SL_TOK_DBL_EQUALS:
@@ -222,6 +224,7 @@ def_expression_method_name(sl_parse_state_t* ps)
             }
         default:
             unexpected(ps, next_token(ps));
+            return ps->vm->lib.nil; /* never reached */
     }
 }
 
