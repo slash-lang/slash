@@ -36,7 +36,7 @@ sl_float_succ(sl_vm_t* vm, SLVAL self)
     return sl_make_float(vm, sl_get_float(vm, self) + 1.0);
 }
 
-static SLVAL
+SLVAL
 sl_float_to_s(sl_vm_t* vm, SLVAL self)
 {
     double d = sl_get_float(vm, self);
