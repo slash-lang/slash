@@ -393,6 +393,9 @@ sl_init_ext_json(sl_vm_t* vm)
     sl_define_singleton_method(vm, JSON, "parse", -2, sl_json_parse);
     sl_define_singleton_method(vm, JSON, "dump", 1, sl_json_dump);
     
+    sl_define_singleton_method(vm, JSON, "decode", -2, sl_json_parse);
+    sl_define_singleton_method(vm, JSON, "encode", 1, sl_json_dump);
+    
     sl_vm_store_put(vm, &cJSON, JSON);
     sl_vm_store_put(vm, &cJSON_ParseError, JSON_ParseError);
     sl_vm_store_put(vm, &cJSON_DumpError, JSON_DumpError);
