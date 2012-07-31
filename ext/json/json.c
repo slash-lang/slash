@@ -22,7 +22,7 @@ typedef struct {
     char* type_stack;
     yajl_handle yajl;
 }
-json_t;
+json_parse_t;
 
 #define JSON_ADD_VALUE(value) do { \
         if(json->stack_len == 0) { \
@@ -55,7 +55,7 @@ json_t;
 static int
 on_null(void* ctx)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     JSON_ADD_VALUE(json->vm->lib.nil);
     return 1;
 }
@@ -63,7 +63,7 @@ on_null(void* ctx)
 static int
 on_boolean(void* ctx, int val)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     SLVAL b = val ? json->vm->lib._true : json->vm->lib._false;
     JSON_ADD_VALUE(b);
     return 1;
@@ -72,7 +72,7 @@ on_boolean(void* ctx, int val)
 static int
 on_integer(void* ctx, long long val)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     char buff[256];
     SLVAL i;
     if(val >= SL_MAX_INT || val <= SL_MIN_INT) {
@@ -88,7 +88,7 @@ on_integer(void* ctx, long long val)
 static int
 on_double(void* ctx, double val)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     SLVAL f = sl_make_float(json->vm, val);
     JSON_ADD_VALUE(f);
     return 1;
@@ -97,7 +97,7 @@ on_double(void* ctx, double val)
 static int
 on_string(void* ctx, const uint8_t* str, size_t len)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     SLVAL s = sl_make_string(json->vm, (uint8_t*)str, len);
     JSON_ADD_VALUE(s);
     return 1;
@@ -106,7 +106,7 @@ on_string(void* ctx, const uint8_t* str, size_t len)
 static int
 on_start_map(void* ctx)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     SLVAL m = sl_make_dict(json->vm, 0, NULL);
     JSON_PUSH_CONTAINER(m, JSON_TYPE_DICT);
     return 1;
@@ -115,7 +115,7 @@ on_start_map(void* ctx)
 static int
 on_map_key(void* ctx, const uint8_t* str, size_t len)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     json->key = sl_make_string(json->vm, (uint8_t*)str, len);
     return 1;
 }
@@ -123,7 +123,7 @@ on_map_key(void* ctx, const uint8_t* str, size_t len)
 static int
 on_end_map(void* ctx)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     JSON_POP_CONTAINER();
     return 1;
 }
@@ -131,7 +131,7 @@ on_end_map(void* ctx)
 static int
 on_start_array(void* ctx)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     SLVAL a = sl_make_array(json->vm, 0, NULL);
     JSON_PUSH_CONTAINER(a, JSON_TYPE_ARRAY);
     return 1;
@@ -140,7 +140,7 @@ on_start_array(void* ctx)
 static int
 on_end_array(void* ctx)
 {
-    json_t* json = ctx;
+    json_parse_t* json = ctx;
     JSON_POP_CONTAINER();
     return 1;
 }
@@ -190,7 +190,7 @@ alloc_funcs = {
 };
 
 static void
-sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_t* json, yajl_status status)
+sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yajl_status status)
 {
     uint8_t* err_str;
     SLVAL err;
@@ -213,7 +213,7 @@ static SLVAL
 sl_json_parse(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_string_t* str = (sl_string_t*)sl_get_ptr(argv[0]);
-    json_t json;
+    json_parse_t json;
     json.vm = vm;
     json.max_depth = 32;
     json.stack_len = 0;
