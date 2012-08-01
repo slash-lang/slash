@@ -1,6 +1,7 @@
 #include <gc.h>
 #include <gcrypt.h>
 #include <stdio.h>
+#include <alloca.h>
 #include "slash.h"
 
 static int cGCrypt;
