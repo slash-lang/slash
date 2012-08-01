@@ -56,53 +56,66 @@ sl_utf8_to_utf32(sl_vm_t* vm, uint8_t* buff, size_t len, size_t* out_len)
 {
     uint32_t* out = GC_MALLOC(sizeof(uint32_t) * len);
     size_t str_len = 0;
-    size_t i;
-    uint32_t c;
-    for(i = 0; i < len; i++) {
-        if((buff[i] & 0x80) == 0x00) { /* 1 byte char */
-            out[str_len++] = buff[i];
-            continue;
-        }
-        if((buff[i] & 0xe0) == 0xc0) { /* 2 byte char */
-            if(i + 1 == len) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            c  = (buff[i]     & 0x1f) << 6;
-            c |= (buff[i + 1] & 0x3f) << 0;
-            if(c < 128) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            out[str_len++] = c;
-            i += 1;
-            continue;
-        }
-        if((buff[i] & 0xf0) == 0xe0) { /* 3 byte char */
-            if(i + 2 == len) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 2] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            c  = (buff[i]     & 0x0f) << 12;
-            c |= (buff[i + 1] & 0x3f) << 6;
-            c |= (buff[i + 2] & 0x3f) << 0;
-            if(c < 2048) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            out[str_len++] = c;
-            i += 2;
-            continue;
-        }
-        if((buff[i] & 0xf8) == 0xf0) { /* 4 byte char */
-            if(i + 3 == len) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 2] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            if((buff[i + 3] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            c  = (buff[i]     & 0x07) << 18;
-            c |= (buff[i + 1] & 0x3f) << 12;
-            c |= (buff[i + 2] & 0x3f) << 6;
-            c |= (buff[i + 3] & 0x3f) << 0;
-            if(c < 2048) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
-            out[str_len++] = c;
-            i += 3;
-            continue;
-        }
-        sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+    size_t clen = len;
+    uint8_t* cbuff = buff;
+    while(clen) {
+        out[str_len++] = sl_utf8_each_char(vm, &cbuff, &clen);
     }
     *out_len = str_len;
     return out;
+}
+
+uint32_t
+sl_utf8_each_char(sl_vm_t* vm, uint8_t** buff_ptr, size_t* len)
+{
+    uint32_t c;
+    uint8_t* buff = *buff_ptr;
+    if(*len == 0) {
+        return 0;
+    }
+    if((buff[0] & 0x80) == 0x00) { /* 1 byte char */
+        ++*buff_ptr;
+        --*len;
+        return buff[0];
+    }
+    if((buff[0] & 0xe0) == 0xc0) { /* 2 byte char */
+        if(*len < 2) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        c  = (buff[0] & 0x1f) << 6;
+        c |= (buff[1] & 0x3f) << 0;
+        if(c < 128) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        *buff_ptr += 2;
+        *len -= 2;
+        return c;
+    }
+    if((buff[0] & 0xf0) == 0xe0) { /* 3 byte char */
+        if(*len < 3) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[2] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        c  = (buff[0] & 0x0f) << 12;
+        c |= (buff[1] & 0x3f) << 6;
+        c |= (buff[2] & 0x3f) << 0;
+        if(c < 2048) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        *buff_ptr += 3;
+        *len -= 3;
+        return c;
+    }
+    if((buff[0] & 0xf8) == 0xf0) { /* 4 byte char */
+        if(*len < 4) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[1] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[2] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        if((buff[3] & 0xc0) != 0x80) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        c  = (buff[0] & 0x07) << 18;
+        c |= (buff[1] & 0x3f) << 12;
+        c |= (buff[2] & 0x3f) << 6;
+        c |= (buff[3] & 0x3f) << 0;
+        if(c < 65536) sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+        *buff_ptr += 4;
+        *len -= 4;
+        return c;
+    }
+    sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 sequence");
+    return 0; /* never reached */
 }
 
 size_t
