@@ -33,6 +33,9 @@ sl_string_html_escape(sl_vm_t* vm, SLVAL self);
 SLVAL
 sl_string_url_decode(sl_vm_t* vm, SLVAL self);
 
+SLVAL
+sl_string_url_encode(sl_vm_t* vm, SLVAL self);
+
 void
 sl_init_string(sl_vm_t* vm);
 
