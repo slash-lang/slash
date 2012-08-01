@@ -1,7 +1,7 @@
 .PHONY: clean describe
 
 slash-cli: cli.o $(LIBS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
 
 clean:
 	rm -f *.o
