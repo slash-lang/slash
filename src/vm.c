@@ -8,6 +8,7 @@
 #include "class.h"
 #include "object.h"
 #include "error.h"
+#include "platform.h"
 
 static int
 sl_statically_initialized;
