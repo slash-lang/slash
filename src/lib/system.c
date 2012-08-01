@@ -12,7 +12,7 @@ object_exit(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         exit_code = argv[0];
     }
     sl_exit(vm, exit_code);
-    return vm->lib.nil; /* never reached */
+    return self; /* never reached */
 }
 
 void
