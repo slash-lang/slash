@@ -82,9 +82,13 @@ static sl_node_base_t*
 body_expression(sl_parse_state_t* ps)
 {
     sl_node_seq_t* seq = sl_make_seq_node();
+    sl_node_base_t* node;
     expect_token(ps, SL_TOK_OPEN_BRACE);
     while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
-        sl_seq_node_append(seq, statement(ps));
+        node = statement(ps);
+        if(node) {
+            sl_seq_node_append(seq, node);
+        }
     }
     expect_token(ps, SL_TOK_CLOSE_BRACE);
     return (sl_node_base_t*)seq;
@@ -839,6 +843,9 @@ statement(sl_parse_state_t* ps)
                 expect_token(ps, SL_TOK_OPEN_TAG);
             }
             return node;
+        case SL_TOK_SEMICOLON:
+            next_token(ps);
+            return NULL;
         default:
             node = expression(ps);
             if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
@@ -854,8 +861,12 @@ static sl_node_base_t*
 statements(sl_parse_state_t* ps)
 {
     sl_node_seq_t* seq = sl_make_seq_node();
+    sl_node_base_t* node;
     while(peek_token(ps)->type != SL_TOK_END) {
-        sl_seq_node_append(seq, statement(ps));
+        node = statement(ps);
+        if(node) {
+            sl_seq_node_append(seq, node);
+        }
     }
     return (sl_node_base_t*)seq;
 }
