@@ -48,7 +48,7 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    my $output = `$ENV{CC} $CFLAGS $flags -o $binary $filename 2>&1`;
+    my $output = `$ENV{CC} $CFLAGS -o $binary $filename $flags 2>&1`;
     print $output if $verbose;
     chomp $output;
     $? == 0 && !$output;
