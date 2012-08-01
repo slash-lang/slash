@@ -64,7 +64,7 @@ sl_gcrypt_algorithm_hex_digest(sl_vm_t* vm, SLVAL self, SLVAL strv)
     char* hex_digest = alloca(digest_len * 2);
     gcry_md_hash_buffer(algo->algo, digest, str->buff, str->buff_len);
     for(i = 0; i < digest_len; i++) {
-        sprintf(hex_digest + 2 * i, "%2x", digest[i]);
+        sprintf(hex_digest + 2 * i, "%2x", (uint8_t)digest[i]);
     }
     return sl_make_string(vm, (uint8_t*)hex_digest, digest_len * 2);
 }
