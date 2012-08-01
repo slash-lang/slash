@@ -225,6 +225,54 @@ sl_string_url_decode(sl_vm_t* vm, SLVAL self)
     return sl_make_string(vm, out, out_len);
 }
 
+SLVAL
+sl_string_url_encode(sl_vm_t* vm, SLVAL self)
+{
+    sl_string_t* str = get_string(vm, self);
+    size_t out_cap = 32;
+    size_t out_len = 0;
+    uint8_t* out = GC_MALLOC(out_cap);
+    size_t clen = str->buff_len;
+    uint8_t* cbuff = str->buff;
+    uint32_t c;
+    uint8_t utf8buff[8];
+    uint32_t utf8len;
+    while(clen) {
+        if(out_len + 16 >= out_cap) {
+            out_cap *= 2;
+            out = GC_REALLOC(out, out_cap);
+        }
+        c = sl_utf8_each_char(vm, &cbuff, &clen);
+        if(c >= 'A' && c <= 'Z') {
+            out[out_len++] = c;
+            continue;
+        }
+        if(c >= 'a' && c <= 'z') {
+            out[out_len++] = c;
+            continue;
+        }
+        if(c >= '0' && c <= '9') {
+            out[out_len++] = c;
+            continue;
+        }
+        if(c == '-' || c == '_' || c == '.' || c == '~') {
+            out[out_len++] = c;
+            continue;
+        }
+        if(c == ' ') {
+            out[out_len++] = '+';
+            continue;
+        }
+        utf8len = sl_utf32_char_to_utf8(vm, c, utf8buff);
+        while(utf8len) {
+            sprintf((char*)out + out_len, "%%%2X", utf8buff[0]);
+            out_len += 3;
+            utf8len--;
+        }
+    }
+    return sl_make_string(vm, out, out_len);
+}
+
 static SLVAL
 sl_string_to_s(sl_vm_t* vm, SLVAL self)
 {
@@ -310,6 +358,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
+    sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
