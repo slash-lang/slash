@@ -133,7 +133,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     sl_request_internal_opts_t* req = GC_MALLOC(sizeof(sl_request_internal_opts_t));
     req->method       = sl_make_cstring(vm, opts->method);
     req->uri          = sl_make_cstring(vm, opts->uri);
-    req->path_info    = sl_make_cstring(vm, opts->path_info);
+    req->path_info    = sl_make_cstring(vm, opts->path_info ? opts->path_info : "");
     req->query_string = sl_make_cstring(vm, opts->query_string ? opts->query_string : "");
     req->remote_addr  = sl_make_cstring(vm, opts->remote_addr);
     req->headers      = sl_make_dict(vm, 0, NULL);
