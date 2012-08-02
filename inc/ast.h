@@ -27,12 +27,12 @@ typedef enum sl_node_type {
     SL_NODE_AND,
     SL_NODE_OR,
     SL_NODE_NOT,
-    SL_NODE_ASSIGN_SEQ,
     SL_NODE_ASSIGN_VAR,
     SL_NODE_ASSIGN_IVAR,
     SL_NODE_ASSIGN_CVAR,
     SL_NODE_ASSIGN_SEND,
     SL_NODE_ASSIGN_CONST,
+    SL_NODE_ASSIGN_ARRAY,
     SL_NODE_ARRAY,
     SL_NODE_DICT,
     SL_NODE_RETURN
@@ -171,12 +171,20 @@ typedef struct sl_node_unary {
 }
 sl_node_unary_t;
 
-typedef struct sl_node_assign_seq {
+typedef struct sl_node_array {
     sl_node_base_t base;
-    sl_node_seq_t* lval;
-    sl_node_base_t* rval;
+    size_t node_count;
+    sl_node_base_t** nodes;
 }
-sl_node_assign_seq_t;
+sl_node_array_t;
+
+typedef struct sl_node_dict {
+    sl_node_base_t base;
+    size_t node_count;
+    sl_node_base_t** keys;
+    sl_node_base_t** vals;
+}
+sl_node_dict_t;
 
 typedef struct sl_node_assign_var {
     sl_node_base_t base;
@@ -213,19 +221,11 @@ typedef struct sl_node_assign_const {
 }
 sl_node_assign_const_t;
 
-typedef struct sl_node_array {
+typedef struct sl_node_assign_array {
     sl_node_base_t base;
-    size_t node_count;
-    sl_node_base_t** nodes;
+    sl_node_array_t* lval;
+    sl_node_base_t* rval;
 }
-sl_node_array_t;
-
-typedef struct sl_node_dict {
-    sl_node_base_t base;
-    size_t node_count;
-    sl_node_base_t** keys;
-    sl_node_base_t** vals;
-}
-sl_node_dict_t;
+sl_node_assign_array_t;
 
 #endif
