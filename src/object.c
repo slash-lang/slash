@@ -62,6 +62,12 @@ sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     return sl_send2(vm, self, argv[0], argc - 1, argv + 1);
 }
 
+int
+sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b)
+{
+    return sl_is_truthy(sl_object_eq(vm, a, b));
+}
+
 static SLVAL
 sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
