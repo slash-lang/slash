@@ -47,7 +47,7 @@ sl_init_object(sl_vm_t* vm)
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "Object"), (st_data_t)vm->lib.Object.i);
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
-    sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_to_s);
+    sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_inspect);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
@@ -105,7 +105,7 @@ sl_to_s(sl_vm_t* vm, SLVAL obj)
     if(sl_get_primitive_type(s) == SL_T_STRING) {
         return s;
     } else {
-        return sl_object_to_s(vm, obj);
+        return sl_object_inspect(vm, obj);
     }
 }
 
@@ -117,7 +117,7 @@ sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj)
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         ret = sl_to_s(vm, obj);
     }, err, {
-        ret = sl_object_to_s(vm, obj);
+        ret = sl_object_inspect(vm, obj);
     });
     return ret;
 }
@@ -129,7 +129,7 @@ sl_inspect(sl_vm_t* vm, SLVAL obj)
     if(sl_get_primitive_type(s) == SL_T_STRING) {
         return s;
     } else {
-        return sl_object_to_s(vm, obj);
+        return sl_object_inspect(vm, obj);
     }
 }
 
@@ -146,6 +146,12 @@ sl_to_cstr(sl_vm_t* vm, SLVAL obj)
 
 SLVAL
 sl_object_to_s(sl_vm_t* vm, SLVAL self)
+{
+    return sl_send(vm, self, "inspect", 0);
+}
+
+SLVAL
+sl_object_inspect(sl_vm_t* vm, SLVAL self)
 {
     char buff[128];
     SLVAL klass = sl_class_of(vm, self);
@@ -395,7 +401,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     error = sl_make_cstring(vm, "Undefined method '");
     error = sl_string_concat(vm, error, idv);
     error = sl_string_concat(vm, error, sl_make_cstring(vm, "' on "));
-    error = sl_string_concat(vm, error, sl_object_to_s(vm, recv));
+    error = sl_string_concat(vm, error, sl_object_inspect(vm, recv));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, error));
     return vm->lib.nil; /* shutup gcc */
 }
