@@ -161,13 +161,16 @@ run_slash_script(request_rec* r)
 static int
 slash_handler(request_rec* r)
 {
+    int ret;
     if(!r->handler || strcmp(r->handler, "slash") != 0) {
         return DECLINED;
     }
     if(!sl_abs_file_exists(r->canonical_filename)) {
         return DECLINED;
     }
-    return run_slash_script(r);
+    ret = run_slash_script(r);
+    GC_gcollect();
+    return ret;
 }
 
 static void
