@@ -36,6 +36,13 @@ get_bignum(sl_vm_t* vm, SLVAL val)
     return (sl_bignum_t*)sl_get_ptr(val);
 }
 
+long
+sl_bignum_get_long(sl_vm_t* vm, SLVAL self)
+{
+    sl_bignum_t* bn = get_bignum(vm, self);
+    return mpz_get_si(bn->mpz);
+}
+
 SLVAL
 sl_bignum_to_s(sl_vm_t* vm, SLVAL self)
 {
