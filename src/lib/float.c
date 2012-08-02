@@ -127,7 +127,7 @@ sl_float_mul(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_mul(vm, self, sl_bignum_to_f(vm, other));
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_mul(vm, self, sl_make_float(vm, sl_get_int(other)));
+        return sl_float_mul(vm, self, sl_make_float(vm, sl_get_int(other)));
     }
     return sl_make_float(vm, sl_get_float(vm, self) * sl_get_float(vm, other));
 }
