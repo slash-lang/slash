@@ -571,9 +571,8 @@ unary_expression(sl_parse_state_t* ps)
             return sl_make_send_node(ps, tok->line, expr, id, 0, NULL);
         case SL_TOK_TILDE:
             tok = next_token(ps);
-            id = sl_make_cstring(ps->vm, "~");
             expr = unary_expression(ps);
-            return sl_make_send_node(ps, tok->line, expr, id, 0, NULL);
+            return sl_make_send_node(ps, tok->line, expr, tok->str, 0, NULL);
         case SL_TOK_NOT:
             next_token(ps);
             expr = unary_expression(ps);
@@ -584,11 +583,14 @@ unary_expression(sl_parse_state_t* ps)
                 case SL_TOK_SEMICOLON:
                 case SL_TOK_CLOSE_BRACE:
                 case SL_TOK_CLOSE_TAG:
+                /* in these case we want to allow for postfix control structures: */
+                case SL_TOK_IF:
+                case SL_TOK_UNLESS:
                     return sl_make_unary_node(sl_make_immediate_node(ps->vm->lib.nil), SL_NODE_RETURN, sl_eval_return);
                 default:
                     return sl_make_unary_node(low_precedence_logical_expression(ps), SL_NODE_RETURN, sl_eval_return);
             }
-            if(peek_token(ps)->type == SL_TOK_SEMICOLON || peek_token(ps)->type == SL_TOK_CLOSE_BRACE)
+            break;
         default:
             return power_expression(ps);
     }
@@ -782,9 +784,31 @@ low_precedence_logical_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+postfix_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t* expr = low_precedence_logical_expression(ps);
+    while(1) {
+        switch(peek_token(ps)->type) {
+            case SL_TOK_IF:
+                next_token(ps);
+                expr = sl_make_if_node(low_precedence_logical_expression(ps), expr, NULL);
+                break;
+            case SL_TOK_UNLESS:
+                next_token(ps);
+                expr = sl_make_if_node(
+                    sl_make_unary_node(low_precedence_logical_expression(ps), SL_NODE_NOT, sl_eval_not),
+                    expr, NULL);
+                break;
+            default:
+                return expr;
+        }
+    }
+}
+
+static sl_node_base_t*
 expression(sl_parse_state_t* ps)
 {
-    return low_precedence_logical_expression(ps);
+    return postfix_expression(ps);
 }
 
 static sl_node_base_t*
