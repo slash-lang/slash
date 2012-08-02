@@ -101,12 +101,19 @@ static sl_node_base_t*
 if_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t *condition, *if_true, *if_false = NULL;
+    int negate_condition = 0;
     if(peek_token(ps)->type == SL_TOK_ELSIF) {
         expect_token(ps, SL_TOK_ELSIF);
+    } else if(peek_token(ps)->type == SL_TOK_UNLESS) {
+        expect_token(ps, SL_TOK_UNLESS);
+        negate_condition = 1;
     } else {
         expect_token(ps, SL_TOK_IF);
     }
     condition = expression(ps);
+    if(negate_condition) {
+        condition = sl_make_unary_node(condition, SL_NODE_NOT, sl_eval_not);
+    }
     if_true = body_expression(ps);
     if(peek_token(ps)->type == SL_TOK_ELSIF) {
         if_false = if_expression(ps);
@@ -883,6 +890,9 @@ statement(sl_parse_state_t* ps)
         case SL_TOK_SEMICOLON:
             next_token(ps);
             return NULL;
+        case SL_TOK_IF:
+        case SL_TOK_UNLESS:
+            return if_expression(ps);
         default:
             node = expression(ps);
             if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
