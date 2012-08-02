@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title><%= err.class.name %> at <%= Request.uri %></title>
+    <title><%= err.class.to_s %> at <%= Request.uri %></title>
     <style>
     body {
         font-family:Verdana, sans-serif;
@@ -58,7 +58,7 @@
 </head>
 <body>
     <header>
-        <h2><%= err.class.name %> <span>at <%= Request.uri %></span></h2>
+        <h2><%= err.class.to_s %> <span>at <%= Request.uri %></span></h2>
         <table>
             <tr>
                 <th>Message</th>
