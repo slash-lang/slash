@@ -66,7 +66,7 @@ static void
 set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val);
 
 static void
-assign_seq(sl_node_seq_t* node, sl_eval_ctx_t* ctx, SLVAL val)
+assign_array(sl_node_array_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 {
     size_t i;
     if(!sl_is_a(ctx->vm, val, ctx->vm->lib.Array)) {
@@ -82,10 +82,10 @@ assign_seq(sl_node_seq_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 }
 
 SLVAL
-sl_eval_assign_seq(sl_node_assign_seq_t* node, sl_eval_ctx_t* ctx)
+sl_eval_assign_array(sl_node_assign_array_t* node, sl_eval_ctx_t* ctx)
 {
     SLVAL val = node->rval->eval(node->rval, ctx);
-    assign_seq(node->lval, ctx, val);
+    assign_array(node->lval, ctx, val);
     return val;
 }
 
@@ -183,9 +183,6 @@ static void
 set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val)
 {
     switch(node->type) {
-        case SL_NODE_SEQ:
-            assign_seq((sl_node_seq_t*)node, ctx, val);
-            break;
         case SL_NODE_VAR:
             assign_var((sl_node_var_t*)node, ctx, val);
             break;
@@ -200,6 +197,9 @@ set_lval(sl_node_base_t* node, sl_eval_ctx_t* ctx, SLVAL val)
             break;
         case SL_NODE_SEND:
             assign_send((sl_node_send_t*)node, ctx, val);
+            break;
+        case SL_NODE_ARRAY:
+            assign_array((sl_node_array_t*)node, ctx, val);
             break;
         default:
             sl_throw_message2(ctx->vm, ctx->vm->lib.TypeError, "Invalid lval in assignment");

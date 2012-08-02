@@ -33,7 +33,9 @@ peek_token_n(sl_parse_state_t* ps, int n)
 static sl_token_t*
 next_token(sl_parse_state_t* ps)
 {
-    return &ps->tokens[ps->current_token++];
+    sl_token_t* tok = &ps->tokens[ps->current_token++];
+    ps->line = tok->line;
+    return tok;
 }
 
 static void
@@ -163,7 +165,7 @@ for_expression(sl_parse_state_t* ps)
             }
             seq_lval->nodes[seq_lval->node_count++] = lval;
         }
-        lval = (sl_node_base_t*)seq_lval;
+        lval = sl_make_array_node(seq_lval->node_count, seq_lval->nodes);
     }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
@@ -715,42 +717,40 @@ assignment_expression(sl_parse_state_t* ps)
     sl_node_base_t** argv;
     sl_node_base_t* left = range_expression(ps);
     sl_token_t* tok;
-    if(left->type == SL_NODE_SEND || left->type == SL_NODE_VAR ||
-        left->type == SL_NODE_IVAR || left->type == SL_NODE_CVAR ||
-        left->type == SL_NODE_CONST) {
-        /* valid lvals */
-        if(peek_token(ps)->type == SL_TOK_EQUALS) {
-            switch(left->type) {
-                case SL_NODE_VAR:
-                    next_token(ps);
-                    left = sl_make_assign_var_node((sl_node_var_t*)left, assignment_expression(ps));
-                    break;
-                case SL_NODE_IVAR:
-                    next_token(ps);
-                    left = sl_make_assign_ivar_node((sl_node_var_t*)left, assignment_expression(ps));
-                    break;
-                case SL_NODE_CVAR:
-                    next_token(ps);
-                    left = sl_make_assign_cvar_node((sl_node_var_t*)left, assignment_expression(ps));
-                    break;
-                case SL_NODE_SEND:
-                    tok = next_token(ps);
-                    send = (sl_node_send_t*)left;
-                    argv = GC_MALLOC(sizeof(sl_node_base_t*) * (send->arg_count + 1));
-                    memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
-                    argv[send->arg_count] = assignment_expression(ps);
-                    left = sl_make_send_node(ps, tok->line, send->recv,
-                        sl_string_concat(ps->vm, send->id, sl_make_cstring(ps->vm, "=")),
-                        send->arg_count + 1, argv);
-                    break;
-                case SL_NODE_CONST:
-                    next_token(ps);
-                    left = sl_make_assign_const_node((sl_node_const_t*)left, assignment_expression(ps));
-                    break;
-                default:
-                    unexpected(ps, next_token(ps));
-                    break;
-            }
+    if(peek_token(ps)->type == SL_TOK_EQUALS) {
+        switch(left->type) {
+            case SL_NODE_VAR:
+                next_token(ps);
+                left = sl_make_assign_var_node((sl_node_var_t*)left, assignment_expression(ps));
+                break;
+            case SL_NODE_IVAR:
+                next_token(ps);
+                left = sl_make_assign_ivar_node((sl_node_var_t*)left, assignment_expression(ps));
+                break;
+            case SL_NODE_CVAR:
+                next_token(ps);
+                left = sl_make_assign_cvar_node((sl_node_var_t*)left, assignment_expression(ps));
+                break;
+            case SL_NODE_SEND:
+                tok = next_token(ps);
+                send = (sl_node_send_t*)left;
+                argv = GC_MALLOC(sizeof(sl_node_base_t*) * (send->arg_count + 1));
+                memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
+                argv[send->arg_count] = assignment_expression(ps);
+                left = sl_make_send_node(ps, tok->line, send->recv,
+                    sl_string_concat(ps->vm, send->id, sl_make_cstring(ps->vm, "=")),
+                    send->arg_count + 1, argv);
+                break;
+            case SL_NODE_CONST:
+                next_token(ps);
+                left = sl_make_assign_const_node((sl_node_const_t*)left, assignment_expression(ps));
+                break;
+            case SL_NODE_ARRAY:
+                next_token(ps);
+                left = sl_make_assign_array_node(ps, (sl_node_array_t*)left, assignment_expression(ps));
+                break;
+            default:
+                break;
         }
     }
     return left;
