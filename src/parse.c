@@ -431,7 +431,7 @@ primary_expression(sl_parse_state_t* ps)
     switch(peek_token(ps)->type) {
         case SL_TOK_INTEGER:
             tok = next_token(ps);
-            return sl_make_immediate_node(sl_number_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return sl_make_immediate_node(sl_integer_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_FLOAT:
             return sl_make_immediate_node(sl_make_float(ps->vm, next_token(ps)->as.dbl));
         case SL_TOK_STRING:
