@@ -10,6 +10,7 @@
 #include "class.h"
 #include "utf8.h"
 #include "lib/array.h"
+#include "lib/number.h"
 
 static int
 str_hash(sl_string_t* str)
@@ -281,6 +282,13 @@ sl_string_to_s(sl_vm_t* vm, SLVAL self)
     return self;
 }
 
+static SLVAL
+sl_string_to_i(sl_vm_t* vm, SLVAL self)
+{
+    sl_string_t* str = get_string(vm, self);
+    return sl_integer_parse(vm, str->buff, str->buff_len);
+}
+
 SLVAL
 sl_string_inspect(sl_vm_t* vm, SLVAL self)
 {
@@ -433,6 +441,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
+    sl_define_method(vm, vm->lib.String, "to_i", 0, sl_string_to_i);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
