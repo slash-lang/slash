@@ -54,6 +54,9 @@ sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
 void
 sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
 
+int
+sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b);
+
 SLVAL
 sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);
 
