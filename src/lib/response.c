@@ -115,6 +115,7 @@ response_unbuffer(sl_vm_t* vm)
 static SLVAL
 response_set_header(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
 {
+    char* h;
     sl_response_internal_opts_t* resp = response(vm);
     (void)self;
     sl_expect(vm, name, vm->lib.String);
@@ -123,10 +124,21 @@ response_set_header(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
         resp->header_cap *= 2;
         resp->headers = GC_REALLOC(resp->headers, sizeof(sl_response_key_value_t) * resp->header_cap);
     }
-    resp->headers[resp->header_count].name = sl_to_cstr(vm, name);
-    resp->headers[resp->header_count].value = sl_to_cstr(vm, value);
+    
+    h = sl_to_cstr(vm, name);
+    if(strchr(h, '\n') || strchr(h, '\r')) {
+        return vm->lib._false;
+    }
+    resp->headers[resp->header_count].name = h;
+    
+    h = sl_to_cstr(vm, value);
+    if(strchr(h, '\n') || strchr(h, '\r')) {
+        return vm->lib._false;
+    }
+    resp->headers[resp->header_count].value = h;
+    
     resp->header_count++;
-    return vm->lib.nil;
+    return vm->lib._true;
 }
 
 struct get_headers_iter_state {
