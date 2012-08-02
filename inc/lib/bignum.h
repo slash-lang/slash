@@ -13,6 +13,9 @@ sl_make_bignum_s(sl_vm_t* vm, char* s);
 SLVAL
 sl_make_bignum_f(sl_vm_t* vm, double n);
 
+long
+sl_bignum_get_long(sl_vm_t* vm, SLVAL self);
+
 SLVAL
 sl_bignum_to_f(sl_vm_t* vm, SLVAL self);
 
