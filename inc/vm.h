@@ -9,6 +9,8 @@ typedef struct sl_lib {
     SLVAL Object;
     SLVAL Class;
     SLVAL String;
+    SLVAL Regexp;
+    SLVAL Regexp_Match;
     
     SLVAL Error;
     SLVAL Error_Frame;

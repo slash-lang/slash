@@ -21,6 +21,8 @@ typedef enum sl_token_type {
     SL_TOK_STRING,
     SL_TOK_INTEGER,
     SL_TOK_FLOAT,
+    SL_TOK_REGEXP,
+    SL_TOK_REGEXP_OPTS,
     SL_TOK_NIL,
     SL_TOK_TRUE,
     SL_TOK_FALSE,

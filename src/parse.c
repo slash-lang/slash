@@ -4,6 +4,7 @@
 #include "eval.h"
 #include "lib/float.h"
 #include "lib/number.h"
+#include "lib/regexp.h"
 #include "string.h"
 #include "object.h"
 #include <stdlib.h>
@@ -413,6 +414,16 @@ bracketed_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+regexp_expression(sl_parse_state_t* ps)
+{
+    sl_token_t* re = expect_token(ps, SL_TOK_REGEXP);
+    sl_token_t* opts = expect_token(ps, SL_TOK_REGEXP_OPTS);
+    return sl_make_immediate_node(sl_make_regexp(ps->vm,
+        re->as.str.buff, re->as.str.len,
+        opts->as.str.buff, opts->as.str.len));
+}
+
+static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
@@ -426,6 +437,8 @@ primary_expression(sl_parse_state_t* ps)
         case SL_TOK_STRING:
             tok = next_token(ps);
             return sl_make_immediate_node(sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+        case SL_TOK_REGEXP:
+            return regexp_expression(ps);
         case SL_TOK_CONSTANT:
             tok = next_token(ps);
             return sl_make_const_node(NULL, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));

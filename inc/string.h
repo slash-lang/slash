@@ -42,6 +42,9 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr);
 SLVAL
 sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL delim);
 
+int
+sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL str, int index);
+
 void
 sl_init_string(sl_vm_t* vm);
 

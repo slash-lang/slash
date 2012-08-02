@@ -4,7 +4,7 @@
     #include "error.h"
 %}
 
-%option noyywrap yylineno reentrant nounistd never-interactive
+%option noyywrap yylineno reentrant nounistd never-interactive stack
 %option extra-type="sl_lex_state_t*"
 
 %{
@@ -21,7 +21,7 @@
         } while(0)
 %}
 
-%x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG NKW_ID
+%x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG NKW_ID REGEXP REGEXP_R
 
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]
@@ -66,6 +66,19 @@ HEX [0-9a-fA-F]
 
 <SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
 <SLASH>"'"{SYM}     { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, yytext + 1, yyleng - 1)); }
+
+<SLASH>"r{"         { ADD_TOKEN(sl_make_string_token(SL_TOK_REGEXP, "", 0));BEGIN(REGEXP); }
+<REGEXP>"{"         { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_push_state(REGEXP_R, yyscanner); }
+<REGEXP>"\\"(.|\n)  { sl_lex_append_byte_to_string(yyextra, yytext[0]);
+                      sl_lex_append_byte_to_string(yyextra, yytext[1]); }
+<REGEXP>"}"[a-z]*   { ADD_TOKEN(sl_make_string_token(SL_TOK_REGEXP_OPTS, yytext + 1, yyleng - 1));
+                                                                            BEGIN(SLASH); }
+<REGEXP>.|\n        { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
+<REGEXP_R>"{"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_push_state(REGEXP_R, yyscanner); }
+<REGEXP_R>"}"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_pop_state(yyscanner); }
+<REGEXP_R>"\\"(.|\n) {sl_lex_append_byte_to_string(yyextra, yytext[0]);
+                      sl_lex_append_byte_to_string(yyextra, yytext[1]); }
+<REGEXP_R>.|\n      { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
 
 <SLASH>"/*"         {                                                       BEGIN(COMMENT_ML_C); }
 <SLASH>"#"|"//"     {                                                       BEGIN(COMMENT_LINE); }

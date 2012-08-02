@@ -121,6 +121,14 @@ int main() {
 }
 C
 
+check_lib "pcre", <<C;
+#include <pcre.h>
+
+int main() {
+    pcre_version();
+}
+C
+
 open my $mf, ">local.mk";
 
 my %platforms = (
