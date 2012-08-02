@@ -24,6 +24,9 @@ sl_to_cstr(sl_vm_t* vm, SLVAL obj);
 SLVAL
 sl_object_to_s(sl_vm_t* vm, SLVAL self);
 
+SLVAL
+sl_object_inspect(sl_vm_t* vm, SLVAL self);
+
 void
 sl_define_singleton_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)());
 
