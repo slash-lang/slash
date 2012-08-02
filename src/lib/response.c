@@ -257,15 +257,15 @@ sl_init_response(sl_vm_t* vm)
     sl_define_singleton_method(vm, Response, "write", -2, sl_response_write);
     sl_define_method(vm, vm->lib.Object, "print", -2, response_write);
     
-    sl_define_method(vm, vm->lib.Object, "flush", 0, sl_response_flush);
-    sl_define_method(vm, vm->lib.Object, "unbuffer", 0, response_unbuffer);
-    sl_define_method(vm, vm->lib.Object, "set_header", 2, response_set_header);
-    sl_define_method(vm, vm->lib.Object, "set_cookie", 2, response_set_cookie);
-    sl_define_method(vm, vm->lib.Object, "redirect", 1, response_redirect);
-    sl_define_method(vm, vm->lib.Object, "status", 0, response_status);
-    sl_define_method(vm, vm->lib.Object, "status=", 1, response_status_set);
-    sl_define_method(vm, vm->lib.Object, "descriptive_error_pages", 0, response_descriptive_error_pages);
-    sl_define_method(vm, vm->lib.Object, "descriptive_error_pages=", 1, response_descriptive_error_pages_set);
+    sl_define_singleton_method(vm, Response, "flush", 0, sl_response_flush);
+    sl_define_singleton_method(vm, Response, "unbuffer", 0, response_unbuffer);
+    sl_define_singleton_method(vm, Response, "set_header", 2, response_set_header);
+    sl_define_singleton_method(vm, Response, "set_cookie", 2, response_set_cookie);
+    sl_define_singleton_method(vm, Response, "redirect", 1, response_redirect);
+    sl_define_singleton_method(vm, Response, "status", 0, response_status);
+    sl_define_singleton_method(vm, Response, "status=", 1, response_status_set);
+    sl_define_singleton_method(vm, Response, "descriptive_error_pages", 0, response_descriptive_error_pages);
+    sl_define_singleton_method(vm, Response, "descriptive_error_pages=", 1, response_descriptive_error_pages_set);
     
     sl_class_set_const(vm, vm->lib.Object, "Response", Response);
 }
