@@ -128,12 +128,16 @@ run_slash_script(request_rec* r)
     sl_vm_t* vm;
     slash_context_t ctx;
     sl_catch_frame_t exit_frame, exception_frame;
+    char* last_slash;
     SLVAL error;
     sl_static_init();
     vm = sl_init();
     vm->cwd = GC_MALLOC(strlen(r->canonical_filename) + 10);
     strcpy(vm->cwd, r->canonical_filename);
-    strcat(vm->cwd, "/../");
+    last_slash = strrchr(vm->cwd, '/');
+    if(last_slash) {
+        *last_slash = 0;
+    }
     SL_TRY(exit_frame, SL_UNWIND_ALL, {
         SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
             ctx.headers_sent = 0;
