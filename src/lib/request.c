@@ -210,6 +210,18 @@ request_method(sl_vm_t* vm)
 }
 
 static SLVAL
+request_safe_method(sl_vm_t* vm)
+{
+    if(sl_eq(vm, request(vm)->method, sl_make_cstring(vm, "GET"))) {
+        return vm->lib._true;
+    }
+    if(sl_eq(vm, request(vm)->method, sl_make_cstring(vm, "HEAD"))) {
+        return vm->lib._true;
+    }
+    return vm->lib._false;
+}
+
+static SLVAL
 request_uri(sl_vm_t* vm)
 {
     return request(vm)->uri;
@@ -252,6 +264,7 @@ sl_init_request(sl_vm_t* vm)
     sl_define_singleton_method(vm, Request, "env", 0, request_env);
     sl_define_singleton_method(vm, Request, "cookies", 0, request_cookies);
     sl_define_singleton_method(vm, Request, "method", 0, request_method);
+    sl_define_singleton_method(vm, Request, "safe_method", 0, request_safe_method);
     sl_define_singleton_method(vm, Request, "uri", 0, request_uri);
     sl_define_singleton_method(vm, Request, "path_info", 0, request_path_info);
     sl_define_singleton_method(vm, Request, "query_string", 0, request_query_string);
