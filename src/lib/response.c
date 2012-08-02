@@ -157,6 +157,15 @@ response_set_cookie(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
     return response_set_header(vm, self, sl_make_cstring(vm, "Set-Cookie"), header);
 }
 
+static SLVAL
+response_redirect(sl_vm_t* vm, SLVAL self, SLVAL url)
+{
+    response(vm)->status = 302;
+    response_set_header(vm, self, sl_make_cstring(vm, "Location"), url);
+    sl_exit(vm, sl_make_int(vm, 0));
+    return self; /* never reached */
+}
+
 struct get_headers_iter_state {
     sl_response_key_value_t* headers;
     size_t at;
@@ -252,6 +261,7 @@ sl_init_response(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "unbuffer", 0, response_unbuffer);
     sl_define_method(vm, vm->lib.Object, "set_header", 2, response_set_header);
     sl_define_method(vm, vm->lib.Object, "set_cookie", 2, response_set_cookie);
+    sl_define_method(vm, vm->lib.Object, "redirect", 1, response_redirect);
     sl_define_method(vm, vm->lib.Object, "status", 0, response_status);
     sl_define_method(vm, vm->lib.Object, "status=", 1, response_status_set);
     sl_define_method(vm, vm->lib.Object, "descriptive_error_pages", 0, response_descriptive_error_pages);
