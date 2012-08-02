@@ -9,7 +9,7 @@
 #include <limits.h>
 
 SLVAL
-sl_number_parse(sl_vm_t* vm, uint8_t* str, size_t len)
+sl_integer_parse(sl_vm_t* vm, uint8_t* str, size_t len)
 {
     /* TODO handle bignum upgrade as well */
     int n;
