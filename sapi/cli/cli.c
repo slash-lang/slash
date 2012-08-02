@@ -108,12 +108,11 @@ main(int argc, char** argv)
     }
     state.src = read_all(f, &state.len);
     SL_TRY(exit_frame, SL_UNWIND_ALL, {
-        SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
-            run(vm, &state);
-        }, err, {
-            on_error(vm, &state, err);
-        });
+        run(vm, &state);
     }, err, {
+        if(exit_frame.type == SL_UNWIND_EXCEPTION) {
+            on_error(vm, &state, err);
+        }
         if(exit_frame.type == SL_UNWIND_EXIT) {
             exit(sl_get_int(err));
         }

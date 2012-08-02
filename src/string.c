@@ -389,6 +389,22 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
     return vm->lib.nil;
 }
 
+int
+sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL strv, int index)
+{
+    sl_string_t* str = get_string(vm, strv);
+    uint8_t* buff = str->buff;
+    size_t len = str->buff_len;
+    while(len) {
+        if(index == 0) {
+            return buff - str->buff;
+        }
+        sl_utf8_each_char(vm, &buff, &len);
+        index--;
+    }
+    return -1;
+}
+
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
