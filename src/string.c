@@ -9,6 +9,7 @@
 #include "vm.h"
 #include "class.h"
 #include "utf8.h"
+#include "lib/array.h"
 
 static int
 str_hash(sl_string_t* str)
@@ -327,6 +328,67 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
 }
 
+SLVAL
+sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
+{
+    sl_string_t* haystack = get_string(vm, self);
+    sl_string_t* needle = get_string(vm, substr);
+    
+    /* @TODO use a more efficient algorithm */
+    uint8_t* haystack_buff = haystack->buff;
+    size_t haystack_len = haystack->buff_len;
+    size_t i = 0;
+    while(haystack_len >= needle->buff_len) {
+        if(memcmp(haystack_buff, needle->buff, needle->buff_len) == 0) {
+            return sl_make_int(vm, i);
+        }
+        sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+        i++;
+    }
+    
+    return vm->lib.nil;
+}
+
+SLVAL
+sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
+{
+    sl_string_t* haystack = get_string(vm, self);
+    sl_string_t* needle = get_string(vm, substr);
+    SLVAL ret = sl_make_array(vm, 0, NULL), piece;
+    uint8_t* haystack_buff = haystack->buff;
+    uint8_t* start_ptr = haystack_buff;
+    size_t haystack_len = haystack->buff_len;
+    uint8_t buff[12];
+    size_t buff_len;
+    uint32_t c;
+    if(needle->buff_len == 0) {
+        while(haystack_len) {
+            c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+            buff_len = sl_utf32_char_to_utf8(vm, c, buff);
+            piece = sl_make_string(vm, buff, buff_len);
+            sl_array_push(vm, ret, 1, &piece);
+        }
+        return ret;
+    } else {
+        while(haystack_len >= needle->buff_len) {
+            if(memcmp(haystack_buff, needle->buff, needle->buff_len) == 0) {
+                piece = sl_make_string(vm, start_ptr, haystack_buff - start_ptr);
+                sl_array_push(vm, ret, 1, &piece);
+                haystack_buff += needle->buff_len;
+                haystack_len -= needle->buff_len;
+                start_ptr = haystack_buff;
+                continue;
+            }
+            haystack_buff++;
+            haystack_len--;
+        }    
+        piece = sl_make_string(vm, start_ptr, haystack_buff - start_ptr);
+        sl_array_push(vm, ret, 1, &piece);
+        return ret;
+    }
+    return vm->lib.nil;
+}
+
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
@@ -359,6 +421,8 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
     sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
+    sl_define_method(vm, vm->lib.String, "index", 1, sl_string_index);
+    sl_define_method(vm, vm->lib.String, "split", 1, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
