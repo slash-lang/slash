@@ -14,7 +14,7 @@ sl_integer_parse(sl_vm_t* vm, uint8_t* str, size_t len)
     /* TODO handle bignum upgrade as well */
     int n;
     mpz_t mpz;
-    char* buff = GC_MALLOC(len + 1);
+    char* buff = sl_alloc(vm->arena, len + 1);
     memcpy(buff, str, len);
     buff[len] = 0;
     mpz_init_set_str(mpz, buff, 10);

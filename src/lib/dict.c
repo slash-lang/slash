@@ -48,7 +48,7 @@ dict_hash_type = { dict_key_cmp, dict_key_hash };
 static sl_object_t*
 allocate_dict(sl_vm_t* vm)
 {
-    sl_dict_t* dict = GC_MALLOC(sizeof(sl_dict_t));
+    sl_dict_t* dict = sl_alloc(vm->arena, sizeof(sl_dict_t));
     dict->base.primitive_type = SL_T_DICT;
     dict->st = st_init_table(vm->arena, &dict_hash_type);
     return (sl_object_t*)dict;
@@ -95,7 +95,7 @@ sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
 SLVAL
 sl_dict_set(sl_vm_t* vm, SLVAL dict, SLVAL key, SLVAL val)
 {
-    sl_dict_key_t* k = GC_MALLOC(sizeof(sl_dict_key_t));
+    sl_dict_key_t* k = sl_alloc(vm->arena, sizeof(sl_dict_key_t));
     k->vm = vm;
     k->key = key;
     st_insert(get_dict(vm, dict)->st, (st_data_t)k, (st_data_t)sl_get_ptr(val));
@@ -181,9 +181,9 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
 }
 
 static sl_object_t*
-allocate_dict_enumerator()
+allocate_dict_enumerator(sl_vm_t* vm)
 {
-    return GC_MALLOC(sizeof(sl_dict_enumerator_t));
+    return sl_alloc(vm->arena, sizeof(sl_dict_enumerator_t));
 }
 
 static int
@@ -202,7 +202,7 @@ sl_dict_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL dict)
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     e->dict = dict;
     e->count = d->st->num_entries;
-    e->keys = GC_MALLOC(sizeof(SLVAL) * e->count);
+    e->keys = sl_alloc(vm->arena, sizeof(SLVAL) * e->count);
     st_foreach(d->st, dict_enumerator_init_iter, (st_data_t)e);
     e->at = 0;
     return self;
@@ -260,7 +260,7 @@ sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
 {
     sl_dict_t* d = get_dict(vm, dict);
     struct dict_keys_state state;
-    state.keys = GC_MALLOC(sizeof(SLVAL) * d->st->num_entries);
+    state.keys = sl_alloc(vm->arena, sizeof(SLVAL) * d->st->num_entries);
     state.at = 0;
     st_foreach(d->st, sl_dict_keys_iter, (st_data_t)&state);
     *count = state.at;

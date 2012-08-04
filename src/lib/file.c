@@ -18,9 +18,9 @@ free_file(sl_file_t* file)
 }
 
 static sl_object_t*
-allocate_file()
+allocate_file(sl_vm_t* vm)
 {
-    sl_file_t* file = GC_MALLOC(sizeof(sl_file_t));
+    sl_file_t* file = sl_alloc(vm->arena, sizeof(sl_file_t));
     GC_register_finalizer(file, (void(*)(void*,void*))free_file, NULL, NULL, NULL);
     return (sl_object_t*)file;
 }

@@ -23,16 +23,16 @@ sl_response_internal_opts_t;
 void
 sl_response_set_opts(sl_vm_t* vm, sl_response_opts_t* opts)
 {
-    sl_response_internal_opts_t* iopts = GC_MALLOC(sizeof(sl_response_internal_opts_t));
+    sl_response_internal_opts_t* iopts = sl_alloc(vm->arena, sizeof(sl_response_internal_opts_t));
     iopts->status        = 200;
     iopts->buffered      = opts->buffered;
     iopts->output_cap    = 4;
     iopts->output_len    = 0;
-    iopts->output        = GC_MALLOC(sizeof(SLVAL) * iopts->output_cap);
+    iopts->output        = sl_alloc(vm->arena, sizeof(SLVAL) * iopts->output_cap);
     iopts->write         = opts->write;
     iopts->header_cap    = 2;
     iopts->header_count  = 0;
-    iopts->headers       = GC_MALLOC(sizeof(sl_response_key_value_t) * iopts->header_cap);
+    iopts->headers       = sl_alloc(vm->arena, sizeof(sl_response_key_value_t) * iopts->header_cap);
     iopts->descriptive_error_pages = opts->descriptive_error_pages;
     sl_vm_store_put(vm, &Response_opts, sl_make_ptr((sl_object_t*)iopts));
 }
@@ -54,7 +54,7 @@ response_write(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         for(i = 0; i < argc; i++) {
             if(resp->output_len >= resp->output_cap) {
                 resp->output_cap *= 2;
-                resp->output = GC_REALLOC(resp->output, sizeof(SLVAL) * resp->output_cap);
+                resp->output = sl_realloc(vm->arena, resp->output, sizeof(SLVAL) * resp->output_cap);
             }
             resp->output[resp->output_len++] = sl_to_s(vm, argv[i]);
         }
@@ -84,7 +84,7 @@ sl_response_flush(sl_vm_t* vm)
         str = (sl_string_t*)sl_get_ptr(resp->output[i]);
         total_size += str->buff_len;
     }
-    output_buffer = GC_MALLOC(total_size + 1);
+    output_buffer = sl_alloc_buffer(vm->arena, total_size + 1);
     for(i = 0; i < resp->output_len; i++) {
         str = (sl_string_t*)sl_get_ptr(resp->output[i]);
         memcpy(output_buffer + offset, str->buff, str->buff_len);
@@ -122,7 +122,7 @@ response_set_header(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
     sl_expect(vm, value, vm->lib.String);
     if(resp->header_count >= resp->header_cap) {
         resp->header_cap *= 2;
-        resp->headers = GC_REALLOC(resp->headers, sizeof(sl_response_key_value_t) * resp->header_cap);
+        resp->headers = sl_realloc(vm->arena, resp->headers, sizeof(sl_response_key_value_t) * resp->header_cap);
     }
     
     h = sl_to_cstr(vm, name);
