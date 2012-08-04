@@ -194,3 +194,9 @@ sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 {
     arena->stack_top = (intptr_t)ptr;
 }
+
+void
+sl_gc_set_finalizer(sl_gc_arena_t* arena, void* ptr, void(*finalizer)(void*))
+{
+    sl_gc_find_alloc(arena, ptr, NULL)->finalizer = finalizer;
+}
