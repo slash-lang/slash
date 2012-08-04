@@ -126,7 +126,7 @@ setup_response_object(sl_vm_t* vm)
 }
 
 static int
-run_slash_script(request_rec* r)
+run_slash_script(request_rec* r, void* stack_top)
 {
     sl_vm_t* vm;
     slash_context_t ctx;
@@ -135,7 +135,8 @@ run_slash_script(request_rec* r)
     SLVAL error;
     sl_static_init();
     vm = sl_init();
-    vm->cwd = sl_alloc(vm->arena, strlen(r->canonical_filename) + 10);
+    sl_gc_set_stack_top(vm->arena, stack_top);
+    vm->cwd = sl_alloc_buffer(vm->arena, strlen(r->canonical_filename) + 10);
     strcpy(vm->cwd, r->canonical_filename);
     last_slash = strrchr(vm->cwd, '/');
     if(last_slash) {
@@ -158,6 +159,7 @@ run_slash_script(request_rec* r)
     }, error, {});
     flush_headers(&ctx);
     sl_response_flush(vm);
+    sl_free_gc_arena(vm->arena);
     return OK;
 }
 
@@ -171,8 +173,7 @@ slash_handler(request_rec* r)
     if(!sl_abs_file_exists(r->canonical_filename)) {
         return DECLINED;
     }
-    ret = run_slash_script(r);
-    GC_gcollect();
+    ret = run_slash_script(r, &ret);
     return ret;
 }
 

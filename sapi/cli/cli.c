@@ -92,6 +92,7 @@ main(int argc, char** argv)
     sl_vm_t* vm;
     sl_catch_frame_t exit_frame;
     SLVAL err;
+    int exit_code;
     sl_static_init();
     vm = sl_init();
     sl_gc_set_stack_top(vm->arena, &argc);
@@ -115,8 +116,11 @@ main(int argc, char** argv)
             on_error(vm, &state, err);
         }
         if(exit_frame.type == SL_UNWIND_EXIT) {
-            exit(sl_get_int(err));
+            exit_code = sl_get_int(err);
+            sl_free_gc_arena(vm->arena);
+            exit(exit_code);
         }
-    });
+    });    
+    sl_free_gc_arena(vm->arena);
     return 0;
 }
