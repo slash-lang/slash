@@ -20,11 +20,11 @@ free_bignum(sl_bignum_t* bn)
 }
 
 static sl_object_t*
-allocate_bignum()
+allocate_bignum(sl_vm_t* vm)
 {
-    sl_bignum_t* bn = (sl_bignum_t*)GC_MALLOC(sizeof(sl_bignum_t));
+    sl_bignum_t* bn = (sl_bignum_t*)sl_alloc(vm->arena, sizeof(sl_bignum_t));
     bn->base.primitive_type = SL_T_BIGNUM;
-    GC_register_finalizer(bn, (void(*)(void*,void*))free_bignum, NULL, NULL, NULL);
+    sl_gc_set_finalizer(vm->arena, bn, (void(*)(void*))free_bignum);
     mpz_init(bn->mpz);
     return (sl_object_t*)bn;
 }
@@ -48,7 +48,7 @@ sl_bignum_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_bignum_t* bn = get_bignum(vm, self);
     size_t dig = mpz_sizeinbase(bn->mpz, 10);
-    char* str = GC_MALLOC_ATOMIC(dig + 4);
+    char* str = sl_alloc_buffer(vm->arena, dig + 4);
     gmp_snprintf(str, dig + 3, "%Zd", bn->mpz);
     return sl_make_cstring(vm, str);
 }
