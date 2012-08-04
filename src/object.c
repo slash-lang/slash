@@ -18,12 +18,12 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->super = vm->lib.nil;
     klass->name = vm->lib.nil;
     klass->in = vm->lib.nil;
-    klass->constants = st_init_table(&sl_string_hash_type);
-    klass->class_variables = st_init_table(&sl_string_hash_type);
-    klass->instance_methods = st_init_table(&sl_string_hash_type);
+    klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     klass->base.klass = vm->lib.Class;
     klass->base.primitive_type = SL_T_CLASS;
-    klass->base.instance_variables = st_init_table(&sl_string_hash_type);
+    klass->base.instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
 }
 
 static SLVAL
@@ -190,7 +190,7 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
         sl_throw_message2(vm, vm->lib.TypeError, "Can't define singleton method on Int object");
     }
     if(!sl_get_ptr(object)->singleton_methods) {
-        sl_get_ptr(object)->singleton_methods = st_init_table(&sl_string_hash_type);
+        sl_get_ptr(object)->singleton_methods = st_init_table(vm->arena, &sl_string_hash_type);
     }
     st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
 }

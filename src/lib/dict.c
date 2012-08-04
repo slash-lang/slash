@@ -46,11 +46,11 @@ static struct st_hash_type
 dict_hash_type = { dict_key_cmp, dict_key_hash };
 
 static sl_object_t*
-allocate_dict()
+allocate_dict(sl_vm_t* vm)
 {
     sl_dict_t* dict = GC_MALLOC(sizeof(sl_dict_t));
     dict->base.primitive_type = SL_T_DICT;
-    dict->st = st_init_table(&dict_hash_type);
+    dict->st = st_init_table(vm->arena, &dict_hash_type);
     return (sl_object_t*)dict;
 }
 
