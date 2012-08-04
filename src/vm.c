@@ -93,7 +93,7 @@ sl_init()
     vm->arena = arena;
     vm->cwd = ".";
     vm->initializing = 1;
-    vm->store = st_init_numtable();
+    vm->store = st_init_numtable(vm->arena);
     sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
     vm->stack_limit = sl_stack_limit();

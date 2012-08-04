@@ -18,7 +18,7 @@ sl_make_eval_ctx(sl_vm_t* vm)
     sl_eval_ctx_t* ctx = sl_alloc(vm->arena, sizeof(sl_eval_ctx_t));
     ctx->vm = vm;
     ctx->self = vm->lib.Object;
-    ctx->vars = st_init_table(&sl_string_hash_type);
+    ctx->vars = st_init_table(vm->arena, &sl_string_hash_type);
     ctx->parent = NULL;
     return ctx;
 }
