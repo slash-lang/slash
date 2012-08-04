@@ -1,6 +1,9 @@
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
 #include "mem.h"
+
+#define POINTER_ALIGN_BYTES (4)
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
@@ -8,7 +11,7 @@ typedef struct sl_gc_alloc {
     size_t size;
     char mark_flag;
     char scan_pointers;
-    void(*finalizer)(void* ptr);
+    void(*finalizer)(void*);
 }
 sl_gc_alloc_t;
 
@@ -17,6 +20,7 @@ struct sl_gc_arena {
     size_t table_count;
     intptr_t ptr_mask;
     size_t alloc_count;
+    size_t allocs_since_gc;
     intptr_t stack_top;
     int mark_flag;
 };
@@ -37,10 +41,11 @@ sl_gc_arena_t*
 sl_make_gc_arena()
 {
     sl_gc_arena_t* arena = malloc(sizeof(sl_gc_arena_t));
-    arena->ptr_mask = 0xff;
-    arena->table_count = 256;
+    arena->table_count = 65536;
+    arena->ptr_mask = arena->table_count - 1;
     arena->table = calloc(arena->table_count, sizeof(sl_gc_alloc_t*));
     arena->alloc_count = 0;
+    arena->allocs_since_gc = 0;
     arena->mark_flag = 0;
     return arena;
 }
@@ -78,6 +83,7 @@ sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
         if(prev) {
             *prev = alloc;
         }
+        alloc = alloc->next;
     }
     if(prev) {
         *prev = NULL;
@@ -92,6 +98,10 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     void* ptr;
     intptr_t hash;
     
+    if(arena->allocs_since_gc > 100000) {
+        sl_gc_run(arena);
+    }
+    
     /* align size: */
     size += sizeof(intptr_t) - 1;
     size &= ~(sizeof(intptr_t) - 1);
@@ -104,8 +114,10 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     alloc->next = arena->table[hash];
     alloc->finalizer = NULL;
     alloc->mark_flag = arena->mark_flag;
+    alloc->scan_pointers = 1;
     arena->table[hash] = alloc;
     arena->alloc_count++;
+    arena->allocs_since_gc++;
     return ptr;
 }
 
@@ -148,12 +160,12 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
         return;
     }
     alloc->mark_flag = arena->mark_flag;
-    if(!alloc->scan_pointers) {
+    /*if(!alloc->scan_pointers) {
         return;
-    }
-    while(addr < max) {
+    }*/
+    for(; addr < max; addr += POINTER_ALIGN_BYTES) {
         ptr = *(intptr_t*)addr;
-        if(ptr & (sizeof(intptr_t) - 1)) {
+        if(ptr & (POINTER_ALIGN_BYTES - 1)) {
             /* if the pointer is not aligned, ignore it */
             continue;
         }
@@ -161,18 +173,18 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
         if(alloc) {
             sl_gc_mark_allocation(arena, alloc);
         }
-        addr += sizeof(intptr_t);
     }
 }
 
 static void
 sl_gc_mark_stack(sl_gc_arena_t* arena)
 {
-    intptr_t addr = arena->stack_top;
+    intptr_t addr;
     sl_gc_alloc_t* alloc;
     intptr_t ptr;
+    intptr_t stack_bottom = (intptr_t)&addr;
     /* start at the top of the stack and work downwards, testing for pointers */
-    while(addr > (intptr_t)&addr) {
+    for(addr = arena->stack_top; addr > stack_bottom; addr -= POINTER_ALIGN_BYTES) {
         ptr = *(intptr_t*)addr;
         if(ptr & (sizeof(intptr_t) - 1)) {
             /* if the pointer is not aligned, ignore it */
@@ -182,21 +194,57 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
         if(alloc) {
             sl_gc_mark_allocation(arena, alloc);
         }
-        /* only consider aligned addresses */
-        addr -= sizeof(intptr_t);
     }
+}
+
+#include <stdio.h>
+
+static void
+sl_gc_sweep(sl_gc_arena_t* arena)
+{
+    sl_gc_alloc_t *alloc, *prev, *next;
+    size_t i;
+    size_t collected = 0;
+    for(i = 0; i < arena->table_count; i++) {
+        prev = (sl_gc_alloc_t*)&arena->table[i];
+        alloc = arena->table[i];
+        while(alloc) {
+            next = alloc->next;
+            if(alloc->mark_flag != arena->mark_flag) {
+                if(alloc->finalizer) {
+                    alloc->finalizer(alloc->ptr);
+                }
+                free(alloc->ptr);
+                free(alloc);
+                prev->next = next;
+                alloc = next;
+                arena->alloc_count--;
+                collected++;
+                continue;
+            }
+            prev = alloc;
+            alloc = next;
+        }
+    }
+    printf("made %d collections, %d allocs still alive\n", (int)collected, (int)arena->alloc_count);
 }
 
 void
 sl_gc_run(sl_gc_arena_t* arena)
 {
+    jmp_buf regs;
+    setjmp(regs); /* dump registers to stack */
+    
+    arena->allocs_since_gc = 0;
+    arena->mark_flag = !arena->mark_flag;
     sl_gc_mark_stack(arena);
+    sl_gc_sweep(arena);
 }
 
 void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 {
-    arena->stack_top = (intptr_t)ptr;
+    arena->stack_top = (intptr_t)ptr & ~(POINTER_ALIGN_BYTES - 1);
 }
 
 void
