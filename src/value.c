@@ -84,7 +84,7 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
             obj->primitive_type = SL_T_OBJECT;
         }
     } else {
-        obj = GC_MALLOC(sizeof(sl_object_t));
+        obj = sl_alloc(vm->arena, sizeof(sl_object_t));
         obj->primitive_type = SL_T_OBJECT;
     }
     obj->klass = vklass;
