@@ -69,7 +69,7 @@ static sl_object_t*
 allocate_regexp(sl_vm_t* vm)
 {
     sl_object_t* re = sl_alloc(vm->arena, sizeof(sl_regexp_t));
-    GC_register_finalizer(re, (void(*)(void*,void*))free_regexp, NULL, NULL, NULL);
+    sl_gc_set_finalizer(vm->arena, re, (void(*)(void*))free_regexp);
     return re;
 }
 
