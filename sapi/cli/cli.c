@@ -90,7 +90,7 @@ main(int argc, char** argv)
     cli_state_t state;
     FILE* f;
     sl_vm_t* vm;
-    sl_catch_frame_t exit_frame, exception_frame;
+    sl_catch_frame_t exit_frame;
     SLVAL err;
     sl_static_init();
     vm = sl_init();
