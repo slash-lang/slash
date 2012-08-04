@@ -23,6 +23,7 @@ exit 1 unless GetOptions "with-gc-dir=s" => \my $gc_dir,
                          "verbose" => \my $verbose,
                          "cflags=s" => \$CFLAGS,
                          "ldflags=s" => \$LDFLAGS,
+                         "vanilla" => sub { @exts = () },
                          "ext=s" => sub { my $ext = $_[1]; push @exts, $ext },
                          "no-ext=s" => sub { my $ext = $_[1]; @exts = grep { $_ ne $ext } @exts };
 
