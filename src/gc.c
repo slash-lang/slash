@@ -226,7 +226,9 @@ sl_gc_sweep(sl_gc_arena_t* arena)
             alloc = next;
         }
     }
-    printf("made %d collections, %d allocs still alive\n", (int)collected, (int)arena->alloc_count);
+    #ifdef SL_GC_DEBUG
+        printf("made %d collections, %d allocs still alive\n", (int)collected, (int)arena->alloc_count);
+    #endif
 }
 
 void
