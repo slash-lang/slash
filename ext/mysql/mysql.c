@@ -24,7 +24,9 @@ sl_static_init_ext_mysql()
 static void
 free_mysql(mysql_t* mysql)
 {
-    mysql_close(&mysql->mysql);
+    if(mysql->valid) {
+        mysql_close(&mysql->mysql);
+    }
 }
 
 static sl_object_t*
