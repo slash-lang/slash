@@ -5,7 +5,6 @@
 #include "lib/bignum.h"
 #include "string.h"
 #include <gmp.h>
-#include <gc.h>
 
 typedef struct {
     sl_object_t base;

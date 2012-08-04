@@ -1,4 +1,3 @@
-#include <gc.h>
 #include "class.h"
 #include "method.h"
 

@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <gc.h>
 #include "slash.h"
 
 typedef struct {

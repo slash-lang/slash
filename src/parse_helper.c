@@ -4,7 +4,6 @@
 #include "class.h"
 #include "lib/lambda.h"
 #include "object.h"
-#include <gc.h>
 #include <string.h>
 
 void

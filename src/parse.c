@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <gc.h>
 
 static sl_token_t*
 token(sl_parse_state_t* ps)

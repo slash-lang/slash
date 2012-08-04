@@ -1,6 +1,5 @@
 #include "utf8.h"
 #include "string.h"
-#include <gc.h>
 
 static uint32_t utf8_code_point_limit[] = {
     0,
