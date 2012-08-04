@@ -104,7 +104,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     alloc->next = arena->table[hash];
     alloc->finalizer = NULL;
     alloc->mark_flag = arena->mark_flag;
-    arena->table[hash] = alloc->next;
+    arena->table[hash] = alloc;
     arena->alloc_count++;
     return ptr;
 }
@@ -120,12 +120,16 @@ sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 void*
 sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 {
+    /* @TODO: more more efficient */
+    sl_gc_alloc_t* old_alloc;
+    void* new_ptr;
+    sl_gc_alloc_t* new_alloc;
     if(ptr == NULL) {
         return sl_alloc(arena, new_size);
     }
-    sl_gc_alloc_t* old_alloc = sl_gc_find_alloc(arena, ptr, NULL);
-    void* new_ptr = sl_alloc(arena, new_size);
-    sl_gc_alloc_t* new_alloc = sl_gc_find_alloc(arena, new_ptr, NULL);
+    old_alloc = sl_gc_find_alloc(arena, ptr, NULL);
+    new_ptr = sl_alloc(arena, new_size);
+    new_alloc = sl_gc_find_alloc(arena, new_ptr, NULL);
     new_alloc->scan_pointers = old_alloc->scan_pointers;
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
