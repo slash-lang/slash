@@ -8,6 +8,7 @@
 #include "parse.h"
 #include "class.h"
 #include "string.h"
+#include "platform.h"
 #include "lib/array.h"
 #include "lib/dict.h"
 #include "lib/bignum.h"
