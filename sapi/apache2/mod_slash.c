@@ -19,6 +19,7 @@ struct iter_args {
     sl_request_key_value_t* kvs;
     size_t count;
     size_t capacity;
+    sl_vm_t* vm;
 };
 
 static void
@@ -51,7 +52,7 @@ iterate_apr_table(void* rec, const char* name, const char* value)
     struct iter_args* ia = rec;
     if(ia->count == ia->capacity) {
         ia->capacity *= 2;
-        ia->kvs = GC_REALLOC(ia->kvs, sizeof(sl_request_key_value_t) * ia->capacity);
+        ia->kvs = sl_realloc(ia->vm->arena, ia->kvs, sizeof(sl_request_key_value_t) * ia->capacity);
     }
     ia->kvs[ia->count].name = (char*)name;
     ia->kvs[ia->count].value = (char*)value;
@@ -60,14 +61,14 @@ iterate_apr_table(void* rec, const char* name, const char* value)
 }
 
 static void
-read_post_data(sl_request_opts_t* opts, request_rec* r)
+read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, request_rec* r)
 {
     apr_bucket_brigade* brigade = apr_brigade_create(r->pool, r->connection->bucket_alloc);
     size_t len = 1024;
     opts->post_length = 0;
     opts->post_data = NULL;
     while(ap_get_brigade(r->input_filters, brigade, AP_MODE_READBYTES, APR_BLOCK_READ, len) == APR_SUCCESS) {
-        opts->post_data = GC_REALLOC(opts->post_data, opts->post_length + len);
+        opts->post_data = sl_realloc(vm->arena, opts->post_data, opts->post_length + len);
         apr_brigade_flatten(brigade, opts->post_data + opts->post_length, &len);
         apr_brigade_cleanup(brigade);
         opts->post_length += len;
@@ -93,7 +94,8 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     
     ia.count = 0;
     ia.capacity = 4;
-    ia.kvs = GC_MALLOC(sizeof(sl_request_key_value_t) * ia.capacity);
+    ia.kvs = sl_alloc(vm->arena, sizeof(sl_request_key_value_t) * ia.capacity);
+    ia.vm = vm;
     apr_table_do(iterate_apr_table, &ia, r->headers_in, NULL);
     opts.header_count = ia.count;
     opts.headers = ia.kvs;
@@ -102,12 +104,13 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     ap_add_cgi_vars(r);
     ia.count = 0;
     ia.capacity = 4;
-    ia.kvs = GC_MALLOC(sizeof(sl_request_key_value_t) * ia.capacity);
+    ia.kvs = sl_alloc(vm->arena, sizeof(sl_request_key_value_t) * ia.capacity);
+    ia.vm = vm;
     apr_table_do(iterate_apr_table, &ia, r->subprocess_env, NULL);
     opts.env_count = ia.count;
     opts.env = ia.kvs;
     
-    read_post_data(&opts, r);
+    read_post_data(vm, &opts, r);
     
     sl_request_set_opts(vm, &opts);
 }
@@ -132,7 +135,7 @@ run_slash_script(request_rec* r)
     SLVAL error;
     sl_static_init();
     vm = sl_init();
-    vm->cwd = GC_MALLOC(strlen(r->canonical_filename) + 10);
+    vm->cwd = sl_alloc(vm->arena, strlen(r->canonical_filename) + 10);
     strcpy(vm->cwd, r->canonical_filename);
     last_slash = strrchr(vm->cwd, '/');
     if(last_slash) {
