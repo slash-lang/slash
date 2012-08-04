@@ -55,6 +55,7 @@ file_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         sl_throw(vm, sl_make_error2(vm, sl_class_get_const(vm, vm->lib.File, "NotFound"), err));
     }
     f = sl_to_cstr(vm, argv[0]);
+    f = sl_realpath(vm, f);
     file->file = fopen(f, mode);
     if(!file->file) {
         err = sl_make_cstring(vm, "No such file: ");
