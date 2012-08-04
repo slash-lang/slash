@@ -100,6 +100,8 @@ sl_init()
     vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
     
+    vm->global_ctx = sl_make_eval_ctx(vm);
+    
     sl_pre_init_class(vm);
     sl_pre_init_object(vm);
     sl_pre_init_string(vm);

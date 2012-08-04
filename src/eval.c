@@ -42,7 +42,7 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     size_t token_count;
     sl_token_t* tokens;
     sl_node_base_t* ast;
-    sl_eval_ctx_t* ctx = sl_make_eval_ctx(vm);
+    sl_eval_ctx_t* ctx = vm->global_ctx;
     SLVAL err;
     
     if(!f) {

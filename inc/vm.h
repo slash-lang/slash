@@ -61,6 +61,7 @@ typedef struct sl_vm {
     int hash_seed;
     void* stack_limit;
     char* cwd;
+    struct sl_eval_ctx* global_ctx;
 }
 sl_vm_t;
 
