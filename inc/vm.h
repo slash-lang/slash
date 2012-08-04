@@ -4,6 +4,7 @@
 #include "value.h"
 #include "st.h"
 #include "error.h"
+#include "mem.h"
 
 typedef struct sl_lib {
     SLVAL Object;
@@ -62,6 +63,7 @@ typedef struct sl_vm {
     void* stack_limit;
     char* cwd;
     struct sl_eval_ctx* global_ctx;
+    sl_gc_arena_t* arena;
 }
 sl_vm_t;
 
