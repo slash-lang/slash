@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <gc.h>
 #include "lib/array.h"
 #include "lib/enumerable.h"
 #include "string.h"
@@ -28,7 +27,7 @@ sl_error_frame_t;
 static sl_object_t*
 allocate_error(sl_vm_t* vm)
 {
-    sl_error_t* err = GC_MALLOC(sizeof(sl_error_t));
+    sl_error_t* err = sl_alloc(vm->arena, sizeof(sl_error_t));
     err->message = vm->lib.nil;
     err->backtrace = sl_make_array(vm, 0, NULL);
     return (sl_object_t*)err;
@@ -37,7 +36,7 @@ allocate_error(sl_vm_t* vm)
 static sl_object_t*
 allocate_error_frame(sl_vm_t* vm)
 {
-    sl_error_frame_t* frame = GC_MALLOC(sizeof(sl_error_frame_t));
+    sl_error_frame_t* frame = sl_alloc(vm->arena, sizeof(sl_error_frame_t));
     frame->receiver = vm->lib.nil;
     frame->method = vm->lib.nil;
     frame->file = vm->lib.nil;

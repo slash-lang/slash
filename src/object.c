@@ -144,7 +144,7 @@ sl_to_cstr(sl_vm_t* vm, SLVAL obj)
 {
     SLVAL str = sl_to_s(vm, obj);
     sl_string_t* strp = (sl_string_t*)sl_get_ptr(str);
-    char* buff = (char*)GC_MALLOC_ATOMIC(strp->buff_len + 1);
+    char* buff = sl_alloc_buffer(vm->arena,strp->buff_len + 1);
     memcpy(buff, strp->buff, strp->buff_len);
     buff[strp->buff_len] = 0;
     return buff;

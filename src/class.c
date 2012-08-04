@@ -7,11 +7,12 @@
 #include "class.h"
 #include "method.h"
 #include "object.h"
+#include "mem.h"
 
 static sl_object_t*
-allocate_class()
+allocate_class(sl_vm_t* vm)
 {
-    sl_class_t* klass = GC_MALLOC(sizeof(sl_class_t));
+    sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
     return (sl_object_t*)klass;
 }
@@ -29,7 +30,7 @@ get_class(sl_vm_t* vm, SLVAL klass)
 void
 sl_pre_init_class(sl_vm_t* vm)
 {
-    sl_class_t* obj = GC_MALLOC(sizeof(sl_class_t));
+    sl_class_t* obj = sl_alloc(vm->arena, sizeof(sl_class_t));
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
     obj->name = vm->lib.nil;
     obj->super = vm->lib.Object;
