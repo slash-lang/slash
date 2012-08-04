@@ -4,6 +4,7 @@
 #include "mem.h"
 
 #define POINTER_ALIGN_BYTES (4)
+#define ALLOCS_PER_GC_RUN (100000)
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
@@ -18,7 +19,7 @@ sl_gc_alloc_t;
 struct sl_gc_arena {
     sl_gc_alloc_t** table;
     size_t table_count;
-    intptr_t ptr_mask;
+    size_t pointer_mask;
     size_t alloc_count;
     size_t allocs_since_gc;
     intptr_t stack_top;
@@ -42,7 +43,7 @@ sl_make_gc_arena()
 {
     sl_gc_arena_t* arena = malloc(sizeof(sl_gc_arena_t));
     arena->table_count = 65536;
-    arena->ptr_mask = arena->table_count - 1;
+    arena->pointer_mask = arena->table_count - 1;
     arena->table = calloc(arena->table_count, sizeof(sl_gc_alloc_t*));
     arena->alloc_count = 0;
     arena->allocs_since_gc = 0;
@@ -74,7 +75,7 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
 static sl_gc_alloc_t*
 sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
 {
-    intptr_t hash = remove_insignificant_bits(ptr) & arena->ptr_mask;
+    intptr_t hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     sl_gc_alloc_t *alloc = arena->table[hash];
     while(alloc) {
         if(alloc->ptr == ptr) {
@@ -98,7 +99,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     void* ptr;
     intptr_t hash;
     
-    if(arena->allocs_since_gc > 100000) {
+    if(arena->allocs_since_gc > ALLOCS_PER_GC_RUN) {
         sl_gc_run(arena);
     }
     
@@ -108,7 +109,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     
     ptr = malloc(size);
     memset(ptr, 0, size);
-    hash = remove_insignificant_bits(ptr) & arena->ptr_mask;
+    hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     alloc->ptr = ptr;
     alloc->size = size;
     alloc->next = arena->table[hash];
