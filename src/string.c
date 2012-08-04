@@ -68,7 +68,7 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
     str->char_len = sl_utf8_strlen(vm, buff, buff_len);
-    str->buff = GC_MALLOC_ATOMIC(buff_len + 1);
+    str->buff = sl_alloc_buffer(vm->arena, buff_len + 1);
     memcpy(str->buff, buff, buff_len);
     str->buff[buff_len] = 0;
     str->buff_len = buff_len;
@@ -79,7 +79,7 @@ SLVAL
 sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding)
 {
     size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
-    char *inbuff = buff, *outbuf = GC_MALLOC_ATOMIC(out_bytes_left), *retn_outbuf = outbuf;
+    char *inbuff = buff, *outbuf = sl_alloc_buffer(vm->arena, out_bytes_left), *retn_outbuf = outbuf;
     size_t ret;
     iconv_t cd = iconv_open("UTF-8", encoding);
     if(cd == (iconv_t)(-1)) {
@@ -94,7 +94,7 @@ sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding)
         if(errno == E2BIG) {
             out_bytes_left = buff_len;
             cap += buff_len;
-            outbuf = GC_REALLOC(outbuf, cap);
+            outbuf = sl_realloc(vm->arena, outbuf, cap);
             continue;
         }
         
@@ -120,9 +120,9 @@ sl_cstring(struct sl_vm* vm, char* cstr)
 }
 
 static sl_object_t*
-allocate_string()
+allocate_string(sl_vm_t* vm)
 {
-    sl_object_t* obj = (sl_object_t*)GC_MALLOC(sizeof(sl_string_t));
+    sl_object_t* obj = (sl_object_t*)sl_alloc(vm->arena, sizeof(sl_string_t));
     obj->primitive_type = SL_T_STRING;
     return obj;
 }
@@ -145,7 +145,7 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     sl_string_t* a = get_string(vm, self);
     sl_string_t* b = get_string(vm, other);
-    uint8_t* buff = (uint8_t*)GC_MALLOC(a->buff_len + b->buff_len);
+    uint8_t* buff = (uint8_t*)sl_alloc_buffer(vm->arena, a->buff_len + b->buff_len);
     memcpy(buff, a->buff, a->buff_len);
     memcpy(buff + a->buff_len, b->buff, b->buff_len);
     return sl_make_string(vm, buff, a->buff_len + b->buff_len);
@@ -158,11 +158,11 @@ sl_string_html_escape(sl_vm_t* vm, SLVAL self)
     size_t out_cap = 32;
     size_t out_len = 0;
     size_t str_i;
-    uint8_t* out = GC_MALLOC(out_cap);
+    uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
     for(str_i = 0; str_i < str->buff_len; str_i++) {
         if(out_len + 8 >= out_cap) {
             out_cap *= 2;
-            out = GC_REALLOC(out, out_cap);
+            out = sl_realloc(vm->arena, out, out_cap);
         }
         if(str->buff[str_i] == '<') {
             memcpy(out + out_len, "&lt;", 4);
@@ -198,13 +198,13 @@ sl_string_url_decode(sl_vm_t* vm, SLVAL self)
     sl_string_t* str = get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
-    uint8_t* out = GC_MALLOC(out_cap);
+    uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
     size_t str_i;
     char tmp[3];
     for(str_i = 0; str_i < str->buff_len; str_i++) {
         if(out_len + 8 >= out_cap) {
             out_cap *= 2;
-            out = GC_REALLOC(out, out_cap);
+            out = sl_realloc(vm->arena, out, out_cap);
         }
         if(str->buff[str_i] == '%') {
             if(str_i + 2 < str->buff_len) {
@@ -233,7 +233,7 @@ sl_string_url_encode(sl_vm_t* vm, SLVAL self)
     sl_string_t* str = get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
-    uint8_t* out = GC_MALLOC(out_cap);
+    uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
     size_t clen = str->buff_len;
     uint8_t* cbuff = str->buff;
     uint32_t c;
@@ -242,7 +242,7 @@ sl_string_url_encode(sl_vm_t* vm, SLVAL self)
     while(clen) {
         if(out_len + 16 >= out_cap) {
             out_cap *= 2;
-            out = GC_REALLOC(out, out_cap);
+            out = sl_realloc(vm->arena, out, out_cap);
         }
         c = sl_utf8_each_char(vm, &cbuff, &clen);
         if(c >= 'A' && c <= 'Z') {
@@ -296,12 +296,12 @@ sl_string_inspect(sl_vm_t* vm, SLVAL self)
     size_t out_cap = 32;
     size_t out_len = 0;
     size_t str_i;
-    uint8_t* out = GC_MALLOC(out_cap);
+    uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
     out[out_len++] = '"';
     for(str_i = 0; str_i < str->buff_len; str_i++) {
         if(out_len + 8 >= out_cap) {
             out_cap *= 2;
-            out = GC_REALLOC(out, out_cap);
+            out = sl_realloc(vm->arena, out, out_cap);
         }
         if(str->buff[str_i] == '"') {
             memcpy(out + out_len, "\\\"", 2);
