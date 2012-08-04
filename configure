@@ -105,14 +105,6 @@ int main() {
 }
 C
 
-check_lib "gc", <<C;
-#include <gc.h>
-
-int main() {
-    GC_INIT();
-}
-C
-
 check_lib "iconv", <<C;
 #include <iconv.h>
 
