@@ -30,11 +30,11 @@ free_mysql(mysql_t* mysql)
 }
 
 static sl_object_t*
-allocate_mysql()
+allocate_mysql(sl_vm_t* vm)
 {
-    mysql_t* mysql = GC_MALLOC(sizeof(mysql_t));
+    mysql_t* mysql = sl_alloc(vm->arena, sizeof(mysql_t));
     mysql_init(&mysql->mysql);
-    GC_register_finalizer(mysql, (void(*)(void*,void*))free_mysql, NULL, NULL, NULL);
+    sl_gc_set_finalizer(vm->arena, mysql, (void(*)(void*))free_mysql);
     return (sl_object_t*)mysql;
 }
 
@@ -124,10 +124,10 @@ sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
         /* do shit */
         ncolumns = mysql_num_fields(result);
         nrows = mysql_num_rows(result);
-        rows = GC_MALLOC(sizeof(SLVAL) * nrows);
+        rows = sl_alloc(vm->arena, sizeof(SLVAL) * nrows);
         fields = mysql_fetch_fields(result);
         for(i = 0; i < nrows; i++) {
-            cells = GC_MALLOC(sizeof(SLVAL) * ncolumns * 2);
+            cells = sl_alloc(vm->arena, sizeof(SLVAL) * ncolumns * 2);
             row = mysql_fetch_row(result);
             lengths = mysql_fetch_lengths(result);
             for(j = 0; j < ncolumns; j++) {
@@ -155,7 +155,7 @@ sl_mysql_escape(sl_vm_t* vm, SLVAL self, SLVAL str)
 {
     mysql_t* mysql = get_mysql(vm, self);
     sl_string_t* s = (sl_string_t*)sl_get_ptr(sl_expect(vm, str, vm->lib.String));
-    char* esc = GC_MALLOC(s->buff_len * 2 + 1);
+    char* esc = sl_alloc(vm->arena, s->buff_len * 2 + 1);
     size_t esc_len = mysql_real_escape_string(&mysql->mysql, esc, (char*)s->buff, s->buff_len);
     return sl_make_string(vm, (uint8_t*)esc, esc_len);
 }
