@@ -127,7 +127,7 @@ sl_token_t
 sl_make_token(sl_token_type_t type);
 
 sl_token_t
-sl_make_string_token(sl_token_type_t type, char* buff, size_t len);
+sl_make_string_token(sl_lex_state_t* st, sl_token_type_t type, char* buff, size_t len);
 
 sl_token_t
 sl_make_float_token(char* text);
