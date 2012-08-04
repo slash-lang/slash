@@ -14,19 +14,19 @@ sl_realpath(sl_vm_t* vm, char* path)
 {
     char *cpath, *gcbuff;
     if(path[0] != '/') {
-        gcbuff = GC_MALLOC(strlen(vm->cwd) + strlen(path) + 10);
+        gcbuff = sl_alloc_buffer(vm->arena, strlen(vm->cwd) + strlen(path) + 10);
         strcpy(gcbuff, vm->cwd);
         strcat(gcbuff, "/");
         strcat(gcbuff, path);
         path = gcbuff;
     }
     #ifdef PATH_MAX
-        cpath = GC_MALLOC(PATH_MAX + 1);
+        cpath = sl_alloc_buffer(vm->arena, PATH_MAX + 1);
         realpath(path, cpath);
         return cpath;
     #else
         cpath = realpath(path, NULL);
-        gcbuff = GC_MALLOC(strlen(cpath) + 1);
+        gcbuff = sl_alloc_buffer(vm->arena, strlen(cpath) + 1);
         strcpy(gcbuff, cpath);
         return gcbuff;
     #endif
