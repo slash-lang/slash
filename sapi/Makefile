@@ -1,5 +1,5 @@
 SAPIS=$(shell ls -F | grep "/" | sed -e 's/\///')
-CFLAGS=-Wall -Wextra -pedantic -ansi -iquote../../inc/ -g
+CFLAGS=-Wall -Wextra -pedantic -ansi -iquote../../inc/
 LDFLAGS=-lpthread -lm
 LIBS=../../libslash.a
 
