@@ -84,13 +84,13 @@ expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 static sl_node_base_t*
 body_expression(sl_parse_state_t* ps)
 {
-    sl_node_seq_t* seq = sl_make_seq_node();
+    sl_node_seq_t* seq = sl_make_seq_node(ps);
     sl_node_base_t* node;
     expect_token(ps, SL_TOK_OPEN_BRACE);
     while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
         node = statement(ps);
         if(node) {
-            sl_seq_node_append(seq, node);
+            sl_seq_node_append(ps, seq, node);
         }
     }
     expect_token(ps, SL_TOK_CLOSE_BRACE);
@@ -112,7 +112,7 @@ if_expression(sl_parse_state_t* ps)
     }
     condition = expression(ps);
     if(negate_condition) {
-        condition = sl_make_unary_node(condition, SL_NODE_NOT, sl_eval_not);
+        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT, sl_eval_not);
     }
     if_true = body_expression(ps);
     if(peek_token(ps)->type == SL_TOK_ELSIF) {
@@ -122,7 +122,7 @@ if_expression(sl_parse_state_t* ps)
         next_token(ps);
         if_false = body_expression(ps);
     }
-    return sl_make_if_node(condition, if_true, if_false);
+    return sl_make_if_node(ps, condition, if_true, if_false);
 }
 
 static sl_node_base_t*
@@ -138,10 +138,10 @@ while_expression(sl_parse_state_t* ps)
     }
     condition = expression(ps);
     if(until) {
-        condition = sl_make_unary_node(condition, SL_NODE_NOT, sl_eval_not);
+        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT, sl_eval_not);
     }
     body = body_expression(ps);
-    return sl_make_while_node(condition, body);
+    return sl_make_while_node(ps, condition, body);
 }
 
 static sl_node_base_t*
@@ -158,13 +158,13 @@ for_expression(sl_parse_state_t* ps)
         unexpected(ps, tok);
     }
     if(peek_token(ps)->type == SL_TOK_COMMA) {
-        seq_lval = sl_make_seq_node();
+        seq_lval = sl_make_seq_node(ps);
         seq_lval->nodes[seq_lval->node_count++] = lval;
         while(peek_token(ps)->type == SL_TOK_COMMA) {
             next_token(ps);
             if(seq_lval->node_count == seq_lval->node_capacity) {
                 seq_lval->node_capacity *= 2;
-                seq_lval->nodes = GC_REALLOC(seq_lval->nodes, sizeof(sl_node_base_t*) * seq_lval->node_capacity);
+                seq_lval->nodes = sl_realloc(ps->vm->arena, seq_lval->nodes, sizeof(sl_node_base_t*) * seq_lval->node_capacity);
             }
             tok = peek_token(ps);
             lval = primary_expression(ps);
@@ -173,7 +173,7 @@ for_expression(sl_parse_state_t* ps)
             }
             seq_lval->nodes[seq_lval->node_count++] = lval;
         }
-        lval = sl_make_array_node(seq_lval->node_count, seq_lval->nodes);
+        lval = sl_make_array_node(ps, seq_lval->node_count, seq_lval->nodes);
     }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
@@ -182,7 +182,7 @@ for_expression(sl_parse_state_t* ps)
         next_token(ps);
         else_body = body_expression(ps);
     }
-    return sl_make_for_node(lval, expr, body, else_body);
+    return sl_make_for_node(ps, lval, expr, body, else_body);
 }
 
 static sl_node_base_t*
@@ -250,7 +250,7 @@ def_expression(sl_parse_state_t* ps)
     sl_node_base_t* body;
     sl_token_t* tok;
     size_t arg_count = 0, arg_cap = 2;
-    sl_string_t** args = GC_MALLOC(sizeof(sl_string_t*) * arg_cap);
+    sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
     expect_token(ps, SL_TOK_DEF);
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
@@ -283,7 +283,7 @@ def_expression(sl_parse_state_t* ps)
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             if(arg_count >= arg_cap) {
                 arg_cap *= 2;
-                args = GC_REALLOC(args, sizeof(sl_string_t*) * arg_cap);
+                args = sl_realloc(ps->vm->arena, args, sizeof(sl_string_t*) * arg_cap);
             }
             tok = expect_token(ps, SL_TOK_IDENTIFIER);
             args[arg_count++] = (sl_string_t*)sl_get_ptr(
@@ -304,14 +304,14 @@ lambda_expression(sl_parse_state_t* ps)
     sl_node_base_t* body;
     sl_token_t* tok;
     size_t arg_count = 0, arg_cap = 2;
-    sl_string_t** args = GC_MALLOC(sizeof(sl_string_t*) * arg_cap);
+    sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
     expect_token(ps, SL_TOK_LAMBDA);
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             if(arg_count >= arg_cap) {
                 arg_cap *= 2;
-                args = GC_REALLOC(args, sizeof(sl_string_t*) * arg_cap);
+                args = sl_realloc(ps->vm->arena, args, sizeof(sl_string_t*) * arg_cap);
             }
             tok = expect_token(ps, SL_TOK_IDENTIFIER);
             args[arg_count++] = (sl_string_t*)sl_get_ptr(
@@ -323,7 +323,7 @@ lambda_expression(sl_parse_state_t* ps)
         expect_token(ps, SL_TOK_CLOSE_PAREN);
     }
     body = body_expression(ps);
-    return sl_make_lambda_node(arg_count, args, body);
+    return sl_make_lambda_node(ps, arg_count, args, body);
 }
 
 static sl_node_base_t*
@@ -342,19 +342,19 @@ try_expression(sl_parse_state_t* ps)
         }
     }
     catch_body = body_expression(ps);
-    return sl_make_try_node(body, lval, catch_body);
+    return sl_make_try_node(ps, body, lval, catch_body);
 }
 
 static sl_node_base_t*
 send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
 {
     size_t argc = 0, cap = 2;
-    sl_node_base_t** argv = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    sl_node_base_t** argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
     sl_token_t* tok = expect_token(ps, SL_TOK_OPEN_PAREN);
     while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
         if(argc >= cap) {
             cap *= 2;
-            argv = GC_REALLOC(argv, sizeof(sl_node_base_t*) * cap);
+            argv = sl_realloc(ps->vm->arena, argv, sizeof(sl_node_base_t*) * cap);
         }
         argv[argc++] = expression(ps);
         if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
@@ -369,12 +369,12 @@ static sl_node_base_t*
 array_expression(sl_parse_state_t* ps)
 {
     size_t count = 0, cap = 2;
-    sl_node_base_t** nodes = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    sl_node_base_t** nodes = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
     expect_token(ps, SL_TOK_OPEN_BRACKET);
     while(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
         if(count >= cap) {
             cap *= 2;
-            nodes = GC_REALLOC(nodes, sizeof(sl_node_base_t*) * cap);
+            nodes = sl_realloc(ps->vm->arena, nodes, sizeof(sl_node_base_t*) * cap);
         }
         nodes[count++] = expression(ps);
         if(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
@@ -382,21 +382,21 @@ array_expression(sl_parse_state_t* ps)
         }
     }
     expect_token(ps, SL_TOK_CLOSE_BRACKET);
-    return sl_make_array_node(count, nodes);
+    return sl_make_array_node(ps, count, nodes);
 }
 
 static sl_node_base_t*
 dict_expression(sl_parse_state_t* ps)
 {
     size_t count = 0, cap = 2;
-    sl_node_base_t** keys = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
-    sl_node_base_t** vals = GC_MALLOC(sizeof(sl_node_base_t*) * cap);
+    sl_node_base_t** keys = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
+    sl_node_base_t** vals = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
     expect_token(ps, SL_TOK_OPEN_BRACE);
     while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
         if(count >= cap) {
             cap *= 2;
-            keys = GC_REALLOC(keys, sizeof(sl_node_base_t*) * cap);
-            vals = GC_REALLOC(vals, sizeof(sl_node_base_t*) * cap);
+            keys = sl_realloc(ps->vm->arena, keys, sizeof(sl_node_base_t*) * cap);
+            vals = sl_realloc(ps->vm->arena, vals, sizeof(sl_node_base_t*) * cap);
         }
         keys[count] = expression(ps);
         expect_token(ps, SL_TOK_FAT_COMMA);
@@ -407,7 +407,7 @@ dict_expression(sl_parse_state_t* ps)
         }
     }
     expect_token(ps, SL_TOK_CLOSE_BRACE);
-    return sl_make_dict_node(count, keys, vals);
+    return sl_make_dict_node(ps, count, keys, vals);
 }
 
 static sl_node_base_t*
@@ -425,7 +425,7 @@ regexp_expression(sl_parse_state_t* ps)
 {
     sl_token_t* re = expect_token(ps, SL_TOK_REGEXP);
     sl_token_t* opts = expect_token(ps, SL_TOK_REGEXP_OPTS);
-    return sl_make_immediate_node(sl_make_regexp(ps->vm,
+    return sl_make_immediate_node(ps, sl_make_regexp(ps->vm,
         re->as.str.buff, re->as.str.len,
         opts->as.str.buff, opts->as.str.len));
 }
@@ -438,33 +438,33 @@ primary_expression(sl_parse_state_t* ps)
     switch(peek_token(ps)->type) {
         case SL_TOK_INTEGER:
             tok = next_token(ps);
-            return sl_make_immediate_node(sl_integer_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return sl_make_immediate_node(ps, sl_integer_parse(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_FLOAT:
-            return sl_make_immediate_node(sl_make_float(ps->vm, next_token(ps)->as.dbl));
+            return sl_make_immediate_node(ps, sl_make_float(ps->vm, next_token(ps)->as.dbl));
         case SL_TOK_STRING:
             tok = next_token(ps);
-            return sl_make_immediate_node(sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return sl_make_immediate_node(ps, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_REGEXP:
             return regexp_expression(ps);
         case SL_TOK_CONSTANT:
             tok = next_token(ps);
-            return sl_make_const_node(NULL, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return sl_make_const_node(ps, NULL, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_IDENTIFIER:
             tok = next_token(ps);
             return sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_TRUE:
             next_token(ps);
-            return sl_make_immediate_node(ps->vm->lib._true);
+            return sl_make_immediate_node(ps, ps->vm->lib._true);
         case SL_TOK_FALSE:
             next_token(ps);
-            return sl_make_immediate_node(ps->vm->lib._false);
+            return sl_make_immediate_node(ps, ps->vm->lib._false);
         case SL_TOK_NIL:
             next_token(ps);
-            return sl_make_immediate_node(ps->vm->lib.nil);
+            return sl_make_immediate_node(ps, ps->vm->lib.nil);
         case SL_TOK_SELF:
             next_token(ps);
-            return sl_make_self_node();
+            return sl_make_self_node(ps);
         case SL_TOK_IVAR:
             tok = next_token(ps);
             node = sl_make_var_node(ps, SL_NODE_IVAR, sl_eval_ivar,
@@ -525,7 +525,7 @@ call_expression(sl_parse_state_t* ps)
     size_t node_cap;
     sl_token_t* tok;
     if(left->type == SL_NODE_VAR && peek_token(ps)->type == SL_TOK_OPEN_PAREN) {
-        left = send_with_args_expression(ps, sl_make_self_node(),
+        left = send_with_args_expression(ps, sl_make_self_node(ps),
             sl_make_ptr((sl_object_t*)((sl_node_var_t*)left)->name));
     }
     while(peek_token(ps)->type == SL_TOK_DOT
@@ -538,16 +538,16 @@ call_expression(sl_parse_state_t* ps)
                 break;
             case SL_TOK_PAAMAYIM_NEKUDOTAYIM:
                 tok = expect_token(ps, SL_TOK_CONSTANT);
-                left = sl_make_const_node(left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+                left = sl_make_const_node(ps, left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
                 break;
             case SL_TOK_OPEN_BRACKET:
                 node_cap = 1;
                 node_len = 0;
-                nodes = GC_MALLOC(sizeof(SLVAL) * node_cap);
+                nodes = sl_alloc(ps->vm->arena, sizeof(SLVAL) * node_cap);
                 while(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
                     if(node_len >= node_cap) {
                         node_cap *= 2;
-                        nodes = GC_REALLOC(nodes, sizeof(SLVAL) * node_cap);
+                        nodes = sl_realloc(ps->vm->arena, nodes, sizeof(SLVAL) * node_cap);
                     }
                     nodes[node_len++] = expression(ps);
                     if(peek_token(ps)->type != SL_TOK_CLOSE_BRACKET) {
@@ -596,7 +596,7 @@ unary_expression(sl_parse_state_t* ps)
         case SL_TOK_NOT:
             next_token(ps);
             expr = unary_expression(ps);
-            return sl_make_unary_node(expr, SL_NODE_NOT, sl_eval_not);
+            return sl_make_unary_node(ps, expr, SL_NODE_NOT, sl_eval_not);
         case SL_TOK_RETURN:
             next_token(ps);
             switch(peek_token(ps)->type) {
@@ -606,9 +606,9 @@ unary_expression(sl_parse_state_t* ps)
                 /* in these case we want to allow for postfix control structures: */
                 case SL_TOK_IF:
                 case SL_TOK_UNLESS:
-                    return sl_make_unary_node(sl_make_immediate_node(ps->vm->lib.nil), SL_NODE_RETURN, sl_eval_return);
+                    return sl_make_unary_node(ps, sl_make_immediate_node(ps, ps->vm->lib.nil), SL_NODE_RETURN, sl_eval_return);
                 default:
-                    return sl_make_unary_node(low_precedence_logical_expression(ps), SL_NODE_RETURN, sl_eval_return);
+                    return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_RETURN, sl_eval_return);
             }
             break;
         default:
@@ -712,12 +712,12 @@ logical_expression(sl_parse_state_t* ps)
             case SL_TOK_OR:
                 next_token(ps);
                 right = relational_expression(ps);
-                left = sl_make_binary_node(left, right, SL_NODE_OR, sl_eval_or);
+                left = sl_make_binary_node(ps, left, right, SL_NODE_OR, sl_eval_or);
                 break;
             case SL_TOK_AND:
                 next_token(ps);
                 right = relational_expression(ps);
-                left = sl_make_binary_node(left, right, SL_NODE_AND, sl_eval_and);
+                left = sl_make_binary_node(ps, left, right, SL_NODE_AND, sl_eval_and);
                 break;
             default:
                 return left;
@@ -743,20 +743,20 @@ assignment_expression(sl_parse_state_t* ps)
         switch(left->type) {
             case SL_NODE_VAR:
                 next_token(ps);
-                left = sl_make_assign_var_node((sl_node_var_t*)left, assignment_expression(ps));
+                left = sl_make_assign_var_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
                 break;
             case SL_NODE_IVAR:
                 next_token(ps);
-                left = sl_make_assign_ivar_node((sl_node_var_t*)left, assignment_expression(ps));
+                left = sl_make_assign_ivar_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
                 break;
             case SL_NODE_CVAR:
                 next_token(ps);
-                left = sl_make_assign_cvar_node((sl_node_var_t*)left, assignment_expression(ps));
+                left = sl_make_assign_cvar_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
                 break;
             case SL_NODE_SEND:
                 tok = next_token(ps);
                 send = (sl_node_send_t*)left;
-                argv = GC_MALLOC(sizeof(sl_node_base_t*) * (send->arg_count + 1));
+                argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * (send->arg_count + 1));
                 memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
                 argv[send->arg_count] = assignment_expression(ps);
                 left = sl_make_send_node(ps, tok->line, send->recv,
@@ -765,7 +765,7 @@ assignment_expression(sl_parse_state_t* ps)
                 break;
             case SL_NODE_CONST:
                 next_token(ps);
-                left = sl_make_assign_const_node((sl_node_const_t*)left, assignment_expression(ps));
+                left = sl_make_assign_const_node(ps, (sl_node_const_t*)left, assignment_expression(ps));
                 break;
             case SL_NODE_ARRAY:
                 next_token(ps);
@@ -782,7 +782,7 @@ static sl_node_base_t*
 low_precedence_not_expression(sl_parse_state_t* ps)
 {
     if(peek_token(ps)->type == SL_TOK_LP_NOT) {
-        return sl_make_unary_node(assignment_expression(ps), SL_NODE_NOT, sl_eval_not);
+        return sl_make_unary_node(ps, assignment_expression(ps), SL_NODE_NOT, sl_eval_not);
     } else {
         return assignment_expression(ps);
     }
@@ -794,11 +794,11 @@ low_precedence_logical_expression(sl_parse_state_t* ps)
     sl_node_base_t* left = low_precedence_not_expression(ps);
     if(peek_token(ps)->type == SL_TOK_LP_AND) {
         next_token(ps);
-        left = sl_make_binary_node(left, low_precedence_logical_expression(ps), SL_NODE_AND, sl_eval_and);
+        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_AND, sl_eval_and);
     }
     if(peek_token(ps)->type == SL_TOK_LP_OR) {
         next_token(ps);
-        left = sl_make_binary_node(left, low_precedence_logical_expression(ps), SL_NODE_OR, sl_eval_or);
+        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_OR, sl_eval_or);
     }
     return left;
 }
@@ -811,12 +811,12 @@ postfix_expression(sl_parse_state_t* ps)
         switch(peek_token(ps)->type) {
             case SL_TOK_IF:
                 next_token(ps);
-                expr = sl_make_if_node(low_precedence_logical_expression(ps), expr, NULL);
+                expr = sl_make_if_node(ps, low_precedence_logical_expression(ps), expr, NULL);
                 break;
             case SL_TOK_UNLESS:
                 next_token(ps);
-                expr = sl_make_if_node(
-                    sl_make_unary_node(low_precedence_logical_expression(ps), SL_NODE_NOT, sl_eval_not),
+                expr = sl_make_if_node(ps, 
+                    sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_NOT, sl_eval_not),
                     expr, NULL);
                 break;
             default:
@@ -838,7 +838,7 @@ echo_tag(sl_parse_state_t* ps)
     expect_token(ps, SL_TOK_OPEN_ECHO_TAG);
     expr = expression(ps);
     expect_token(ps, SL_TOK_CLOSE_TAG);
-    return sl_make_echo_node(expr);
+    return sl_make_echo_node(ps, expr);
 }
 
 static sl_node_base_t*
@@ -848,23 +848,23 @@ echo_raw_tag(sl_parse_state_t* ps)
     expect_token(ps, SL_TOK_OPEN_RAW_ECHO_TAG);
     expr = expression(ps);
     expect_token(ps, SL_TOK_CLOSE_TAG);
-    return sl_make_raw_echo_node(expr);
+    return sl_make_raw_echo_node(ps, expr);
 }
 
 static sl_node_base_t*
 inline_raw(sl_parse_state_t* ps)
 {
-    sl_node_seq_t* seq = sl_make_seq_node();
+    sl_node_seq_t* seq = sl_make_seq_node(ps);
     while(1) {
         switch(peek_token(ps)->type) {
             case SL_TOK_OPEN_ECHO_TAG:
-                sl_seq_node_append(seq, echo_tag(ps));
+                sl_seq_node_append(ps, seq, echo_tag(ps));
                 break;
             case SL_TOK_OPEN_RAW_ECHO_TAG:
-                sl_seq_node_append(seq, echo_raw_tag(ps));
+                sl_seq_node_append(ps, seq, echo_raw_tag(ps));
                 break;
             case SL_TOK_RAW:
-                sl_seq_node_append(seq, sl_make_raw_node(ps, next_token(ps)));
+                sl_seq_node_append(ps, seq, sl_make_raw_node(ps, next_token(ps)));
                 break;
             case SL_TOK_END:
                 return (sl_node_base_t*)seq;
@@ -907,12 +907,12 @@ statement(sl_parse_state_t* ps)
 static sl_node_base_t*
 statements(sl_parse_state_t* ps)
 {
-    sl_node_seq_t* seq = sl_make_seq_node();
+    sl_node_seq_t* seq = sl_make_seq_node(ps);
     sl_node_base_t* node;
     while(peek_token(ps)->type != SL_TOK_END) {
         node = statement(ps);
         if(node) {
-            sl_seq_node_append(seq, node);
+            sl_seq_node_append(ps, seq, node);
         }
     }
     return (sl_node_base_t*)seq;
