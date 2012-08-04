@@ -1,7 +1,6 @@
 #include "slash.h"
 #include <string.h>
 #include <stdio.h>
-#include <gc.h>
 
 typedef struct {
     sl_object_t base;

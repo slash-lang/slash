@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <gc.h>
 #include "object.h"
 #include "class.h"
 #include "string.h"

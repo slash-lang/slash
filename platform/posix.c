@@ -5,7 +5,6 @@
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
-#include <gc.h>
 #include <string.h>
 #include "platform.h"
 

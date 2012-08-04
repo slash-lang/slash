@@ -4,7 +4,6 @@
 #include "string.h"
 #include "object.h"
 #include "lib/bignum.h"
-#include <gc.h>
 #include <stdlib.h>
 #include <time.h>
 

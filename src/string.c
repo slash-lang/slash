@@ -1,5 +1,4 @@
 #include <string.h>
-#include <gc.h>
 #include <iconv.h>
 #include <errno.h>
 #include <stdio.h>

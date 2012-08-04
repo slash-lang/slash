@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <string.h>
 #include "lib/request.h"
 #include "lib/dict.h"

@@ -8,9 +8,6 @@
 #include "st.h"
 #include "mem.h"
 
-/* slash modification: use boehm gc */
-#include <gc.h>
-
 #define ST_DEFAULT_MAX_DENSITY 5
 #define ST_DEFAULT_INIT_TABLE_SIZE 11
 

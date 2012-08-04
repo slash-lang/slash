@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <gmp.h>
-#include <gc.h>
 #include <limits.h>
 
 SLVAL

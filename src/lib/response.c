@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <string.h>
 #include "lib/response.h"
 #include "lib/dict.h"

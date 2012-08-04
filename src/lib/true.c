@@ -2,7 +2,6 @@
 #include "vm.h"
 #include "class.h"
 #include "string.h"
-#include <gc.h>
 
 static sl_object_t*
 allocate_true(sl_vm_t* vm)

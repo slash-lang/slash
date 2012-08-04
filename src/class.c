@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <gc.h>
 #include "st.h"
 #include "value.h"
 #include "vm.h"

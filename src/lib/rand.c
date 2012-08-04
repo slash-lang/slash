@@ -1,5 +1,4 @@
 #include <time.h>
-#include <gc.h>
 #include "lib/rand.h"
 #include "lib/float.h"
 #include "slash.h"
