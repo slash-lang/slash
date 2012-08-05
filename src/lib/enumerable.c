@@ -174,6 +174,12 @@ enumerable_reject(sl_vm_t* vm, SLVAL self, SLVAL f)
     return ary;
 }
 
+static SLVAL
+enumerable_sort(sl_vm_t* vm, SLVAL self)
+{
+    return sl_array_sort(vm, enumerable_to_a(vm, self));
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -190,4 +196,5 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "find", 1, enumerable_find);
     sl_define_method(vm, vm->lib.Enumerable, "filter", 1, enumerable_filter);
     sl_define_method(vm, vm->lib.Enumerable, "reject", 1, enumerable_reject);
+    sl_define_method(vm, vm->lib.Enumerable, "sort", 0, enumerable_sort);
 }
