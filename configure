@@ -12,20 +12,25 @@ use File::Basename;
 use Getopt::Long;
 
 my @exts = qw(mysql json base64 gcrypt inflect);
+my @sapis = qw(cli);
+
+my $path = dirname(rel2abs($0));
 
 my $CFLAGS = "";
 my $LDFLAGS = "";
 
 exit 1 unless GetOptions "with-gc-dir=s" => \my $gc_dir,
                          "with-gmp-dir=s" => \my $gmp_dir,
-                         "debug" => \my $debug,
-                         "profile" => \my $profile,
-                         "verbose" => \my $verbose,
-                         "cflags=s" => \$CFLAGS,
+                         "debug"     => \my $debug,
+                         "profile"   => \my $profile,
+                         "verbose"   => \my $verbose,
+                         "cflags=s"  => \$CFLAGS,
                          "ldflags=s" => \$LDFLAGS,
-                         "vanilla" => sub { @exts = () },
-                         "ext=s" => sub { my $ext = $_[1]; push @exts, $ext },
-                         "no-ext=s" => sub { my $ext = $_[1]; @exts = grep { $_ ne $ext } @exts };
+                         "vanilla"   => sub { @exts = (); @sapis = (); },
+                         "ext=s"     => sub { my $ext = $_[1];  push @exts, $ext },
+                         "no-ext=s"  => sub { my $ext = $_[1];  @exts = grep { $_ ne $ext } @exts },
+                         "sapi=s"    => sub { my $sapi = $_[1]; push @sapis, $sapi },
+                         "no-sapi=s" => sub { my $sapi = $_[1]; @sapis = grep { $_ ne $sapi } @sapis };
 
 if($gc_dir) {
     $CFLAGS .= " -I$gc_dir/include -L$gc_dir/lib";
@@ -122,7 +127,7 @@ int main() {
 }
 C
 
-open my $mf, ">local.mk";
+open my $mf, ">$path/local.mk";
 
 my %platforms = (
     darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; },
@@ -149,16 +154,15 @@ sub needs_static_init {
 print "\n";
 for my $ext (@exts) {
     print "\e[1mConfiguring ext/$ext\e[0m\n";
-    my $conf = "ext/$ext/configure.pl";
+    my $conf = "$path/ext/$ext/configure.pl";
     $CURRENT_EXT = $ext;
     require $conf if -e $conf;
     $ext_decls .= "void sl_init_ext_$ext(sl_vm_t* vm);";
     $ext_inits .= "sl_init_ext_$ext(vm);";
-    my $path = dirname(rel2abs($0));
     print $mf "include $path/ext/$ext/$ext.mk\n";
 }
 
-open my $init_exts, ">src/init_exts.c";
+open my $init_exts, ">$path/src/init_exts.c";
 print $init_exts <<"C";
 #include "slash.h"
 
@@ -177,6 +181,14 @@ sl_init_exts(sl_vm_t* vm)
 }
 C
 close $init_exts;
+
+print "\n";
+for my $sapi (@sapis) {
+    print "\e[1mConfiguring sapi/$sapi\e[0m\n";
+    my $conf = "$path/sapi/$sapi/configure.pl";
+    require $conf if -e $conf;
+    print $mf "TARGETS+= sapi[$sapi]\n";
+}
 
 close $mf;
 print "\n\e[32mReady to build\n\e[0m";
