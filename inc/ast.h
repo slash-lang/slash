@@ -36,7 +36,9 @@ typedef enum sl_node_type {
     SL_NODE_ARRAY,
     SL_NODE_DICT,
     SL_NODE_RETURN,
-    SL_NODE_RANGE
+    SL_NODE_RANGE,
+    SL_NODE_NEXT,
+    SL_NODE_LAST
 }
 sl_node_type_t;
 

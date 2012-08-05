@@ -43,6 +43,8 @@ typedef enum sl_token_type {
     SL_TOK_TRY,
     SL_TOK_CATCH,
     SL_TOK_RETURN,
+    SL_TOK_NEXT,
+    SL_TOK_LAST,
     
     SL_TOK_OPEN_PAREN,
     SL_TOK_CLOSE_PAREN,

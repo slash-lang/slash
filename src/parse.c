@@ -525,6 +525,18 @@ primary_expression(sl_parse_state_t* ps)
             return bracketed_expression(ps);
         case SL_TOK_OPEN_BRACE:
             return dict_expression(ps);
+        case SL_TOK_NEXT:
+            tok = next_token(ps);
+            if(!(ps->scope->flags & SL_PF_CAN_NEXT_LAST)) {
+                error(ps, sl_make_cstring(ps->vm, "next invalid outside loop"), tok);
+            }
+            return sl_make_singleton_node(ps, SL_NODE_NEXT, sl_eval_next);
+        case SL_TOK_LAST:
+            tok = next_token(ps);
+            if(!(ps->scope->flags & SL_PF_CAN_NEXT_LAST)) {
+                error(ps, sl_make_cstring(ps->vm, "last invalid outside loop"), tok);
+            }
+            return sl_make_singleton_node(ps, SL_NODE_LAST, sl_eval_last);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;
