@@ -1,7 +1,7 @@
 #include "slash.h"
 
-static int
-cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
+int
+sl_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 {
     SLVAL ret = sl_send(vm, a, "<=>", 1, b);
     sl_expect(vm, ret, vm->lib.Int);
@@ -11,7 +11,7 @@ cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 static SLVAL
 comparable_lt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(cmp(vm, self, other) < 0) {
+    if(sl_cmp(vm, self, other) < 0) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -21,7 +21,7 @@ comparable_lt(sl_vm_t* vm, SLVAL self, SLVAL other)
 static SLVAL
 comparable_lte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(cmp(vm, self, other) <= 0) {
+    if(sl_cmp(vm, self, other) <= 0) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -31,7 +31,7 @@ comparable_lte(sl_vm_t* vm, SLVAL self, SLVAL other)
 static SLVAL
 comparable_gt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(cmp(vm, self, other) > 0) {
+    if(sl_cmp(vm, self, other) > 0) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -41,7 +41,7 @@ comparable_gt(sl_vm_t* vm, SLVAL self, SLVAL other)
 static SLVAL
 comparable_gte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(cmp(vm, self, other) >= 0) {
+    if(sl_cmp(vm, self, other) >= 0) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
