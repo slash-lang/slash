@@ -44,6 +44,8 @@ typedef struct sl_lib {
     SLVAL Array_Enumerator;
     SLVAL Dict;
     SLVAL Dict_Enumerator;
+    SLVAL Range;
+    SLVAL Range_Enumerator;
     
     SLVAL File;
     
