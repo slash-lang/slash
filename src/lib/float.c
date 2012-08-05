@@ -79,6 +79,8 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "%", 1, sl_float_mod);
     sl_define_method(vm, vm->lib.Float, "==", 1, sl_float_eq);
     sl_define_method(vm, vm->lib.Float, "<=>", 1, sl_float_cmp);
+    
+    sl_class_set_const(vm, vm->lib.Object, "Infinity", sl_make_float(vm, 1.0/0.0));
 }
 
 SLVAL
