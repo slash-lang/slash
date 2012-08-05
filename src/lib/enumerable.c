@@ -113,6 +113,23 @@ enumerable_any(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 }
 
 static SLVAL
+enumerable_all(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    SLVAL val;
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        if(argc > 0) {
+            val = sl_send(vm, argv[0], "call", 1, val);
+        }
+        if(!sl_is_truthy(val)) {
+            return vm->lib._false;
+        }
+    }
+    return vm->lib._true;
+}
+
+static SLVAL
 enumerable_find(sl_vm_t* vm, SLVAL self, SLVAL f)
 {
     SLVAL val, truthy;
@@ -169,6 +186,7 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "length", 0, enumerable_length);
     sl_define_method(vm, vm->lib.Enumerable, "empty", 0, enumerable_empty);
     sl_define_method(vm, vm->lib.Enumerable, "any", -1, enumerable_any);
+    sl_define_method(vm, vm->lib.Enumerable, "all", -1, enumerable_all);
     sl_define_method(vm, vm->lib.Enumerable, "find", 1, enumerable_find);
     sl_define_method(vm, vm->lib.Enumerable, "filter", 1, enumerable_filter);
     sl_define_method(vm, vm->lib.Enumerable, "reject", 1, enumerable_reject);
