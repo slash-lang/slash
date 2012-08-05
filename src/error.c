@@ -200,7 +200,7 @@ sl_make_error2(sl_vm_t* vm, SLVAL klass, SLVAL message)
     return err;
 }
 
-static void
+void
 sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
 {
     if(vm->catch_stack == NULL) {

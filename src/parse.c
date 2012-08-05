@@ -39,20 +39,27 @@ next_token(sl_parse_state_t* ps)
 }
 
 static void
+error(sl_parse_state_t* ps, SLVAL err, sl_token_t* tok)
+{
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, " in "));
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, (char*)ps->filename));
+    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, ", line "));
+    err = sl_string_concat(ps->vm, err, sl_to_s(ps->vm, sl_make_int(ps->vm, tok->line)));
+    sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
+}
+
+static void
 unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 {
     SLVAL err;
     if(tok->type != SL_TOK_END) {
         err = sl_make_cstring(ps->vm, "Unexpected '");
         err = sl_string_concat(ps->vm, err, tok->str);
-        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "' in "));
+        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
     } else {
-        err = sl_make_cstring(ps->vm, "Unexpected end of file in");
-    }    
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, (char*)ps->filename));
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, ", line "));
-    err = sl_string_concat(ps->vm, err, sl_to_s(ps->vm, sl_make_int(ps->vm, tok->line)));
-    sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
+        err = sl_make_cstring(ps->vm, "Unexpected end of file");
+    }
+    error(ps, err, tok);
 }
 
 static sl_node_base_t*
@@ -128,6 +135,7 @@ static sl_node_base_t*
 while_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t *condition, *body;
+    sl_parse_scope_t scope;
     int until = 0;
     if(peek_token(ps)->type == SL_TOK_UNTIL) {
         next_token(ps);
@@ -139,7 +147,11 @@ while_expression(sl_parse_state_t* ps)
     if(until) {
         condition = sl_make_unary_node(ps, condition, SL_NODE_NOT, sl_eval_not);
     }
+    scope.prev = ps->scope;
+    scope.flags = scope.prev->flags | SL_PF_CAN_NEXT_LAST;
+    ps->scope = &scope;
     body = body_expression(ps);
+    ps->scope = scope.prev;
     return sl_make_while_node(ps, condition, body);
 }
 
@@ -149,6 +161,7 @@ for_expression(sl_parse_state_t* ps)
     sl_node_base_t *lval, *expr, *body, *else_body = NULL;
     sl_node_seq_t* seq_lval;
     sl_token_t* tok;
+    sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_FOR);
     /* save current token to allow rewinding and erroring */
     tok = peek_token(ps);
@@ -176,7 +189,13 @@ for_expression(sl_parse_state_t* ps)
     }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
+    
+    scope.prev = ps->scope;
+    scope.flags = scope.prev->flags | SL_PF_CAN_NEXT_LAST;
+    ps->scope = &scope;
     body = body_expression(ps);
+    ps->scope = scope.prev;
+    
     if(peek_token(ps)->type == SL_TOK_ELSE) {
         next_token(ps);
         else_body = body_expression(ps);
@@ -250,6 +269,7 @@ def_expression(sl_parse_state_t* ps)
     sl_token_t* tok;
     size_t arg_count = 0, arg_cap = 2;
     sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
+    sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_DEF);
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
@@ -293,7 +313,11 @@ def_expression(sl_parse_state_t* ps)
         }
         expect_token(ps, SL_TOK_CLOSE_PAREN);
     }
+    scope.prev = ps->scope;
+    scope.flags = SL_PF_CAN_RETURN;
+    ps->scope = &scope;
     body = body_expression(ps);
+    ps->scope = scope.prev;
     return sl_make_def_node(ps, name, on, arg_count, args, body);
 }
 
@@ -304,6 +328,7 @@ lambda_expression(sl_parse_state_t* ps)
     sl_token_t* tok;
     size_t arg_count = 0, arg_cap = 2;
     sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
+    sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_LAMBDA);
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
@@ -321,7 +346,11 @@ lambda_expression(sl_parse_state_t* ps)
         }
         expect_token(ps, SL_TOK_CLOSE_PAREN);
     }
+    scope.prev = ps->scope;
+    scope.flags = SL_PF_CAN_RETURN;
+    ps->scope = &scope;
     body = body_expression(ps);
+    ps->scope = scope.prev;
     return sl_make_lambda_node(ps, arg_count, args, body);
 }
 
@@ -596,8 +625,11 @@ unary_expression(sl_parse_state_t* ps)
             next_token(ps);
             expr = unary_expression(ps);
             return sl_make_unary_node(ps, expr, SL_NODE_NOT, sl_eval_not);
-        case SL_TOK_RETURN:
-            next_token(ps);
+        case SL_TOK_RETURN:    
+            tok = next_token(ps);
+            if(!(ps->scope->flags & SL_PF_CAN_RETURN)) {
+                error(ps, sl_make_cstring(ps->vm, "Can't return outside of a method or lambda"), tok);
+            }
             switch(peek_token(ps)->type) {
                 case SL_TOK_SEMICOLON:
                 case SL_TOK_CLOSE_BRACE:
@@ -929,11 +961,14 @@ statements(sl_parse_state_t* ps)
 sl_node_base_t*
 sl_parse(sl_vm_t* vm, sl_token_t* tokens, size_t token_count, uint8_t* filename)
 {
+    sl_parse_scope_t scope;
     sl_parse_state_t ps;
     ps.vm = vm;
     ps.tokens = tokens;
     ps.token_count = token_count;
     ps.current_token = 0;
     ps.filename = filename;
+    ps.scope = &scope;
+    scope.flags = 0;
     return statements(&ps);
 }

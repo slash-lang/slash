@@ -7,6 +7,18 @@
 #include "eval.h"
 #include "st.h"
 
+typedef enum {
+    SL_PF_CAN_RETURN    = 1,
+    SL_PF_CAN_NEXT_LAST = 2
+}
+sl_parse_flags_t;
+
+typedef struct sl_parse_scope {
+    struct sl_parse_scope* prev;
+    sl_parse_flags_t flags;
+}
+sl_parse_scope_t;
+
 typedef struct {
     sl_vm_t* vm;
     sl_token_t* tokens;
@@ -14,6 +26,7 @@ typedef struct {
     size_t current_token;
     uint8_t* filename;
     sl_node_base_t* ast;
+    sl_parse_scope_t* scope;
     int line;
 }
 sl_parse_state_t;
