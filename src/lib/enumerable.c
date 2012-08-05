@@ -100,16 +100,11 @@ enumerable_any(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
     SLVAL val;
-    if(argc == 0) {
-        if(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-            return vm->lib._true;
-        } else {
-            return vm->lib._false;
-        }
-    }
     while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
         val = sl_send(vm, enumerator, "current", 0);
-        val = sl_send(vm, argv[0], "call", 1, val);
+        if(argc > 0) {
+            val = sl_send(vm, argv[0], "call", 1, val);
+        }
         if(sl_is_truthy(val)) {
             return vm->lib._true;
         }
