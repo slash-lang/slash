@@ -33,4 +33,7 @@ sl_array_unshift(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items);
 SLVAL
 sl_array_shift(sl_vm_t* vm, SLVAL array);
 
+SLVAL
+sl_array_sort(sl_vm_t* vm, SLVAL array);
+
 #endif

@@ -2,6 +2,8 @@
 #include <string.h>
 #include <gc.h>
 #include "slash.h"
+#include "lib/rand.h"
+#include "lib/comparable.h"
 
 typedef struct {
     sl_object_t base;
@@ -176,6 +178,13 @@ sl_array_hash(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, hash % SL_MAX_INT);
 }
 
+static SLVAL
+sl_array_to_a(sl_vm_t* vm, SLVAL self)
+{
+    return self;
+    (void)vm; /* never reached */
+}
+
 void
 sl_init_array(sl_vm_t* vm)
 {
@@ -190,9 +199,11 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "pop", 0, sl_array_pop);
     sl_define_method(vm, vm->lib.Array, "unshift", -2, sl_array_unshift);
     sl_define_method(vm, vm->lib.Array, "shift", 0, sl_array_shift);
+    sl_define_method(vm, vm->lib.Array, "to_a", 0, sl_array_to_a);
     sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "hash", 0, sl_array_hash);
+    sl_define_method(vm, vm->lib.Array, "sort", 0, sl_array_sort);
     
     vm->lib.Array_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
@@ -300,4 +311,39 @@ sl_array_shift(sl_vm_t* vm, SLVAL array)
     memmove(aryp->items, aryp->items + 1, (aryp->count - 1) * sizeof(SLVAL));
     array_resize(vm, aryp, aryp->count - 1);
     return val;
+}
+
+static void
+quicksort(sl_vm_t* vm, SLVAL* items, size_t count)
+{
+    size_t pivot_idx, m, i;
+    SLVAL pivot, tmp;
+    if(count < 2) return;
+    pivot_idx = sl_rand(vm) % count;
+    pivot = items[pivot_idx];
+    items[pivot_idx] = items[count - 1];
+    items[count - 1] = pivot;
+    m = 0;
+    for(i = 0; i < count - 1; i++) {
+        if(sl_cmp(vm, items[i], pivot) < 0) {
+            tmp = items[i];
+            items[i] = items[m];
+            items[m] = tmp;
+            m++;
+        }
+    }
+    tmp = items[m];
+    items[m] = items[count - 1];
+    items[count - 1] = tmp;
+    quicksort(vm, items, m);
+    quicksort(vm, items + m + 1, count - m - 1);
+}
+
+SLVAL
+sl_array_sort(sl_vm_t* vm, SLVAL array)
+{
+    sl_array_t* aryp = get_array(vm, array);
+    sl_array_t* copy = get_array(vm, sl_make_array(vm, aryp->count, aryp->items));
+    quicksort(vm, copy->items, copy->count);
+    return sl_make_ptr((sl_object_t*)copy);
 }
