@@ -2,17 +2,16 @@
     #include "lex.h"
     #include "string.h"
     #include "error.h"
+    #include "mem.h"
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive stack
 %option extra-type="sl_lex_state_t*"
 
 %{
-    #include <gc.h>
-    
     #define ADD_TOKEN(tok) do { \
             if(yyextra->len + 2 >= yyextra->cap) { \
-                yyextra->tokens = GC_REALLOC(yyextra->tokens, sizeof(sl_token_t) * (yyextra->cap *= 2)); \
+                yyextra->tokens = sl_realloc(yyextra->vm->arena, yyextra->tokens, sizeof(sl_token_t) * (yyextra->cap *= 2)); \
             } \
             yyextra->tokens[yyextra->len] = (tok); \
             yyextra->tokens[yyextra->len].str = sl_make_string(yyextra->vm, (uint8_t*)yytext, yyleng); \
@@ -32,22 +31,22 @@ HEX [0-9a-fA-F]
 
 %%
 
-<INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));       BEGIN(SLASH); }
-<INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));   BEGIN(SLASH); }
-<INITIAL>"<%#"      {                                                       BEGIN(COMMENT_TAG); }
-<INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));            BEGIN(SLASH); }
+<INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));        BEGIN(SLASH); }
+<INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));    BEGIN(SLASH); }
+<INITIAL>"<%#"      {                                                                 BEGIN(COMMENT_TAG); }
+<INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));             BEGIN(SLASH); }
 
 <INITIAL>\n         { sl_lex_append_to_raw(yyextra, yytext, 1); yyextra->line++; }
 <INITIAL>.          { sl_lex_append_to_raw(yyextra, yytext, 1); }
 
-<COMMENT_TAG>"%>"   {                                                       BEGIN(INITIAL); }
+<COMMENT_TAG>"%>"   {                                                                 BEGIN(INITIAL); }
 <COMMENT_TAG>\n     { yyextra->line++; }
 <COMMENT_TAG>.      { }
 
 <COMMENT_LINE>.     { }
-<COMMENT_LINE>\n    { yyextra->line++;                                      BEGIN(SLASH); }
+<COMMENT_LINE>\n    { yyextra->line++;                                                BEGIN(SLASH); }
 
-<COMMENT_ML_C>"*/"  {                                                       BEGIN(SLASH); }
+<COMMENT_ML_C>"*/"  {                                                                 BEGIN(SLASH); }
 <COMMENT_ML_C>\n    { yyextra->line++; }
 <COMMENT_ML_C>.     { }
 
@@ -56,38 +55,38 @@ HEX [0-9a-fA-F]
 <STRING>\n          { sl_lex_append_byte_to_string(yyextra, yytext[0]); yyextra->line++; }
 <STRING>.           { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
 
-<STRE>"n"           { sl_lex_append_byte_to_string(yyextra, '\n');          BEGIN(STRING); }
-<STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');          BEGIN(STRING); }
-<STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');          BEGIN(STRING); }
-<STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');        BEGIN(STRING); }
-<STRE>"x"{HEX}{1,6} { sl_lex_append_hex_to_string(yyextra, yytext);         BEGIN(STRING); }
-<STRE>\n            { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); yyextra->line++; }
-<STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);     BEGIN(STRING); }
+<STRE>"n"           { sl_lex_append_byte_to_string(yyextra, '\n');                    BEGIN(STRING); }
+<STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');                    BEGIN(STRING); }
+<STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');                    BEGIN(STRING); }
+<STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');                  BEGIN(STRING); }
+<STRE>"x"{HEX}{1,6} { sl_lex_append_hex_to_string(yyextra, yytext);                   BEGIN(STRING); }
+<STRE>\n            { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); yyextra->line++; }
+<STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); }
 
-<SLASH>"\""         { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, "", 0));BEGIN(STRING); }
-<SLASH>"'"{SYM}     { ADD_TOKEN(sl_make_string_token(SL_TOK_STRING, yytext + 1, yyleng - 1)); }
+<SLASH>"\""         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_STRING, "", 0)); BEGIN(STRING); }
+<SLASH>"'"{SYM}     { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_STRING, yytext + 1, yyleng - 1)); }
 
-<SLASH>"r{"         { ADD_TOKEN(sl_make_string_token(SL_TOK_REGEXP, "", 0));BEGIN(REGEXP); }
-<REGEXP>"{"         { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_push_state(REGEXP_R, yyscanner); }
+<SLASH>"r{"         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_REGEXP, "", 0)); BEGIN(REGEXP); }
+<REGEXP>"{"         { sl_lex_append_byte_to_string(yyextra, yytext[0]);               yy_push_state(REGEXP_R, yyscanner); }
 <REGEXP>"\\"(.|\n)  { sl_lex_append_byte_to_string(yyextra, yytext[0]);
                       sl_lex_append_byte_to_string(yyextra, yytext[1]); }
-<REGEXP>"}"[a-z]*   { ADD_TOKEN(sl_make_string_token(SL_TOK_REGEXP_OPTS, yytext + 1, yyleng - 1));
-                                                                            BEGIN(SLASH); }
+<REGEXP>"}"[a-z]*   { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_REGEXP_OPTS, yytext + 1, yyleng - 1));
+                                                                                      BEGIN(SLASH); }
 <REGEXP>.|\n        { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
-<REGEXP_R>"{"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_push_state(REGEXP_R, yyscanner); }
-<REGEXP_R>"}"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);     yy_pop_state(yyscanner); }
+<REGEXP_R>"{"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);               yy_push_state(REGEXP_R, yyscanner); }
+<REGEXP_R>"}"       { sl_lex_append_byte_to_string(yyextra, yytext[0]);               yy_pop_state(yyscanner); }
 <REGEXP_R>"\\"(.|\n) {sl_lex_append_byte_to_string(yyextra, yytext[0]);
                       sl_lex_append_byte_to_string(yyextra, yytext[1]); }
 <REGEXP_R>.|\n      { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
 
-<SLASH>"/*"         {                                                       BEGIN(COMMENT_ML_C); }
-<SLASH>"#"|"//"     {                                                       BEGIN(COMMENT_LINE); }
-<SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));           BEGIN(INITIAL); }
+<SLASH>"/*"         {                                                                 BEGIN(COMMENT_ML_C); }
+<SLASH>"#"|"//"     {                                                                 BEGIN(COMMENT_LINE); }
+<SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));                     BEGIN(INITIAL); }
 
 <SLASH>[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }
 <SLASH>[0-9]+("."[0-9]+)("e"[+-]?[0-9]+)?   { ADD_TOKEN(sl_make_float_token(yytext)); }
 
-<SLASH>[0-9]+           { ADD_TOKEN(sl_make_string_token(SL_TOK_INTEGER, yytext, yyleng)); }
+<SLASH>[0-9]+           { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_INTEGER, yytext, yyleng)); }
 
 <SLASH>"nil"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
 <SLASH>"true"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
@@ -112,10 +111,10 @@ HEX [0-9a-fA-F]
 <SLASH>"catch"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_CATCH)); }
 <SLASH>"return"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_RETURN)); }
 
-<SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(SL_TOK_CONSTANT, yytext, yyleng)); }
-<SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng)); }
-<SLASH>@{ID}        { ADD_TOKEN(sl_make_string_token(SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
-<SLASH>@@{ID}       { ADD_TOKEN(sl_make_string_token(SL_TOK_CVAR, yytext + 2, yyleng - 2)); }
+<SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CONSTANT, yytext, yyleng)); }
+<SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng)); }
+<SLASH>@{ID}        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
+<SLASH>@@{ID}       { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CVAR, yytext + 2, yyleng - 2)); }
 
 <SLASH>"("          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_PAREN)); }
 <SLASH>")"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_PAREN)); }
@@ -156,7 +155,7 @@ HEX [0-9a-fA-F]
 <SLASH>"..."        { ADD_TOKEN(sl_make_token(SL_TOK_RANGE_EX)); }
 <SLASH>".."         { ADD_TOKEN(sl_make_token(SL_TOK_RANGE)); }
 <SLASH>"."/{ID}     { ADD_TOKEN(sl_make_token(SL_TOK_DOT));                                         BEGIN(NKW_ID); }
-<NKW_ID>{ID}        { ADD_TOKEN(sl_make_string_token(SL_TOK_IDENTIFIER, yytext, yyleng));           BEGIN(SLASH); }
+<NKW_ID>{ID}        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng));  BEGIN(SLASH); }
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
 
@@ -178,7 +177,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.vm = vm;
     ls.cap = 8;
     ls.len = 0;
-    ls.tokens = GC_MALLOC(sizeof(sl_token_t) * ls.cap);
+    ls.tokens = sl_alloc(vm->arena, sizeof(sl_token_t) * ls.cap);
     ls.filename = filename;
     ls.line = 1;
     

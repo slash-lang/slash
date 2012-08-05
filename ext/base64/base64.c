@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <string.h>
 #include "slash.h"
 
@@ -29,7 +28,7 @@ sl_base64_encode(sl_vm_t* vm, SLVAL self, SLVAL strv)
 {
     sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, strv, vm->lib.String));
     size_t out_len = ((str->buff_len + 2) / 3) * 4;
-    uint8_t* out_buff = GC_MALLOC(out_len);
+    uint8_t* out_buff = sl_alloc_buffer(vm->arena, out_len);
     size_t i, len;
     len = str->buff_len;
     for(i = 0; i < str->buff_len; i++) {
@@ -54,7 +53,7 @@ sl_base64_decode(sl_vm_t* vm, SLVAL self, SLVAL strv)
     sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, strv, vm->lib.String));
     uint8_t scratch_buff[4];
     int scratch_i = 0;
-    uint8_t* out_buff = GC_MALLOC(str->buff_len);
+    uint8_t* out_buff = sl_alloc_buffer(vm->arena, str->buff_len);
     size_t out_i = 0;
     size_t i;
     for(i = 0; i < str->buff_len; i++) {

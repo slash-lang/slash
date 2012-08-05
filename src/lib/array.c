@@ -1,6 +1,5 @@
 #include <stdlib.h>
 #include <string.h>
-#include <gc.h>
 #include "slash.h"
 #include "lib/rand.h"
 #include "lib/comparable.h"
@@ -26,10 +25,10 @@ static sl_object_t*
 allocate_array(sl_vm_t* vm)
 {
     size_t i;
-    sl_array_t* ary = GC_MALLOC(sizeof(sl_array_t));
+    sl_array_t* ary = sl_alloc(vm->arena, sizeof(sl_array_t));
     ary->capacity = 2;
     ary->count = 0;
-    ary->items = GC_MALLOC(sizeof(SLVAL) * ary->capacity);
+    ary->items = sl_alloc(vm->arena, sizeof(SLVAL) * ary->capacity);
     ary->base.primitive_type = SL_T_ARRAY;
     for(i = 0; i < ary->capacity; i++) {
         ary->items[i] = vm->lib.nil;
@@ -38,9 +37,9 @@ allocate_array(sl_vm_t* vm)
 }
 
 static sl_object_t*
-allocate_array_enumerator()
+allocate_array_enumerator(sl_vm_t* vm)
 {
-    return GC_MALLOC(sizeof(sl_array_enumerator_t));
+    return sl_alloc(vm->arena, sizeof(sl_array_enumerator_t));
 }
 
 static sl_array_t*
@@ -62,7 +61,7 @@ array_resize(sl_vm_t* vm, sl_array_t* aryp, size_t new_size)
         while(new_size > aryp->capacity) {
             aryp->capacity *= 2;
         }
-        aryp->items = GC_REALLOC(aryp->items, sizeof(SLVAL) * aryp->capacity);
+        aryp->items = sl_realloc(vm->arena, aryp->items, sizeof(SLVAL) * aryp->capacity);
         for(i = old_capacity; i < aryp->capacity; i++) {
             aryp->items[i] = vm->lib.nil;
         }
@@ -70,7 +69,7 @@ array_resize(sl_vm_t* vm, sl_array_t* aryp, size_t new_size)
         while(new_size < aryp->capacity / 2) {
             aryp->capacity /= 2;
         }
-        aryp->items = GC_REALLOC(aryp->items, sizeof(SLVAL) * aryp->capacity);
+        aryp->items = sl_realloc(vm->arena, aryp->items, sizeof(SLVAL) * aryp->capacity);
     }
     aryp->count = new_size;
 }
@@ -81,7 +80,7 @@ sl_array_init(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items)
     sl_array_t* aryp = get_array(vm, array);
     aryp->count = count;
     aryp->capacity = count > 2 ? count : 2;
-    aryp->items = GC_MALLOC(sizeof(SLVAL) * aryp->capacity);
+    aryp->items = sl_alloc(vm->arena, sizeof(SLVAL) * aryp->capacity);
     aryp->items[0] = vm->lib.nil;
     aryp->items[1] = vm->lib.nil;
     memcpy(aryp->items, items, sizeof(SLVAL) * count);
@@ -128,7 +127,7 @@ sl_array_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL array)
 {
     sl_array_enumerator_t* e = (sl_array_enumerator_t*)sl_get_ptr(self);
     sl_array_t* a = get_array(vm, array);
-    e->items = GC_MALLOC(sizeof(SLVAL) * a->count);
+    e->items = sl_alloc(vm->arena, sizeof(SLVAL) * a->count);
     memcpy(e->items, a->items, sizeof(SLVAL) * a->count);
     e->at = 0;
     e->count = a->count;

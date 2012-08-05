@@ -2,12 +2,11 @@
 #include "vm.h"
 #include "class.h"
 #include "string.h"
-#include <gc.h>
 
 static sl_object_t*
-allocate_true()
+allocate_true(sl_vm_t* vm)
 {
-    sl_object_t* obj = GC_MALLOC(sizeof(sl_object_t));
+    sl_object_t* obj = sl_alloc(vm->arena, sizeof(sl_object_t));
     obj->primitive_type = SL_T_TRUE;
     return obj;
 }

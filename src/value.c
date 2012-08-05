@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdlib.h>
-#include <gc.h>
 #include "lib/bignum.h"
 #include "value.h"
 #include "vm.h"
@@ -84,11 +83,11 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
             obj->primitive_type = SL_T_OBJECT;
         }
     } else {
-        obj = GC_MALLOC(sizeof(sl_object_t));
+        obj = sl_alloc(vm->arena, sizeof(sl_object_t));
         obj->primitive_type = SL_T_OBJECT;
     }
     obj->klass = vklass;
-    obj->instance_variables = st_init_table(&sl_string_hash_type);
+    obj->instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
     return sl_make_ptr(obj);
 }
 

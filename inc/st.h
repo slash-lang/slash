@@ -5,6 +5,8 @@
 
 #define ST_INCLUDED
 
+#include "mem.h"
+
 #if SIZEOF_LONG == SIZEOF_VOIDP
 typedef unsigned long st_data_t;
 #elif SIZEOF_LONG_LONG == SIZEOF_VOIDP
@@ -23,6 +25,7 @@ struct st_hash_type {
 };
 
 struct st_table {
+    sl_gc_arena_t* arena;
     struct st_hash_type *type;
     int num_bins;
     int num_entries;
@@ -54,12 +57,12 @@ enum st_retval {ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK};
 # endif
 #endif
 
-st_table_t *st_init_table _((struct st_hash_type *));
-st_table_t *st_init_table_with_size _((struct st_hash_type *, int));
-st_table_t *st_init_numtable _((void));
-st_table_t *st_init_numtable_with_size _((int));
-st_table_t *st_init_strtable _((void));
-st_table_t *st_init_strtable_with_size _((int));
+st_table_t *st_init_table _((sl_gc_arena_t* arena, struct st_hash_type *));
+st_table_t *st_init_table_with_size _((sl_gc_arena_t* arena, struct st_hash_type *, int));
+st_table_t *st_init_numtable _((sl_gc_arena_t* arena));
+st_table_t *st_init_numtable_with_size _((sl_gc_arena_t* arena, int));
+st_table_t *st_init_strtable _((sl_gc_arena_t* arena));
+st_table_t *st_init_strtable_with_size _((sl_gc_arena_t* arena, int));
 int st_delete _((st_table_t *, st_data_t *, st_data_t *));
 int st_delete_safe _((st_table_t *, st_data_t *, st_data_t *, st_data_t));
 int st_insert _((st_table_t *, st_data_t, st_data_t));

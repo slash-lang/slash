@@ -1,7 +1,6 @@
 #include "lib/lambda.h"
 #include "slash.h"
 #include <stdio.h>
-#include <gc.h>
 
 typedef struct {
     sl_object_t base;
@@ -27,9 +26,9 @@ sl_make_lambda(sl_node_lambda_t* node, sl_eval_ctx_t* ctx)
 }
 
 static sl_object_t*
-allocate_lambda()
+allocate_lambda(sl_vm_t* vm)
 {
-    return GC_MALLOC(sizeof(sl_lambda_t));
+    return sl_alloc(vm->arena, sizeof(sl_lambda_t));
 }
 
 static SLVAL

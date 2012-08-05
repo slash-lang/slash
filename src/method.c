@@ -1,19 +1,18 @@
-#include <gc.h>
 #include "class.h"
 #include "method.h"
 
 static sl_object_t*
-allocate_method()
+allocate_method(sl_vm_t* vm)
 {
-    sl_object_t* method = (sl_object_t*)GC_MALLOC(sizeof(sl_method_t));
+    sl_object_t* method = sl_alloc(vm->arena, sizeof(sl_method_t));
     method->primitive_type = SL_T_METHOD;
     return method;
 }
 
 static sl_object_t*
-allocate_bound_method()
+allocate_bound_method(sl_vm_t* vm)
 {
-    sl_object_t* bound_method = (sl_object_t*)GC_MALLOC(sizeof(sl_bound_method_t));
+    sl_object_t* bound_method = sl_alloc(vm->arena, sizeof(sl_bound_method_t));
     bound_method->primitive_type = SL_T_BOUND_METHOD;
     return bound_method;
 }

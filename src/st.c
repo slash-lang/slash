@@ -6,9 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "st.h"
-
-/* slash modification: use boehm gc */
-#include <gc.h>
+#include "mem.h"
 
 #define ST_DEFAULT_MAX_DENSITY 5
 #define ST_DEFAULT_INIT_TABLE_SIZE 11
@@ -41,8 +39,8 @@ static struct st_hash_type type_strhash =
 static void rehash(st_table_t *);
 
 /* slash modification: use boehm gc's allocation functions rather than libc's */
-#define alloc(type) (type*)GC_MALLOC(sizeof(type))
-#define Calloc(n,s) (char*)GC_MALLOC((n) * (s))
+#define alloc(type) (type*)sl_alloc(tbl->arena, sizeof(type))
+#define Calloc(n,s) (char*)sl_alloc(tbl->arena, (n) * (s))
 /*
 #define alloc(type) (type*)malloc((unsigned)sizeof(type))
 #define Calloc(n,s) (char*)calloc((n),(s))
@@ -133,7 +131,8 @@ stat_col()
 #endif
 
 st_table_t*
-st_init_table_with_size(type, size)
+st_init_table_with_size(arena, type, size)
+sl_gc_arena_t* arena;
 struct st_hash_type *type;
 int size;
 {
@@ -148,7 +147,8 @@ int size;
 
     size = new_size(size);                        /* round up to prime number */
 
-    tbl = alloc(st_table_t);
+    tbl = sl_alloc(arena, sizeof(st_table_t));
+    tbl->arena = arena;
     tbl->type = type;
     tbl->num_entries = 0;
     tbl->num_bins = size;
@@ -158,36 +158,39 @@ int size;
 }
 
 st_table_t*
-st_init_table(type)
+st_init_table(arena, type)
+sl_gc_arena_t* arena;
 struct st_hash_type *type;
 {
-    return st_init_table_with_size(type, 0);
+    return st_init_table_with_size(arena, type, 0);
 }
 
 st_table_t*
-st_init_numtable(void)
+st_init_numtable(sl_gc_arena_t* arena)
 {
-    return st_init_table(&type_numhash);
+    return st_init_table(arena, &type_numhash);
 }
 
 st_table_t*
-st_init_numtable_with_size(size)
+st_init_numtable_with_size(arena, size)
+sl_gc_arena_t* arena;
 int size;
 {
-    return st_init_table_with_size(&type_numhash, size);
+    return st_init_table_with_size(arena, &type_numhash, size);
 }
 
 st_table_t*
-st_init_strtable(void)
+st_init_strtable(sl_gc_arena_t* arena)
 {
-    return st_init_table(&type_strhash);
+    return st_init_table(arena, &type_strhash);
 }
 
 st_table_t*
-st_init_strtable_with_size(size)
+st_init_strtable_with_size(arena, size)
+sl_gc_arena_t* arena;
 int size;
 {
-    return st_init_table_with_size(&type_strhash, size);
+    return st_init_table_with_size(arena, &type_strhash, size);
 }
 
 void
@@ -277,19 +280,19 @@ st_data_t *value;
 } while (0)
 
 int
-st_insert(table, key, value)
-register st_table_t *table;
+st_insert(tbl, key, value)
+register st_table_t *tbl;
 register st_data_t key;
 st_data_t value;
 {
     unsigned int hash_val, bin_pos;
     register st_table_entry *ptr;
 
-    hash_val = do_hash(key, table);
-    FIND_ENTRY(table, ptr, hash_val, bin_pos);
+    hash_val = do_hash(key, tbl);
+    FIND_ENTRY(tbl, ptr, hash_val, bin_pos);
 
     if (ptr == 0) {
-        ADD_DIRECT(table, key, value, hash_val, bin_pos);
+        ADD_DIRECT(tbl, key, value, hash_val, bin_pos);
         return 0;
     }
     else {
@@ -299,31 +302,31 @@ st_data_t value;
 }
 
 void
-st_add_direct(table, key, value)
-st_table_t *table;
+st_add_direct(tbl, key, value)
+st_table_t *tbl;
 st_data_t key;
 st_data_t value;
 {
     unsigned int hash_val, bin_pos;
 
-    hash_val = do_hash(key, table);
-    bin_pos = hash_val % table->num_bins;
-    ADD_DIRECT(table, key, value, hash_val, bin_pos);
+    hash_val = do_hash(key, tbl);
+    bin_pos = hash_val % tbl->num_bins;
+    ADD_DIRECT(tbl, key, value, hash_val, bin_pos);
 }
 
 static void
-rehash(table)
-register st_table_t *table;
+rehash(tbl)
+register st_table_t *tbl;
 {
     register st_table_entry *ptr, *next, **new_bins;
-    int i, old_num_bins = table->num_bins, new_num_bins;
+    int i, old_num_bins = tbl->num_bins, new_num_bins;
     unsigned int hash_val;
 
     new_num_bins = new_size(old_num_bins+1);
     new_bins = (st_table_entry**)Calloc(new_num_bins, sizeof(st_table_entry*));
 
     for(i = 0; i < old_num_bins; i++) {
-        ptr = table->bins[i];
+        ptr = tbl->bins[i];
         while (ptr != 0) {
             next = ptr->next;
             hash_val = ptr->hash % new_num_bins;
@@ -334,8 +337,8 @@ register st_table_t *table;
     }
     /* slash modification: remove free() calls because we're using a gc */
     /* free(table->bins); */
-    table->num_bins = new_num_bins;
-    table->bins = new_bins;
+    tbl->num_bins = new_num_bins;
+    tbl->bins = new_bins;
 }
 
 st_table_t*
@@ -345,6 +348,10 @@ st_table_t *old_table;
     st_table_t *new_table;
     st_table_entry *ptr, *entry;
     int i, num_bins = old_table->num_bins;
+    
+    /*  this is only for alloc()'s expectation that there is a tbl local.
+        it requires a tbl local to exist so it can locate the arena to use */
+    st_table_t* tbl = old_table;
 
     new_table = alloc(st_table_t);
     if (new_table == 0) {

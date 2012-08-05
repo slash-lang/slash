@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <string.h>
 #include "lib/request.h"
 #include "lib/dict.h"
@@ -130,7 +129,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     size_t i;
     SLVAL n, v, cookies;
     sl_string_t* str;
-    sl_request_internal_opts_t* req = GC_MALLOC(sizeof(sl_request_internal_opts_t));
+    sl_request_internal_opts_t* req = sl_alloc(vm->arena, sizeof(sl_request_internal_opts_t));
     req->method       = sl_make_cstring(vm, opts->method);
     req->uri          = sl_make_cstring(vm, opts->uri);
     req->path_info    = sl_make_cstring(vm, opts->path_info ? opts->path_info : "");

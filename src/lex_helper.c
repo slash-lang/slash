@@ -1,6 +1,6 @@
 #include "lex.h"
 #include "utf8.h"
-#include <gc.h>
+#include "mem.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,12 +14,12 @@ sl_make_token(sl_token_type_t type)
 }
 
 sl_token_t
-sl_make_string_token(sl_token_type_t type, char* buff, size_t len)
+sl_make_string_token(sl_lex_state_t* ls, sl_token_type_t type, char* buff, size_t len)
 {
     sl_token_t token;
     size_t cap = len < 4 ? 4 : len;
     token.type = type;
-    token.as.str.buff = GC_MALLOC(cap);
+    token.as.str.buff = sl_alloc_buffer(ls->vm->arena, cap);
     token.as.str.len = len;
     token.as.str.cap = cap;
     memcpy(token.as.str.buff, buff, len);
@@ -41,13 +41,13 @@ sl_lex_append_to_raw(sl_lex_state_t* st, char* buff, size_t len)
     sl_token_t* raw_token;
     if(st->len == 0 || st->tokens[st->len - 1].type != SL_TOK_RAW) {
         if(st->len + 1 >= st->cap) {
-            st->tokens = GC_REALLOC(st->tokens, sizeof(sl_token_t) * (st->cap *= 2));
+            st->tokens = sl_realloc(st->vm->arena, st->tokens, sizeof(sl_token_t) * (st->cap *= 2));
         }
-        st->tokens[st->len++] = sl_make_string_token(SL_TOK_RAW, "", 0);
+        st->tokens[st->len++] = sl_make_string_token(st, SL_TOK_RAW, "", 0);
     }
     raw_token = &st->tokens[st->len - 1];
     if(raw_token->as.str.cap < raw_token->as.str.len + len) {
-        raw_token->as.str.buff = GC_REALLOC(raw_token->as.str.buff, raw_token->as.str.cap *= 2);
+        raw_token->as.str.buff = sl_realloc(st->vm->arena, raw_token->as.str.buff, raw_token->as.str.cap *= 2);
     }
     memcpy(raw_token->as.str.buff + raw_token->as.str.len, buff, len);
     raw_token->as.str.len += len;
@@ -58,7 +58,7 @@ sl_lex_append_to_string(sl_lex_state_t* st, uint32_t c)
 {
     sl_token_t* str_token = &st->tokens[st->len - 1];
     if(str_token->as.str.len + 4 >= str_token->as.str.cap) {
-        str_token->as.str.buff = GC_REALLOC(str_token->as.str.buff, str_token->as.str.cap *= 2);
+        str_token->as.str.buff = sl_realloc(st->vm->arena, str_token->as.str.buff, str_token->as.str.cap *= 2);
     }
     str_token->as.str.len += sl_utf32_char_to_utf8(
         st->vm, c, str_token->as.str.buff + str_token->as.str.len);
@@ -69,7 +69,7 @@ sl_lex_append_byte_to_string(sl_lex_state_t* st, char c)
 {
     sl_token_t* str_token = &st->tokens[st->len - 1];
     if(str_token->as.str.len + 4 >= str_token->as.str.cap) {
-        str_token->as.str.buff = GC_REALLOC(str_token->as.str.buff, str_token->as.str.cap *= 2);
+        str_token->as.str.buff = sl_realloc(st->vm->arena, str_token->as.str.buff, str_token->as.str.cap *= 2);
     }
     str_token->as.str.buff[str_token->as.str.len++] = c;
 }
@@ -98,7 +98,7 @@ void
 sl_lex_error(sl_lex_state_t* st, char* text, int lineno)
 {
     size_t filename_len = strlen((char*)st->filename);
-    char* buff = GC_MALLOC(128 + filename_len);
+    char* buff = sl_alloc(st->vm->arena, 128 + filename_len);
     sprintf(buff, "Unexpected character '%c' in %s, line %d", text[0] /* todo utf 8 fix :\ */, st->filename, lineno);
     sl_throw_message2(st->vm, st->vm->lib.SyntaxError, buff);
 }

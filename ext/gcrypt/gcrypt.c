@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <gcrypt.h>
 #include <stdio.h>
 #include <alloca.h>
@@ -17,7 +16,7 @@ gcrypt_algorithm_t;
 static sl_object_t*
 allocate_gcrypt_algorithm(sl_vm_t* vm)
 {
-    gcrypt_algorithm_t* algo = GC_MALLOC(sizeof(gcrypt_algorithm_t));
+    gcrypt_algorithm_t* algo = sl_alloc(vm->arena, sizeof(gcrypt_algorithm_t));
     algo->algo = 0;
     algo->name = sl_make_cstring(vm, "(Invalid)");
     return (sl_object_t*)algo;

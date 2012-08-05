@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <stdlib.h>
 #include <time.h>
 #include "lib/rand.h"
@@ -9,6 +8,7 @@
 #include "object.h"
 #include "error.h"
 #include "platform.h"
+#include "mem.h"
 
 static int
 sl_statically_initialized;
@@ -23,7 +23,6 @@ sl_static_init()
         return;
     }
     sl_statically_initialized = 1;
-    GC_INIT();
     sl_static_init_exts();
 }
 
@@ -88,17 +87,19 @@ sl_init()
     sl_class_t* Object;
     sl_class_t* Class;
     sl_class_t* String;
+    sl_gc_arena_t* arena = sl_make_gc_arena();
     
-    vm = GC_MALLOC(sizeof(sl_vm_t));
+    vm = sl_alloc(arena, sizeof(sl_vm_t));
+    vm->arena = arena;
     vm->cwd = ".";
     vm->initializing = 1;
-    vm->store = st_init_numtable();
+    vm->store = st_init_numtable(vm->arena);
     sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
     vm->stack_limit = sl_stack_limit();
     
-    vm->lib.nil = sl_make_ptr(GC_MALLOC(sizeof(sl_object_t)));
-    vm->lib.Object = sl_make_ptr(GC_MALLOC(sizeof(sl_class_t)));
+    vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
+    vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));
     
     vm->global_ctx = sl_make_eval_ctx(vm);
     

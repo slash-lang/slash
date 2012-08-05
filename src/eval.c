@@ -7,7 +7,6 @@
 #include "method.h"
 #include "lib/array.h"
 #include "lib/response.h"
-#include <gc.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,10 +15,10 @@
 sl_eval_ctx_t*
 sl_make_eval_ctx(sl_vm_t* vm)
 {
-    sl_eval_ctx_t* ctx = GC_MALLOC(sizeof(sl_eval_ctx_t));
+    sl_eval_ctx_t* ctx = sl_alloc(vm->arena, sizeof(sl_eval_ctx_t));
     ctx->vm = vm;
     ctx->self = vm->lib.Object;
-    ctx->vars = st_init_table(&sl_string_hash_type);
+    ctx->vars = st_init_table(vm->arena, &sl_string_hash_type);
     ctx->parent = NULL;
     return ctx;
 }
@@ -53,7 +52,7 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     fseek(f, 0, SEEK_END);
     file_size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    src = GC_MALLOC(file_size);
+    src = sl_alloc(vm->arena, file_size);
     fread(src, file_size, 1, f);
     fclose(f);
     
@@ -475,7 +474,7 @@ sl_eval_self(sl_node_base_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_array(sl_node_array_t* node, sl_eval_ctx_t* ctx)
 {
-    SLVAL* items = GC_MALLOC(sizeof(SLVAL) * node->node_count);
+    SLVAL* items = sl_alloc(ctx->vm->arena, sizeof(SLVAL) * node->node_count);
     size_t i;
     for(i = 0; i < node->node_count; i++) {
         items[i] = node->nodes[i]->eval(node->nodes[i], ctx);
