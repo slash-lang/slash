@@ -1,4 +1,4 @@
-.PHONY: clean describe
+.PHONY: clean
 
 APR=apr-1
 APXS=apxs
@@ -14,6 +14,3 @@ mod_slash.so: .libs/mod_slash.so
 clean:
 	rm -f *.o *.so *.$(SO_EXT)
 	rm -rf *.dSYM .libs
-
-describe:
-	@echo "Embeds a Slash interpreter in an apache2 process"
