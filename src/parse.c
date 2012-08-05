@@ -727,8 +727,17 @@ logical_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 range_expression(sl_parse_state_t* ps)
 {
-    /* @TODO */
-    return logical_expression(ps);
+    sl_node_base_t* left = logical_expression(ps);
+    switch(peek_token(ps)->type) {
+        case SL_TOK_RANGE:
+            next_token(ps);
+            return sl_make_range_node(ps, left, logical_expression(ps), 0);
+        case SL_TOK_RANGE_EX:
+            next_token(ps);
+            return sl_make_range_node(ps, left, logical_expression(ps), 1);
+        default:
+            return left;
+    }
 }
 
 static sl_node_base_t*

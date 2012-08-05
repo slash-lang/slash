@@ -35,7 +35,8 @@ typedef enum sl_node_type {
     SL_NODE_ASSIGN_ARRAY,
     SL_NODE_ARRAY,
     SL_NODE_DICT,
-    SL_NODE_RETURN
+    SL_NODE_RETURN,
+    SL_NODE_RANGE
 }
 sl_node_type_t;
 
@@ -227,5 +228,13 @@ typedef struct sl_node_assign_array {
     sl_node_base_t* rval;
 }
 sl_node_assign_array_t;
+
+typedef struct sl_node_range {
+    sl_node_base_t base;
+    sl_node_base_t* left;
+    sl_node_base_t* right;
+    int exclusive;
+}
+sl_node_range_t;
 
 #endif

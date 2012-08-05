@@ -7,6 +7,7 @@
 #include "method.h"
 #include "lib/array.h"
 #include "lib/response.h"
+#include "lib/range.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -498,4 +499,16 @@ sl_eval_return(sl_node_unary_t* node, sl_eval_ctx_t* ctx)
 {
     sl_return(ctx->vm, node->expr->eval(node->expr, ctx));
     return ctx->vm->lib.nil; /* never reached */
+}
+
+SLVAL
+sl_eval_range(sl_node_range_t* node, sl_eval_ctx_t* ctx)
+{
+    SLVAL left = node->left->eval(node->left, ctx);
+    SLVAL right = node->right->eval(node->right, ctx);
+    if(node->exclusive) {
+        return sl_make_range_exclusive(ctx->vm, left, right);
+    } else {
+        return sl_make_range(ctx->vm, left, right);
+    }
 }
