@@ -303,3 +303,13 @@ sl_make_dict_node(sl_parse_state_t* ps, size_t node_count, sl_node_base_t** keys
         node->vals = vals;
     });
 }
+
+sl_node_base_t*
+sl_make_range_node(sl_parse_state_t* ps, sl_node_base_t* left, sl_node_base_t* right, int exclusive)
+{
+    MAKE_NODE(SL_NODE_RANGE, sl_eval_range, sl_node_range_t, {
+        node->left = left;
+        node->right = right;
+        node->exclusive = exclusive;
+    });
+}

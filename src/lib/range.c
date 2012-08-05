@@ -130,6 +130,28 @@ range_enumerator_next(sl_vm_t* vm, SLVAL self)
     }
 }
 
+SLVAL
+sl_make_range(sl_vm_t* vm, SLVAL lower, SLVAL upper)
+{
+    SLVAL rangev = sl_allocate(vm, vm->lib.Range);
+    sl_range_t* range = get_range(vm, rangev);
+    range->left      = lower;
+    range->right     = upper;
+    range->exclusive = 0;
+    return rangev;
+}
+
+SLVAL
+sl_make_range_exclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper)
+{
+    SLVAL rangev = sl_allocate(vm, vm->lib.Range);
+    sl_range_t* range = get_range(vm, rangev);
+    range->left      = lower;
+    range->right     = upper;
+    range->exclusive = 1;
+    return rangev;
+}
+
 void
 sl_init_range(sl_vm_t* vm)
 {

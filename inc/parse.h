@@ -105,4 +105,7 @@ sl_make_array_node(sl_parse_state_t* ps, size_t node_count, sl_node_base_t** nod
 sl_node_base_t*
 sl_make_dict_node(sl_parse_state_t* ps, size_t node_count, sl_node_base_t** keys, sl_node_base_t** vals);
 
+sl_node_base_t*
+sl_make_range_node(sl_parse_state_t* ps, sl_node_base_t* left, sl_node_base_t* right, int exclusive);
+
 #endif
