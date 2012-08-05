@@ -9,7 +9,8 @@
 
 typedef enum {
     SL_PF_CAN_RETURN    = 1,
-    SL_PF_CAN_NEXT_LAST = 2
+    SL_PF_CAN_NEXT_LAST = 2,
+    SL_PF_SCOPE_CLOSURE = 4
 }
 sl_parse_flags_t;
 

@@ -152,6 +152,9 @@ while_expression(sl_parse_state_t* ps)
     ps->scope = &scope;
     body = body_expression(ps);
     ps->scope = scope.prev;
+    if(scope.flags & SL_PF_SCOPE_CLOSURE) {
+        ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
+    }
     return sl_make_while_node(ps, condition, body);
 }
 
@@ -195,6 +198,9 @@ for_expression(sl_parse_state_t* ps)
     ps->scope = &scope;
     body = body_expression(ps);
     ps->scope = scope.prev;
+    if(scope.flags & SL_PF_SCOPE_CLOSURE) {
+        ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
+    }
     
     if(peek_token(ps)->type == SL_TOK_ELSE) {
         next_token(ps);
@@ -318,6 +324,7 @@ def_expression(sl_parse_state_t* ps)
     ps->scope = &scope;
     body = body_expression(ps);
     ps->scope = scope.prev;
+    ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
     return sl_make_def_node(ps, name, on, arg_count, args, body);
 }
 
@@ -351,6 +358,7 @@ lambda_expression(sl_parse_state_t* ps)
     ps->scope = &scope;
     body = body_expression(ps);
     ps->scope = scope.prev;
+    ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
     return sl_make_lambda_node(ps, arg_count, args, body);
 }
 
@@ -981,6 +989,6 @@ sl_parse(sl_vm_t* vm, sl_token_t* tokens, size_t token_count, uint8_t* filename)
     ps.current_token = 0;
     ps.filename = filename;
     ps.scope = &scope;
-    scope.flags = 0;
+    scope.flags = SL_PF_SCOPE_CLOSURE;
     return statements(&ps);
 }
