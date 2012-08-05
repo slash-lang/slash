@@ -1,4 +1,3 @@
-#include <gc.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,9 +15,9 @@ typedef struct sl_float {
 sl_float_t;
 
 static sl_object_t*
-allocate_float()
+allocate_float(sl_vm_t* vm)
 {
-    sl_object_t* obj = (sl_object_t*)GC_MALLOC(sizeof(sl_float_t));
+    sl_object_t* obj = sl_alloc(vm->arena, sizeof(sl_float_t));
     obj->primitive_type = SL_T_FLOAT;
     return obj;
 }

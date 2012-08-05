@@ -1,7 +1,6 @@
 #include "lib/regexp.h"
 #include "class.h"
 #include "string.h"
-#include <gc.h>
 #include <string.h>
 #include <stdio.h>
 #include <pcre.h>
@@ -66,17 +65,17 @@ free_regexp(sl_regexp_t* re)
 }
 
 static sl_object_t*
-allocate_regexp()
+allocate_regexp(sl_vm_t* vm)
 {
-    sl_object_t* re = GC_MALLOC(sizeof(sl_regexp_t));
-    GC_register_finalizer(re, (void(*)(void*,void*))free_regexp, NULL, NULL, NULL);
+    sl_object_t* re = sl_alloc(vm->arena, sizeof(sl_regexp_t));
+    sl_gc_set_finalizer(vm->arena, re, (void(*)(void*))free_regexp);
     return re;
 }
 
 static sl_object_t*
-allocate_regexp_match()
+allocate_regexp_match(sl_vm_t* vm)
 {
-    return GC_MALLOC(sizeof(sl_regexp_match_t));
+    return sl_alloc(vm->arena, sizeof(sl_regexp_match_t));
 }
 
 static void
@@ -105,7 +104,7 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
     if(memchr(re_buff, 0, re_len)) {
         sl_throw_message2(vm, vm->lib.SyntaxError, "Regular expression contains null byte");
     }
-    rez = GC_MALLOC(re_len + 1);
+    rez = sl_alloc(vm->arena, re_len + 1);
     memcpy(rez, re_buff, re_len);
     rez[re_len] = 0;
     re = pcre_compile(rez, opts, &error, &error_offset, NULL);
@@ -178,7 +177,7 @@ sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     pcre_fullinfo(re->re, re->study, PCRE_INFO_CAPTURECOUNT, &ncaps);
     ncaps += 1;
     ncaps *= 3;
-    caps = GC_MALLOC(sizeof(int) * ncaps);
+    caps = sl_alloc(vm->arena, sizeof(int) * ncaps);
     rc = pcre_exec(re->re, re->study, (char*)str->buff, str->buff_len, offset, PCRE_NEWLINE_LF, caps, ncaps);
     if(rc < 0) {
         if(rc == PCRE_ERROR_NOMATCH) {

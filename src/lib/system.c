@@ -4,7 +4,6 @@
 #include "string.h"
 #include "object.h"
 #include "lib/bignum.h"
-#include <gc.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -26,7 +25,7 @@ object_strftime(sl_vm_t* vm, SLVAL self, SLVAL format, SLVAL time)
     struct tm* tm_ptr;
     size_t capacity = 256;
     char* fmt = sl_to_cstr(vm, format);
-    char* buff = GC_MALLOC(capacity);
+    char* buff = sl_alloc_buffer(vm->arena, capacity);
     if(sl_is_a(vm, time, vm->lib.Int)) {
         t = sl_get_int(time);
     } else if(sl_is_a(vm, time, vm->lib.Bignum)) {
@@ -37,7 +36,7 @@ object_strftime(sl_vm_t* vm, SLVAL self, SLVAL format, SLVAL time)
     tm_ptr = gmtime(&t);
     while(strftime(buff, capacity, fmt, tm_ptr) == 0) {
         capacity *= 2;
-        buff = GC_REALLOC(buff, capacity);
+        buff = sl_realloc(vm->arena, buff, capacity);
     }
     return sl_make_cstring(vm, buff);
     (void)self; /* never reached */

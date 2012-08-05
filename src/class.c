@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <gc.h>
 #include "st.h"
 #include "value.h"
 #include "vm.h"
@@ -7,11 +6,12 @@
 #include "class.h"
 #include "method.h"
 #include "object.h"
+#include "mem.h"
 
 static sl_object_t*
-allocate_class()
+allocate_class(sl_vm_t* vm)
 {
-    sl_class_t* klass = GC_MALLOC(sizeof(sl_class_t));
+    sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
     return (sl_object_t*)klass;
 }
@@ -29,18 +29,18 @@ get_class(sl_vm_t* vm, SLVAL klass)
 void
 sl_pre_init_class(sl_vm_t* vm)
 {
-    sl_class_t* obj = GC_MALLOC(sizeof(sl_class_t));
+    sl_class_t* obj = sl_alloc(vm->arena, sizeof(sl_class_t));
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
     obj->name = vm->lib.nil;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
-    obj->constants = st_init_table(&sl_string_hash_type);
-    obj->class_variables = st_init_table(&sl_string_hash_type);
-    obj->instance_methods = st_init_table(&sl_string_hash_type);
+    obj->constants = st_init_table(vm->arena, &sl_string_hash_type);
+    obj->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    obj->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
     obj->base.primitive_type = SL_T_CLASS;
-    obj->base.instance_variables = st_init_table(&sl_string_hash_type);
+    obj->base.instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
 }
 
 static SLVAL
@@ -110,9 +110,9 @@ sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in)
     klass->super = sl_expect(vm, super, vm->lib.Class);
     klass->name = sl_expect(vm, name, vm->lib.String);
     klass->in = sl_expect(vm, in, vm->lib.Class);
-    klass->constants = st_init_table(&sl_string_hash_type);
-    klass->class_variables = st_init_table(&sl_string_hash_type);
-    klass->instance_methods = st_init_table(&sl_string_hash_type);
+    klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     klass->allocator = get_class(vm, super)->allocator;
     if(!vm->initializing) {
         st_insert(((sl_class_t*)sl_get_ptr(in))->constants,

@@ -1,7 +1,7 @@
 #include "slash.h"
 #include "lib/request.h"
 #include "lib/response.h"
-#include <gc.h>
+#include "mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,15 +45,15 @@ on_error(sl_vm_t* vm, void* state, SLVAL error)
 }
 
 static uint8_t*
-read_all(FILE* f, size_t* length)
+read_all(sl_vm_t* vm, FILE* f, size_t* length)
 {
     size_t len = 0;
     size_t cap = 4096;
-    uint8_t* src = GC_MALLOC_ATOMIC(cap);
+    uint8_t* src = sl_alloc_buffer(vm->arena, cap);
     while(!feof(f)) {
         if(len + 4096 > cap) {
             cap *= 2;
-            src = GC_REALLOC(src, cap);
+            src = sl_realloc(vm->arena, src, cap);
         }
         len += fread(src + len, 1, 4096, f);
     }
@@ -92,8 +92,10 @@ main(int argc, char** argv)
     sl_vm_t* vm;
     sl_catch_frame_t exit_frame;
     SLVAL err;
+    int exit_code;
     sl_static_init();
     vm = sl_init();
+    sl_gc_set_stack_top(vm->arena, &argc);
     setup_request_response(vm);
     if(argc > 1) {
         state.filename = (uint8_t*)argv[1];
@@ -106,7 +108,7 @@ main(int argc, char** argv)
         state.filename = (uint8_t*)"(stdin)";
         f = stdin;
     }
-    state.src = read_all(f, &state.len);
+    state.src = read_all(vm, f, &state.len);
     SL_TRY(exit_frame, SL_UNWIND_ALL, {
         run(vm, &state);
     }, err, {
@@ -114,8 +116,11 @@ main(int argc, char** argv)
             on_error(vm, &state, err);
         }
         if(exit_frame.type == SL_UNWIND_EXIT) {
-            exit(sl_get_int(err));
+            exit_code = sl_get_int(err);
+            sl_free_gc_arena(vm->arena);
+            exit(exit_code);
         }
-    });
+    });    
+    sl_free_gc_arena(vm->arena);
     return 0;
 }

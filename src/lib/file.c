@@ -1,7 +1,6 @@
 #include "slash.h"
 #include <string.h>
 #include <stdio.h>
-#include <gc.h>
 
 typedef struct {
     sl_object_t base;
@@ -18,10 +17,10 @@ free_file(sl_file_t* file)
 }
 
 static sl_object_t*
-allocate_file()
+allocate_file(sl_vm_t* vm)
 {
-    sl_file_t* file = GC_MALLOC(sizeof(sl_file_t));
-    GC_register_finalizer(file, (void(*)(void*,void*))free_file, NULL, NULL, NULL);
+    sl_file_t* file = sl_alloc(vm->arena, sizeof(sl_file_t));
+    sl_gc_set_finalizer(vm->arena, file, (void(*)(void*))free_file);
     return (sl_object_t*)file;
 }
 

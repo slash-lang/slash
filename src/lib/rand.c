@@ -1,5 +1,4 @@
 #include <time.h>
-#include <gc.h>
 #include "lib/rand.h"
 #include "lib/float.h"
 #include "slash.h"
@@ -46,7 +45,7 @@ sl_rand(sl_vm_t* vm)
 void
 sl_rand_init_mt(sl_vm_t* vm)
 {
-    sl_mt_state_t* state = GC_MALLOC_ATOMIC(sizeof(sl_mt_state_t));
+    sl_mt_state_t* state = sl_alloc_buffer(vm->arena, sizeof(sl_mt_state_t));
     int seed = sl_seed(), i;
     state->mt[0] = seed;
     for(i = 1; i < 624; i++) {

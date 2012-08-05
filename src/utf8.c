@@ -1,6 +1,5 @@
 #include "utf8.h"
 #include "string.h"
-#include <gc.h>
 
 static uint32_t utf8_code_point_limit[] = {
     0,
@@ -54,7 +53,7 @@ sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
 uint32_t*
 sl_utf8_to_utf32(sl_vm_t* vm, uint8_t* buff, size_t len, size_t* out_len)
 {
-    uint32_t* out = GC_MALLOC(sizeof(uint32_t) * len);
+    uint32_t* out = sl_alloc(vm->arena, sizeof(uint32_t) * len);
     size_t str_len = 0;
     size_t clen = len;
     uint8_t* cbuff = buff;
@@ -152,11 +151,11 @@ sl_utf32_to_utf8(sl_vm_t* vm, uint32_t* u32, size_t u32_len, size_t* buff_len)
 {
     size_t cap = 8;
     size_t len = 0;
-    uint8_t* buff = GC_MALLOC(cap);
+    uint8_t* buff = sl_alloc(vm->arena, cap);
     size_t i;
     for(i = 0; i < u32_len; i++) {
         if(cap + 5 >= len) {
-            buff = GC_REALLOC(buff, cap *= 2);
+            buff = sl_realloc(vm->arena, buff, cap *= 2);
         }
         len += sl_utf32_char_to_utf8(vm, u32[i], buff + len);
     }

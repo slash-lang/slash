@@ -44,8 +44,8 @@ json_parse_t;
         } \
         if(json->stack_len >= json->stack_cap) { \
             json->stack_cap *= 2; \
-            json->stack = GC_REALLOC(json->stack, sizeof(SLVAL) * json->stack_cap); \
-            json->type_stack = GC_REALLOC(json->type_stack, json->stack_cap); \
+            json->stack = sl_realloc(json->vm->arena, json->stack, sizeof(SLVAL) * json->stack_cap); \
+            json->type_stack = sl_realloc(json->vm->arena, json->type_stack, json->stack_cap); \
         } \
         json->type_stack[json->stack_len] = (type); \
         json->stack[json->stack_len++] = (value); \
@@ -164,31 +164,22 @@ callbacks = {
 static void*
 sl_yajl_alloc(void* ctx, size_t sz)
 {
-    (void)ctx;
-    return GC_MALLOC(sz);
+    return sl_alloc(ctx, sz);
 }
 
 static void
 sl_yajl_free(void* ctx, void* ptr)
 {
+    /* no-op */
     (void)ctx;
-    GC_FREE(ptr);
+    (void)ptr;
 }
 
 static void*
 sl_yajl_realloc(void* ctx, void* ptr, size_t sz)
 {
-    (void)ctx;
-    return GC_REALLOC(ptr, sz);
+    return sl_realloc(ctx, ptr, sz);
 }
-
-static yajl_alloc_funcs
-alloc_funcs = {
-    sl_yajl_alloc,
-    sl_yajl_realloc,
-    sl_yajl_free,
-    NULL
-};
 
 static void
 sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yajl_status status)
@@ -215,12 +206,19 @@ sl_json_parse(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
     json_parse_t json;
+    yajl_alloc_funcs alloc_funcs = {
+        sl_yajl_alloc,
+        sl_yajl_realloc,
+        sl_yajl_free,
+        NULL
+    };
+    alloc_funcs.ctx = vm->arena;
     json.vm = vm;
     json.max_depth = 32;
     json.stack_len = 0;
     json.stack_cap = 32;
-    json.stack = GC_MALLOC(sizeof(SLVAL) * json.stack_cap);
-    json.type_stack = GC_MALLOC(json.stack_cap);
+    json.stack = sl_alloc(vm->arena, sizeof(SLVAL) * json.stack_cap);
+    json.type_stack = sl_alloc(vm->arena, json.stack_cap);
     if(argc > 1) {
         json.max_depth = sl_get_int(sl_expect(vm, argv[1], vm->lib.Int));
     }
@@ -250,7 +248,7 @@ json_dump_t;
 #define JSON_DUMP_NEED_BYTES(b) do { \
         if(state->buffer_len + b >= state->buffer_cap) { \
             state->buffer_cap *= 2; \
-            state->buffer = GC_REALLOC(state->buffer, state->buffer_cap); \
+            state->buffer = sl_realloc(state->vm->arena, state->buffer, state->buffer_cap); \
         } \
     } while(0)
 
@@ -262,7 +260,7 @@ json_dump_t;
         } \
         if(state->seen_len >= state->seen_cap) { \
             state->seen_cap *= 2; \
-            state->seen_ptrs = GC_REALLOC(state->seen_ptrs, sizeof(void*) * state->seen_cap); \
+            state->seen_ptrs = sl_realloc(state->vm->arena, state->seen_ptrs, sizeof(void*) * state->seen_cap); \
         } \
         state->seen_ptrs[state->seen_len++] = sl_get_ptr((obj)); \
     } while(0)
@@ -375,10 +373,10 @@ sl_json_dump(sl_vm_t* vm, SLVAL self, SLVAL object)
     dump.vm = vm;
     dump.buffer_len = 0;
     dump.buffer_cap = 32;
-    dump.buffer = GC_MALLOC_ATOMIC(dump.buffer_cap);
+    dump.buffer = sl_alloc_buffer(vm->arena, dump.buffer_cap);
     dump.seen_len = 0;
     dump.seen_cap = 32;
-    dump.seen_ptrs = GC_MALLOC_ATOMIC(sizeof(void*) * dump.seen_cap);
+    dump.seen_ptrs = sl_alloc(vm->arena, sizeof(void*) * dump.seen_cap);
     json_dump(&dump, object);
     return sl_make_string(vm, dump.buffer, dump.buffer_len);
     (void)self;
