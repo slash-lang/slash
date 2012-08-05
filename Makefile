@@ -11,17 +11,13 @@ OBJS=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/lib/error_page.o src/lib/system.o src/lib/regexp.o src/gc.o \
 	src/lib/range.o
 
+TARGETS=
+
 include local.mk
 
 .PHONY=clean default test
 
-default:
-	@echo "Please choose something to build. Here are the useful targets:"
-	@echo 
-	@make -s -C sapi list
-	@tput setaf 2; tput bold; echo "make $$(tput setaf 3)libslash.a"; tput sgr0
-	@echo "- Slash static library"
-	@echo
+default: $(TARGETS)
 
 test: sapi[cli]
 	sapi/cli/slash-cli test/driver.sl
