@@ -207,7 +207,7 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
     SLVAL klass = sl_class_of(vm, object);
     sl_class_t* klassp = NULL;
     
-    if(recvp->singleton_methods) {
+    if(sl_get_primitive_type(object) != SL_T_INT && recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, NULL)) {
             return vm->lib._true;
         }
