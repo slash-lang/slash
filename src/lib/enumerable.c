@@ -15,6 +15,19 @@ enumerable_map(sl_vm_t* vm, SLVAL self, SLVAL f)
 }
 
 static SLVAL
+enumerable_to_a(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL array = sl_make_array(vm, 0, NULL);
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    SLVAL val;
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        sl_array_push(vm, array, 1, &val);
+    }
+    return array;
+}
+
+static SLVAL
 enumerable_reduce(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
@@ -104,14 +117,64 @@ enumerable_any(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     return vm->lib._false;
 }
 
+static SLVAL
+enumerable_find(sl_vm_t* vm, SLVAL self, SLVAL f)
+{
+    SLVAL val, truthy;
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        truthy = sl_send(vm, f, "call", 1, val);
+        if(sl_is_truthy(truthy)) {
+            return val;
+        }
+    }
+    return vm->lib.nil;
+}
+
+static SLVAL
+enumerable_filter(sl_vm_t* vm, SLVAL self, SLVAL f)
+{
+    SLVAL val, truthy, ary = sl_make_array(vm, 0, NULL);
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        truthy = sl_send(vm, f, "call", 1, val);
+        if(sl_is_truthy(truthy)) {
+            sl_array_push(vm, ary, 1, &val);
+        }
+    }
+    return ary;
+}
+
+static SLVAL
+enumerable_reject(sl_vm_t* vm, SLVAL self, SLVAL f)
+{
+    SLVAL val, truthy, ary = sl_make_array(vm, 0, NULL);
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        val = sl_send(vm, enumerator, "current", 0);
+        truthy = sl_send(vm, f, "call", 1, val);
+        if(!sl_is_truthy(truthy)) {
+            sl_array_push(vm, ary, 1, &val);
+        }
+    }
+    return ary;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
     vm->lib.Enumerable = sl_define_class(vm, "Enumerable", vm->lib.Object);
     sl_define_method(vm, vm->lib.Enumerable, "map", 1, enumerable_map);
+    sl_define_method(vm, vm->lib.Enumerable, "to_a", 0, enumerable_to_a);
     sl_define_method(vm, vm->lib.Enumerable, "reduce", -2, enumerable_reduce);
+    sl_define_method(vm, vm->lib.Enumerable, "fold", -2, enumerable_reduce);
     sl_define_method(vm, vm->lib.Enumerable, "join", -1, sl_enumerable_join);
     sl_define_method(vm, vm->lib.Enumerable, "length", 0, enumerable_length);
     sl_define_method(vm, vm->lib.Enumerable, "empty", 0, enumerable_empty);
     sl_define_method(vm, vm->lib.Enumerable, "any", -1, enumerable_any);
+    sl_define_method(vm, vm->lib.Enumerable, "find", 1, enumerable_find);
+    sl_define_method(vm, vm->lib.Enumerable, "filter", 1, enumerable_filter);
+    sl_define_method(vm, vm->lib.Enumerable, "reject", 1, enumerable_reject);
 }
