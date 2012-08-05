@@ -50,6 +50,12 @@ sl_make_node(sl_parse_state_t* ps, sl_node_type_t type, sl_node_eval_fn_t eval, 
     return node;
 }
 
+sl_node_base_t*
+sl_make_singleton_node(sl_parse_state_t* ps, sl_node_type_t type, sl_node_eval_fn_t fn)
+{
+    return sl_make_node(ps, type, fn, sizeof(sl_node_base_t));
+}
+
 #define MAKE_NODE(t, eval, type, block) do { \
         type* node = (type*)sl_make_node(ps, (t), (sl_node_eval_fn_t)(eval), sizeof(type)); \
         block; \

@@ -368,15 +368,29 @@ sl_eval_if(sl_node_if_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx)
 {
+    sl_catch_frame_t frame;
+    sl_vm_t* vm = ctx->vm;
     SLVAL enumerable = node->expr->eval(node->expr, ctx);
-    SLVAL enumerator = sl_send(ctx->vm, enumerable, "enumerate", 0, NULL);
+    SLVAL enumerator = sl_send(vm, enumerable, "enumerate", 0, NULL);
     SLVAL val;
-    int iterated = 0;
-    while(sl_is_truthy(sl_send(ctx->vm, enumerator, "next", 0, NULL))) {
-        val = sl_send(ctx->vm, enumerator, "current", 0, NULL);
+    int iterated = 0, cont_break;
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0, NULL))) {
+        val = sl_send(vm, enumerator, "current", 0, NULL);
         set_lval(node->lval, ctx, val);
         iterated = 1;
-        node->body->eval(node->body, ctx);
+        cont_break = 0;
+        SL_TRY(frame, SL_UNWIND_NEXT | SL_UNWIND_LAST, {
+            node->body->eval(node->body, ctx);
+        }, val, {
+            cont_break = 1;
+        });
+        if(cont_break) {
+            if(frame.type == SL_UNWIND_NEXT) {
+                continue;
+            } else {
+                break;
+            }
+        }
     }
     if(!iterated) {
         if(node->else_body) {
@@ -389,8 +403,24 @@ sl_eval_for(sl_node_for_t* node, sl_eval_ctx_t* ctx)
 SLVAL
 sl_eval_while(sl_node_while_t* node, sl_eval_ctx_t* ctx)
 {
+    sl_catch_frame_t frame;
+    SLVAL dummy;
+    int cont_break;
+    sl_vm_t* vm = ctx->vm;
     while(sl_is_truthy(node->expr->eval(node->expr, ctx))) {
-        node->body->eval(node->body, ctx);
+        cont_break = 0;
+        SL_TRY(frame, SL_UNWIND_NEXT | SL_UNWIND_LAST, {
+            node->body->eval(node->body, ctx);
+        }, dummy, {
+            cont_break = 1;
+        });
+        if(cont_break) {
+            if(frame.type == SL_UNWIND_NEXT) {
+                continue;
+            } else {
+                break;
+            }
+        }
     }
     return ctx->vm->lib.nil;
 }
@@ -511,4 +541,22 @@ sl_eval_range(sl_node_range_t* node, sl_eval_ctx_t* ctx)
     } else {
         return sl_make_range(ctx->vm, left, right);
     }
+}
+
+SLVAL
+sl_eval_next(sl_node_base_t* node, sl_eval_ctx_t* ctx)
+{
+    sl_unwind(ctx->vm, ctx->vm->lib.nil, SL_UNWIND_NEXT);
+    /* never reached: */
+    (void)node;
+    return ctx->vm->lib.nil;
+}
+
+SLVAL
+sl_eval_last(sl_node_base_t* node, sl_eval_ctx_t* ctx)
+{
+    sl_unwind(ctx->vm, ctx->vm->lib.nil, SL_UNWIND_LAST);
+    /* never reached: */
+    (void)node;
+    return ctx->vm->lib.nil;
 }

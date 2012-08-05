@@ -40,6 +40,9 @@ sl_parse_error(sl_parse_state_t* ps, char* message);
 int
 sl_node_is_lval(sl_node_base_t* node);
 
+sl_node_base_t*
+sl_make_singleton_node(sl_parse_state_t* ps, sl_node_type_t type, sl_node_eval_fn_t fn);
+
 sl_node_seq_t*
 sl_make_seq_node(sl_parse_state_t* ps);
 

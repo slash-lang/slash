@@ -109,4 +109,10 @@ sl_eval_return(sl_node_unary_t* node, sl_eval_ctx_t* ctx);
 SLVAL
 sl_eval_range(sl_node_range_t* node, sl_eval_ctx_t* ctx);
 
+SLVAL
+sl_eval_next(sl_node_base_t* node, sl_eval_ctx_t* ctx);
+
+SLVAL
+sl_eval_last(sl_node_base_t* node, sl_eval_ctx_t* ctx);
+
 #endif
