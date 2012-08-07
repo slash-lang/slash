@@ -98,7 +98,7 @@ if(!defined $ENV{CC}) {
 }
 check_prog "$ENV{CC} --version";
 
-check_prog "flex --version", /flex 2/;
+check_prog "flex --version", "flex 2";
 
 check_lib "gmp", <<C;
 #include <gmp.h>
