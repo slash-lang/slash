@@ -1,4 +1,4 @@
-.PHONY: clean
+.PHONY: clean install
 
 APR=apr-1
 APXS=apxs
@@ -14,3 +14,8 @@ mod_slash.so: .libs/mod_slash.so
 clean:
 	rm -f *.o *.so *.$(SO_EXT)
 	rm -rf *.dSYM .libs
+
+install:
+	$(APXS) -i -a mod_slash.so
+
+u

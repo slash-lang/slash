@@ -18,14 +18,16 @@ my $path = dirname(rel2abs($0));
 
 my $CFLAGS = "";
 my $LDFLAGS = "";
+my $prefix = "/usr/local";
 
 exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
                          "debug"     => \my $debug,
                          "profile"   => \my $profile,
                          "verbose"   => \my $verbose,
+                         "prefix=s"  => \$prefix,
                          "cflags=s"  => \$CFLAGS,
                          "ldflags=s" => \$LDFLAGS,
-                         "vanilla"   => sub { @exts = (); @sapis = (); },
+                         "vanilla"   => sub { @exts = (); @sapis = () },
                          "ext=s"     => sub { my $ext = $_[1];  push @exts, $ext },
                          "no-ext=s"  => sub { my $ext = $_[1];  @exts = grep { $_ ne $ext } @exts },
                          "sapi=s"    => sub { my $sapi = $_[1]; push @sapis, $sapi },
@@ -185,6 +187,10 @@ for my $sapi (@sapis) {
     require $conf if -e $conf;
     print $mf "TARGETS+= sapi[$sapi]\n";
 }
+
+print $mf "INSTALL_PREFIX=$prefix\n";
+print $mf "SAPIS_ENABLED=" . join(" ", @sapis) . "\n";
+print $mf "BASE_PATH=$path\n";
 
 close $mf;
 print "\n\e[32mReady to build\n\e[0m";
