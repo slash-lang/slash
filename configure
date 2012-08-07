@@ -83,7 +83,7 @@ sub check_prog {
     print "Checking for $prog... ";
     ($_) = `$cmd 2>&1`;
     chomp;
-    if(/$expect/) {
+    if($? == 0 && /$expect/) {
         print "$_\n";
     } else {
         print "failed\n";
