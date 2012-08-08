@@ -265,7 +265,6 @@ handle_request(slash_context_t* ctx, void* dummy)
     sl_response_flush(ctx->vm);
     
     sl_free_gc_arena(ctx->vm->arena);
-    FCGX_PutS("Content-Type: text/html\r\n\r\nHello world", ctx->request.out);
     FCGX_Finish_r(&ctx->request);
     FCGX_Free(&ctx->request, 0);
     free(ctx);
