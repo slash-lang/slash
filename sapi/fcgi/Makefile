@@ -5,8 +5,10 @@ LDFLAGS += -lfcgi -pthreads
 slash-fcgi: slash-fcgi.c
 
 install: slash-fcgi
+	cp slash-fcgi $(INSTALL_PREFIX)/bin
 
 clean:
 	rm -f slash-fcgi
 
 uninstall:
+	rm -f $(INSTALL_PREFIX)/bin/slash-cli
