@@ -1,4 +1,4 @@
-.PHONY: clean install
+.PHONY: clean install uninstall
 
 APR=apr-1
 APXS=apxs
@@ -18,4 +18,4 @@ clean:
 install:
 	$(APXS) -i -a mod_slash.so
 
-u
+uninstall:
