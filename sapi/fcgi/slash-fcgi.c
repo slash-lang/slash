@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <pthread.h>
 #include <signal.h>
+#include <unistd.h>
 
 #define USE_PTHREADS
 
@@ -95,6 +96,22 @@ stop_server()
     exit(0);
 }
 
+void
+daemonize()
+{
+    pid_t pid;
+    pid = fork();
+    if(pid < 0) {
+        exit(1);
+    }
+    if(pid) {
+        exit(0);
+    }
+    if(setsid() < 0) {
+        exit(1);
+    }
+}
+
 int
 main(int argc, char** argv)
 {
@@ -110,6 +127,10 @@ main(int argc, char** argv)
     parse_opts(argc, argv);
     FCGX_Init();
     sl_static_init();
+    
+    if(DAEMONIZE) {
+        daemonize();
+    }
     
     sock = FCGX_OpenSocket(LISTEN, BACKLOG);
     while(1) {
