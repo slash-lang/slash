@@ -1,6 +1,6 @@
 include ../../local.mk
 
-.PHONY: clean
+.PHONY: clean install uninstall
 
 slash-cli: cli.o $(LIBS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
