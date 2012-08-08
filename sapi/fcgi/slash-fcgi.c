@@ -183,10 +183,6 @@ setup_request_object(sl_vm_t* vm, FCGX_Request* request, char** script_filename)
         if(strcmp(request->envp[i], "REMOTE_ADDR") == 0)     { opts.remote_addr  = value; }
         if(strcmp(request->envp[i], "CONTENT_TYPE") == 0)    { opts.content_type = value; }
         if(strcmp(request->envp[i], "SCRIPT_FILENAME") == 0) { *script_filename  = value; }
-        /* @TODO: lol: */
-        if(strcmp(request->envp[i], "QUERY_STRING") == 0 && strcmp(value, "exit") == 0) {
-            exit(0);
-        }
     }
     opts.header_count = header_i;
     opts.env_count    = env_i;
