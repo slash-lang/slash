@@ -344,48 +344,6 @@ NODE(sl_node_send_t, send)
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
-NODE(sl_node_unary_t, not)
-{
-    sl_vm_insn_t insn;
-    compile_node(cs, node->expr, dest);
-    insn.opcode = SL_OP_NOT;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-}
-
-NODE(sl_node_base_t, next)
-{
-    sl_vm_insn_t insn;
-    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
-    fixup->next = cs->next_last_frames->next_fixups;
-    cs->next_last_frames->next_fixups = fixup;
-    insn.opcode = SL_OP_JUMP;
-    emit(cs, insn);
-    insn.uint = 0x0000CAFE;
-    fixup->fixup = emit(cs, insn);
-    
-    (void)node;
-    (void)dest;
-}
-
-NODE(sl_node_base_t, last)
-{
-    sl_vm_insn_t insn;
-    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
-    fixup->next = cs->next_last_frames->last_fixups;
-    cs->next_last_frames->last_fixups = fixup;
-    insn.opcode = SL_OP_JUMP;
-    emit(cs, insn);
-    insn.uint = 0x0000CAFE;
-    fixup->fixup = emit(cs, insn);
-    
-    (void)node;
-    (void)dest;
-}
-
 NODE(sl_node_const_t, const)
 {
     sl_vm_insn_t insn;
@@ -447,6 +405,28 @@ NODE(sl_node_binary_t, or)
     cs->section->insns[fixup].uint = cs->section->insns_count;
 }
 
+NODE(sl_node_unary_t, not)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->expr, dest);
+    insn.opcode = SL_OP_NOT;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
+NODE(sl_node_unary_t, return)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->expr, dest);
+    insn.opcode = SL_OP_RETURN;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node_range_t, range)
 {
     sl_vm_insn_t insn;
@@ -465,7 +445,37 @@ NODE(sl_node_range_t, range)
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
-    reg_free(right);
+    reg_free(cs, right);
+}
+
+NODE(sl_node_base_t, next)
+{
+    sl_vm_insn_t insn;
+    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
+    fixup->next = cs->next_last_frames->next_fixups;
+    cs->next_last_frames->next_fixups = fixup;
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup->fixup = emit(cs, insn);
+    
+    (void)node;
+    (void)dest;
+}
+
+NODE(sl_node_base_t, last)
+{
+    sl_vm_insn_t insn;
+    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
+    fixup->next = cs->next_last_frames->last_fixups;
+    cs->next_last_frames->last_fixups = fixup;
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup->fixup = emit(cs, insn);
+    
+    (void)node;
+    (void)dest;
 }
 
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
@@ -497,6 +507,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_binary_t,    AND,       and);
         COMPILE(sl_node_binary_t,    OR,        or);
         COMPILE(sl_node_unary_t,     NOT,       not);
+        COMPILE(sl_node_unary_t,     RETURN,    return);
         COMPILE(sl_node_range_t,     RANGE,     range);
         COMPILE(sl_node_base_t,      NEXT,      next);
         COMPILE(sl_node_base_t,      LAST,      last);
