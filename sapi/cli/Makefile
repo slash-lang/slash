@@ -2,8 +2,8 @@ include ../../local.mk
 
 .PHONY: clean install uninstall
 
-slash-cli: cli.o $(LIBS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDFLAGS)
+slash-cli: cli.o ../../libslash.a
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LDFLAGS)
 
 clean:
 	rm -f *.o

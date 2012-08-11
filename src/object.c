@@ -233,7 +233,7 @@ sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
         return vm->lib.nil;
     }
     p = sl_get_ptr(object);
-    if(st_lookup(p->instance_variables, (st_data_t)id, (st_data_t*)&val)) {
+    if(p->instance_variables && st_lookup(p->instance_variables, (st_data_t)id, (st_data_t*)&val)) {
         return val;
     }
     return vm->lib.nil;
@@ -262,6 +262,9 @@ sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val)
         sl_throw_message2(vm, vm->lib.TypeError, "Can't set instance variable on Int");
     }
     p = sl_get_ptr(object);
+    if(!p->instance_variables) {
+        p->instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    }
     st_insert(p->instance_variables, (st_data_t)id, (st_data_t)sl_get_ptr(val));
 }
 
@@ -282,12 +285,13 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
     SLVAL* argv = alloca(argc * sizeof(SLVAL));
     va_list va;
     size_t i;
+    sl_string_t id_placement;
     va_start(va, argc);
     for(i = 0; i < argc; i++) {
         argv[i] = va_arg(va, SLVAL);
     }
     va_end(va);
-    return sl_send2(vm, recv, sl_make_cstring(vm, id), argc, argv);
+    return sl_send2(vm, recv, sl_make_cstring_placement(vm, &id_placement, id), argc, argv);
 }
 
 static SLVAL
