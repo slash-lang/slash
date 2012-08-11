@@ -18,7 +18,6 @@ typedef enum sl_node_type {
     SL_NODE_LAMBDA,
     SL_NODE_TRY,
     SL_NODE_IF,
-    SL_NODE_UNLESS,
     SL_NODE_FOR,
     SL_NODE_WHILE,
     SL_NODE_UNTIL,

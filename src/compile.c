@@ -255,6 +255,18 @@ NODE(sl_node_if_t, if)
     cs->section->insns[fixup].uint = cs->section->insns_count;
 }
 
+NODE(sl_node_unary_t, not)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->expr, dest);
+    insn.opcode = SL_OP_NOT;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
 
 static void
@@ -277,6 +289,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_try_t,       TRY,       try);
         */
         COMPILE(sl_node_if_t,        IF,        if);
+        COMPILE(sl_node_unary_t,     NOT,       not);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
 }
