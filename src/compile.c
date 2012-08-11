@@ -66,7 +66,7 @@ reg_free_block(sl_compile_state_t* cs, size_t reg, size_t count)
     }
 }
 
-static sl_vm_insn_t*
+static size_t
 emit(sl_compile_state_t* cs, sl_vm_insn_t insn)
 {
     if(cs->section->insns_count == cs->section->insns_cap) {
@@ -74,7 +74,19 @@ emit(sl_compile_state_t* cs, sl_vm_insn_t insn)
         cs->section->insns = sl_realloc(cs->vm->arena, cs->section->insns, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
     }
     cs->section->insns[cs->section->insns_count++] = insn;
-    return &cs->section->insns[cs->section->insns_count - 1];
+    return cs->section->insns_count - 1;
+}
+
+static void
+emit_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
+{
+    sl_vm_insn_t insn;
+    insn.opcode = SL_OP_IMMEDIATE;
+    emit(cs, insn);
+    insn.imm = immediate;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
 }
 
 static void
@@ -89,6 +101,9 @@ NODE(sl_node_seq_t, seq)
         /*  we only care about the result of the last node so we'll write all
             results to the same output register we were given */
         compile_node(cs, node->nodes[i], dest);
+    }
+    if(node->node_count == 0) {
+        emit_immediate(cs, cs->vm->lib.nil, dest);
     }
 }
 
@@ -183,13 +198,7 @@ NODE(sl_node_var_t, cvar)
 
 NODE(sl_node_immediate_t, immediate)
 {
-    sl_vm_insn_t insn;
-    insn.opcode = SL_OP_IMMEDIATE;
-    emit(cs, insn);
-    insn.imm = node->value;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_immediate(cs, node->value, dest);
 }
 
 NODE(sl_node_base_t, self)
@@ -199,6 +208,7 @@ NODE(sl_node_base_t, self)
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
+    (void)node;
 }
 
 /* @TODO: class, def, lambda, try */
@@ -206,7 +216,7 @@ NODE(sl_node_base_t, self)
 NODE(sl_node_if_t, if)
 {
     sl_vm_insn_t insn;
-    sl_vm_insn_t* fixup;
+    size_t fixup;
     
     /* emit code for !condition: */
     compile_node(cs, node->condition, dest);
@@ -230,7 +240,7 @@ NODE(sl_node_if_t, if)
     
     /*  emit a jump over the else body, and compensate for the jump 
         by adding two bytes to the fixup's operand */
-    fixup->uint = cs->section->insns_count + 2 /* JUMP <end> */;
+    cs->section->insns[fixup].uint = cs->section->insns_count + 2 /* JUMP <end> */;
     insn.opcode = SL_OP_JUMP;
     emit(cs, insn);
     insn.uint = 0x0000CAFE;
@@ -239,15 +249,10 @@ NODE(sl_node_if_t, if)
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
     } else {
-        insn.opcode = SL_OP_IMMEDIATE;
-        emit(cs, insn);
-        insn.imm = cs->vm->lib.nil;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_immediate(cs, cs->vm->lib.nil, dest);
     }
     
-    fixup->uint = cs->section->insns_count;
+    cs->section->insns[fixup].uint = cs->section->insns_count;
 }
 
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
