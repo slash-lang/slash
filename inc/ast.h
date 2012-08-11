@@ -20,7 +20,6 @@ typedef enum sl_node_type {
     SL_NODE_IF,
     SL_NODE_FOR,
     SL_NODE_WHILE,
-    SL_NODE_UNTIL,
     SL_NODE_SEND,
     SL_NODE_CONST,
     SL_NODE_AND,
