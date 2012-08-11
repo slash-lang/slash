@@ -14,11 +14,27 @@ use Getopt::Long;
 my @exts = qw(mysql json base64 gcrypt inflect);
 my @sapis = qw(cli);
 
-my $path = dirname(rel2abs($0));
+our $path = dirname(rel2abs($0));
 
-my $CFLAGS = "";
-my $LDFLAGS = "";
-my $prefix = "/usr/local";
+our $CFLAGS = "";
+our $LDFLAGS = "";
+our $prefix = "/usr/local";
+
+sub error {
+    my $message = shift;
+    print "\n\e[31m$message\n\e[0m";
+    exit 1;
+};
+
+sub warning {
+    my $message = shift;
+    print "\n\e[33m$message\n\e[0m";
+};
+
+sub success {
+    my $message = shift;
+    print "\n\e[32m$message\n\e[0m";
+};
 
 exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
                          "debug"     => \my $debug,
@@ -28,10 +44,24 @@ exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
                          "cflags=s"  => \$CFLAGS,
                          "ldflags=s" => \$LDFLAGS,
                          "vanilla"   => sub { @exts = (); @sapis = () },
-                         "ext=s"     => sub { my $ext = $_[1];  push @exts, $ext },
-                         "no-ext=s"  => sub { my $ext = $_[1];  @exts = grep { $_ ne $ext } @exts },
-                         "sapi=s"    => sub { my $sapi = $_[1]; push @sapis, $sapi },
-                         "no-sapi=s" => sub { my $sapi = $_[1]; @sapis = grep { $_ ne $sapi } @sapis };
+                         "ext=s"     => sub {
+                             my $ext = $_[1];
+                             error "Unknown extension $ext" unless -d "ext/$ext";
+                             push @exts, $ext;
+                         },
+                         "no-ext=s"  => sub {
+                             my $ext = $_[1];
+                             @exts = grep { $_ ne $ext } @exts;
+                         },
+                         "sapi=s"    => sub {
+                             my $sapi = $_[1];
+                             error "Unknown SAPI $sapi" unless -d "sapi/$sapi";
+                             push @sapis, $sapi;
+                         },
+                         "no-sapi=s" => sub {
+                             my $sapi = $_[1];
+                             @sapis = grep { $_ ne $sapi } @sapis;
+                         };
 
 if($lib_dir) {
     $CFLAGS .= " -I$lib_dir/include -L$lib_dir/lib";
@@ -52,7 +82,9 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    my $output = `$ENV{CC} $CFLAGS -o $binary $filename $flags 2>&1`;
+    my $command = "$ENV{CC} $CFLAGS $flags -o $binary $filename 2>&1";
+    print "% $command\n" if $verbose;
+    my $output = `$command`;
     print $output if $verbose;
     chomp $output;
     $? == 0 && !$output;
@@ -71,8 +103,7 @@ sub check_lib {
         } else {
             # nope
             print "failed\n";
-            print "\n\e[31mCould not find lib$lib (used -l$lib)\nPlease make sure it is available before building Slash\n\e[0m";
-            exit 1;
+            error "Could not find lib$lib (used -l$lib)\nPlease make sure it is available before building Slash";
         }
     }
 };
@@ -87,13 +118,12 @@ sub check_prog {
         print "$_\n";
     } else {
         print "failed\n";
-        print "\n\e[31mCould not find $prog (used $cmd)\nPlease make sure it is available before building Slash\n\e[0m";
-        exit 1;
+        error "Could not find $prog (used $cmd)\nPlease make sure it is available before building Slash";
     }
 }
 
 if(!defined $ENV{CC}) {
-    print "\e[33mCC environment variable not set, falling back to 'cc'...\n\e[0m";
+    warning "CC environment variable not set, falling back to 'cc'...";
     $ENV{CC} = "cc";
 }
 check_prog "$ENV{CC} --version";
@@ -134,12 +164,8 @@ my %platforms = (
 if($platforms{$^O}) {
     $platforms{$^O}->();
 } else {
-    print "\n\e[31mUnknown system $^O. Please file an issue at https://github.com/haileysome/slash/issues.\n\e[0m";
-    exit 1;
+    error "Unknown system $^O. Please file an issue at https://github.com/haileysome/slash/issues.";
 }
-
-print $mf "CFLAGS+= $CFLAGS\n";
-print $mf "LDFLAGS+= $LDFLAGS\n";
 
 my ($ext_decls, $ext_inits, $ext_static_inits);
 
@@ -151,7 +177,7 @@ sub needs_static_init {
 
 print "\n";
 for my $ext (@exts) {
-    print "\e[1mConfiguring ext/$ext\e[0m\n";
+    print "\e[34;1mConfiguring ext/$ext\e[0m\n";
     my $conf = "$path/ext/$ext/configure.pl";
     $CURRENT_EXT = $ext;
     require $conf if -e $conf;
@@ -182,15 +208,18 @@ close $init_exts;
 
 print "\n";
 for my $sapi (@sapis) {
-    print "\e[1mConfiguring sapi/$sapi\e[0m\n";
+    print "\e[34;1mConfiguring sapi/$sapi\e[0m\n";
     my $conf = "$path/sapi/$sapi/configure.pl";
     require $conf if -e $conf;
     print $mf "TARGETS+= sapi[$sapi]\n";
 }
+
+print $mf "CFLAGS+= $CFLAGS\n";
+print $mf "LDFLAGS+= $LDFLAGS\n";
 
 print $mf "INSTALL_PREFIX=$prefix\n";
 print $mf "SAPIS_ENABLED=" . join(" ", @sapis) . "\n";
 print $mf "BASE_PATH=$path\n";
 
 close $mf;
-print "\n\e[32mReady to build\n\e[0m";
+success "Ready to build";
