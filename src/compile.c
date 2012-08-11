@@ -44,7 +44,7 @@ reg_alloc_block(sl_compile_state_t* cs, size_t count)
 {
     size_t i, j;
     size_t begin;
-    for(i = 0; i < cs->section->max_registers - count + 1; i++) {
+    for(i = 0; i + count < cs->section->max_registers + 1; i++) {
         if(cs->registers[i]) {
             continue_outer: continue;
         }
@@ -417,6 +417,43 @@ NODE(sl_node_unary_t, not)
     emit(cs, insn);
 }
 
+NODE(sl_node_array_t, array)
+{
+    sl_vm_insn_t insn;
+    size_t i, reg_base = reg_alloc_block(cs, node->node_count);
+    for(i = 0; i < node->node_count; i++) {
+        compile_node(cs, node->nodes[i], reg_base + i);
+    }
+    insn.opcode = SL_OP_ARRAY;
+    emit(cs, insn);
+    insn.uint = node->node_count;
+    emit(cs, insn);
+    insn.uint = reg_base;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    reg_free_block(cs, reg_base, node->node_count);
+}
+
+NODE(sl_node_dict_t, dict)
+{
+    sl_vm_insn_t insn;
+    size_t i, reg_base = reg_alloc_block(cs, node->node_count * 2);
+    for(i = 0; i < node->node_count; i++) {
+        compile_node(cs, node->keys[i], reg_base + i * 2);
+        compile_node(cs, node->vals[i], reg_base + i * 2 + 1);
+    }
+    insn.opcode = SL_OP_DICT;
+    emit(cs, insn);
+    insn.uint = node->node_count;
+    emit(cs, insn);
+    insn.uint = reg_base;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    reg_free_block(cs, reg_base, node->node_count * 2);
+}
+
 NODE(sl_node_unary_t, return)
 {
     sl_vm_insn_t insn;
@@ -507,6 +544,8 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_binary_t,    AND,       and);
         COMPILE(sl_node_binary_t,    OR,        or);
         COMPILE(sl_node_unary_t,     NOT,       not);
+        COMPILE(sl_node_array_t,     ARRAY,     array);
+        COMPILE(sl_node_dict_t,      DICT,      dict);
         COMPILE(sl_node_unary_t,     RETURN,    return);
         COMPILE(sl_node_range_t,     RANGE,     range);
         COMPILE(sl_node_base_t,      NEXT,      next);
