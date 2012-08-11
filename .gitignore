@@ -1,6 +1,7 @@
 *.o
 *.a
 *.la
+*.so
 *.dSYM
 *.supp
 local.mk
