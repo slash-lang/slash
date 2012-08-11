@@ -6,3 +6,4 @@
 *.supp
 local.mk
 src/init_exts.c
+tmp
