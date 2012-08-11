@@ -70,7 +70,7 @@ if($profile) {
     $CFLAGS .= " -pg";
 }
 if($debug) {
-    $CFLAGS .= " -g";
+    $CFLAGS .= " -g -DSL_DEBUG";
 } else {
     $CFLAGS .= " -O3";
 }
@@ -87,7 +87,7 @@ sub compile {
     my $output = `$command`;
     print $output if $verbose;
     chomp $output;
-    $? == 0 && !$output;
+    $? == 0;
 };
 
 sub check_lib {
