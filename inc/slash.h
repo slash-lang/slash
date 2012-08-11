@@ -7,6 +7,7 @@
 #include "lex.h"
 #include "object.h"
 #include "parse.h"
+#include "compile.h"
 #include "class.h"
 #include "string.h"
 #include "platform.h"

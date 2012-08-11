@@ -25,11 +25,18 @@ run(sl_vm_t* vm, void* state)
     size_t token_count;
     sl_token_t* tokens;
     sl_node_base_t* ast;
+    sl_vm_section_t* section;
     cli_state_t* st = state;
-    sl_eval_ctx_t* ctx = vm->global_ctx;
+    sl_vm_exec_ctx_t ctx;
     tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
     ast = sl_parse(vm, tokens, token_count, st->filename);
-    ast->eval(ast, ctx);
+    section = sl_compile(vm, ast);
+    ctx.vm = vm;
+    ctx.section = section;
+    ctx.registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
+    ctx.self = vm->lib.Object;
+    ctx.parent = NULL;
+    sl_vm_exec(&ctx);
 }
 
 static void
