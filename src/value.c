@@ -87,7 +87,6 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
         obj->primitive_type = SL_T_OBJECT;
     }
     obj->klass = vklass;
-    obj->instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
     return sl_make_ptr(obj);
 }
 

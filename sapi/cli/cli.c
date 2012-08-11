@@ -1,7 +1,6 @@
 #include "slash.h"
 #include "lib/request.h"
 #include "lib/response.h"
-#include "mem.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

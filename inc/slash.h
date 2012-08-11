@@ -1,6 +1,7 @@
 #ifndef SL_SLASH_H
 #define SL_SLASH_H
 
+#include "mem.h"
 #include "value.h"
 #include "vm.h"
 #include "lex.h"
