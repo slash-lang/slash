@@ -11,7 +11,7 @@ OBJS+=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
 	src/lib/lambda.o src/lib/enumerable.o src/lib/file.o src/init_exts.o \
 	src/lib/rand.o src/lib/dict.o src/lib/request.o src/lib/response.o \
 	src/lib/error_page.o src/lib/system.o src/lib/regexp.o src/gc.o \
-	src/lib/range.o
+	src/lib/range.o src/vm_exec.o src/compile.o
 
 SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 
@@ -34,6 +34,9 @@ libslash.a: $(OBJS)
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
 %.o: %.c inc/*.h Makefile local.mk
+	$(CC) -o $@ $(CFLAGS) -c $<
+
+src/vm_exec.o: src/vm_exec.c src/vm_exec.inc inc/*.h Makefile local.mk
 	$(CC) -o $@ $(CFLAGS) -c $<
 
 %.c: %.yy inc/*.h Makefile local.mk
