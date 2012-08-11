@@ -341,6 +341,7 @@ NODE(sl_node_send_t, send)
     emit(cs, insn);
     insn.uint = dest; /* destination */
     emit(cs, insn);
+    reg_free_block(cs, arg_base, node->arg_count);
 }
 
 NODE(sl_node_unary_t, not)
@@ -446,6 +447,27 @@ NODE(sl_node_binary_t, or)
     cs->section->insns[fixup].uint = cs->section->insns_count;
 }
 
+NODE(sl_node_range_t, range)
+{
+    sl_vm_insn_t insn;
+    size_t left = dest, right = reg_alloc(cs);
+    compile_node(cs, node->left, left);
+    compile_node(cs, node->right, right);
+    if(node->exclusive) {
+        insn.opcode = SL_OP_RANGE_EX;
+    } else {
+        insn.opcode = SL_OP_RANGE;
+    }
+    emit(cs, insn);
+    insn.uint = left;
+    emit(cs, insn);
+    insn.uint = right;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    reg_free(right);
+}
+
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
 
 static void
@@ -475,6 +497,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_binary_t,    AND,       and);
         COMPILE(sl_node_binary_t,    OR,        or);
         COMPILE(sl_node_unary_t,     NOT,       not);
+        COMPILE(sl_node_range_t,     RANGE,     range);
         COMPILE(sl_node_base_t,      NEXT,      next);
         COMPILE(sl_node_base_t,      LAST,      last);
     }
