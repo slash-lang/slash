@@ -408,6 +408,44 @@ NODE(sl_node_const_t, const)
     }
 }
 
+NODE(sl_node_binary_t, and)
+{
+    sl_vm_insn_t insn;
+    size_t fixup;
+    
+    compile_node(cs, node->left, dest);
+    
+    insn.opcode = SL_OP_JUMP_UNLESS;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup = emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    compile_node(cs, node->right, dest);
+    
+    cs->section->insns[fixup].uint = cs->section->insns_count;
+}
+
+NODE(sl_node_binary_t, or)
+{
+    sl_vm_insn_t insn;
+    size_t fixup;
+    
+    compile_node(cs, node->left, dest);
+    
+    insn.opcode = SL_OP_JUMP_IF;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup = emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    compile_node(cs, node->right, dest);
+    
+    cs->section->insns[fixup].uint = cs->section->insns_count;
+}
+
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
 
 static void
@@ -434,6 +472,8 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_for_t,       FOR,       for);
         COMPILE(sl_node_send_t,      SEND,      send);
         COMPILE(sl_node_const_t,     CONST,     const);
+        COMPILE(sl_node_binary_t,    AND,       and);
+        COMPILE(sl_node_binary_t,    OR,        or);
         COMPILE(sl_node_unary_t,     NOT,       not);
         COMPILE(sl_node_base_t,      NEXT,      next);
         COMPILE(sl_node_base_t,      LAST,      last);
