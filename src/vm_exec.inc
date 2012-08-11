@@ -36,7 +36,7 @@
 #define V_NIL (vm->lib.nil)
 
 #ifdef SL_DEBUG
-    #define TRACE(fmt, ...) fprintf(stderr, "%04lu " fmt, ip, __VA_ARGS__)
+    #define TRACE(fmt, ...) fprintf(stderr, "%04lu " fmt "\n", ip, __VA_ARGS__)
     #define DISPATCH_TRACE(x) TRACE("%s", x)
 #else
     #define TRACE(...) 
@@ -45,7 +45,7 @@
 
 #define INSTRUCTION(opcode, code) \
                 case opcode: \
-                    DISPATCH_TRACE(opcode); \
+                    /*DISPATCH_TRACE(#opcode);*/ \
                     code \
                 break;
     
