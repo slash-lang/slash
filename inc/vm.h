@@ -69,6 +69,66 @@ typedef struct sl_vm {
 }
 sl_vm_t;
 
+typedef enum sl_vm_opcode {
+    SL_OP_RAW,
+    SL_OP_ECHO,
+    SL_OP_ECHO_RAW,
+    SL_OP_NOT,
+    SL_OP_MOV,
+    SL_OP_GET_OUTER,
+    SL_OP_GET_GLOBAL,
+    SL_OP_GET_IVAR,
+    SL_OP_GET_CVAR,
+    SL_OP_GET_CONST,
+    SL_OP_GET_OBJECT_CONST,
+    SL_OP_SET_OUTER,
+    SL_OP_SET_GLOBAL,
+    SL_OP_SET_IVAR,
+    SL_OP_SET_CVAR,
+    SL_OP_SET_CONST,
+    SL_OP_SET_OBJECT_CONST,
+    SL_OP_IMMEDIATE,
+    SL_OP_SEND,
+    SL_OP_JUMP,
+    SL_OP_JUMP_IF,
+    SL_OP_CLASS,
+    SL_OP_DEFINE,
+    SL_OP_DEFINE_ON,
+    SL_OP_SELF,
+    SL_OP_ARRAY,
+    SL_OP_DICT,
+    SL_OP_RETURN,
+    SL_OP_RANGE,
+    SL_OP_RANGE_EX
+}
+sl_vm_opcode_t;
+
+typedef union sl_vm_insn {
+    sl_vm_opcode_t        opcode;
+    size_t                uint;
+    struct sl_vm_section* section;
+    SLVAL                 imm;
+    sl_string_t*          str;
+}
+sl_vm_insn_t;
+
+typedef struct sl_vm_section {
+    size_t insns_count;
+    size_t insns_cap;
+    sl_vm_insn_t* insns;
+    size_t max_registers;
+}
+sl_vm_section_t;
+
+typedef struct sl_vm_exec_ctx {
+    sl_vm_t* vm;
+    sl_vm_section_t* section;
+    SLVAL* registers;
+    SLVAL self;
+    struct sl_vm_exec_ctx* parent;
+}
+sl_vm_exec_ctx_t;
+
 #include "eval.h"
 
 void
@@ -82,5 +142,8 @@ sl_vm_store_get(sl_vm_t* vm, void* key);
 
 void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val);
+
+SLVAL
+sl_vm_exec(sl_vm_exec_ctx_t* ctx);
 
 #endif
