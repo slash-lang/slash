@@ -212,6 +212,17 @@ INSTRUCTION(SL_OP_JUMP_IF, {
     }
 });
 
+/*  0: JUMP_UNLESS
+    1: <uint:ip>
+    2: <reg:condition> */
+INSTRUCTION(SL_OP_JUMP_UNLESS, {
+    tmp_uint = NEXT_UINT();
+    tmp = NEXT_REG();
+    if(!sl_is_truthy(tmp)) {
+        ip = tmp_uint;
+    }
+});
+
 /*  0: CLASS
     1: <str:name>
     2: <reg:extends>

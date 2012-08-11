@@ -91,6 +91,7 @@ typedef enum sl_vm_opcode {
     SL_OP_SEND,
     SL_OP_JUMP,
     SL_OP_JUMP_IF,
+    SL_OP_JUMP_UNLESS,
     SL_OP_CLASS,
     SL_OP_DEFINE,
     SL_OP_DEFINE_ON,
