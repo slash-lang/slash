@@ -1,12 +1,26 @@
 #include "compile.h"
 #include "string.h"
 
+typedef struct fixup {
+    struct fixup* next;
+    size_t fixup;
+}
+fixup_t;
+
+typedef struct next_last_frame {
+    struct next_last_frame* prev;
+    fixup_t* next_fixups;
+    fixup_t* last_fixups;
+}
+next_last_frame_t;
+
 typedef struct sl_compile_state {
     sl_vm_t* vm;
     st_table_t* vars;
     struct sl_compile_state* parent;
     uint8_t* registers;
     sl_vm_section_t* section;
+    next_last_frame_t* next_last_frames;
 }
 sl_compile_state_t;
 
@@ -218,17 +232,9 @@ NODE(sl_node_if_t, if)
     sl_vm_insn_t insn;
     size_t fixup;
     
-    /* emit code for !condition: */
-    compile_node(cs, node->condition, dest);
-    insn.opcode = SL_OP_NOT;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    
     /* emit a jump over the true branch, keeping a pointer to fixup later */
-    insn.opcode = SL_OP_JUMP_IF;
+    compile_node(cs, node->condition, dest);
+    insn.opcode = SL_OP_JUMP_UNLESS;
     emit(cs, insn);
     insn.uint = 0x0000CAFE;
     fixup = emit(cs, insn);
@@ -255,6 +261,88 @@ NODE(sl_node_if_t, if)
     cs->section->insns[fixup].uint = cs->section->insns_count;
 }
 
+NODE(sl_node_while_t, while)
+{
+    sl_vm_insn_t insn;
+    size_t fixup, begin;
+    next_last_frame_t nl;
+    
+    begin = cs->section->insns_count;
+    
+    /* loop condition */
+    compile_node(cs, node->expr, dest);
+    
+    /* emit code for !condition: */
+    insn.opcode = SL_OP_JUMP_UNLESS;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup = emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    /* push this loop on to the next/last fixup stack */
+    nl.next_fixups = NULL;
+    nl.last_fixups = NULL;
+    nl.prev = cs->next_last_frames;
+    cs->next_last_frames = &nl;
+    
+    /* loop body */
+    compile_node(cs, node->body, dest);
+    
+    /* place the right address in the next fixups */
+    cs->next_last_frames = nl.prev;
+    while(nl.next_fixups) {
+        cs->section->insns[nl.next_fixups->fixup].uint = begin;
+        nl.next_fixups = nl.next_fixups->next;
+    }
+    
+    /* jump back to condition */
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = begin;
+    emit(cs, insn);
+    
+    /* put the current IP into the JUMP_UNLESS fixup */
+    cs->section->insns[fixup].uint = cs->section->insns_count;
+    
+    /* place the right address in the last fixups */
+    while(nl.last_fixups) {
+        cs->section->insns[nl.last_fixups->fixup].uint = cs->section->insns_count;
+        nl.last_fixups = nl.last_fixups->next;
+    }
+    
+    emit_immediate(cs, cs->vm->lib.nil, dest);
+}
+
+NODE(sl_node_for_t, for)
+{
+    /* @TODO */
+}
+
+NODE(sl_node_send_t, send)
+{
+    sl_vm_insn_t insn;
+    size_t arg_base, i;
+    /* compile the receiver into our 'dest' register */
+    compile_node(cs, node->recv, dest);
+    arg_base = reg_alloc_block(cs, node->arg_count);
+    for(i = 0; i < node->arg_count; i++) {
+        compile_node(cs, node->args[i], arg_base + i);
+    }
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = dest; /* recv */
+    emit(cs, insn);
+    insn.imm = node->id;
+    emit(cs, insn);
+    insn.uint = arg_base;
+    emit(cs, insn);
+    insn.uint = node->arg_count;
+    emit(cs, insn);
+    insn.uint = dest; /* destination */
+    emit(cs, insn);
+}
+
 NODE(sl_node_unary_t, not)
 {
     sl_vm_insn_t insn;
@@ -265,6 +353,36 @@ NODE(sl_node_unary_t, not)
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
+}
+
+NODE(sl_node_base_t, next)
+{
+    sl_vm_insn_t insn;
+    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
+    fixup->next = cs->next_last_frames->next_fixups;
+    cs->next_last_frames->next_fixups = fixup;
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup->fixup = emit(cs, insn);
+    
+    (void)node;
+    (void)dest;
+}
+
+NODE(sl_node_base_t, last)
+{
+    sl_vm_insn_t insn;
+    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
+    fixup->next = cs->next_last_frames->last_fixups;
+    cs->next_last_frames->last_fixups = fixup;
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = 0x0000CAFE;
+    fixup->fixup = emit(cs, insn);
+    
+    (void)node;
+    (void)dest;
 }
 
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
@@ -289,7 +407,12 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_try_t,       TRY,       try);
         */
         COMPILE(sl_node_if_t,        IF,        if);
+        COMPILE(sl_node_while_t,     WHILE,     while);
+        COMPILE(sl_node_for_t,       FOR,       for);
+        COMPILE(sl_node_send_t,      SEND,      send);
         COMPILE(sl_node_unary_t,     NOT,       not);
+        COMPILE(sl_node_base_t,      NEXT,      next);
+        COMPILE(sl_node_base_t,      LAST,      last);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
 }
@@ -309,6 +432,7 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast)
     cs.section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs.section->insns_cap);
     cs.registers = sl_alloc(vm->arena, cs.section->max_registers);
     cs.registers[0] = 1;
+    cs.next_last_frames = NULL;
     compile_node(&cs, ast, 0);
     
     insn.opcode = SL_OP_IMMEDIATE;
