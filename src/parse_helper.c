@@ -271,6 +271,15 @@ sl_make_assign_cvar_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base
 }
 
 sl_node_base_t*
+sl_make_assign_global_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_GLOBAL, NULL, sl_node_assign_var_t, {
+        node->lval = lval;
+        node->rval = rval;
+    });
+}
+
+sl_node_base_t*
 sl_make_assign_const_node(sl_parse_state_t* ps, sl_node_const_t* lval, sl_node_base_t* rval)
 {
     MAKE_NODE(SL_NODE_ASSIGN_CONST, sl_eval_assign_const, sl_node_assign_const_t, {

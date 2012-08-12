@@ -17,6 +17,7 @@ typedef enum sl_token_type {
     SL_TOK_IDENTIFIER,
     SL_TOK_IVAR,
     SL_TOK_CVAR,
+    SL_TOK_GLOBAL,
     
     SL_TOK_STRING,
     SL_TOK_INTEGER,

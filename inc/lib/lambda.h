@@ -5,6 +5,6 @@
 #include "value.h"
 
 SLVAL
-sl_make_lambda(sl_node_lambda_t* node, sl_eval_ctx_t* ctx);
+sl_make_lambda(sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx);
 
 #endif

@@ -21,7 +21,7 @@ output(sl_vm_t* vm, char* buff, size_t len)
 
 static void
 run(sl_vm_t* vm, void* state)
-{    
+{
     size_t token_count;
     sl_token_t* tokens;
     sl_node_base_t* ast;
