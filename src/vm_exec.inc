@@ -7,6 +7,7 @@
 #include "lib/array.h"
 #include "lib/dict.h"
 #include "lib/range.h"
+#include "lib/lambda.h"
 #include <stdio.h>
 
 #define VM_BEGIN \
@@ -15,7 +16,7 @@
     { \
         size_t ip = 0; \
         sl_vm_t* vm = ctx->vm; \
-        SLVAL tmp, tmp2, err, *tmp_p; \
+        SLVAL tmp, tmp2, *tmp_p; \
         sl_string_t* tmp_str; \
         size_t tmp_uint; \
         sl_vm_exec_ctx_t* tmp_ctx; \
@@ -45,7 +46,7 @@
 
 #define INSTRUCTION(opcode, code) \
                 case opcode: \
-                    /*DISPATCH_TRACE(#opcode);*/ \
+                    /*/DISPATCH_TRACE(#opcode);/**/ \
                     code \
                 break;
     

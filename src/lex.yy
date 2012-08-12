@@ -115,8 +115,9 @@ HEX [0-9a-fA-F]
 
 <SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng)); }
-<SLASH>@{ID}        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
-<SLASH>@@{ID}       { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CVAR, yytext + 2, yyleng - 2)); }
+<SLASH>"$"{ID}      { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_GLOBAL, yytext + 1, yyleng - 1)); }
+<SLASH>"@"{ID}      { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
+<SLASH>"@@"{ID}     { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CVAR, yytext + 2, yyleng - 2)); }
 
 <SLASH>"("          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_PAREN)); }
 <SLASH>")"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_PAREN)); }

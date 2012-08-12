@@ -62,12 +62,7 @@ INSTRUCTION(SL_OP_GET_OUTER, {
     2: <reg:dest> */
 INSTRUCTION(SL_OP_GET_GLOBAL, {
     tmp_str = NEXT_STR();
-    if(!st_lookup(vm->global_ctx->vars, (st_data_t)tmp_str, (st_data_t*)&NEXT_REG())) {
-        err = sl_make_cstring(vm, "Undefined variable '");
-        err = sl_string_concat(vm, err, sl_make_ptr((sl_object_t*)tmp_str));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, "'"));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
-    }
+    NEXT_REG() = sl_get_global2(vm, tmp_str);
 });
 
 /*  0: GET_IVAR
@@ -134,7 +129,7 @@ INSTRUCTION(SL_OP_SET_OUTER, {
     2: <reg:value> */
 INSTRUCTION(SL_OP_SET_GLOBAL, {
     tmp_str = NEXT_STR();
-    st_insert(vm->global_ctx->vars, (st_data_t)tmp_str, (st_data_t)sl_get_ptr(NEXT_REG()));
+    sl_set_global2(vm, tmp_str, NEXT_REG());
 });
 
 /*  0: SET_IVAR
@@ -248,7 +243,8 @@ INSTRUCTION(SL_OP_CLASS, {
     tmp_ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * tmp_section->max_registers);
     tmp_ctx->self = tmp;
     tmp_ctx->parent = ctx;
-    NEXT_REG() = sl_vm_exec(tmp_ctx);
+    sl_vm_exec(tmp_ctx);
+    NEXT_REG() = tmp;
 });
 
 /* @TODO DEFINE, DEFINE_ON */
@@ -257,6 +253,14 @@ INSTRUCTION(SL_OP_DEFINE, {
 });
 INSTRUCTION(SL_OP_DEFINE_ON, {
     sl_throw_message(vm, "DEFINE_ON opcode not yet implemented");
+});
+
+/*  0: LAMBDA
+    1: <section:body>
+    2: <reg:dest> */
+INSTRUCTION(SL_OP_LAMBDA, {
+    tmp = sl_make_lambda(NEXT_SECTION(), ctx);
+    NEXT_REG() = tmp;
 });
 
 /*  0: SELF

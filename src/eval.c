@@ -42,7 +42,8 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     size_t token_count;
     sl_token_t* tokens;
     sl_node_base_t* ast;
-    sl_eval_ctx_t* ctx = vm->global_ctx;
+    sl_vm_exec_ctx_t* ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
+    sl_vm_section_t* section;
     SLVAL err;
     
     if(!f) {
@@ -59,7 +60,13 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     
     tokens = sl_lex(vm, filename, src, file_size, &token_count);
     ast = sl_parse(vm, tokens, token_count, filename);
-    return ast->eval(ast, ctx);
+    section = sl_compile(vm, ast);
+    ctx->vm = vm;
+    ctx->section = section;
+    ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
+    ctx->self = vm->lib.Object;
+    ctx->parent = NULL;
+    return sl_vm_exec(ctx);
 }
 
 static void

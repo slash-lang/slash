@@ -64,7 +64,7 @@ typedef struct sl_vm {
     int hash_seed;
     void* stack_limit;
     char* cwd;
-    struct sl_eval_ctx* global_ctx;
+    st_table_t* globals;
     sl_gc_arena_t* arena;
 }
 sl_vm_t;
@@ -95,6 +95,7 @@ typedef enum sl_vm_opcode {
     SL_OP_CLASS,
     SL_OP_DEFINE,
     SL_OP_DEFINE_ON,
+    SL_OP_LAMBDA,
     SL_OP_SELF,
     SL_OP_ARRAY,
     SL_OP_DICT,
@@ -118,6 +119,7 @@ typedef struct sl_vm_section {
     size_t insns_cap;
     sl_vm_insn_t* insns;
     size_t max_registers;
+    size_t arg_registers;
 }
 sl_vm_section_t;
 
@@ -143,6 +145,18 @@ sl_vm_store_get(sl_vm_t* vm, void* key);
 
 void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val);
+
+SLVAL
+sl_get_global(sl_vm_t* vm, char* name);
+
+SLVAL
+sl_get_global2(sl_vm_t* vm, sl_string_t* name);
+
+void
+sl_set_global(sl_vm_t* vm, char* name, SLVAL val);
+
+void
+sl_set_global2(sl_vm_t* vm, sl_string_t* name, SLVAL val);
 
 SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx);

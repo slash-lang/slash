@@ -24,6 +24,26 @@ typedef struct sl_compile_state {
 }
 sl_compile_state_t;
 
+static void
+init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* parent, size_t init_registers)
+{
+    size_t i;
+    cs->vm = vm;
+    cs->vars = st_init_table(vm->arena, &sl_string_hash_type);
+    cs->parent = parent;
+    cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
+    cs->section->max_registers = init_registers;
+    cs->section->arg_registers = 0;
+    cs->section->insns_cap = 4;
+    cs->section->insns_count = 0;
+    cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
+    cs->registers = sl_alloc(vm->arena, cs->section->max_registers);
+    for(i = 0; i < init_registers; i++) {
+        cs->registers[i] = 1;
+    }
+    cs->next_last_frames = NULL;
+}
+
 static size_t
 reg_alloc(sl_compile_state_t* cs)
 {
@@ -36,6 +56,7 @@ reg_alloc(sl_compile_state_t* cs)
     }
     cs->section->max_registers++;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
+    cs->registers[cs->section->max_registers - 1] = 1;
     return cs->section->max_registers - 1;
 }
 
@@ -62,7 +83,11 @@ reg_alloc_block(sl_compile_state_t* cs, size_t count)
     }
     cs->section->max_registers += count;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
-    return cs->section->max_registers - count;
+    i = cs->section->max_registers - count;
+    for(j = 0; j < count; j++) {
+        cs->registers[i + j] = 1;
+    }
+    return i;
 }
 
 static void
@@ -156,36 +181,33 @@ NODE(sl_node_var_t, var)
     sl_vm_insn_t insn;
     size_t frame;
     sl_compile_state_t* xcs = cs;
-    size_t index;
-    if(cs->parent) {
-        frame = 0;
-        while(xcs->parent) {
-            if(st_lookup(xcs->vars, (st_data_t)node->name, (st_data_t*)&index)) {
-                if(frame == 0) {
-                    insn.opcode = SL_OP_MOV;
-                    emit(cs, insn);
-                } else {
-                    insn.opcode = SL_OP_SET_OUTER;
-                    emit(cs, insn);
-                    insn.uint = frame;
-                    emit(cs, insn);
-                }    
-                insn.uint = index;
+    size_t index = 0xCAFE;
+    SLVAL err;
+    frame = 0;
+    while(xcs) {
+        if(st_lookup(xcs->vars, (st_data_t)node->name, (st_data_t*)&index)) {
+            if(frame == 0) {
+                insn.opcode = SL_OP_MOV;
                 emit(cs, insn);
-                insn.uint = dest;
+            } else {
+                insn.opcode = SL_OP_GET_OUTER;
                 emit(cs, insn);
-                return;
-            }
-            xcs = xcs->parent;
-            frame++;
+                insn.uint = frame;
+                emit(cs, insn);
+            }    
+            insn.uint = index;
+            emit(cs, insn);
+            insn.uint = dest;
+            emit(cs, insn);
+            return;
         }
+        xcs = xcs->parent;
+        frame++;
     }
-    insn.opcode = SL_OP_GET_GLOBAL;
-    emit(cs, insn);
-    insn.str = node->name;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    err = sl_make_cstring(cs->vm, "Undefined variable '");
+    err = sl_string_concat(cs->vm, err, sl_make_ptr((sl_object_t*)node->name));
+    err = sl_string_concat(cs->vm, err, sl_make_cstring(cs->vm, "'"));
+    sl_throw(cs->vm, sl_make_error2(cs->vm, cs->vm->lib.NameError, err));
 }
 
 NODE(sl_node_var_t, ivar)
@@ -210,6 +232,17 @@ NODE(sl_node_var_t, cvar)
     emit(cs, insn);
 }
 
+NODE(sl_node_var_t, global)
+{
+    sl_vm_insn_t insn;
+    insn.opcode = SL_OP_GET_GLOBAL;
+    emit(cs, insn);
+    insn.str = node->name;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node_immediate_t, immediate)
 {
     emit_immediate(cs, node->value, dest);
@@ -223,6 +256,30 @@ NODE(sl_node_base_t, self)
     insn.uint = dest;
     emit(cs, insn);
     (void)node;
+}
+
+NODE(sl_node_lambda_t, lambda)
+{
+    sl_vm_insn_t insn;
+    sl_compile_state_t sub_cs;
+    size_t i;
+    init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
+    for(i = 0; i < node->arg_count; i++) {
+        st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
+    }
+    sub_cs.section->arg_registers = node->arg_count;
+    compile_node(&sub_cs, node->body, 0);
+    insn.opcode = SL_OP_RETURN;
+    emit(&sub_cs, insn);
+    insn.uint = 0;
+    emit(&sub_cs, insn);
+    
+    insn.opcode = SL_OP_LAMBDA;
+    emit(cs, insn);
+    insn.section = sub_cs.section;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
 }
 
 /* @TODO: class, def, lambda, try */
@@ -325,7 +382,7 @@ NODE(sl_node_send_t, send)
     size_t arg_base, i;
     /* compile the receiver into our 'dest' register */
     compile_node(cs, node->recv, dest);
-    arg_base = reg_alloc_block(cs, node->arg_count);
+    arg_base = node->arg_count ? reg_alloc_block(cs, node->arg_count) : 0;
     for(i = 0; i < node->arg_count; i++) {
         compile_node(cs, node->args[i], arg_base + i);
     }
@@ -412,6 +469,62 @@ NODE(sl_node_unary_t, not)
     insn.opcode = SL_OP_NOT;
     emit(cs, insn);
     insn.uint = dest;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
+NODE(sl_node_assign_var_t, assign_var)
+{
+    sl_vm_insn_t insn;
+    size_t frame;
+    sl_compile_state_t* xcs = cs;
+    size_t index;
+    compile_node(cs, node->rval, dest);
+    if(cs) {
+        frame = 0;
+        while(xcs) {
+            if(st_lookup(xcs->vars, (st_data_t)node->lval->name, (st_data_t*)&index)) {
+                if(frame == 0) {
+                    insn.opcode = SL_OP_MOV;
+                    emit(cs, insn);
+                    insn.uint = index;
+                    emit(cs, insn);
+                    insn.uint = dest;
+                    emit(cs, insn);
+                } else {
+                    insn.opcode = SL_OP_SET_OUTER;
+                    emit(cs, insn);
+                    insn.uint = frame;
+                    emit(cs, insn);
+                    insn.uint = index;
+                    emit(cs, insn);
+                    insn.uint = dest;
+                    emit(cs, insn);
+                }
+                return;
+            }
+            xcs = xcs->parent;
+            frame++;
+        }
+    }
+    index = reg_alloc(cs);
+    st_insert(cs->vars, (st_data_t)node->lval->name, (st_data_t)index);
+    insn.opcode = SL_OP_MOV;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.uint = index;
+    emit(cs, insn);
+}
+
+NODE(sl_node_assign_var_t, assign_global)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->rval, dest);
+    insn.opcode = SL_OP_SET_GLOBAL;
+    emit(cs, insn);
+    insn.str = node->lval->name;
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
@@ -521,35 +634,40 @@ static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
 {
     switch(node->type) {
-        COMPILE(sl_node_seq_t,       SEQ,       seq);
-        COMPILE(sl_node_raw_t,       RAW,       raw);
-        COMPILE(sl_node_echo_t,      ECHO,      echo);
-        COMPILE(sl_node_echo_t,      ECHO_RAW,  echo_raw);
-        COMPILE(sl_node_var_t,       VAR,       var);
-        COMPILE(sl_node_var_t,       IVAR,      ivar);
-        COMPILE(sl_node_var_t,       CVAR,      cvar);
-        COMPILE(sl_node_immediate_t, IMMEDIATE, immediate);
-        COMPILE(sl_node_base_t,      SELF,      self);
+        COMPILE(sl_node_seq_t,           SEQ,           seq);
+        COMPILE(sl_node_raw_t,           RAW,           raw);
+        COMPILE(sl_node_echo_t,          ECHO,          echo);
+        COMPILE(sl_node_echo_t,          ECHO_RAW,      echo_raw);
+        COMPILE(sl_node_var_t,           VAR,           var);
+        COMPILE(sl_node_var_t,           IVAR,          ivar);
+        COMPILE(sl_node_var_t,           CVAR,          cvar);
+        COMPILE(sl_node_var_t,           GLOBAL,        global);
+        COMPILE(sl_node_immediate_t,     IMMEDIATE,     immediate);
+        COMPILE(sl_node_base_t,          SELF,          self);
         /*
-        COMPILE(sl_node_class_t,     CLASS,     class);
-        COMPILE(sl_node_def_t,       DEF,       def);
-        COMPILE(sl_node_lambda_t,    LAMBDA,    lambda);
-        COMPILE(sl_node_try_t,       TRY,       try);
+        COMPILE(sl_node_class_t,         CLASS,         class);
+        COMPILE(sl_node_def_t,           DEF,           def);
         */
-        COMPILE(sl_node_if_t,        IF,        if);
-        COMPILE(sl_node_while_t,     WHILE,     while);
-        COMPILE(sl_node_for_t,       FOR,       for);
-        COMPILE(sl_node_send_t,      SEND,      send);
-        COMPILE(sl_node_const_t,     CONST,     const);
-        COMPILE(sl_node_binary_t,    AND,       and);
-        COMPILE(sl_node_binary_t,    OR,        or);
-        COMPILE(sl_node_unary_t,     NOT,       not);
-        COMPILE(sl_node_array_t,     ARRAY,     array);
-        COMPILE(sl_node_dict_t,      DICT,      dict);
-        COMPILE(sl_node_unary_t,     RETURN,    return);
-        COMPILE(sl_node_range_t,     RANGE,     range);
-        COMPILE(sl_node_base_t,      NEXT,      next);
-        COMPILE(sl_node_base_t,      LAST,      last);
+        COMPILE(sl_node_lambda_t,        LAMBDA,        lambda);
+        /*
+        COMPILE(sl_node_try_t,           TRY,           try);
+        */
+        COMPILE(sl_node_if_t,            IF,            if);
+        COMPILE(sl_node_while_t,         WHILE,         while);
+        COMPILE(sl_node_for_t,           FOR,           for);
+        COMPILE(sl_node_send_t,          SEND,          send);
+        COMPILE(sl_node_const_t,         CONST,         const);
+        COMPILE(sl_node_binary_t,        AND,           and);
+        COMPILE(sl_node_binary_t,        OR,            or);
+        COMPILE(sl_node_unary_t,         NOT,           not);
+        COMPILE(sl_node_assign_var_t,    ASSIGN_VAR,    assign_var);
+        COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL, assign_global);
+        COMPILE(sl_node_array_t,         ARRAY,         array);
+        COMPILE(sl_node_dict_t,          DICT,          dict);
+        COMPILE(sl_node_unary_t,         RETURN,        return);
+        COMPILE(sl_node_range_t,         RANGE,         range);
+        COMPILE(sl_node_base_t,          NEXT,          next);
+        COMPILE(sl_node_base_t,          LAST,          last);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
 }
@@ -559,17 +677,7 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast)
 {
     sl_vm_insn_t insn;
     sl_compile_state_t cs;
-    cs.vm = vm;
-    cs.vars = st_init_table(vm->arena, &sl_string_hash_type);
-    cs.parent = NULL;
-    cs.section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
-    cs.section->max_registers = 1;
-    cs.section->insns_cap = 4;
-    cs.section->insns_count = 0;
-    cs.section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs.section->insns_cap);
-    cs.registers = sl_alloc(vm->arena, cs.section->max_registers);
-    cs.registers[0] = 1;
-    cs.next_last_frames = NULL;
+    init_compile_state(&cs, vm, NULL, 1);
     compile_node(&cs, ast, 0);
     
     insn.opcode = SL_OP_IMMEDIATE;
