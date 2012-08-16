@@ -98,6 +98,7 @@ typedef enum sl_vm_opcode {
     SL_OP_LAMBDA,
     SL_OP_SELF,
     SL_OP_ARRAY,
+    SL_OP_ARRAY_DUMP,
     SL_OP_DICT,
     SL_OP_RETURN,
     SL_OP_RANGE,

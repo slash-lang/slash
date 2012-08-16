@@ -655,6 +655,30 @@ NODE(sl_node_assign_const_t, assign_const)
     }
 }
 
+NODE(sl_node_assign_array_t, assign_array)
+{
+    sl_vm_insn_t insn;
+    size_t dump_regs, i;
+    dump_regs = reg_alloc_block(cs, node->lval->node_count);
+    
+    compile_node(cs, node->rval, dest);
+    
+    insn.opcode = SL_OP_ARRAY_DUMP;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.uint = node->lval->node_count;
+    emit(cs, insn);
+    insn.uint = dump_regs;
+    emit(cs, insn);
+    
+    for(i = 0; i < node->lval->node_count; i++) {
+        emit_assignment(cs, node->lval->nodes[i], dump_regs + i);
+    }
+    
+    reg_free_block(cs, dump_regs, node->lval->node_count);
+}
+
 NODE(sl_node_array_t, array)
 {
     sl_vm_insn_t insn;
@@ -801,6 +825,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_assign_cvar_t,   ASSIGN_CVAR,   assign_cvar);
         COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL, assign_global);
         COMPILE(sl_node_assign_const_t,  ASSIGN_CONST,  assign_const);
+        COMPILE(sl_node_assign_array_t,  ASSIGN_ARRAY,  assign_array);
         COMPILE(sl_node_array_t,         ARRAY,         array);
         COMPILE(sl_node_dict_t,          DICT,          dict);
         COMPILE(sl_node_unary_t,         RETURN,        return);

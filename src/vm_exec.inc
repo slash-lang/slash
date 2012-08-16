@@ -18,7 +18,7 @@
         sl_vm_t* vm = ctx->vm; \
         SLVAL tmp, tmp2, *tmp_p; \
         sl_string_t* tmp_str; \
-        size_t tmp_uint; \
+        size_t tmp_uint, j; \
         sl_vm_exec_ctx_t* tmp_ctx; \
         sl_vm_section_t* tmp_section; \
         while(1) { \
