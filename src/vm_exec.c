@@ -264,6 +264,28 @@ INSTRUCTION(SL_OP_ARRAY, {
     NEXT_REG() = sl_make_array(vm, tmp_uint, tmp_p);
 });
 
+/*  0: ARRAY_DUMP
+    1: <reg:array>
+    2: <uint:count>
+    3: <reg:first_element> */
+INSTRUCTION(SL_OP_ARRAY_DUMP, {
+    tmp = NEXT_REG();
+    tmp_uint = NEXT_UINT();
+    tmp_p = &NEXT_REG();
+    if(sl_is_a(vm, tmp, vm->lib.Array)) {
+        for(j = 0; j < tmp_uint; j++) {
+            tmp_p[j] = sl_array_get(vm, tmp, j);
+        }
+    } else {
+        if(tmp_uint) {
+            tmp_p[0] = tmp;
+        }
+        for(j = 1; j < tmp_uint; j++) {
+            tmp_p[j] = V_NIL;
+        }
+    }
+});
+
 /*  0: DICT
     1: <uint:count>
     2: <reg:first_element>
