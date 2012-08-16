@@ -1,5 +1,6 @@
 #include "compile.h"
 #include "string.h"
+#include <string.h>
 
 typedef struct fixup {
     struct fixup* next;
@@ -130,6 +131,46 @@ emit_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
 
 static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest);
+
+static void
+emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
+{
+    sl_node_assign_var_t a_var;
+    sl_node_send_t send;
+    
+    size_t dest_reg = reg_alloc(cs);
+    
+    sl_node__register_t node;
+    sl_node__register_t* node_p = &node;
+    node.base.type = SL_NODE__REGISTER;
+    node.reg = reg;
+    
+    switch(lval->type) {
+        case SL_NODE_VAR:    a_var.base.type = SL_NODE_ASSIGN_VAR;    break;
+        case SL_NODE_IVAR:   a_var.base.type = SL_NODE_ASSIGN_IVAR;   break;
+        case SL_NODE_CVAR:   a_var.base.type = SL_NODE_ASSIGN_CVAR;   break;
+        case SL_NODE_GLOBAL: a_var.base.type = SL_NODE_ASSIGN_GLOBAL; break;
+        case SL_NODE_CONST:  a_var.base.type = SL_NODE_ASSIGN_CONST;  break;
+        case SL_NODE_ARRAY:  a_var.base.type = SL_NODE_ASSIGN_ARRAY;  break;
+        case SL_NODE_SEND:
+            /* special case that turns a.b = 1 into a.send("b=", 1) */
+            memcpy(&send, lval, sizeof(sl_node_send_t));
+            send.id = sl_string_concat(cs->vm, send.id, sl_make_cstring(cs->vm, "="));
+            send.arg_count = 1;
+            send.args = (sl_node_base_t**)&node_p;
+            compile_node(cs, (sl_node_base_t*)&send, dest_reg);
+            reg_free(cs, dest_reg);
+            return;
+        default:
+            sl_throw_message2(cs->vm, cs->vm->lib.TypeError, "Invalid lval in assignment");
+    }
+    
+    a_var.lval = (void*)lval;
+    a_var.rval = (sl_node_base_t*)&node;
+    compile_node(cs, (sl_node_base_t*)&a_var, dest_reg);
+    
+    reg_free(cs, dest_reg);
+}
 
 #define NODE(type, name) static void compile_##name(sl_compile_state_t* cs, type* node, size_t dest)
 
@@ -403,7 +444,8 @@ NODE(sl_node_while_t, while)
 
 NODE(sl_node_for_t, for)
 {
-    /* @TODO */
+    compile_node(cs, node->expr, dest);
+    emit_assignment(cs, node->lval, dest);
 }
 
 NODE(sl_node_send_t, send)
@@ -711,6 +753,17 @@ NODE(sl_node_base_t, last)
     (void)dest;
 }
 
+NODE(sl_node__register_t, _register)
+{
+    sl_vm_insn_t insn;
+    insn.opcode = SL_OP_MOV;
+    emit(cs, insn);
+    insn.uint = node->reg;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
 
 static void
@@ -754,6 +807,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_range_t,         RANGE,         range);
         COMPILE(sl_node_base_t,          NEXT,          next);
         COMPILE(sl_node_base_t,          LAST,          last);
+        COMPILE(sl_node__register_t,     _REGISTER,     _register);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
 }

@@ -75,6 +75,9 @@ static sl_node_base_t*
 send_expression(sl_parse_state_t* ps, sl_node_base_t* recv);
 
 static sl_node_base_t*
+call_expression(sl_parse_state_t* ps);
+
+static sl_node_base_t*
 low_precedence_logical_expression(sl_parse_state_t* ps);
 
 static sl_token_t*

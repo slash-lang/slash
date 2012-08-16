@@ -37,7 +37,8 @@ typedef enum sl_node_type {
     SL_NODE_RETURN,
     SL_NODE_RANGE,
     SL_NODE_NEXT,
-    SL_NODE_LAST
+    SL_NODE_LAST,
+    SL_NODE__REGISTER
 }
 sl_node_type_t;
 
@@ -237,5 +238,11 @@ typedef struct sl_node_range {
     int exclusive;
 }
 sl_node_range_t;
+
+typedef struct sl_node__register {
+    sl_node_base_t base;
+    size_t reg;
+}
+sl_node__register_t;
 
 #endif
