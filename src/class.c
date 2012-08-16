@@ -80,18 +80,11 @@ sl_class_super(sl_vm_t* vm, SLVAL self)
     return get_class(vm, self)->super;
 }
 
-static SLVAL
-sl_class_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
-{
-    
-}
-
 void
 sl_init_class(sl_vm_t* vm)
 {
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "Class"), (st_data_t)vm->lib.Class.i);
-    sl_define_method(vm, vm->lib.Class, "init", -1, sl_class_init);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
