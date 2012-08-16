@@ -55,3 +55,29 @@
         } \
     }
 
+/* helper functions */
+
+static SLVAL
+sl_vm_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_section_t* section)
+{
+    SLVAL klass, in;
+    sl_vm_exec_ctx_t* subctx;
+    if(sl_class_has_const2(ctx->vm, ctx->self, name)) {
+        /* @TODO: verify same superclass */
+        klass = sl_class_get_const2(ctx->vm, ctx->self, name);
+    } else {
+        in = ctx->self;
+        if(!sl_is_a(ctx->vm, in, ctx->vm->lib.Class)) {
+            in = sl_class_of(ctx->vm, in);
+        }
+        klass = sl_define_class3(ctx->vm, name, extends, in);
+    }
+    subctx = sl_alloc(ctx->vm->arena, sizeof(sl_vm_exec_ctx_t));
+    subctx->vm = ctx->vm;
+    subctx->section = section;
+    subctx->registers = sl_alloc(ctx->vm->arena, sizeof(SLVAL) * section->max_registers);
+    subctx->self = klass;
+    subctx->parent = ctx;
+    sl_vm_exec(subctx);
+    return klass;
+}

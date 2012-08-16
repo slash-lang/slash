@@ -224,27 +224,14 @@ INSTRUCTION(SL_OP_JUMP_UNLESS, {
     3: <section:body>
     4: <reg:dest> */
 INSTRUCTION(SL_OP_CLASS, {
-    tmp_str = NEXT_STR();
-    tmp2 = NEXT_REG();
+    #define name tmp
+    #define extends tmp2
+    name = NEXT_IMM();
+    extends = NEXT_REG();
     tmp_section = NEXT_SECTION();
-    if(sl_class_has_const2(vm, ctx->self, sl_make_ptr((sl_object_t*)tmp_str))) {
-        /* @TODO: verify same superclass */
-        tmp = sl_class_get_const2(vm, ctx->self, sl_make_ptr((sl_object_t*)tmp_str));
-    } else {
-        tmp = ctx->self;
-        if(sl_is_a(vm, tmp, vm->lib.Class)) {
-            tmp = sl_class_of(vm, tmp);
-        }
-        tmp = sl_define_class3(vm, sl_make_ptr((sl_object_t*)tmp_str), tmp2, tmp);
-    }    
-    tmp_ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
-    tmp_ctx->vm = vm;
-    tmp_ctx->section = tmp_section;
-    tmp_ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * tmp_section->max_registers);
-    tmp_ctx->self = tmp;
-    tmp_ctx->parent = ctx;
-    sl_vm_exec(tmp_ctx);
-    NEXT_REG() = tmp;
+    NEXT_REG() = sl_vm_define_class(ctx, name, extends, tmp_section);
+    #undef name
+    #undef extends
 });
 
 /* @TODO DEFINE, DEFINE_ON */
