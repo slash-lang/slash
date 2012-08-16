@@ -224,14 +224,12 @@ INSTRUCTION(SL_OP_JUMP_UNLESS, {
     3: <section:body>
     4: <reg:dest> */
 INSTRUCTION(SL_OP_CLASS, {
-    #define name tmp
-    #define extends tmp2
-    name = NEXT_IMM();
-    extends = NEXT_REG();
+    /* tmp: class name */
+    tmp = NEXT_IMM();
+    /* tmp2: base class */
+    tmp2 = NEXT_REG();
     tmp_section = NEXT_SECTION();
-    NEXT_REG() = sl_vm_define_class(ctx, name, extends, tmp_section);
-    #undef name
-    #undef extends
+    NEXT_REG() = sl_vm_define_class(ctx, tmp, tmp2, tmp_section);
 });
 
 /* @TODO DEFINE, DEFINE_ON */
