@@ -23,11 +23,12 @@ sl_node_is_lval(sl_node_base_t* node)
     size_t i = 0;
     sl_node_array_t* ary;
     switch(node->type) {
-        case SL_NODE_VAR:   return 1;
-        case SL_NODE_IVAR:  return 1;
-        case SL_NODE_CVAR:  return 1;
-        case SL_NODE_CONST: return 1;
-        case SL_NODE_SEND:  return 1;
+        case SL_NODE_VAR:    return 1;
+        case SL_NODE_IVAR:   return 1;
+        case SL_NODE_CVAR:   return 1;
+        case SL_NODE_CONST:  return 1;
+        case SL_NODE_SEND:   return 1;
+        case SL_NODE_GLOBAL: return 1;
         case SL_NODE_ARRAY:
             ary = (sl_node_array_t*)node;
             for(i = 0; i < ary->node_count; i++) {

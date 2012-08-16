@@ -168,7 +168,7 @@ for_expression(sl_parse_state_t* ps)
     expect_token(ps, SL_TOK_FOR);
     /* save current token to allow rewinding and erroring */
     tok = peek_token(ps);
-    lval = primary_expression(ps);
+    lval = call_expression(ps);
     if(!sl_node_is_lval(lval)) {
         unexpected(ps, tok);
     }
@@ -182,7 +182,7 @@ for_expression(sl_parse_state_t* ps)
                 seq_lval->nodes = sl_realloc(ps->vm->arena, seq_lval->nodes, sizeof(sl_node_base_t*) * seq_lval->node_capacity);
             }
             tok = peek_token(ps);
-            lval = primary_expression(ps);
+            lval = call_expression(ps);
             if(!sl_node_is_lval(lval)) {
                 unexpected(ps, tok);
             }
