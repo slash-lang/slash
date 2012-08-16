@@ -282,6 +282,36 @@ NODE(sl_node_lambda_t, lambda)
     emit(cs, insn);
 }
 
+NODE(sl_node_class_t, class)
+{
+    sl_vm_insn_t insn;
+    sl_compile_state_t sub_cs;
+    
+    if(node->extends) {
+        compile_node(cs, node->extends, dest);
+    } else {
+        emit_immediate(cs, cs->vm->lib.Object, dest);
+    }
+    
+    init_compile_state(&sub_cs, cs->vm, cs, 1);
+    compile_node(&sub_cs, node->body, 0);
+    insn.opcode = SL_OP_RETURN;
+    emit(&sub_cs, insn);
+    insn.uint = 0;
+    emit(&sub_cs, insn);
+    
+    insn.opcode = SL_OP_CLASS;
+    emit(cs, insn);
+    insn.imm = node->name;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.section = sub_cs.section;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 /* @TODO: class, def, lambda, try */
 
 NODE(sl_node_if_t, if)
@@ -518,6 +548,30 @@ NODE(sl_node_assign_var_t, assign_var)
     emit(cs, insn);
 }
 
+NODE(sl_node_assign_ivar_t, assign_ivar)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->rval, dest);
+    insn.opcode = SL_OP_SET_IVAR;
+    emit(cs, insn);
+    insn.str = node->lval->name;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
+NODE(sl_node_assign_cvar_t, assign_cvar)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->rval, dest);
+    insn.opcode = SL_OP_SET_CVAR;
+    emit(cs, insn);
+    insn.str = node->lval->name;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node_assign_var_t, assign_global)
 {
     sl_vm_insn_t insn;
@@ -528,6 +582,35 @@ NODE(sl_node_assign_var_t, assign_global)
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
+}
+
+NODE(sl_node_assign_const_t, assign_const)
+{
+    sl_vm_insn_t insn;
+    size_t reg;
+    if(node->lval->obj) {
+        /* SL_OP_SET_OBJECT_CONST */
+        reg = reg_alloc(cs);
+        compile_node(cs, node->lval->obj, reg);
+        insn.opcode = SL_OP_SET_OBJECT_CONST;
+        emit(cs, insn);
+        insn.uint = reg;
+        emit(cs, insn);
+        insn.imm = node->lval->id;
+        emit(cs, insn);
+        insn.uint = dest;
+        emit(cs, insn);
+        reg_free(cs, reg);
+    } else {
+        /* SL_OP_SET_CONST */
+        compile_node(cs, node->rval, dest);
+        insn.opcode = SL_OP_SET_CONST;
+        emit(cs, insn);
+        insn.imm = node->lval->id;
+        emit(cs, insn);
+        insn.uint = dest;
+        emit(cs, insn);
+    }
 }
 
 NODE(sl_node_array_t, array)
@@ -644,8 +727,8 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_var_t,           GLOBAL,        global);
         COMPILE(sl_node_immediate_t,     IMMEDIATE,     immediate);
         COMPILE(sl_node_base_t,          SELF,          self);
-        /*
         COMPILE(sl_node_class_t,         CLASS,         class);
+        /*
         COMPILE(sl_node_def_t,           DEF,           def);
         */
         COMPILE(sl_node_lambda_t,        LAMBDA,        lambda);
@@ -661,7 +744,10 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_binary_t,        OR,            or);
         COMPILE(sl_node_unary_t,         NOT,           not);
         COMPILE(sl_node_assign_var_t,    ASSIGN_VAR,    assign_var);
+        COMPILE(sl_node_assign_ivar_t,   ASSIGN_IVAR,   assign_ivar);
+        COMPILE(sl_node_assign_cvar_t,   ASSIGN_CVAR,   assign_cvar);
         COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL, assign_global);
+        COMPILE(sl_node_assign_const_t,  ASSIGN_CONST,  assign_const);
         COMPILE(sl_node_array_t,         ARRAY,         array);
         COMPILE(sl_node_dict_t,          DICT,          dict);
         COMPILE(sl_node_unary_t,         RETURN,        return);

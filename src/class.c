@@ -13,6 +13,9 @@ allocate_class(sl_vm_t* vm)
 {
     sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
+    klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     return (sl_object_t*)klass;
 }
 
@@ -77,11 +80,18 @@ sl_class_super(sl_vm_t* vm, SLVAL self)
     return get_class(vm, self)->super;
 }
 
+static SLVAL
+sl_class_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "Class"), (st_data_t)vm->lib.Class.i);
+    sl_define_method(vm, vm->lib.Class, "init", -1, sl_class_init);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
@@ -110,9 +120,6 @@ sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in)
     klass->super = sl_expect(vm, super, vm->lib.Class);
     klass->name = sl_expect(vm, name, vm->lib.String);
     klass->in = sl_expect(vm, in, vm->lib.Class);
-    klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
-    klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
-    klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     klass->allocator = get_class(vm, super)->allocator;
     if(!vm->initializing) {
         st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
