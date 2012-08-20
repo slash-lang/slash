@@ -560,9 +560,9 @@ NODE(sl_node_assign_var_t, assign_var)
                 if(frame == 0) {
                     insn.opcode = SL_OP_MOV;
                     emit(cs, insn);
-                    insn.uint = index;
-                    emit(cs, insn);
                     insn.uint = dest;
+                    emit(cs, insn);
+                    insn.uint = index;
                     emit(cs, insn);
                 } else {
                     insn.opcode = SL_OP_SET_OUTER;
