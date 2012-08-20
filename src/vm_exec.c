@@ -229,13 +229,20 @@ INSTRUCTION(SL_OP_CLASS, {
     /* tmp2: base class */
     tmp2 = NEXT_REG();
     tmp_section = NEXT_SECTION();
-    NEXT_REG() = sl_vm_define_class(ctx, tmp, tmp2, tmp_section);
+    NEXT_REG() = vm_helper_define_class(ctx, tmp, tmp2, tmp_section);
 });
 
-/* @TODO DEFINE, DEFINE_ON */
+/*  0: DEFINE
+    1: <str:name>
+    2: <section:body>
+    3: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE, {
-    sl_throw_message(vm, "DEFINE opcode not yet implemented");
+    tmp = NEXT_IMM();
+    tmp_section = NEXT_SECTION();
+    NEXT_REG() = vm_helper_define_method(ctx, tmp, tmp_section);
 });
+
+/* @TODO DEFINE_ON */
 INSTRUCTION(SL_OP_DEFINE_ON, {
     sl_throw_message(vm, "DEFINE_ON opcode not yet implemented");
 });

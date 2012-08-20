@@ -479,8 +479,8 @@ sl_eval_def(sl_node_def_t* node, sl_eval_ctx_t* ctx)
         mklass = on;
         definer = sl_define_method3;
     }
-    method = sl_make_method(ctx->vm, mklass, node->name, node->arg_count,
-        node->arg_count, node->args, node->body, ctx);
+    /*method = sl_make_method(ctx->vm, mklass, node->name, node->arg_count,
+        node->arg_count, node->args, node->body, ctx);*/
     definer(ctx->vm, on, node->name, method);
     return method;
 }
