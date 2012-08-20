@@ -121,7 +121,7 @@ if_expression(sl_parse_state_t* ps)
     }
     condition = expression(ps);
     if(negate_condition) {
-        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT, sl_eval_not);
+        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT);
     }
     if_true = body_expression(ps);
     if(peek_token(ps)->type == SL_TOK_ELSIF) {
@@ -148,7 +148,7 @@ while_expression(sl_parse_state_t* ps)
     }
     condition = expression(ps);
     if(until) {
-        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT, sl_eval_not);
+        condition = sl_make_unary_node(ps, condition, SL_NODE_NOT);
     }
     scope.prev = ps->scope;
     scope.flags = scope.prev->flags | SL_PF_CAN_NEXT_LAST;
@@ -283,7 +283,7 @@ def_expression(sl_parse_state_t* ps)
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
             if(peek_token_n(ps, 2)->type == SL_TOK_DOT) {
-                on = sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var, next_token(ps)->str);
+                on = sl_make_var_node(ps, SL_NODE_VAR, next_token(ps)->str);
                 next_token(ps);
                 name = def_expression_method_name(ps);
             } else {
@@ -490,7 +490,7 @@ primary_expression(sl_parse_state_t* ps)
             return sl_make_const_node(ps, NULL, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_IDENTIFIER:
             tok = next_token(ps);
-            return sl_make_var_node(ps, SL_NODE_VAR, sl_eval_var,
+            return sl_make_var_node(ps, SL_NODE_VAR,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
         case SL_TOK_TRUE:
             next_token(ps);
@@ -506,17 +506,17 @@ primary_expression(sl_parse_state_t* ps)
             return sl_make_self_node(ps);
         case SL_TOK_IVAR:
             tok = next_token(ps);
-            node = sl_make_var_node(ps, SL_NODE_IVAR, sl_eval_ivar,
+            node = sl_make_var_node(ps, SL_NODE_IVAR,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
         case SL_TOK_CVAR:
             tok = next_token(ps);
-            node = sl_make_var_node(ps, SL_NODE_CVAR, sl_eval_cvar,
+            node = sl_make_var_node(ps, SL_NODE_CVAR,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
         case SL_TOK_GLOBAL:
             tok = next_token(ps);
-            node = sl_make_var_node(ps, SL_NODE_GLOBAL, NULL,
+            node = sl_make_var_node(ps, SL_NODE_GLOBAL,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
         case SL_TOK_IF:
@@ -546,13 +546,13 @@ primary_expression(sl_parse_state_t* ps)
             if(!(ps->scope->flags & SL_PF_CAN_NEXT_LAST)) {
                 error(ps, sl_make_cstring(ps->vm, "next invalid outside loop"), tok);
             }
-            return sl_make_singleton_node(ps, SL_NODE_NEXT, sl_eval_next);
+            return sl_make_singleton_node(ps, SL_NODE_NEXT);
         case SL_TOK_LAST:
             tok = next_token(ps);
             if(!(ps->scope->flags & SL_PF_CAN_NEXT_LAST)) {
                 error(ps, sl_make_cstring(ps->vm, "last invalid outside loop"), tok);
             }
-            return sl_make_singleton_node(ps, SL_NODE_LAST, sl_eval_last);
+            return sl_make_singleton_node(ps, SL_NODE_LAST);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;
@@ -652,7 +652,7 @@ unary_expression(sl_parse_state_t* ps)
         case SL_TOK_NOT:
             next_token(ps);
             expr = unary_expression(ps);
-            return sl_make_unary_node(ps, expr, SL_NODE_NOT, sl_eval_not);
+            return sl_make_unary_node(ps, expr, SL_NODE_NOT);
         case SL_TOK_RETURN:    
             tok = next_token(ps);
             if(!(ps->scope->flags & SL_PF_CAN_RETURN)) {
@@ -665,9 +665,9 @@ unary_expression(sl_parse_state_t* ps)
                 /* in these case we want to allow for postfix control structures: */
                 case SL_TOK_IF:
                 case SL_TOK_UNLESS:
-                    return sl_make_unary_node(ps, sl_make_immediate_node(ps, ps->vm->lib.nil), SL_NODE_RETURN, sl_eval_return);
+                    return sl_make_unary_node(ps, sl_make_immediate_node(ps, ps->vm->lib.nil), SL_NODE_RETURN);
                 default:
-                    return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_RETURN, sl_eval_return);
+                    return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_RETURN);
             }
             break;
         default:
@@ -771,12 +771,12 @@ logical_expression(sl_parse_state_t* ps)
             case SL_TOK_OR:
                 next_token(ps);
                 right = relational_expression(ps);
-                left = sl_make_binary_node(ps, left, right, SL_NODE_OR, sl_eval_or);
+                left = sl_make_binary_node(ps, left, right, SL_NODE_OR);
                 break;
             case SL_TOK_AND:
                 next_token(ps);
                 right = relational_expression(ps);
-                left = sl_make_binary_node(ps, left, right, SL_NODE_AND, sl_eval_and);
+                left = sl_make_binary_node(ps, left, right, SL_NODE_AND);
                 break;
             default:
                 return left;
@@ -854,7 +854,7 @@ static sl_node_base_t*
 low_precedence_not_expression(sl_parse_state_t* ps)
 {
     if(peek_token(ps)->type == SL_TOK_LP_NOT) {
-        return sl_make_unary_node(ps, assignment_expression(ps), SL_NODE_NOT, sl_eval_not);
+        return sl_make_unary_node(ps, assignment_expression(ps), SL_NODE_NOT);
     } else {
         return assignment_expression(ps);
     }
@@ -866,11 +866,11 @@ low_precedence_logical_expression(sl_parse_state_t* ps)
     sl_node_base_t* left = low_precedence_not_expression(ps);
     if(peek_token(ps)->type == SL_TOK_LP_AND) {
         next_token(ps);
-        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_AND, sl_eval_and);
+        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_AND);
     }
     if(peek_token(ps)->type == SL_TOK_LP_OR) {
         next_token(ps);
-        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_OR, sl_eval_or);
+        left = sl_make_binary_node(ps, left, low_precedence_logical_expression(ps), SL_NODE_OR);
     }
     return left;
 }
@@ -888,7 +888,7 @@ postfix_expression(sl_parse_state_t* ps)
             case SL_TOK_UNLESS:
                 next_token(ps);
                 expr = sl_make_if_node(ps, 
-                    sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_NOT, sl_eval_not),
+                    sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_NOT),
                     expr, NULL);
                 break;
             default:
