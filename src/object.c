@@ -294,7 +294,7 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
     return sl_send2(vm, recv, sl_make_cstring_placement(vm, &id_placement, id), argc, argv);
 }
 
-static SLVAL
+SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     char errstr[1024];

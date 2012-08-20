@@ -57,7 +57,7 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
 int
 sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b);
 
-static SLVAL
+SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv);
 
 SLVAL
