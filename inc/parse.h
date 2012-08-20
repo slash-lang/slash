@@ -42,7 +42,7 @@ int
 sl_node_is_lval(sl_node_base_t* node);
 
 sl_node_base_t*
-sl_make_singleton_node(sl_parse_state_t* ps, sl_node_type_t type, sl_node_eval_fn_t fn);
+sl_make_singleton_node(sl_parse_state_t* ps, sl_node_type_t type);
 
 sl_node_seq_t*
 sl_make_seq_node(sl_parse_state_t* ps);
@@ -60,10 +60,10 @@ sl_node_base_t*
 sl_make_raw_echo_node(sl_parse_state_t* ps, sl_node_base_t* expr);
 
 sl_node_base_t*
-sl_make_binary_node(sl_parse_state_t* ps, sl_node_base_t* left, sl_node_base_t* right, sl_node_type_t type, SLVAL(*eval)(sl_node_binary_t*,sl_eval_ctx_t*));
+sl_make_binary_node(sl_parse_state_t* ps, sl_node_base_t* left, sl_node_base_t* right, sl_node_type_t type);
 
 sl_node_base_t*
-sl_make_unary_node(sl_parse_state_t* ps, sl_node_base_t* expr, sl_node_type_t type, SLVAL(*eval)(sl_node_unary_t*,sl_eval_ctx_t*));
+sl_make_unary_node(sl_parse_state_t* ps, sl_node_base_t* expr, sl_node_type_t type);
 
 sl_node_base_t*
 sl_make_immediate_node(sl_parse_state_t* ps, SLVAL val);
@@ -72,7 +72,7 @@ sl_node_base_t*
 sl_make_send_node(sl_parse_state_t* ps, int line, sl_node_base_t* recv, SLVAL id, size_t argc, sl_node_base_t** argv);
 
 sl_node_base_t*
-sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL(*eval)(sl_node_var_t*,sl_eval_ctx_t*), SLVAL id);
+sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL id);
 
 sl_node_base_t*
 sl_make_const_node(sl_parse_state_t* ps, sl_node_base_t* obj, SLVAL id);

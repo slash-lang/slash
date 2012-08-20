@@ -47,7 +47,6 @@ struct sl_node_base;
 
 typedef struct sl_node_base {
     sl_node_type_t type;
-    SLVAL(*eval)(struct sl_node_base*, struct sl_eval_ctx*);
 }
 sl_node_base_t;
 
