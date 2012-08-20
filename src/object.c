@@ -295,7 +295,7 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
 }
 
 static SLVAL
-apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
+sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     char errstr[1024];
     sl_vm_exec_ctx_t* ctx;
@@ -366,7 +366,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     
     if(sl_get_primitive_type(recv) != SL_T_INT && recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return apply(vm, recv, method, argc, argv);
+            return sl_apply_method(vm, recv, method, argc, argv);
         }
     }
     
@@ -375,7 +375,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
         while(klassp->base.primitive_type != SL_T_NIL) {
             if(klassp->base.singleton_methods) {
                 if(st_lookup(klassp->base.singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
-                    return apply(vm, recv, method, argc, argv);
+                    return sl_apply_method(vm, recv, method, argc, argv);
                 }
             }
             klassp = (sl_class_t*)sl_get_ptr(klassp->super);
@@ -385,7 +385,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return apply(vm, recv, method, argc, argv);
+            return sl_apply_method(vm, recv, method, argc, argv);
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
@@ -400,7 +400,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return apply(vm, recv, method, argc, argv);
+            return sl_apply_method(vm, recv, method, argc, argv);
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
