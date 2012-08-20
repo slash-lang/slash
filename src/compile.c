@@ -303,7 +303,7 @@ NODE(sl_node_def_t, def)
 {
     sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
-    size_t i;
+    size_t i, on_reg;
     init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
     for(i = 0; i < node->arg_count; i++) {
         st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
@@ -315,8 +315,18 @@ NODE(sl_node_def_t, def)
     insn.uint = 0;
     emit(&sub_cs, insn);
     
-    insn.opcode = SL_OP_DEFINE;
-    emit(cs, insn);
+    if(node->on) {
+        on_reg = reg_alloc(cs);
+        compile_node(cs, node->on, on_reg);
+        insn.opcode = SL_OP_DEFINE_ON;
+        emit(cs, insn);
+        insn.uint = on_reg;
+        emit(cs, insn);
+        reg_free(cs, on_reg);
+    } else {
+        insn.opcode = SL_OP_DEFINE;
+        emit(cs, insn);
+    }
     insn.imm = node->name;
     emit(cs, insn);
     insn.section = sub_cs.section;
@@ -484,6 +494,7 @@ NODE(sl_node_send_t, send)
     for(i = 0; i < node->arg_count; i++) {
         compile_node(cs, node->args[i], arg_base + i);
     }
+    
     insn.opcode = SL_OP_SEND;
     emit(cs, insn);
     insn.uint = dest; /* recv */

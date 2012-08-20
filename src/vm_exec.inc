@@ -86,3 +86,15 @@ vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLVAL name, sl_vm_section_t* sect
     sl_define_method3(ctx->vm, on, name, method);
     return method;
 }
+
+static SLVAL
+vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, sl_vm_section_t* section)
+{
+    SLVAL klass = on, method;
+    if(!sl_is_a(ctx->vm, klass, ctx->vm->lib.Class)) {
+        klass = sl_class_of(ctx->vm, klass);
+    }
+    method = sl_make_method(ctx->vm, klass, name, section, ctx);
+    sl_define_singleton_method3(ctx->vm, on, name, method);
+    return method;
+}

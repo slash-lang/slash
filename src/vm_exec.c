@@ -242,9 +242,16 @@ INSTRUCTION(SL_OP_DEFINE, {
     NEXT_REG() = vm_helper_define_method(ctx, tmp, tmp_section);
 });
 
-/* @TODO DEFINE_ON */
+/*  0: DEFINE
+    1: <reg:on>
+    2: <str:name>
+    3: <section:body>
+    4: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE_ON, {
-    sl_throw_message(vm, "DEFINE_ON opcode not yet implemented");
+    tmp = NEXT_REG();
+    tmp2 = NEXT_IMM();
+    tmp_section = NEXT_SECTION();
+    NEXT_REG() = vm_helper_define_singleton_method(ctx, tmp, tmp2, tmp_section);
 });
 
 /*  0: LAMBDA
