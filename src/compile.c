@@ -299,6 +299,32 @@ NODE(sl_node_base_t, self)
     (void)node;
 }
 
+NODE(sl_node_def_t, def)
+{
+    sl_vm_insn_t insn;
+    sl_compile_state_t sub_cs;
+    size_t i;
+    init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
+    for(i = 0; i < node->arg_count; i++) {
+        st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
+    }
+    sub_cs.section->arg_registers = node->arg_count;
+    compile_node(&sub_cs, node->body, 0);
+    insn.opcode = SL_OP_RETURN;
+    emit(&sub_cs, insn);
+    insn.uint = 0;
+    emit(&sub_cs, insn);
+    
+    insn.opcode = SL_OP_DEFINE;
+    emit(cs, insn);
+    insn.imm = node->name;
+    emit(cs, insn);
+    insn.section = sub_cs.section;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node_lambda_t, lambda)
 {
     sl_vm_insn_t insn;
@@ -805,9 +831,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_immediate_t,     IMMEDIATE,     immediate);
         COMPILE(sl_node_base_t,          SELF,          self);
         COMPILE(sl_node_class_t,         CLASS,         class);
-        /*
         COMPILE(sl_node_def_t,           DEF,           def);
-        */
         COMPILE(sl_node_lambda_t,        LAMBDA,        lambda);
         /*
         COMPILE(sl_node_try_t,           TRY,           try);

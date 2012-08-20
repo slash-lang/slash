@@ -13,6 +13,6 @@ SLVAL
 sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*c_func)());
 
 SLVAL
-sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, size_t arg_count, sl_string_t** args, sl_node_base_t* body, sl_eval_ctx_t* ctx);
+sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx);
 
 #endif

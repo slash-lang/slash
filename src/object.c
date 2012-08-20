@@ -298,10 +298,9 @@ static SLVAL
 apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     char errstr[1024];
-    sl_eval_ctx_t* ctx;
+    sl_vm_exec_ctx_t* ctx;
     size_t i;
-    SLVAL arg, ret;
-    sl_catch_frame_t frame;
+    SLVAL arg;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
         sl_throw_message2(vm, vm->lib.StackOverflowError, "Stack Overflow");
@@ -335,17 +334,18 @@ apply(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
                 sl_throw_message(vm, "Too many arguments for C function");
         }
     } else {
-        ctx = sl_close_eval_ctx(vm, method->as.sl.ctx);
+        ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
+        ctx->vm = vm;
+        ctx->section = method->as.sl.section;
+        ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
         ctx->self = recv;
-        for(i = 0; i < method->as.sl.argc; i++) {
-            arg = argv[i];
-            st_insert(ctx->vars,
-                (st_data_t)method->as.sl.argv[i], (st_data_t)sl_get_ptr(arg));
+        ctx->parent = method->as.sl.parent_ctx;
+        
+        for(i = 0; i < ctx->section->arg_registers; i++) {
+            ctx->registers[i + 1] = argv[i];
         }
-        SL_TRY(frame, SL_UNWIND_RETURN, {
-            ret = method->as.sl.body->eval(method->as.sl.body, ctx);
-        }, ret, {});
-        return ret;
+        
+        return sl_vm_exec(ctx);
     }
     return vm->lib.nil;
 }

@@ -3,6 +3,7 @@
 #include "string.h"
 #include "object.h"
 #include "class.h"
+#include "method.h"
 #include "lib/response.h"
 #include "lib/array.h"
 #include "lib/dict.h"
@@ -36,12 +37,9 @@
 #define V_FALSE (vm->lib._false)
 #define V_NIL (vm->lib.nil)
 
-#define TRACE(fmt, ...) fprintf(stderr, "%04lu " fmt "\n", ip, __VA_ARGS__)
-#define DISPATCH_TRACE(x) TRACE("%s", x)
-
 #define INSTRUCTION(opcode, code) \
                 case opcode: \
-                    /*/DISPATCH_TRACE(#opcode);/**/ \
+                    /*/fprintf(stderr, "%04lu %s\n", ip, #opcode);/**/ \
                     code \
                 break;
     
@@ -53,7 +51,7 @@
 /* helper functions */
 
 static SLVAL
-sl_vm_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_section_t* section)
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_section_t* section)
 {
     SLVAL klass, in;
     sl_vm_exec_ctx_t* subctx;
@@ -75,4 +73,16 @@ sl_vm_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_secti
     subctx->parent = ctx;
     sl_vm_exec(subctx);
     return klass;
+}
+
+static SLVAL
+vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLVAL name, sl_vm_section_t* section)
+{
+    SLVAL on = ctx->self, method;
+    if(!sl_is_a(ctx->vm, on, ctx->vm->lib.Class)) {
+        on = sl_class_of(ctx->vm, on);
+    }
+    method = sl_make_method(ctx->vm, on, name, section, ctx);
+    sl_define_method3(ctx->vm, on, name, method);
+    return method;
 }
