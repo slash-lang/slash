@@ -337,4 +337,10 @@ INSTRUCTION(SL_OP_RANGE_EX, {
     NEXT_REG() = tmp;
 });
 
+/*  0: LINE
+    1: <uint:line> */
+INSTRUCTION(SL_OP_LINE_TRACE, {
+    line = NEXT_UINT();
+});
+
 VM_END
