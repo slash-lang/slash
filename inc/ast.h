@@ -47,6 +47,7 @@ struct sl_node_base;
 
 typedef struct sl_node_base {
     sl_node_type_t type;
+    int line;
 }
 sl_node_base_t;
 
@@ -145,7 +146,6 @@ sl_node_try_t;
 typedef struct sl_node_send {
     sl_node_base_t base;
     uint8_t* file;
-    int line;
     sl_node_base_t* recv;
     SLVAL id;
     sl_node_base_t** args;
