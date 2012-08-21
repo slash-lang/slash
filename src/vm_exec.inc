@@ -16,6 +16,7 @@
     sl_vm_exec(sl_vm_exec_ctx_t* ctx) \
     { \
         size_t ip = 0; \
+        int line = 0; \
         sl_vm_t* vm = ctx->vm; \
         SLVAL tmp, tmp2, *tmp_p; \
         sl_string_t* tmp_str; \

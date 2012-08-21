@@ -19,6 +19,7 @@ typedef struct sl_compile_state {
     sl_vm_t* vm;
     st_table_t* vars;
     struct sl_compile_state* parent;
+    int last_line;
     uint8_t* registers;
     sl_vm_section_t* section;
     next_last_frame_t* next_last_frames;
@@ -32,6 +33,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->vm = vm;
     cs->vars = st_init_table(vm->arena, &sl_string_hash_type);
     cs->parent = parent;
+    cs->last_line = 0;
     cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
     cs->section->max_registers = init_registers;
     cs->section->arg_registers = 0;
@@ -830,6 +832,14 @@ NODE(sl_node__register_t, _register)
 static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
 {
+    sl_vm_insn_t insn;
+    if(node->line != cs->last_line && node->line != 0) {
+        cs->last_line = node->line;
+        insn.opcode = SL_OP_LINE_TRACE;
+        emit(cs, insn);
+        insn.uint = node->line;
+        emit(cs, insn);
+    }
     switch(node->type) {
         COMPILE(sl_node_seq_t,           SEQ,           seq);
         COMPILE(sl_node_raw_t,           RAW,           raw);
