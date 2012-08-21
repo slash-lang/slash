@@ -122,6 +122,7 @@ typedef struct sl_vm_section {
     sl_vm_insn_t* insns;
     size_t max_registers;
     size_t arg_registers;
+    int can_stack_alloc_frame;
 }
 sl_vm_section_t;
 

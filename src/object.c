@@ -298,6 +298,7 @@ SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     char errstr[1024];
+    sl_vm_exec_ctx_t stack_ctx;
     sl_vm_exec_ctx_t* ctx;
     size_t i;
     SLVAL arg;
@@ -334,10 +335,19 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
                 sl_throw_message(vm, "Too many arguments for C function");
         }
     } else {
-        ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
+        if(method->as.sl.section->can_stack_alloc_frame) {
+            ctx = &stack_ctx;
+            memset(ctx, 0, sizeof(*ctx));
+        } else {
+            ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
+        }
         ctx->vm = vm;
         ctx->section = method->as.sl.section;
-        ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
+        if(method->as.sl.section->can_stack_alloc_frame) {
+            ctx->registers = alloca(sizeof(SLVAL) * ctx->section->max_registers);
+        } else {
+            ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
+        }
         ctx->self = recv;
         ctx->parent = method->as.sl.parent_ctx;
         

@@ -40,6 +40,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->section->insns_cap = 4;
     cs->section->insns_count = 0;
     cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
+    cs->section->can_stack_alloc_frame = 1;
     cs->registers = sl_alloc(vm->arena, cs->section->max_registers);
     for(i = 0; i < init_registers; i++) {
         cs->registers[i] = 1;
@@ -219,6 +220,15 @@ NODE(sl_node_echo_t, echo_raw)
     emit(cs, insn);
 }
 
+static void
+mark_upper_scopes_as_closure_unsafe(sl_compile_state_t* cs, size_t count)
+{
+    while(cs->parent && count--) {
+        cs->parent->section->can_stack_alloc_frame = 0;
+        cs = cs->parent;
+    }
+}
+
 NODE(sl_node_var_t, var)
 {
     sl_vm_insn_t insn;
@@ -237,6 +247,7 @@ NODE(sl_node_var_t, var)
                 emit(cs, insn);
                 insn.uint = frame;
                 emit(cs, insn);
+                mark_upper_scopes_as_closure_unsafe(cs, frame);
             }    
             insn.uint = index;
             emit(cs, insn);
@@ -733,6 +744,7 @@ NODE(sl_node_assign_var_t, assign_var)
                     emit(cs, insn);
                     insn.uint = dest;
                     emit(cs, insn);
+                    mark_upper_scopes_as_closure_unsafe(cs, frame);
                 }
                 return;
             }
