@@ -483,7 +483,7 @@ NODE(sl_node_while_t, while)
 NODE(sl_node_for_t, for)
 {
     sl_vm_insn_t insn;
-    size_t enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
+    size_t expr_reg = reg_alloc(cs), enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
     sl_node__register_t enum_reg_node;
     size_t begin, end_jump_fixup, end_else_fixup;
     next_last_frame_t nl;
@@ -491,7 +491,7 @@ NODE(sl_node_for_t, for)
     enum_reg_node.base.type = SL_NODE__REGISTER;
     enum_reg_node.reg = enum_reg;
     
-    compile_node(cs, node->expr, enum_reg);
+    compile_node(cs, node->expr, expr_reg);
     
     insn.opcode = SL_OP_IMMEDIATE;
     emit(cs, insn);
@@ -502,7 +502,7 @@ NODE(sl_node_for_t, for)
     
     insn.opcode = SL_OP_SEND;
     emit(cs, insn);
-    insn.uint = enum_reg;
+    insn.uint = expr_reg;
     emit(cs, insn);
     insn.imm = sl_make_cstring(cs->vm, "enumerate");
     emit(cs, insn);
@@ -597,7 +597,14 @@ NODE(sl_node_for_t, for)
     
     cs->section->insns[end_else_fixup].uint = cs->section->insns_count;
     
-    emit_immediate(cs, cs->vm->lib.nil, dest);
+    insn.opcode = SL_OP_MOV;
+    emit(cs, insn);
+    insn.uint = expr_reg;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    reg_free(cs, expr_reg);
 }
 
 NODE(sl_node_send_t, send)
