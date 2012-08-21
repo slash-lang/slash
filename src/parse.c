@@ -389,7 +389,7 @@ send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
 {
     size_t argc = 0, cap = 2;
     sl_node_base_t** argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
-    sl_token_t* tok = expect_token(ps, SL_TOK_OPEN_PAREN);
+    expect_token(ps, SL_TOK_OPEN_PAREN);
     while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
         if(argc >= cap) {
             cap *= 2;
@@ -401,7 +401,7 @@ send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
         }
     }
     expect_token(ps, SL_TOK_CLOSE_PAREN);
-    return sl_make_send_node(ps, tok->line, recv, id, argc, argv);
+    return sl_make_send_node(ps, recv, id, argc, argv);
 }
 
 static sl_node_base_t*
@@ -567,7 +567,7 @@ send_expression(sl_parse_state_t* ps, sl_node_base_t* recv)
     tok = expect_token(ps, SL_TOK_IDENTIFIER);
     id = sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len);
     if(peek_token(ps)->type != SL_TOK_OPEN_PAREN) {
-        return sl_make_send_node(ps, tok->line, recv, id, 0, NULL);
+        return sl_make_send_node(ps, recv, id, 0, NULL);
     }
     return send_with_args_expression(ps, recv, id);
 }
@@ -611,7 +611,7 @@ call_expression(sl_parse_state_t* ps)
                     }
                 }
                 expect_token(ps, SL_TOK_CLOSE_BRACKET);
-                left = sl_make_send_node(ps, tok->line, left, sl_make_cstring(ps->vm, "[]"), node_len, nodes);
+                left = sl_make_send_node(ps, left, sl_make_cstring(ps->vm, "[]"), node_len, nodes);
                 break;
             default: break;
         }
@@ -628,7 +628,7 @@ power_expression(sl_parse_state_t* ps)
     if(peek_token(ps)->type == SL_TOK_POW) {
         tok = next_token(ps);
         right = power_expression(ps);
-        left = sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+        left = sl_make_send_node(ps, left, tok->str, 1, &right);
     }
     return left;
 }
@@ -644,11 +644,11 @@ unary_expression(sl_parse_state_t* ps)
             tok = next_token(ps);
             id = sl_make_cstring(ps->vm, "negate");
             expr = unary_expression(ps);
-            return sl_make_send_node(ps, tok->line, expr, id, 0, NULL);
+            return sl_make_send_node(ps, expr, id, 0, NULL);
         case SL_TOK_TILDE:
             tok = next_token(ps);
             expr = unary_expression(ps);
-            return sl_make_send_node(ps, tok->line, expr, tok->str, 0, NULL);
+            return sl_make_send_node(ps, expr, tok->str, 0, NULL);
         case SL_TOK_NOT:
             next_token(ps);
             expr = unary_expression(ps);
@@ -685,7 +685,7 @@ mul_expression(sl_parse_state_t* ps)
             peek_token(ps)->type == SL_TOK_MOD) {
         tok = next_token(ps);
         right = unary_expression(ps);
-        left = sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+        left = sl_make_send_node(ps, left, tok->str, 1, &right);
     }
     return left;
 }
@@ -699,7 +699,7 @@ add_expression(sl_parse_state_t* ps)
     while(peek_token(ps)->type == SL_TOK_PLUS || peek_token(ps)->type == SL_TOK_MINUS) {
         tok = next_token(ps);
         right = mul_expression(ps);
-        left = sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+        left = sl_make_send_node(ps, left, tok->str, 1, &right);
     }
     return left;
 }
@@ -713,7 +713,7 @@ shift_expression(sl_parse_state_t* ps)
     while(peek_token(ps)->type == SL_TOK_SHIFT_LEFT || peek_token(ps)->type == SL_TOK_SHIFT_RIGHT) {
         tok = next_token(ps);
         right = add_expression(ps);
-        left = sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+        left = sl_make_send_node(ps, left, tok->str, 1, &right);
     }
     return left;
 }
@@ -731,7 +731,7 @@ bitwise_expression(sl_parse_state_t* ps)
             case SL_TOK_CARET:
                 tok = next_token(ps);
                 right = shift_expression(ps);
-                left = sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+                left = sl_make_send_node(ps, left, tok->str, 1, &right);
                 break;
             default:
                 return left;
@@ -755,7 +755,7 @@ relational_expression(sl_parse_state_t* ps)
         case SL_TOK_SPACESHIP:
             tok = next_token(ps);
             right = bitwise_expression(ps);
-            return sl_make_send_node(ps, tok->line, left, tok->str, 1, &right);
+            return sl_make_send_node(ps, left, tok->str, 1, &right);
         default:
             return left;
     }
@@ -831,7 +831,7 @@ assignment_expression(sl_parse_state_t* ps)
                 argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * (send->arg_count + 1));
                 memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
                 argv[send->arg_count] = assignment_expression(ps);
-                left = sl_make_send_node(ps, tok->line, send->recv,
+                left = sl_make_send_node(ps, send->recv,
                     sl_string_concat(ps->vm, send->id, sl_make_cstring(ps->vm, "=")),
                     send->arg_count + 1, argv);
                 break;
