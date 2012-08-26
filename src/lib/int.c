@@ -1,9 +1,9 @@
 #include <stdio.h>
-#include "class.h"
-#include "value.h"
-#include "lib/bignum.h"
-#include "lib/float.h"
-#include "string.h"
+#include "slash/class.h"
+#include "slash/value.h"
+#include "slash/lib/bignum.h"
+#include "slash/lib/float.h"
+#include "slash/string.h"
 
 static int
 highest_set_bit(intptr_t t)

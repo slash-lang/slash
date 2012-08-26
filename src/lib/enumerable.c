@@ -1,4 +1,4 @@
-#include "slash.h"
+#include "slash/slash.h"
 
 static SLVAL
 enumerable_map(sl_vm_t* vm, SLVAL self, SLVAL f)

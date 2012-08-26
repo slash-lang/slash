@@ -1,4 +1,4 @@
-#include "slash.h"
+#include "slash/slash.h"
 #include <string.h>
 #include <stdio.h>
 

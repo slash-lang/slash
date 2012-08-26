@@ -1,5 +1,5 @@
-#include "lib/lambda.h"
-#include "slash.h"
+#include "slash/lib/lambda.h"
+#include "slash/slash.h"
 #include <stdio.h>
 
 typedef struct {

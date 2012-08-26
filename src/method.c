@@ -1,5 +1,5 @@
-#include "class.h"
-#include "method.h"
+#include "slash/class.h"
+#include "slash/method.h"
 
 static sl_object_t*
 allocate_method(sl_vm_t* vm)

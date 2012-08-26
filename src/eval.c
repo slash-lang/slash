@@ -1,17 +1,22 @@
-#include "eval.h"
-#include "object.h"
-#include "string.h"
-#include "class.h"
-#include "lex.h"
-#include "parse.h"
-#include "method.h"
-#include "lib/array.h"
-#include "lib/response.h"
-#include "lib/range.h"
+#include "slash/eval.h"
+#include "slash/object.h"
+#include "slash/string.h"
+#include "slash/class.h"
+#include "slash/lex.h"
+#include "slash/parse.h"
+#include "slash/method.h"
+#include "slash/lib/array.h"
+#include "slash/lib/response.h"
+#include "slash/lib/range.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <alloca.h>
+
+#ifndef _WIN32
+    #include <alloca.h>
+#else
+    #include <malloc.h>
+#endif
 
 SLVAL
 sl_do_file(sl_vm_t* vm, uint8_t* filename)

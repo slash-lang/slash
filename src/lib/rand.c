@@ -1,8 +1,8 @@
 #include <time.h>
-#include "lib/rand.h"
-#include "lib/float.h"
-#include "slash.h"
-#include "platform.h"
+#include "slash/lib/rand.h"
+#include "slash/lib/float.h"
+#include "slash/slash.h"
+#include "slash/platform.h"
 
 static int mt;
 

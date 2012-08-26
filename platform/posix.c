@@ -6,14 +6,14 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
-#include "platform.h"
+#include "slash/platform.h"
 
 char*
 sl_realpath(sl_vm_t* vm, char* path)
 {
     char *cpath, *gcbuff;
     if(path[0] != '/') {
-        gcbuff = sl_alloc_buffer(vm->arena, strlen(vm->cwd) + strlen(path) + 10);
+        gcbuff = sl_alloc_buffer(vm->arena, strlen(vm->cwd) + strlen(path) + 2);
         strcpy(gcbuff, vm->cwd);
         strcat(gcbuff, "/");
         strcat(gcbuff, path);

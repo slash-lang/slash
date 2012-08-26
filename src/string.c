@@ -3,13 +3,13 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "string.h"
-#include "value.h"
-#include "vm.h"
-#include "class.h"
-#include "utf8.h"
-#include "lib/array.h"
-#include "lib/number.h"
+#include "slash/string.h"
+#include "slash/value.h"
+#include "slash/vm.h"
+#include "slash/class.h"
+#include "slash/utf8.h"
+#include "slash/lib/array.h"
+#include "slash/lib/number.h"
 
 static int
 str_hash(sl_string_t* str)

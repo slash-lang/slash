@@ -1,6 +1,6 @@
 #include <string.h>
-#include "lib/response.h"
-#include "lib/dict.h"
+#include "slash/lib/response.h"
+#include "slash/lib/dict.h"
 
 static int Response_;
 static int Response_opts;

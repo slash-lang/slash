@@ -1,8 +1,8 @@
-#include "lib/range.h"
-#include "object.h"
-#include "class.h"
-#include "string.h"
-#include "mem.h"
+#include "slash/lib/range.h"
+#include "slash/object.h"
+#include "slash/class.h"
+#include "slash/string.h"
+#include "slash/mem.h"
 
 typedef struct {
     sl_object_t base;
