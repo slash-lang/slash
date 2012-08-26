@@ -1,5 +1,5 @@
-#include "slash.h"
-#include "platform.h"
+#include "slash/slash.h"
+#include "slash/platform.h"
 #include <string.h>
 
 static SLVAL

@@ -1,6 +1,6 @@
 #define _GNU_SOURCE
 #include <pthread.h>
-#include "platform.h"
+#include "slash/platform.h"
 
 void*
 sl_stack_limit()

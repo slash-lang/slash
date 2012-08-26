@@ -1,4 +1,4 @@
-#include "slash.h"
+#include "slash/slash.h"
 
 int
 sl_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)

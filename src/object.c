@@ -1,13 +1,17 @@
-#include <alloca.h>
+#ifndef _WIN32
+    #include <alloca.h>
+#else
+    #include <malloc.h>
+#endif
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "object.h"
-#include "class.h"
-#include "string.h"
-#include "method.h"
-#include "platform.h"
+#include "slash/object.h"
+#include "slash/class.h"
+#include "slash/string.h"
+#include "slash/method.h"
+#include "slash/platform.h"
 
 void
 sl_pre_init_object(sl_vm_t* vm)

@@ -1,9 +1,9 @@
-#include "parse.h"
-#include "eval.h"
-#include "string.h"
-#include "class.h"
-#include "lib/lambda.h"
-#include "object.h"
+#include "slash/parse.h"
+#include "slash/eval.h"
+#include "slash/string.h"
+#include "slash/class.h"
+#include "slash/lib/lambda.h"
+#include "slash/object.h"
 #include <string.h>
 
 void

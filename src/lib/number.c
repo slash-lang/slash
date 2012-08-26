@@ -1,6 +1,6 @@
-#include "class.h"
-#include "value.h"
-#include "lib/bignum.h"
+#include "slash/class.h"
+#include "slash/value.h"
+#include "slash/lib/bignum.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

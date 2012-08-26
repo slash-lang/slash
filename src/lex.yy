@@ -1,8 +1,8 @@
 %{
-    #include "lex.h"
-    #include "string.h"
-    #include "error.h"
-    #include "mem.h"
+    #include "slash/lex.h"
+    #include "slash/string.h"
+    #include "slash/error.h"
+    #include "slash/mem.h"
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive stack

@@ -1,6 +1,6 @@
-#include "slash.h"
-#include "lib/request.h"
-#include "lib/response.h"
+#include <slash/slash.h>
+#include <slash/lib/request.h>
+#include <slash/lib/response.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

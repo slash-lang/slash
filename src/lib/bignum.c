@@ -1,9 +1,9 @@
 #include <stdlib.h>
-#include "class.h"
-#include "value.h"
-#include "lib/float.h"
-#include "lib/bignum.h"
-#include "string.h"
+#include "slash/class.h"
+#include "slash/value.h"
+#include "slash/lib/float.h"
+#include "slash/lib/bignum.h"
+#include "slash/string.h"
 #include <gmp.h>
 
 typedef struct {

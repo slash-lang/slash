@@ -1,5 +1,5 @@
-#include "compile.h"
-#include "string.h"
+#include "slash/compile.h"
+#include "slash/string.h"
 #include <string.h>
 
 typedef struct fixup {
