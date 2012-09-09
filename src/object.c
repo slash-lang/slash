@@ -364,7 +364,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
     return vm->lib.nil;
 }
 
-static sl_method_t*
+sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
 {
     sl_method_t* method;
