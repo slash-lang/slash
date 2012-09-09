@@ -2,7 +2,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdio.h>
-#include "slash.h"
+#include <slash.h>
 
 typedef struct {
     char* re;

@@ -1,4 +1,4 @@
-#include "slash.h"
+#include <slash.h>
 #include <yajl/yajl_parse.h>
 #include <gc.h>
 #include <stdio.h>
