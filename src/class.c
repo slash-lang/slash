@@ -1,12 +1,12 @@
 #include <stdlib.h>
-#include "st.h"
-#include "value.h"
-#include "vm.h"
-#include "string.h"
-#include "class.h"
-#include "method.h"
-#include "object.h"
-#include "mem.h"
+#include <slash/st.h>
+#include <slash/value.h>
+#include <slash/vm.h>
+#include <slash/string.h>
+#include <slash/class.h>
+#include <slash/method.h>
+#include <slash/object.h>
+#include <slash/mem.h>
 
 static sl_object_t*
 allocate_class(sl_vm_t* vm)

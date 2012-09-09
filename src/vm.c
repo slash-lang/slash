@@ -1,14 +1,14 @@
 #include <stdlib.h>
 #include <time.h>
-#include "lib/rand.h"
-#include "value.h"
-#include "vm.h"
-#include "string.h"
-#include "class.h"
-#include "object.h"
-#include "error.h"
-#include "platform.h"
-#include "mem.h"
+#include <slash/lib/rand.h>
+#include <slash/value.h>
+#include <slash/vm.h>
+#include <slash/string.h>
+#include <slash/class.h>
+#include <slash/object.h>
+#include <slash/error.h>
+#include <slash/platform.h>
+#include <slash/mem.h>
 
 static int
 sl_statically_initialized;
