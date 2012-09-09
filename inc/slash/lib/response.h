@@ -1,8 +1,8 @@
 #ifndef SL_LIB_RESPONSE_H
 #define SL_LIB_RESPONSE_H
 
-#include "vm.h"
-#include "value.h"
+#include <slash/vm.h>
+#include <slash/value.h>
 
 typedef struct {
     char* name;

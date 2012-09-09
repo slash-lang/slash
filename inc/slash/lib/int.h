@@ -1,8 +1,8 @@
 #ifndef SL_LIB_INT_H
 #define SL_LIB_INT_H
 
-#include "vm.h"
-#include "value.h"
+#include <slash/vm.h>
+#include <slash/value.h>
 
 SLVAL
 sl_int_to_s(sl_vm_t* vm, SLVAL self);
