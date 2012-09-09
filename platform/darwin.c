@@ -1,5 +1,5 @@
 #include <pthread.h>
-#include "platform.h"
+#include <slash/platform.h>
 
 void*
 pthread_get_stackaddr_np(pthread_t);

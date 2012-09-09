@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
-#include "platform.h"
+#include <slash/platform.h>
 
 char*
 sl_realpath(sl_vm_t* vm, char* path)
