@@ -344,3 +344,12 @@ sl_array_sort(sl_vm_t* vm, SLVAL array)
     quicksort(vm, copy->items, copy->count);
     return sl_make_ptr((sl_object_t*)copy);
 }
+
+size_t
+sl_array_items(sl_vm_t* vm, SLVAL array, SLVAL** items)
+{
+    sl_array_t* aryp = get_array(vm, array);
+    *items = sl_alloc(vm->arena, sizeof(SLVAL) * aryp->count);
+    memcpy(*items, aryp->items, sizeof(SLVAL) * aryp->count);
+    return aryp->count;
+}
