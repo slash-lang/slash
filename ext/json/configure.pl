@@ -1,4 +1,4 @@
-check_lib "yajl_s", <<C;
+check_lib "yajl", <<C;
     #include <yajl/yajl_parse.h>
     
     int main() {
