@@ -1,6 +1,6 @@
 include local.mk
 
-CFLAGS+=-Wall -Wextra -pedantic -ansi -iquote $(BASE_PATH)/inc -fPIC
+CFLAGS+=-Wall -Wextra -pedantic -ansi -I $(BASE_PATH)/inc -fPIC
 LDFLAGS+=-L$(BASE_PATH) -lslash
 
 OBJS+=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
