@@ -40,7 +40,6 @@
 
 #define INSTRUCTION(opcode, code) \
                 case opcode: \
-                    /*/fprintf(stderr, "%04lu %s\n", ip, #opcode);/**/ \
                     code \
                 break;
     
