@@ -1,6 +1,4 @@
-#include "slash.h"
-#include "lib/request.h"
-#include "lib/response.h"
+#include <slash.h>
 #include <fcgi_config.h>
 #include <fcgiapp.h>
 #include <stdio.h>

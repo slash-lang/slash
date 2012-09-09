@@ -3,10 +3,7 @@
 #include <http_protocol.h>
 #include <http_config.h>
 #include <util_script.h>
-#include "slash.h"
-#include "platform.h"
-#include "lib/request.h"
-#include "lib/response.h"
+#include <slash.h>
 
 typedef struct {
     sl_vm_t* vm;
