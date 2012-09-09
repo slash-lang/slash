@@ -14,13 +14,23 @@
 static int
 str_hash(sl_string_t* str)
 {
-    uint32_t m = 0x5bd1e995;
-    uint32_t r = 24;
-    uint32_t seed = 0x9747b28c;
+    uint32_t m;
+    uint32_t r;
+    uint32_t seed;
     
-    int hash = seed ^ str->buff_len;
+    int hash;
     int k;
     size_t i;
+    
+    if(str->hash_set) {
+        return str->hash;
+    }
+    
+    m = 0x5bd1e995;
+    r = 24;
+    seed = 0x9747b28c;
+    hash = seed ^ str->buff_len;
+    
     for(i = 0; i + 4 <= str->buff_len; i += 4) {
         k = *(uint32_t*)&str->buff[i];
         
@@ -44,7 +54,8 @@ str_hash(sl_string_t* str)
     hash *= m;
     hash ^= hash >> 15;
     
-    return hash;
+    str->hash_set = 1;
+    return str->hash = hash;
 }
 
 static int
@@ -71,6 +82,7 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
     memcpy(str->buff, buff, buff_len);
     str->buff[buff_len] = 0;
     str->buff_len = buff_len;
+    str->hash_set = 0;
     return vstr;
 }
 
@@ -122,6 +134,7 @@ sl_make_cstring_placement(sl_vm_t* vm, sl_string_t* placement, char* cstr)
     placement->buff = (uint8_t*)cstr;
     placement->buff_len = strlen(cstr);
     placement->char_len = placement->buff_len;
+    placement->hash_set = 0;
     return sl_make_ptr((sl_object_t*)placement);
 }
 
