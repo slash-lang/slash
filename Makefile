@@ -58,10 +58,9 @@ clean:
 install:
 	mkdir -p $(INSTALL_PREFIX)/bin
 	mkdir -p $(INSTALL_PREFIX)/lib
-	mkdir -p $(INSTALL_PREFIX)/include/slash
+	mkdir -p $(INSTALL_PREFIX)/include
 	cp libslash.a $(INSTALL_PREFIX)/lib
-	cp -r inc/* $(INSTALL_PREFIX)/include/slash
-	echo '#include "slash/slash.h"' > $(INSTALL_PREFIX)/include/slash.h
+	cp -r inc/* $(INSTALL_PREFIX)/include
 	for sapi in $(SAPIS_ENABLED); do make -C sapi/$$sapi install; done
 
 uninstall:
