@@ -448,5 +448,9 @@ static SLVAL
 sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
     sl_method_t* method = sl_lookup_method(vm, self, (sl_string_t*)sl_get_ptr(sl_to_s(vm, method_name)));
-    return sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), self);
+    if(method) {
+        return sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), self);
+    } else {
+        return vm->lib.nil;
+    }
 }
