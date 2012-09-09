@@ -66,4 +66,7 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);
 SLVAL
 sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL id, size_t argc, SLVAL* argv);
 
+sl_method_t*
+sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id);
+
 #endif
