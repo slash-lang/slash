@@ -53,14 +53,6 @@ int sl_seed()
     struct stat s;
     FILE* f;
     int seed;
-    if(!stat("/dev/random", &s)) {
-        f = fopen("/dev/random", "rb");
-        if(f) {
-            fread(&seed, sizeof(int), 1, f);
-            fclose(f);
-            return seed;
-        }
-    }
     if(!stat("/dev/urandom", &s)) {
         f = fopen("/dev/urandom", "rb");
         if(f) {
