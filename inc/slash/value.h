@@ -61,6 +61,8 @@ typedef struct sl_string {
     uint8_t* buff;
     size_t buff_len;
     size_t char_len;
+    int hash;
+    int hash_set;
 }
 sl_string_t;
 
