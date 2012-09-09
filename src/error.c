@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "lib/array.h"
-#include "lib/enumerable.h"
-#include "string.h"
-#include "error.h"
-#include "value.h"
-#include "class.h"
-#include "vm.h"
+#include <slash/lib/array.h>
+#include <slash/lib/enumerable.h>
+#include <slash/string.h>
+#include <slash/error.h>
+#include <slash/value.h>
+#include <slash/class.h>
+#include <slash/vm.h>
 
 typedef struct sl_error {
     sl_object_t base;

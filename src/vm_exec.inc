@@ -1,14 +1,14 @@
-#include "vm.h"
-#include "value.h"
-#include "string.h"
-#include "object.h"
-#include "class.h"
-#include "method.h"
-#include "lib/response.h"
-#include "lib/array.h"
-#include "lib/dict.h"
-#include "lib/range.h"
-#include "lib/lambda.h"
+#include <slash/vm.h>
+#include <slash/value.h>
+#include <slash/string.h>
+#include <slash/object.h>
+#include <slash/class.h>
+#include <slash/method.h>
+#include <slash/lib/response.h>
+#include <slash/lib/array.h>
+#include <slash/lib/dict.h>
+#include <slash/lib/range.h>
+#include <slash/lib/lambda.h>
 #include <stdio.h>
 
 #define VM_BEGIN \
