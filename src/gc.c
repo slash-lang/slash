@@ -2,6 +2,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <slash/mem.h>
+#include <stdint.h>
 
 #define POINTER_ALIGN_BYTES (4)
 #define ALLOCS_PER_GC_RUN (100000)
