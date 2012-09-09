@@ -40,6 +40,9 @@ sl_object_hash(sl_vm_t* vm, SLVAL self);
 static SLVAL
 sl_object_is_a(sl_vm_t* vm, SLVAL self, SLVAL klass);
 
+static SLVAL
+sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -51,6 +54,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
+    sl_define_method(vm, vm->lib.Object, "method", 1, sl_object_method);
     sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
     sl_define_method(vm, vm->lib.Object, "!=", 1, sl_object_ne);
 }
@@ -360,23 +364,17 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
     return vm->lib.nil;
 }
 
-SLVAL
-sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
+static sl_method_t*
+sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
 {
     sl_method_t* method;
+    sl_object_t* recvp = sl_get_ptr(recv);
     SLVAL klass = sl_class_of(vm, recv);
     sl_class_t* klassp;
-    sl_object_t* recvp = sl_get_ptr(recv);
-    SLVAL* argv2;
-    sl_string_t* id;
-    SLVAL error;
-    
-    sl_expect(vm, idv, vm->lib.String);
-    id = (sl_string_t*)sl_get_ptr(idv);
     
     if(sl_get_primitive_type(recv) != SL_T_INT && recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return sl_apply_method(vm, recv, method, argc, argv);
+            return method;
         }
     }
     
@@ -385,7 +383,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
         while(klassp->base.primitive_type != SL_T_NIL) {
             if(klassp->base.singleton_methods) {
                 if(st_lookup(klassp->base.singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
-                    return sl_apply_method(vm, recv, method, argc, argv);
+                    return method;
                 }
             }
             klassp = (sl_class_t*)sl_get_ptr(klassp->super);
@@ -395,9 +393,30 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return sl_apply_method(vm, recv, method, argc, argv);
+            return method;
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
+    }
+    
+    return NULL;
+}
+
+SLVAL
+sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
+{
+    sl_method_t* method;
+    SLVAL klass = sl_class_of(vm, recv);
+    sl_class_t* klassp;
+    SLVAL* argv2;
+    sl_string_t* id;
+    SLVAL error;
+    
+    sl_expect(vm, idv, vm->lib.String);
+    id = (sl_string_t*)sl_get_ptr(idv);
+    
+    method = sl_lookup_method(vm, recv, id);
+    if(method) {
+        return sl_apply_method(vm, recv, method, argc, argv);
     }
     
     /* look for method_missing method */
@@ -423,4 +442,11 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     error = sl_string_concat(vm, error, sl_object_inspect(vm, recv));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, error));
     return vm->lib.nil; /* shutup gcc */
+}
+
+static SLVAL
+sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
+{
+    sl_method_t* method = sl_lookup_method(vm, self, (sl_string_t*)sl_get_ptr(sl_to_s(vm, method_name)));
+    return sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), self);
 }
