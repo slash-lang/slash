@@ -1,7 +1,7 @@
 #ifndef SL_LIB_DICT_H
 #define SL_LIB_DICT_H
 
-#include "slash.h"
+#include <slash.h>
 
 SLVAL
 sl_make_dict(sl_vm_t* vm, size_t count, SLVAL* kvs);
