@@ -80,6 +80,19 @@ sl_class_super(sl_vm_t* vm, SLVAL self)
     return get_class(vm, self)->super;
 }
 
+static SLVAL
+sl_class_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
+{
+    sl_class_t* klass = get_class(vm, self);
+    SLVAL method;
+    method_name = sl_to_s(vm, method_name);
+    if(st_lookup(klass->instance_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+        return method;
+    } else {
+        return vm->lib.nil;
+    }
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -91,6 +104,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "super", 0, sl_class_super);
     sl_define_method(vm, vm->lib.Class, "inspect", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "new", -1, sl_new);
+    sl_define_method(vm, vm->lib.Class, "instance_method", 1, sl_class_instance_method);
 }
 
 SLVAL
