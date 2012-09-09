@@ -188,7 +188,7 @@ for my $ext (@exts) {
 
 open my $init_exts, ">$path/src/init_exts.c";
 print $init_exts <<"C";
-#include "slash.h"
+#include <slash.h>
 
 $ext_decls
 
