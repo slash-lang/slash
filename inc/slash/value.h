@@ -39,7 +39,6 @@ typedef struct sl_object {
     sl_primitive_type_t primitive_type;
     st_table_t* instance_variables;
     st_table_t* singleton_methods;
-    void* data;
 }
 sl_object_t;
 
