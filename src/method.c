@@ -90,11 +90,12 @@ sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver)
         sl_throw_message2(vm, vm->lib.TypeError, "Can't bind uninitialized Method");
     }
     
-    bmethp->method.name      = methp->name;
-    bmethp->method.klass     = methp->klass;
-    bmethp->method.is_c_func = methp->is_c_func;
-    bmethp->method.arity     = methp->arity;
-    bmethp->method.as        = methp->as;
+    bmethp->method.initialized  = 1;
+    bmethp->method.name         = methp->name;
+    bmethp->method.klass        = methp->klass;
+    bmethp->method.is_c_func    = methp->is_c_func;
+    bmethp->method.arity        = methp->arity;
+    bmethp->method.as           = methp->as;
     
     bmethp->self = sl_expect(vm, receiver, methp->klass);
     return sl_make_ptr((sl_object_t*)bmethp);
