@@ -16,5 +16,7 @@
 #include "slash/lib/bignum.h"
 #include "slash/lib/float.h"
 #include "slash/lib/int.h"
+#include "slash/lib/rand.h"
+#include "slash/lib/comparable.h"
 
 #endif
