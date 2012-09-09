@@ -1,7 +1,7 @@
 #include <gcrypt.h>
 #include <stdio.h>
 #include <alloca.h>
-#include "slash.h"
+#include <slash.h>
 
 static int cGCrypt;
 static int cGCrypt_Algorithm;

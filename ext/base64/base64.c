@@ -1,5 +1,5 @@
 #include <string.h>
-#include "slash.h"
+#include <slash.h>
 
 static const char enc_table[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

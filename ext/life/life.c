@@ -1,4 +1,4 @@
-#include "slash.h"
+#include <slash.h>
 
 static int
 meaning_of_life = -1;

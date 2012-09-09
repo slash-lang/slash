@@ -1,4 +1,4 @@
-#include "slash.h"
+#include <slash.h>
 
 static SLVAL
 ordinalize(sl_vm_t* vm, int rem)
