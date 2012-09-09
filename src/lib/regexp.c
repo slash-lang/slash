@@ -1,6 +1,6 @@
-#include "lib/regexp.h"
-#include "class.h"
-#include "string.h"
+#include <slash/lib/regexp.h>
+#include <slash/class.h>
+#include <slash/string.h>
 #include <string.h>
 #include <stdio.h>
 #include <pcre.h>

@@ -1,9 +1,9 @@
-#include "value.h"
-#include "vm.h"
-#include "class.h"
-#include "string.h"
-#include "object.h"
-#include "lib/bignum.h"
+#include <slash/value.h>
+#include <slash/vm.h>
+#include <slash/class.h>
+#include <slash/string.h>
+#include <slash/object.h>
+#include <slash/lib/bignum.h>
 #include <stdlib.h>
 #include <time.h>
 

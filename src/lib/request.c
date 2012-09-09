@@ -1,6 +1,6 @@
 #include <string.h>
-#include "lib/request.h"
-#include "lib/dict.h"
+#include <slash/lib/request.h>
+#include <slash/lib/dict.h>
 
 typedef struct {
     SLVAL method;

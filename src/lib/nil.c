@@ -1,7 +1,7 @@
-#include "vm.h"
-#include "value.h"
-#include "class.h"
-#include "string.h"
+#include <slash/vm.h>
+#include <slash/value.h>
+#include <slash/class.h>
+#include <slash/string.h>
 
 static sl_object_t*
 allocate_nil(sl_vm_t* vm)
