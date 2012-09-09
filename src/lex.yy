@@ -31,10 +31,10 @@ HEX [0-9a-fA-F]
 
 %%
 
-<INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));        BEGIN(SLASH); }
-<INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));    BEGIN(SLASH); }
+<INITIAL>"<%="      { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_ECHO_TAG));                 BEGIN(SLASH); }
+<INITIAL>"<%!!"     { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_RAW_ECHO_TAG));             BEGIN(SLASH); }
 <INITIAL>"<%#"      {                                                                 BEGIN(COMMENT_TAG); }
-<INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));             BEGIN(SLASH); }
+<INITIAL>"<%"       { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_TAG));                      BEGIN(SLASH); }
 
 <INITIAL>\n         { sl_lex_append_to_raw(yyextra, yytext, 1); yyextra->line++; }
 <INITIAL>.          { sl_lex_append_to_raw(yyextra, yytext, 1); }
