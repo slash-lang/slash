@@ -160,7 +160,7 @@ open my $mf, ">$path/local.mk";
 my %platforms = (
     darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; },
     linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\n"; $CFLAGS .= " -I/usr/include/mysql"; $LDFLAGS .= " -lpthread -lm" },
-    cygwin  => sub { print $mf "OBJS+= platform/win32.o"; },
+    cygwin  => sub { print $mf "OBJS+= platform/win32.o\n"; },
 );
 if($platforms{$^O}) {
     $platforms{$^O}->();
