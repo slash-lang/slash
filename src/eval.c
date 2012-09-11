@@ -8,10 +8,10 @@
 #include <slash/lib/array.h>
 #include <slash/lib/response.h>
 #include <slash/lib/range.h>
+#include <slash/platform.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <alloca.h>
 
 SLVAL
 sl_do_file(sl_vm_t* vm, uint8_t* filename)
