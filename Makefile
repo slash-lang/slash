@@ -29,7 +29,7 @@ sapi[%]: libslash.a
 	@tput sgr0
 
 libslash.a: $(OBJS)
-	ar r $@ $^
+	$(AR) r $@ $^
 
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
