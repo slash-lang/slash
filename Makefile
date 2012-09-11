@@ -24,9 +24,9 @@ test: sapi[cli]
 
 sapi[%]: libslash.a
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" make -C sapi/$*
-	@tput setaf 2; tput bold
-	@echo "Built $* successfully"
-	@tput sgr0
+	@echo
+	@echo "   Built $* successfully"
+	@echo
 
 libslash.a: $(OBJS)
 	$(AR) r $@ $^
