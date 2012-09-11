@@ -82,6 +82,6 @@ sl_seed()
 void*
 sl_stack_limit()
 {
-    // TODO: VirtualQuery dwTopOfStack for length
+    /* TODO: VirtualQuery dwTopOfStack for length */
     return NULL;
 }
