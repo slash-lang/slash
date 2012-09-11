@@ -9,7 +9,7 @@ int sl_abs_file_exists(char* path);
 int sl_seed();
 void* sl_stack_limit();
 
-#ifdef WIN32
+#ifdef _WIN32
     #include <malloc.h>
 #else
     #include <alloca.h>
