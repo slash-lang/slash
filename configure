@@ -82,7 +82,7 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    my $command = "$ENV{CC} $CFLAGS $flags -o $binary $filename 2>&1";
+    my $command = "$ENV{CC} $CFLAGS $flags -o $binary $filename $flags 2>&1";
     print "% $command\n" if $verbose;
     my $output = `$command`;
     print $output if $verbose;
