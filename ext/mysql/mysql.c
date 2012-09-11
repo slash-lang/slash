@@ -1,7 +1,6 @@
 #include <slash.h>
 #include <mysql.h>
 #include <gc.h>
-#include <alloca.h>
 #include <stdlib.h>
 #include <string.h>
 
