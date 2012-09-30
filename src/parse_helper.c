@@ -280,6 +280,16 @@ sl_make_assign_global_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_ba
 }
 
 sl_node_base_t*
+sl_make_assign_send_node(sl_parse_state_t* ps, sl_node_send_t* lval, sl_node_base_t* rval, char* op_method)
+{
+    MAKE_NODE(SL_NODE_ASSIGN_GLOBAL, sl_node_assign_send_t, {
+        node->lval = lval;
+        node->rval = rval;
+        node->op_method = op_method;
+    });
+}
+
+sl_node_base_t*
 sl_make_assign_const_node(sl_parse_state_t* ps, sl_node_const_t* lval, sl_node_base_t* rval)
 {
     MAKE_NODE(SL_NODE_ASSIGN_CONST, sl_node_assign_const_t, {
@@ -298,6 +308,41 @@ sl_make_assign_array_node(sl_parse_state_t* ps, sl_node_array_t* lval, sl_node_b
         node->lval = lval;
         node->rval = rval;
     });
+}
+
+static sl_node_base_t*
+make_generic_assignment(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval)
+{
+    switch(lval->base.type) {
+        case SL_NODE_VAR:
+            return sl_make_assign_var_node(ps, lval, rval);
+        case SL_NODE_IVAR:
+            return sl_make_assign_ivar_node(ps, lval, rval);
+        case SL_NODE_CVAR:
+            return sl_make_assign_cvar_node(ps, lval, rval);
+        case SL_NODE_GLOBAL:
+            return sl_make_assign_global_node(ps, lval, rval);
+        default:
+            return NULL;
+    }
+}
+
+sl_node_base_t*
+sl_make_simple_assign_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval, char* op_method)
+{
+    if(op_method == NULL) {
+        return make_generic_assignment(ps, lval, rval);
+    }
+    if(strcmp(op_method, "||") == 0) {
+        return sl_make_if_node(ps, (sl_node_base_t*)lval, (sl_node_base_t*)lval,
+            make_generic_assignment(ps, lval, rval));
+    }
+    if(strcmp(op_method, "&&") == 0) {
+        return sl_make_if_node(ps, (sl_node_base_t*)lval,
+            make_generic_assignment(ps, lval, rval), (sl_node_base_t*)lval);
+    }
+    return make_generic_assignment(ps, lval,
+        sl_make_send_node(ps, (sl_node_base_t*)lval, sl_make_cstring(ps->vm, op_method), 1, &rval));
 }
 
 sl_node_base_t*
