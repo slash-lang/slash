@@ -149,9 +149,9 @@ HEX [0-9a-fA-F]
 
 <SLASH>"^"          { ADD_TOKEN(sl_make_token(SL_TOK_CARET)); }
 <SLASH>"~"          { ADD_TOKEN(sl_make_token(SL_TOK_TILDE)); }
-<SLASH>"&"          { ADD_TOKEN(sl_make_token(SL_TOK_BIT_AND)); }
+<SLASH>"&"          { ADD_TOKEN(sl_make_token(SL_TOK_AMP)); }
 <SLASH>"&&"         { ADD_TOKEN(sl_make_token(SL_TOK_AND)); }
-<SLASH>"|"          { ADD_TOKEN(sl_make_token(SL_TOK_BIT_OR)); }
+<SLASH>"|"          { ADD_TOKEN(sl_make_token(SL_TOK_PIPE)); }
 <SLASH>"||"         { ADD_TOKEN(sl_make_token(SL_TOK_OR)); }
 <SLASH>"!"          { ADD_TOKEN(sl_make_token(SL_TOK_NOT)); }
 

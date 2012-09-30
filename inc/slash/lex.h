@@ -83,8 +83,8 @@ typedef enum sl_token_type {
     SL_TOK_AND,
     SL_TOK_NOT,
     
-    SL_TOK_BIT_OR,
-    SL_TOK_BIT_AND,
+    SL_TOK_PIPE,
+    SL_TOK_AMP,
     SL_TOK_CARET,
     SL_TOK_TILDE,
     

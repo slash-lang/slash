@@ -254,8 +254,8 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_MOD:
         case SL_TOK_CARET:
         case SL_TOK_TILDE:
-        case SL_TOK_BIT_AND:
-        case SL_TOK_BIT_OR:
+        case SL_TOK_AMP:
+        case SL_TOK_PIPE:
             return next_token(ps)->str;
         case SL_TOK_OPEN_BRACKET:
             if(peek_token_n(ps, 2)->type == SL_TOK_CLOSE_BRACKET) {
@@ -726,8 +726,8 @@ bitwise_expression(sl_parse_state_t* ps)
     sl_token_t* tok;
     while(1) {
         switch(peek_token(ps)->type) {
-            case SL_TOK_BIT_OR:
-            case SL_TOK_BIT_AND:
+            case SL_TOK_PIPE:
+            case SL_TOK_AMP:
             case SL_TOK_CARET:
                 tok = next_token(ps);
                 right = shift_expression(ps);
