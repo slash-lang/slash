@@ -803,49 +803,54 @@ range_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 assignment_expression(sl_parse_state_t* ps)
 {
-    sl_node_send_t* send;
-    sl_node_base_t** argv;
     sl_node_base_t* left = range_expression(ps);
-    sl_token_t* tok;
-    if(peek_token(ps)->type == SL_TOK_EQUALS) {
-        switch(left->type) {
-            case SL_NODE_VAR:
-                next_token(ps);
-                left = sl_make_assign_var_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
-                break;
-            case SL_NODE_IVAR:
-                next_token(ps);
-                left = sl_make_assign_ivar_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
-                break;
-            case SL_NODE_CVAR:
-                next_token(ps);
-                left = sl_make_assign_cvar_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
-                break;
-            case SL_NODE_GLOBAL:
-                next_token(ps);
-                left = sl_make_assign_global_node(ps, (sl_node_var_t*)left, assignment_expression(ps));
-                break;
-            case SL_NODE_SEND:
-                tok = next_token(ps);
-                send = (sl_node_send_t*)left;
-                argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * (send->arg_count + 1));
-                memcpy(argv, send->args, sizeof(sl_node_base_t*) * send->arg_count);
-                argv[send->arg_count] = assignment_expression(ps);
-                left = sl_make_send_node(ps, send->recv,
-                    sl_string_concat(ps->vm, send->id, sl_make_cstring(ps->vm, "=")),
-                    send->arg_count + 1, argv);
-                break;
-            case SL_NODE_CONST:
-                next_token(ps);
-                left = sl_make_assign_const_node(ps, (sl_node_const_t*)left, assignment_expression(ps));
-                break;
-            case SL_NODE_ARRAY:
-                next_token(ps);
-                left = sl_make_assign_array_node(ps, (sl_node_array_t*)left, assignment_expression(ps));
-                break;
-            default:
-                break;
-        }
+    sl_token_t* tok = peek_token(ps);
+    char* op_method;
+    switch(tok->type) {
+        case SL_TOK_EQUALS:             op_method = NULL; break;
+        case SL_TOK_ASSIGN_PLUS:        op_method = "+";  break;
+        case SL_TOK_ASSIGN_MINUS:       op_method = "-";  break;
+        case SL_TOK_ASSIGN_POW:         op_method = "**"; break;
+        case SL_TOK_ASSIGN_TIMES:       op_method = "*";  break;
+        case SL_TOK_ASSIGN_DIVIDE:      op_method = "/";  break;
+        case SL_TOK_ASSIGN_MOD:         op_method = "%";  break;
+        case SL_TOK_ASSIGN_PIPE:        op_method = "|";  break;
+        case SL_TOK_ASSIGN_AMP:         op_method = "&";  break;
+        case SL_TOK_ASSIGN_CARET:       op_method = "^";  break;
+        case SL_TOK_ASSIGN_OR:          op_method = "||"; break;
+        case SL_TOK_ASSIGN_AND:         op_method = "&&"; break;
+        case SL_TOK_ASSIGN_SHIFT_LEFT:  op_method = "<<"; break;
+        case SL_TOK_ASSIGN_SHIFT_RIGHT: op_method = ">>"; break;
+        
+        default:
+            return left;
+    }
+    switch(left->type) {
+        case SL_NODE_VAR:
+        case SL_NODE_IVAR:
+        case SL_NODE_CVAR:
+        case SL_NODE_GLOBAL:
+            next_token(ps);
+            left = sl_make_simple_assign_node(ps, (sl_node_var_t*)left, assignment_expression(ps), op_method);
+            break;
+        case SL_NODE_SEND:
+            next_token(ps);
+            left = sl_make_assign_send_node(ps, (sl_node_send_t*)left, assignment_expression(ps), op_method);
+            break;
+        case SL_NODE_CONST:
+            /*  compound assignment makes no sense on constants, so error
+                if the assignment operator is anything except '=': */
+            expect_token(ps, SL_TOK_EQUALS);
+            left = sl_make_assign_const_node(ps, (sl_node_const_t*)left, assignment_expression(ps));
+            break;
+        case SL_NODE_ARRAY:
+            /*  compound assignment makes no sense on arrays, so error if
+                the assignment operator is anything except '=': */
+            expect_token(ps, SL_TOK_EQUALS);
+            left = sl_make_assign_array_node(ps, (sl_node_array_t*)left, assignment_expression(ps));
+            break;
+        default:
+            break;
     }
     return left;
 }
