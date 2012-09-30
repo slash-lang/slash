@@ -127,6 +127,9 @@ HEX [0-9a-fA-F]
 <SLASH>"}"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE)); }
 <SLASH>";"          { ADD_TOKEN(sl_make_token(SL_TOK_SEMICOLON)); }
 
+<SLASH>"<<="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_SHIFT_LEFT)); }
+<SLASH>">>="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_SHIFT_RIGHT)); }
+
 <SLASH>"<<"         { ADD_TOKEN(sl_make_token(SL_TOK_SHIFT_LEFT)); }
 <SLASH>">>"         { ADD_TOKEN(sl_make_token(SL_TOK_SHIFT_RIGHT)); }
 <SLASH>","          { ADD_TOKEN(sl_make_token(SL_TOK_COMMA)); }
@@ -140,12 +143,25 @@ HEX [0-9a-fA-F]
 <SLASH>">="         { ADD_TOKEN(sl_make_token(SL_TOK_GTE)); }
 <SLASH>">"          { ADD_TOKEN(sl_make_token(SL_TOK_GT)); }
 
+<SLASH>"+="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_PLUS)); }
+<SLASH>"-="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_MINUS)); }
+<SLASH>"**="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_POW)); }
+<SLASH>"*="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_TIMES)); }
+<SLASH>"/="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_DIVIDE)); }
+<SLASH>"%="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_MOD)); }
+
 <SLASH>"+"          { ADD_TOKEN(sl_make_token(SL_TOK_PLUS)); }
 <SLASH>"-"          { ADD_TOKEN(sl_make_token(SL_TOK_MINUS)); }
 <SLASH>"**"         { ADD_TOKEN(sl_make_token(SL_TOK_POW)); }
 <SLASH>"*"          { ADD_TOKEN(sl_make_token(SL_TOK_TIMES)); }
 <SLASH>"/"          { ADD_TOKEN(sl_make_token(SL_TOK_DIVIDE)); }
 <SLASH>"%"          { ADD_TOKEN(sl_make_token(SL_TOK_MOD)); }
+
+<SLASH>"^="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_CARET)); }
+<SLASH>"&="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_AMP)); }
+<SLASH>"&&="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_AND)); }
+<SLASH>"|="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_PIPE)); }
+<SLASH>"||="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_OR)); }
 
 <SLASH>"^"          { ADD_TOKEN(sl_make_token(SL_TOK_CARET)); }
 <SLASH>"~"          { ADD_TOKEN(sl_make_token(SL_TOK_TILDE)); }
