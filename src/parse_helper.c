@@ -282,7 +282,7 @@ sl_make_assign_global_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_ba
 sl_node_base_t*
 sl_make_assign_send_node(sl_parse_state_t* ps, sl_node_send_t* lval, sl_node_base_t* rval, char* op_method)
 {
-    MAKE_NODE(SL_NODE_ASSIGN_GLOBAL, sl_node_assign_send_t, {
+    MAKE_NODE(SL_NODE_ASSIGN_SEND, sl_node_assign_send_t, {
         node->lval = lval;
         node->rval = rval;
         node->op_method = op_method;
