@@ -1,3 +1,2 @@
-language: php # the PHP workers have libgmp
-script: ./configure --vanilla --sapi=cli && make && make test
-# force ci build
+language: c
+script: sudo apt-get install libgmp-dev && ./configure --vanilla --sapi=cli && make && make test
