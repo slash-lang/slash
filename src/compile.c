@@ -379,6 +379,42 @@ NODE(sl_node_lambda_t, lambda)
     emit(cs, insn);
 }
 
+NODE(sl_node_try_t, try)
+{
+    sl_vm_insn_t insn;
+    size_t catch_fixup, after_fixup;
+    
+    insn.opcode = SL_OP_TRY;
+    emit(cs, insn);
+    insn.uint = 0xdeadbeef;
+    catch_fixup = emit(cs, insn);
+    
+    compile_node(cs, node->body, dest);
+
+    insn.opcode = SL_OP_END_TRY;
+    emit(cs, insn);
+    
+    insn.opcode = SL_OP_JUMP;
+    emit(cs, insn);
+    insn.uint = 0xdeadbeef;
+    after_fixup = emit(cs, insn);
+    
+    cs->section->insns[catch_fixup].uint = cs->section->insns_count;
+    
+    insn.opcode = SL_OP_CATCH;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    insn.opcode = SL_OP_END_TRY;
+    emit(cs, insn);
+    
+    emit_assignment(cs, node->lval, dest);
+    compile_node(cs, node->catch_body, dest);
+    
+    cs->section->insns[after_fixup].uint = cs->section->insns_count;
+}
+
 NODE(sl_node_class_t, class)
 {
     sl_vm_insn_t insn;
@@ -1197,9 +1233,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_class_t,         CLASS,          class);
         COMPILE(sl_node_def_t,           DEF,            def);
         COMPILE(sl_node_lambda_t,        LAMBDA,         lambda);
-        /*
         COMPILE(sl_node_try_t,           TRY,            try);
-        */
         COMPILE(sl_node_if_t,            IF,             if);
         COMPILE(sl_node_while_t,         WHILE,          while);
         COMPILE(sl_node_for_t,           FOR,            for);

@@ -342,3 +342,29 @@ INSTRUCTION(SL_OP_LINE_TRACE, {
 INSTRUCTION(SL_OP_ABORT, {
     sl_throw_message(vm, "VM abort");
 })
+
+/*  0: THROW
+    1: <reg:exception> */
+INSTRUCTION(SL_OP_THROW, {
+    sl_throw(vm, NEXT_REG());
+})
+
+/*  0: TRY
+    1: <uint:catch_ip> */
+INSTRUCTION(SL_OP_TRY, {
+    sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
+    eh->prev = exception_handler;
+    eh->catch_ip = NEXT_UINT();
+    exception_handler = eh;
+})
+
+/*  0: END_TRY */
+INSTRUCTION(SL_OP_END_TRY, {
+    exception_handler = exception_handler->prev;
+})
+
+/*  0: CATCH
+    1: <reg:exception_dest> */
+INSTRUCTION(SL_OP_CATCH, {
+    NEXT_REG() = frame.value;
+})

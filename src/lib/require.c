@@ -22,8 +22,7 @@ require(sl_vm_t* vm, SLVAL self, SLVAL file)
         }
         if(sl_file_exists(vm, (char*)spath->buff)) {
             canon_path = sl_realpath(vm, (char*)spath->buff);
-            sl_do_file(vm, (uint8_t*)canon_path);
-            return vm->lib._true;
+            return sl_do_file(vm, (uint8_t*)canon_path);
         }
     }
     err = sl_make_cstring(vm, "Could not load '");
