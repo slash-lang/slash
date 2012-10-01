@@ -98,10 +98,10 @@ sl_int_div(sl_vm_t* vm, SLVAL self, SLVAL other)
     int a = sl_get_int(self);
     int b;
     if(sl_is_a(vm, other, vm->lib.Bignum)) {
-        return sl_bignum_add(vm, sl_make_bignum(vm, a), other);
+        return sl_bignum_div(vm, sl_make_bignum(vm, a), other);
     }
     if(sl_is_a(vm, other, vm->lib.Float)) {
-        return sl_float_add(vm, sl_make_float(vm, a), other);
+        return sl_float_div(vm, sl_make_float(vm, a), other);
     }
     b = sl_get_int(sl_expect(vm, other, vm->lib.Int));
     if(b == 0) {
