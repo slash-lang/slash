@@ -7,6 +7,7 @@
 #include <slash/lib/float.h>
 #include <slash/lib/bignum.h>
 #include <math.h>
+#include <string.h>
 
 typedef struct sl_float {
     sl_object_t base;
@@ -53,6 +54,12 @@ sl_float_to_s(sl_vm_t* vm, SLVAL self)
     double d = sl_get_float(vm, self);
     char buff[1024];
     sprintf(buff, "%f", d);
+    for(size_t i = strlen(buff) - 1; i > 0; i--) {
+        if(buff[i] != '0') {
+            break;
+        }
+        buff[i] = 0;
+    }
     return sl_make_cstring(vm, buff);
 }
 
