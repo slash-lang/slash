@@ -219,12 +219,6 @@ sl_throw(sl_vm_t* vm, SLVAL error)
 }
 
 void
-sl_return(sl_vm_t* vm, SLVAL value)
-{
-    sl_unwind(vm, value, SL_UNWIND_RETURN);
-}
-
-void
 sl_exit(sl_vm_t* vm, SLVAL value)
 {
     sl_unwind(vm, sl_expect(vm, value, vm->lib.Int), SL_UNWIND_EXIT);
