@@ -612,7 +612,9 @@ NODE(sl_node_for_t, for)
     reg_free(cs, has_looped_reg);
     reg_free(cs, enum_reg);
     
-    compile_node(cs, node->else_body, dest);
+    if(node->else_body) {
+        compile_node(cs, node->else_body, dest);
+    }
     
     cs->section->insns[end_else_fixup].uint = cs->section->insns_count;
     
@@ -1147,6 +1149,16 @@ NODE(sl_node_base_t, last)
     (void)dest;
 }
 
+NODE(sl_node_unary_t, throw)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->expr, dest);
+    insn.opcode = SL_OP_THROW;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node__register_t, _register)
 {
     sl_vm_insn_t insn;
@@ -1211,6 +1223,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_range_t,         RANGE,          range);
         COMPILE(sl_node_base_t,          NEXT,           next);
         COMPILE(sl_node_base_t,          LAST,           last);
+        COMPILE(sl_node_unary_t,         THROW,          throw);
         COMPILE(sl_node__register_t,     _REGISTER,      _register);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
