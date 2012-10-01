@@ -101,6 +101,8 @@ main(int argc, char** argv)
     vm = sl_init();
     sl_gc_set_stack_top(vm->arena, &argc);
     setup_request_response(vm);
+    SLVAL sl_argv = sl_make_array(vm, 0, NULL);
+    sl_class_set_const(vm, vm->lib.Object, "ARGV", sl_argv);
     if(argc > 1) {
         state.filename = (uint8_t*)argv[1];
         f = fopen((char*)state.filename, "rb");
@@ -108,7 +110,11 @@ main(int argc, char** argv)
             fprintf(stderr, "Can't open '%s' for reading\n", state.filename);
             exit(1);
         }
-    } else {    
+        for(size_t i = 2; i < argc; i++) {
+            SLVAL element = sl_make_cstring(vm, argv[i]);
+            sl_array_push(vm, sl_argv, 1, &element);
+        }
+    } else {
         state.filename = (uint8_t*)"(stdin)";
         f = stdin;
     }
