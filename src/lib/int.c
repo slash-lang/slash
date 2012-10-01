@@ -30,6 +30,12 @@ sl_int_pred(sl_vm_t* vm, SLVAL self)
 }
 
 SLVAL
+sl_int_negate(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, -sl_get_int(self));
+}
+
+SLVAL
 sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
@@ -188,6 +194,7 @@ sl_init_int(sl_vm_t* vm)
     vm->lib.Int = sl_define_class(vm, "Int", vm->lib.Number);
     sl_define_method(vm, vm->lib.Int, "succ", 0, sl_int_succ);
     sl_define_method(vm, vm->lib.Int, "pred", 0, sl_int_pred);
+    sl_define_method(vm, vm->lib.Int, "negate", 0, sl_int_negate);
     sl_define_method(vm, vm->lib.Int, "+", 1, sl_int_add);
     sl_define_method(vm, vm->lib.Int, "-", 1, sl_int_sub);
     sl_define_method(vm, vm->lib.Int, "*", 1, sl_int_mul);
