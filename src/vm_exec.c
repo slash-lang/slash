@@ -343,4 +343,9 @@ INSTRUCTION(SL_OP_LINE_TRACE, {
     line = NEXT_UINT();
 });
 
+/*  0: ABORT */
+INSTRUCTION(SL_OP_ABORT, {
+    sl_throw_message(vm, "VM abort");
+});
+
 VM_END
