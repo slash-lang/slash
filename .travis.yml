@@ -1,2 +1,4 @@
 language: c
-script: sudo apt-get install libgmp-dev && ./configure --vanilla --sapi=cli && make && sapi/cli/slash-cli test/test.sl test/*/*.sl
+before_script:
+  - sudo apt-get install libgmp-dev
+script: ./configure --vanilla --sapi=cli ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
