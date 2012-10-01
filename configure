@@ -1,10 +1,5 @@
 #!/usr/bin/env perl
 
-#
-# This configure script just checks that all the right dependencies are
-# available. It does not (yet) generate any Makefiles or header files...
-#
-
 use strict;
 use File::Temp qw(tempfile tempdir);
 use File::Spec::Functions qw(rel2abs);
