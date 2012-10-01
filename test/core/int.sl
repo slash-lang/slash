@@ -1,38 +1,63 @@
-@EXPECT
-2
-0
-1
--1
-true
-123
-77
-2300
-4
-8
-true
-true
-true
-true
-false
-0
--1
-1
-@CODE
-<%= 1.succ %>
-<%= -1.succ %>
-<%= 2.pred %>
-<%= 0.pred %>
-<%= -(5) == 5.negate && 5.negate == -5 %>
-<%= 100 + 23 %>
-<%= 100 - 23 %>
-<%= 100 * 23 %>
-<%= 100 / 23 %>
-<%= 100 % 23 %>
-<%= 100.to_s == 100.inspect %>
-<%= 100.to_i == 100 && 100.to_i.is_a(Int) %>
-<%= 100.to_f == 100.0 && 100.to_f.is_a(Float) %>
-<%= 100 == 100 %>
-<%= 100 == 200 %>
-<%= 100 <=> 100 %>
-<%= 100 <=> 200 %>
-<%= 200 <=> 100 %>
+<%
+
+class IntTest extends Test {
+    def test_succ {
+        assert_equal(2, 1.succ);
+        assert_equal(0, -1.succ);
+    }
+    
+    def test_pred {
+        assert_equal(1, 2.pred);
+        assert_equal(-1, 0.pred);
+    }
+    
+    def test_negate {
+        assert_equal(-5, 5.negate);
+        assert_equal(-(5), 5.negate);
+    }
+    
+    def test_addition {
+        assert_equal(123, 100 + 23);
+    }
+    
+    def test_subtraction {
+        assert_equal(77, 100 - 23);
+    }
+    
+    def test_multiplication {
+        assert_equal(2300, 100 * 23);
+    }
+    
+    def test_division {
+        assert_equal(4, 100 / 23);
+    }
+    
+    def test_modulo {
+        assert_equal(8, 100 % 23);
+    }
+    
+    def test_to_s_and_inspect {
+        assert_equal("5", 5.to_s);
+        assert_equal("5", 5.inspect);
+    }
+    
+    def test_to_i {
+        assert_equal(100, 100.to_i);
+        assert_is_a(Int, 100.to_i);
+    }
+    
+    def test_to_f {
+        assert_equal(100.0, 100.to_f);
+        assert_is_a(Float, 100.to_f);
+    }
+    
+    def test_inequality {
+        assert(100 != 200, "Expected 100 to not equal 200");
+    }
+    
+    def test_spaceship {
+        assert_equal(0, 100 <=> 100);
+        assert_equal(-1, 100 <=> 200);
+        assert_equal(1, 200 <=> 100);
+    }
+}.register;

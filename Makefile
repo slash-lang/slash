@@ -21,7 +21,7 @@ SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 default: $(TARGETS)
 
 test: sapi[cli]
-	sapi/cli/slash-cli test/driver.sl
+	ruby test/run.rb
 
 sapi[%]: libslash.a
 	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" make -C sapi/$*
@@ -38,7 +38,7 @@ src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 	$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
 src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
-	$(CC) -o $@ $(CFLAGS) -c $<
+	$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
 %.c: %.yy inc/*.h Makefile local.mk
 	flex -o $@ $<
