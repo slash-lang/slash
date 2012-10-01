@@ -340,7 +340,11 @@ lambda_expression(sl_parse_state_t* ps)
     sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
     sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_LAMBDA);
-    if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
+    if(peek_token(ps)->type == SL_TOK_IDENTIFIER) {
+        tok = next_token(ps);
+        args[arg_count++] = (sl_string_t*)sl_get_ptr(
+            sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+    } else if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             if(arg_count >= arg_cap) {
