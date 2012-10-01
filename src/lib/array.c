@@ -51,6 +51,7 @@ static void
 array_resize(sl_vm_t* vm, sl_array_t* aryp, size_t new_size)
 {
     size_t i, old_capacity;
+    aryp->count = new_size;
     if(new_size == 0) {
         return;
     }
@@ -69,7 +70,6 @@ array_resize(sl_vm_t* vm, sl_array_t* aryp, size_t new_size)
         }
         aryp->items = sl_realloc(vm->arena, aryp->items, sizeof(SLVAL) * aryp->capacity);
     }
-    aryp->count = new_size;
 }
 
 static SLVAL
@@ -211,9 +211,9 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "[]", 1, sl_array_get2);
     sl_define_method(vm, vm->lib.Array, "[]=", 2, sl_array_set2);
     sl_define_method(vm, vm->lib.Array, "length", 0, sl_array_length);
-    sl_define_method(vm, vm->lib.Array, "push", -2, sl_array_push);
+    sl_define_method(vm, vm->lib.Array, "push", -1, sl_array_push);
     sl_define_method(vm, vm->lib.Array, "pop", 0, sl_array_pop);
-    sl_define_method(vm, vm->lib.Array, "unshift", -2, sl_array_unshift);
+    sl_define_method(vm, vm->lib.Array, "unshift", -1, sl_array_unshift);
     sl_define_method(vm, vm->lib.Array, "shift", 0, sl_array_shift);
     sl_define_method(vm, vm->lib.Array, "to_a", 0, sl_array_to_a);
     sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_array_to_s);
@@ -304,9 +304,13 @@ SLVAL
 sl_array_pop(sl_vm_t* vm, SLVAL array)
 {
     sl_array_t* aryp = get_array(vm, array);
-    SLVAL val = aryp->items[aryp->count - 1];
-    array_resize(vm, aryp, aryp->count - 1);
-    return val;
+    if(aryp->count > 0) {
+        SLVAL val = aryp->items[aryp->count - 1];
+        array_resize(vm, aryp, aryp->count - 1);
+        return val;
+    } else {
+        return vm->lib.nil;
+    }
 }
 
 SLVAL
@@ -326,10 +330,14 @@ SLVAL
 sl_array_shift(sl_vm_t* vm, SLVAL array)
 {
     sl_array_t* aryp = get_array(vm, array);
-    SLVAL val = aryp->items[0];
-    memmove(aryp->items, aryp->items + 1, (aryp->count - 1) * sizeof(SLVAL));
-    array_resize(vm, aryp, aryp->count - 1);
-    return val;
+    if(aryp->count > 0) {
+        SLVAL val = aryp->items[0];
+        memmove(aryp->items, aryp->items + 1, (aryp->count - 1) * sizeof(SLVAL));
+        array_resize(vm, aryp, aryp->count - 1);
+        return val;
+    } else {
+        return vm->lib.nil;
+    }
 }
 
 static void
