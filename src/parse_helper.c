@@ -47,6 +47,7 @@ sl_make_node(sl_parse_state_t* ps, sl_node_type_t type, size_t size)
 {
     sl_node_base_t* node = sl_alloc(ps->vm->arena, size);
     node->type = type;
+    node->line = 0;
     return node;
 }
 

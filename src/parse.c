@@ -1038,6 +1038,7 @@ sl_parse(sl_vm_t* vm, sl_token_t* tokens, size_t token_count, uint8_t* filename)
     ps.current_token = 0;
     ps.filename = filename;
     ps.scope = &scope;
+    ps.line = 0;
     scope.flags = SL_PF_SCOPE_CLOSURE;
     return statements(&ps);
 }
