@@ -122,7 +122,8 @@ static SLVAL
 sl_error_frame_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_error_frame_t* frame = get_error_frame(vm, self);
-    SLVAL str = frame->method;
+    SLVAL str = sl_make_cstring(vm, "  at ");
+    str = sl_string_concat(vm, str, frame->method);
     str = sl_string_concat(vm, str, sl_make_cstring(vm, " in "));
     str = sl_string_concat(vm, str, frame->file);
     str = sl_string_concat(vm, str, sl_make_cstring(vm, ", line "));
