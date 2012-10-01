@@ -11,5 +11,6 @@ sl_stack_limit()
     size_t size;
     pthread_getattr_np(self, &attr);
     pthread_attr_getstack(&attr, &addr, &size);
+    pthread_attr_destroy(&attr);
     return (void*)((size_t)addr - size + 65536);
 }
