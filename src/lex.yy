@@ -83,10 +83,10 @@ HEX [0-9a-fA-F]
 <SLASH>"#"|"//"     {                                                                 BEGIN(COMMENT_LINE); }
 <SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));                     BEGIN(INITIAL); }
 
-<SLASH>[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }
-<SLASH>[0-9]+("."[0-9]+)("e"[+-]?[0-9]+)?   { ADD_TOKEN(sl_make_float_token(yytext)); }
+<SLASH>"-"?[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }
+<SLASH>"-"?[0-9]+("."[0-9]+)("e"[+-]?[0-9]+)?   { ADD_TOKEN(sl_make_float_token(yytext)); }
 
-<SLASH>[0-9]+           { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_INTEGER, yytext, yyleng)); }
+<SLASH>"-"?[0-9]+           { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_INTEGER, yytext, yyleng)); }
 
 <SLASH>"nil"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
 <SLASH>"true"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
