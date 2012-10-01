@@ -230,7 +230,7 @@ sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_mod(vm, sl_make_float(vm, mpz_get_d(a->mpz)), other);
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_mul(vm, self, sl_make_bignum(vm, sl_get_int(other)));
+        return sl_bignum_mod(vm, self, sl_make_bignum(vm, sl_get_int(other)));
     }
     b = get_bignum(vm, other);
     if(mpz_sgn(b->mpz) == 0) {
