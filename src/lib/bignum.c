@@ -79,6 +79,16 @@ sl_bignum_pred(sl_vm_t* vm, SLVAL val)
     return b;
 }
 
+static SLVAL
+sl_bignum_negate(sl_vm_t* vm, SLVAL val)
+{
+    sl_bignum_t* a = get_bignum(vm, val);
+    SLVAL b = sl_allocate(vm, vm->lib.Bignum);
+    sl_bignum_t* bp = get_bignum(vm, b);
+    mpz_neg(bp->mpz, a->mpz);
+    return b;
+}
+
 void
 sl_init_bignum(sl_vm_t* vm)
 {
@@ -90,6 +100,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "to_f", 0, sl_bignum_to_f);
     sl_define_method(vm, vm->lib.Bignum, "succ", 0, sl_bignum_succ);
     sl_define_method(vm, vm->lib.Bignum, "pred", 0, sl_bignum_pred);
+    sl_define_method(vm, vm->lib.Bignum, "negate", 0, sl_bignum_negate);
     sl_define_method(vm, vm->lib.Bignum, "+", 1, sl_bignum_add);
     sl_define_method(vm, vm->lib.Bignum, "-", 1, sl_bignum_sub);
     sl_define_method(vm, vm->lib.Bignum, "*", 1, sl_bignum_mul);
