@@ -18,4 +18,8 @@ class NilTest extends Test {
         flunk() if nil;
         assert(!nil, "not nil is true");
     }
+    
+    def test_class {
+        assert_equal(Nil, nil.class);
+    }
 }.register;

@@ -18,4 +18,8 @@ class TrueTest extends Test {
         flunk() unless true;
         assert_equal(false, !true);
     }
+    
+    def test_class {
+        assert_equal(True, true.class);
+    }
 }.register;
