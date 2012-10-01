@@ -112,6 +112,7 @@ HEX [0-9a-fA-F]
 <SLASH>"return"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_RETURN)); }
 <SLASH>"next"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_NEXT)); }
 <SLASH>"last"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_LAST)); }
+<SLASH>"throw"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_THROW)); }
 
 <SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 

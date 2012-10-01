@@ -682,7 +682,7 @@ unary_expression(sl_parse_state_t* ps)
             next_token(ps);
             expr = unary_expression(ps);
             return sl_make_unary_node(ps, expr, SL_NODE_NOT);
-        case SL_TOK_RETURN:    
+        case SL_TOK_RETURN:
             tok = next_token(ps);
             if(!(ps->scope->flags & SL_PF_CAN_RETURN)) {
                 error(ps, sl_make_cstring(ps->vm, "Can't return outside of a method or lambda"), tok);
@@ -699,6 +699,9 @@ unary_expression(sl_parse_state_t* ps)
                     return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_RETURN);
             }
             break;
+        case SL_TOK_THROW:
+            next_token(ps);
+            return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_THROW);
         default:
             return power_expression(ps);
     }

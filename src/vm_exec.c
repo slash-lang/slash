@@ -34,6 +34,12 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, s
 #define V_FALSE (vm->lib._false)
 #define V_NIL (vm->lib.nil)
 
+typedef struct sl_vm_exception_handler {
+    struct sl_vm_exception_handler* prev;
+    size_t catch_ip;
+}
+sl_vm_exception_handler_t;
+
 SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx)
 {
@@ -41,6 +47,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
     volatile int line = 0;
     sl_vm_t* vm = ctx->vm;
     sl_catch_frame_t frame;
+    sl_vm_exception_handler_t* exception_handler = NULL;
     
     #if 0
         void* jump_table[] = {
@@ -63,25 +70,32 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
         frame.prev = vm->catch_stack;
         frame.value = vm->lib.nil;
         vm->catch_stack = &frame;
-        if(!setjmp(frame.env)) {
-            while(1) {
-                /* for non-gcc compilers, fall back to switch in a loop */
-                #define INSTRUCTION(opcode, code) \
-                                case opcode: { \
-                                    code; \
-                                } break;
-                switch(NEXT().opcode) {
-                    #include "vm_defn.inc"
-                }
-            }
-        } else {
+        
+        reset_exception_handler:
+        if(setjmp(frame.env)) {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
                 sl_error_add_frame(vm, frame.value, ctx->section->name, sl_make_cstring(vm, (char*)ctx->section->filename), sl_make_int(vm, line));
             }
-            sl_rethrow(vm, &frame);
-            /* shut up gcc */
-            return V_NIL;
+            if(exception_handler) {
+                ip = exception_handler->catch_ip;
+                goto reset_exception_handler;
+            } else {
+                sl_rethrow(vm, &frame);
+            }
+        }
+        while(1) {
+            /* for non-gcc compilers, fall back to switch in a loop */
+            #define INSTRUCTION(opcode, code) \
+                            case opcode: { \
+                                code; \
+                            } break;
+            switch(NEXT().opcode) {
+                #include "vm_defn.inc"
+                
+                default:
+                    sl_throw_message(vm, "BUG: Unknown opcode in VM");
+            }
         }
     #endif
 }

@@ -104,7 +104,11 @@ typedef enum sl_vm_opcode {
     SL_OP_RANGE,
     SL_OP_RANGE_EX,
     SL_OP_LINE_TRACE,
-    SL_OP_ABORT
+    SL_OP_ABORT,
+    SL_OP_THROW,
+    SL_OP_TRY,
+    SL_OP_END_TRY,
+    SL_OP_CATCH,
 }
 sl_vm_opcode_t;
 
