@@ -13,4 +13,9 @@ class NilTest extends Test {
         assert_equal(nil, Nil.new);
         assert(Nil.new == Nil.new, "Expected two different instances of Nil to be considered equal");
     }
+    
+    def test_is_falsish {
+        flunk() if nil;
+        assert(!nil, "not nil is true");
+    }
 }.register;
