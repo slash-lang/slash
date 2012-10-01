@@ -6,4 +6,5 @@
 *.supp
 local.mk
 src/init_exts.c
+src/lib/error_page.c
 tmp
