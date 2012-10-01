@@ -39,4 +39,7 @@ sl_array_sort(sl_vm_t* vm, SLVAL array);
 size_t
 sl_array_items(sl_vm_t* vm, SLVAL array, SLVAL** items);
 
+SLVAL
+sl_array_concat(sl_vm_t* vm, SLVAL array, SLVAL other);
+
 #endif
