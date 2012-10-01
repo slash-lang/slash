@@ -182,6 +182,25 @@ sl_array_to_a(sl_vm_t* vm, SLVAL self)
     (void)vm; /* never reached */
 }
 
+static SLVAL
+sl_array_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(!sl_is_a(vm, other, vm->lib.Array)) {
+        return vm->lib._false;
+    }
+    sl_array_t* ary = get_array(vm, self);
+    sl_array_t* oth = get_array(vm, other);
+    if(ary->count != oth->count) {
+        return vm->lib._false;
+    }
+    for(size_t i = 0; i < ary->count; i++) {
+        if(!sl_eq(vm, ary->items[i], oth->items[i])) {
+            return vm->lib._false;
+        }
+    }
+    return vm->lib._true;
+}
+
 void
 sl_init_array(sl_vm_t* vm)
 {
@@ -203,6 +222,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "sort", 0, sl_array_sort);
     sl_define_method(vm, vm->lib.Array, "concat", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "+", 1, sl_array_concat);
+    sl_define_method(vm, vm->lib.Array, "==", 1, sl_array_eq);
     
     vm->lib.Array_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
