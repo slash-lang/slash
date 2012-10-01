@@ -24,6 +24,7 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, s
 
 #define NEXT_IMM() (NEXT().imm)
 #define NEXT_UINT() (NEXT().uint)
+#define NEXT_PTR() ((void*)NEXT().uint)
 #define NEXT_REG() (ctx->registers[NEXT_UINT()])
 #define NEXT_STR() (NEXT().str)
 #define NEXT_SECTION() (NEXT().section)
@@ -32,22 +33,43 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, s
 #define V_FALSE (vm->lib._false)
 #define V_NIL (vm->lib.nil)
 
-#define INSTRUCTION(opcode, code) \
-                case opcode: { \
-                    code \
-                } break;
-
 SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx)
 {
     size_t ip = 0;
     int line = 0;
     sl_vm_t* vm = ctx->vm;
-    while(1) {
-        switch(NEXT().opcode) {
+    
+    #if 0
+        void* jump_table[] = {
+            #define INSTRUCTION(opcode, code) [opcode] = &&vm_##opcode,
             #include "vm_defn.inc"
+            NULL
+        };
+        
+        goto *jump_table[NEXT().opcode];
+        
+        #undef INSTRUCTION
+        #define INSTRUCTION(op_name, code) \
+            vm_##op_name: { \
+                code; \
+            } \
+            goto *jump_table[NEXT().opcode];
+        
+        #include "vm_defn.inc"
+    #else
+        while(1) {
+            /* for non-gcc compilers, fall back to switch in a loop */
+            switch(NEXT().opcode) {
+                #define INSTRUCTION(opcode, code) \
+                                case opcode: { \
+                                    code; \
+                                } break;
+            
+                #include "vm_defn.inc"
+            }
         }
-    }
+    #endif
 }
 
 /* helper functions */

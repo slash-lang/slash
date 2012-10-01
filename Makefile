@@ -1,6 +1,7 @@
 include local.mk
 
-CFLAGS+=-Wall -Wextra -pedantic -std=c99 -I $(BASE_PATH)/inc
+CFLAGS+=-std=c99 -I $(BASE_PATH)/inc
+WARNING_CFLAGS=-Wall -Wextra -pedantic
 LDFLAGS+=-L$(BASE_PATH) -lslash
 
 OBJS+=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
@@ -34,7 +35,7 @@ libslash.a: $(OBJS)
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
 %.o: %.c inc/*.h inc/*/*.h inc/*/*/*.h Makefile local.mk
-	$(CC) -o $@ $(CFLAGS) -c $<
+	$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
 src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
 	$(CC) -o $@ $(CFLAGS) -c $<
