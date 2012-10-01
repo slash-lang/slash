@@ -346,6 +346,30 @@ sl_make_simple_assign_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_ba
 }
 
 sl_node_base_t*
+sl_make_prefix_mutate_node(sl_parse_state_t* ps, sl_node_base_t* lval, char* op_method)
+{
+    if(!sl_node_is_lval(lval)) {
+        sl_parse_error(ps, "Non-assignable in prefix mutation");
+    }
+    MAKE_NODE(SL_NODE_PREFIX_MUTATE, sl_node_mutate_t, {
+        node->lval = lval;
+        node->op_method = op_method;
+    });
+}
+
+sl_node_base_t*
+sl_make_postfix_mutate_node(sl_parse_state_t* ps, sl_node_base_t* lval, char* op_method)
+{
+    if(!sl_node_is_lval(lval)) {
+        sl_parse_error(ps, "Non-assignable in postfix mutation");
+    }
+    MAKE_NODE(SL_NODE_POSTFIX_MUTATE, sl_node_mutate_t, {
+        node->lval = lval;
+        node->op_method = op_method;
+    });
+}
+
+sl_node_base_t*
 sl_make_array_node(sl_parse_state_t* ps, size_t node_count, sl_node_base_t** nodes)
 {
     MAKE_NODE(SL_NODE_ARRAY, sl_node_array_t, {

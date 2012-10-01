@@ -620,9 +620,34 @@ call_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+inc_dec_expression(sl_parse_state_t* ps)
+{
+    if(peek_token(ps)->type == SL_TOK_INCREMENT) {
+        next_token(ps);
+        return sl_make_prefix_mutate_node(ps, call_expression(ps), "succ");
+    }
+    if(peek_token(ps)->type == SL_TOK_DECREMENT) {
+        next_token(ps);
+        return sl_make_prefix_mutate_node(ps, call_expression(ps), "pred");
+    }
+    sl_node_base_t* lval = call_expression(ps);
+    if(sl_node_is_lval(lval)) {
+        if(peek_token(ps)->type == SL_TOK_INCREMENT) {
+            next_token(ps);
+            return sl_make_postfix_mutate_node(ps, lval, "succ");
+        }
+        if(peek_token(ps)->type == SL_TOK_DECREMENT) {
+            next_token(ps);
+            return sl_make_postfix_mutate_node(ps, lval, "pred");
+        }
+    }
+    return lval;
+}
+
+static sl_node_base_t*
 power_expression(sl_parse_state_t* ps)
 {
-    sl_node_base_t* left = call_expression(ps);
+    sl_node_base_t* left = inc_dec_expression(ps);
     sl_node_base_t* right;
     sl_token_t* tok;
     if(peek_token(ps)->type == SL_TOK_POW) {

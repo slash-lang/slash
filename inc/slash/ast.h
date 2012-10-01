@@ -33,6 +33,8 @@ typedef enum sl_node_type {
     SL_NODE_ASSIGN_SEND,
     SL_NODE_ASSIGN_CONST,
     SL_NODE_ASSIGN_ARRAY,
+    SL_NODE_PREFIX_MUTATE,
+    SL_NODE_POSTFIX_MUTATE,
     SL_NODE_ARRAY,
     SL_NODE_DICT,
     SL_NODE_RETURN,
@@ -231,6 +233,13 @@ typedef struct sl_node_assign_array {
     sl_node_base_t* rval;
 }
 sl_node_assign_array_t;
+
+typedef struct sl_node_mutate {
+    sl_node_base_t base;
+    sl_node_base_t* lval;
+    char* op_method;
+}
+sl_node_mutate_t;
 
 typedef struct sl_node_range {
     sl_node_base_t base;

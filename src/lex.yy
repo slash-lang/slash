@@ -143,6 +143,9 @@ HEX [0-9a-fA-F]
 <SLASH>">="         { ADD_TOKEN(sl_make_token(SL_TOK_GTE)); }
 <SLASH>">"          { ADD_TOKEN(sl_make_token(SL_TOK_GT)); }
 
+<SLASH>"++"         { ADD_TOKEN(sl_make_token(SL_TOK_INCREMENT)); }
+<SLASH>"--"         { ADD_TOKEN(sl_make_token(SL_TOK_DECREMENT)); }
+
 <SLASH>"+="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_PLUS)); }
 <SLASH>"-="         { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_MINUS)); }
 <SLASH>"**="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_POW)); }
