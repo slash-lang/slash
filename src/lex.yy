@@ -66,7 +66,7 @@ HEX [0-9a-fA-F]
 <SLASH>"\""         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_STRING, "", 0)); BEGIN(STRING); }
 <SLASH>"'"{SYM}     { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_STRING, yytext + 1, yyleng - 1)); }
 
-<SLASH>"r{"         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_REGEXP, "", 0)); BEGIN(REGEXP); }
+<SLASH>"%r{"        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_REGEXP, "", 0)); BEGIN(REGEXP); }
 <REGEXP>"{"         { sl_lex_append_byte_to_string(yyextra, yytext[0]);               yy_push_state(REGEXP_R, yyscanner); }
 <REGEXP>"\\"(.|\n)  { sl_lex_append_byte_to_string(yyextra, yytext[0]);
                       sl_lex_append_byte_to_string(yyextra, yytext[1]); }
