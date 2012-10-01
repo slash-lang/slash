@@ -61,4 +61,8 @@ class FloatTest extends Test {
         assert_equal(-1, 100.500000 <=> 100.500001);
         assert_equal(1, 100.500001 <=> 100.500000);
     }
+    
+    def test_class {
+        assert_is_a(Float, 123.0);
+    }
 }.register;
