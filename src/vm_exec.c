@@ -1,4 +1,5 @@
 #include <slash/vm.h>
+#include <slash/error.h>
 #include <slash/value.h>
 #include <slash/string.h>
 #include <slash/object.h>
@@ -37,8 +38,9 @@ SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx)
 {
     size_t ip = 0;
-    int line = 0;
+    volatile int line = 0;
     sl_vm_t* vm = ctx->vm;
+    sl_catch_frame_t frame;
     
     #if 0
         void* jump_table[] = {
@@ -58,16 +60,28 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
         
         #include "vm_defn.inc"
     #else
-        while(1) {
-            /* for non-gcc compilers, fall back to switch in a loop */
-            switch(NEXT().opcode) {
+        frame.prev = vm->catch_stack;
+        frame.value = vm->lib.nil;
+        vm->catch_stack = &frame;
+        if(!setjmp(frame.env)) {
+            while(1) {
+                /* for non-gcc compilers, fall back to switch in a loop */
                 #define INSTRUCTION(opcode, code) \
                                 case opcode: { \
                                     code; \
                                 } break;
-            
-                #include "vm_defn.inc"
+                switch(NEXT().opcode) {
+                    #include "vm_defn.inc"
+                }
             }
+        } else {
+            vm->catch_stack = frame.prev;
+            if(frame.type & SL_UNWIND_EXCEPTION) {
+                sl_error_add_frame(vm, frame.value, ctx->self, V_NIL, V_NIL, sl_make_int(vm, line));
+            }
+            sl_rethrow(vm, &frame);
+            /* shut up gcc */
+            return V_NIL;
         }
     #endif
 }
