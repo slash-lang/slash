@@ -53,6 +53,7 @@ print("\n\n");
 for test_name, failure in Test::FAILURES {
     print(failure.name, " in ", test_name, " - ", failure.message, "\n");
     for frame in failure.backtrace {
+        next if frame.file == "test/test.sl";
         print("    ", frame, "\n");
     }
     print("\n");
