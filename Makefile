@@ -21,32 +21,33 @@ SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 default: $(TARGETS)
 
 test: sapi[cli]
-	ruby test/run.rb
+	sapi/cli/slash-cli test/test.sl test/*/*.sl
 
 sapi[%]: libslash.a
-	CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" make -C sapi/$*
+	@echo "make sapi/$*"
+	@CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)" make -C sapi/$*
 	@echo
 	@echo "   Built $* successfully"
 	@echo
 
 libslash.a: $(OBJS)
-	$(AR) r $@ $^
+	@echo "ar   $<"
+	@$(AR) r $@ $^
 
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
 %.o: %.c inc/*.h inc/*/*.h inc/*/*/*.h Makefile local.mk
-	$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
+	@echo "cc   $<"
+	@$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
 src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
-	$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
 %.c: %.yy inc/*.h Makefile local.mk
-	flex -o $@ $<
+	@echo "flex $<"
+	@flex -o $@ $<
 
-src/lib/error_page.o: src/lib/error_page.sl
-	perl scripts/txt-to-c.pl sl__error_page_src < $< > $@.c
-	$(CC) -o $@ -c $@.c
-	rm -f $@.c
+src/lib/error_page.c: src/lib/error_page.sl
+	@perl scripts/txt-to-c.pl sl__error_page_src < $< > $@
 
 clean:
 	rm -f src/*.o
