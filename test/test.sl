@@ -25,6 +25,15 @@ class Test {
         assert(what.is_a(klass), "Expected " + what.inspect + " to be a " + klass.name);
     }
     
+    def assert_throws(klass, fn) {
+        try {
+            fn.call;
+            assert(false, "Expected callback to throw");
+        } catch e {
+            assert_is_a(klass, e);
+        }
+    }
+    
     def self.run {
         obj = new();
         for method in obj.own_methods {
