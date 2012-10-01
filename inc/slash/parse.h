@@ -126,6 +126,12 @@ sl_node_base_t*
 sl_make_simple_assign_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval, char* op_method);
 
 sl_node_base_t*
+sl_make_prefix_mutate_node(sl_parse_state_t* ps, sl_node_base_t* lval, char* op_method);
+
+sl_node_base_t*
+sl_make_postfix_mutate_node(sl_parse_state_t* ps, sl_node_base_t* lval, char* op_method);
+
+sl_node_base_t*
 sl_make_array_node(sl_parse_state_t* ps, size_t node_count, sl_node_base_t** nodes);
 
 sl_node_base_t*

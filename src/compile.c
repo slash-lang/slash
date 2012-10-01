@@ -998,6 +998,51 @@ NODE(sl_node_assign_array_t, assign_array)
     reg_free_block(cs, dump_regs, node->lval->node_count);
 }
 
+NODE(sl_node_mutate_t, prefix_mutate)
+{
+    sl_vm_insn_t insn;
+    
+    compile_node(cs, node->lval, dest);
+    
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.imm = sl_make_cstring(cs->vm, node->op_method);
+    emit(cs, insn);
+    insn.uint = 0;
+    emit(cs, insn);
+    insn.uint = 0;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    emit_assignment(cs, node->lval, dest);
+}
+
+NODE(sl_node_mutate_t, postfix_mutate)
+{
+    sl_vm_insn_t insn;
+    size_t temp_reg = reg_alloc(cs);
+    
+    compile_node(cs, node->lval, dest);
+    
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    insn.imm = sl_make_cstring(cs->vm, node->op_method);
+    emit(cs, insn);
+    insn.uint = 0;
+    emit(cs, insn);
+    insn.uint = 0;
+    emit(cs, insn);
+    insn.uint = temp_reg;
+    emit(cs, insn);
+    
+    emit_assignment(cs, node->lval, temp_reg);
+}
+
 NODE(sl_node_array_t, array)
 {
     sl_vm_insn_t insn;
@@ -1121,44 +1166,46 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         emit(cs, insn);
     }
     switch(node->type) {
-        COMPILE(sl_node_seq_t,           SEQ,           seq);
-        COMPILE(sl_node_raw_t,           RAW,           raw);
-        COMPILE(sl_node_echo_t,          ECHO,          echo);
-        COMPILE(sl_node_echo_t,          ECHO_RAW,      echo_raw);
-        COMPILE(sl_node_var_t,           VAR,           var);
-        COMPILE(sl_node_var_t,           IVAR,          ivar);
-        COMPILE(sl_node_var_t,           CVAR,          cvar);
-        COMPILE(sl_node_var_t,           GLOBAL,        global);
-        COMPILE(sl_node_immediate_t,     IMMEDIATE,     immediate);
-        COMPILE(sl_node_base_t,          SELF,          self);
-        COMPILE(sl_node_class_t,         CLASS,         class);
-        COMPILE(sl_node_def_t,           DEF,           def);
-        COMPILE(sl_node_lambda_t,        LAMBDA,        lambda);
+        COMPILE(sl_node_seq_t,           SEQ,            seq);
+        COMPILE(sl_node_raw_t,           RAW,            raw);
+        COMPILE(sl_node_echo_t,          ECHO,           echo);
+        COMPILE(sl_node_echo_t,          ECHO_RAW,       echo_raw);
+        COMPILE(sl_node_var_t,           VAR,            var);
+        COMPILE(sl_node_var_t,           IVAR,           ivar);
+        COMPILE(sl_node_var_t,           CVAR,           cvar);
+        COMPILE(sl_node_var_t,           GLOBAL,         global);
+        COMPILE(sl_node_immediate_t,     IMMEDIATE,      immediate);
+        COMPILE(sl_node_base_t,          SELF,           self);
+        COMPILE(sl_node_class_t,         CLASS,          class);
+        COMPILE(sl_node_def_t,           DEF,            def);
+        COMPILE(sl_node_lambda_t,        LAMBDA,         lambda);
         /*
-        COMPILE(sl_node_try_t,           TRY,           try);
+        COMPILE(sl_node_try_t,           TRY,            try);
         */
-        COMPILE(sl_node_if_t,            IF,            if);
-        COMPILE(sl_node_while_t,         WHILE,         while);
-        COMPILE(sl_node_for_t,           FOR,           for);
-        COMPILE(sl_node_send_t,          SEND,          send);
-        COMPILE(sl_node_const_t,         CONST,         const);
-        COMPILE(sl_node_binary_t,        AND,           and);
-        COMPILE(sl_node_binary_t,        OR,            or);
-        COMPILE(sl_node_unary_t,         NOT,           not);
-        COMPILE(sl_node_assign_var_t,    ASSIGN_VAR,    assign_var);
-        COMPILE(sl_node_assign_ivar_t,   ASSIGN_IVAR,   assign_ivar);
-        COMPILE(sl_node_assign_cvar_t,   ASSIGN_CVAR,   assign_cvar);
-        COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL, assign_global);
-        COMPILE(sl_node_assign_send_t,   ASSIGN_SEND,   assign_send);
-        COMPILE(sl_node_assign_const_t,  ASSIGN_CONST,  assign_const);
-        COMPILE(sl_node_assign_array_t,  ASSIGN_ARRAY,  assign_array);
-        COMPILE(sl_node_array_t,         ARRAY,         array);
-        COMPILE(sl_node_dict_t,          DICT,          dict);
-        COMPILE(sl_node_unary_t,         RETURN,        return);
-        COMPILE(sl_node_range_t,         RANGE,         range);
-        COMPILE(sl_node_base_t,          NEXT,          next);
-        COMPILE(sl_node_base_t,          LAST,          last);
-        COMPILE(sl_node__register_t,     _REGISTER,     _register);
+        COMPILE(sl_node_if_t,            IF,             if);
+        COMPILE(sl_node_while_t,         WHILE,          while);
+        COMPILE(sl_node_for_t,           FOR,            for);
+        COMPILE(sl_node_send_t,          SEND,           send);
+        COMPILE(sl_node_const_t,         CONST,          const);
+        COMPILE(sl_node_binary_t,        AND,            and);
+        COMPILE(sl_node_binary_t,        OR,             or);
+        COMPILE(sl_node_unary_t,         NOT,            not);
+        COMPILE(sl_node_assign_var_t,    ASSIGN_VAR,     assign_var);
+        COMPILE(sl_node_assign_ivar_t,   ASSIGN_IVAR,    assign_ivar);
+        COMPILE(sl_node_assign_cvar_t,   ASSIGN_CVAR,    assign_cvar);
+        COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL,  assign_global);
+        COMPILE(sl_node_assign_send_t,   ASSIGN_SEND,    assign_send);
+        COMPILE(sl_node_assign_const_t,  ASSIGN_CONST,   assign_const);
+        COMPILE(sl_node_assign_array_t,  ASSIGN_ARRAY,   assign_array);
+        COMPILE(sl_node_mutate_t,        PREFIX_MUTATE,  prefix_mutate);
+        COMPILE(sl_node_mutate_t,        POSTFIX_MUTATE, postfix_mutate);
+        COMPILE(sl_node_array_t,         ARRAY,          array);
+        COMPILE(sl_node_dict_t,          DICT,           dict);
+        COMPILE(sl_node_unary_t,         RETURN,         return);
+        COMPILE(sl_node_range_t,         RANGE,          range);
+        COMPILE(sl_node_base_t,          NEXT,           next);
+        COMPILE(sl_node_base_t,          LAST,           last);
+        COMPILE(sl_node__register_t,     _REGISTER,      _register);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");
 }

@@ -68,6 +68,9 @@ typedef enum sl_token_type {
     SL_TOK_GT,
     SL_TOK_GTE,
     
+    SL_TOK_INCREMENT,
+    SL_TOK_DECREMENT,
+    
     SL_TOK_PLUS,
     SL_TOK_MINUS,
     SL_TOK_POW,
