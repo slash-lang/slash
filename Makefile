@@ -36,7 +36,7 @@ src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 %.o: %.c inc/*.h inc/*/*.h inc/*/*/*.h Makefile local.mk
 	$(CC) -o $@ $(CFLAGS) -c $<
 
-src/vm_exec.o: src/vm_exec.c src/vm_exec.inc inc/*.h Makefile local.mk
+src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
 	$(CC) -o $@ $(CFLAGS) -c $<
 
 %.c: %.yy inc/*.h Makefile local.mk
