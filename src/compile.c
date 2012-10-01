@@ -71,12 +71,10 @@ static size_t
 reg_alloc_block(sl_compile_state_t* cs, size_t count)
 {
     size_t i, j;
-    size_t begin;
     for(i = 0; i + count < cs->section->max_registers + 1; i++) {
         if(cs->registers[i]) {
             continue_outer: continue;
         }
-        begin = i;
         for(j = 0; j < count; j++) {
             if(cs->registers[i + j]) {
                 i += j;
@@ -539,12 +537,8 @@ NODE(sl_node_for_t, for)
 {
     sl_vm_insn_t insn;
     size_t expr_reg = reg_alloc(cs), enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
-    sl_node__register_t enum_reg_node;
     size_t begin, end_jump_fixup, end_else_fixup;
     next_last_frame_t nl;
-    
-    enum_reg_node.base.type = SL_NODE__REGISTER;
-    enum_reg_node.reg = enum_reg;
     
     compile_node(cs, node->expr, expr_reg);
     
