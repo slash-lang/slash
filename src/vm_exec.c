@@ -67,17 +67,18 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
         
         #include "vm_defn.inc"
     #else
-        frame.prev = vm->catch_stack;
+        
         frame.value = vm->lib.nil;
+    reset_exception_handler:
+        frame.prev = vm->catch_stack;
         vm->catch_stack = &frame;
         
-        reset_exception_handler:
         if(setjmp(frame.env)) {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
                 sl_error_add_frame(vm, frame.value, ctx->section->name, sl_make_cstring(vm, (char*)ctx->section->filename), sl_make_int(vm, line));
             }
-            if(exception_handler) {
+            if(exception_handler && (frame.type & SL_UNWIND_EXCEPTION)) {
                 ip = exception_handler->catch_ip;
                 goto reset_exception_handler;
             } else {
