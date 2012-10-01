@@ -18,11 +18,6 @@
         size_t ip = 0; \
         int line = 0; \
         sl_vm_t* vm = ctx->vm; \
-        SLVAL tmp, tmp2, *tmp_p; \
-        sl_string_t* tmp_str; \
-        size_t tmp_uint, j; \
-        sl_vm_exec_ctx_t* tmp_ctx; \
-        sl_vm_section_t* tmp_section; \
         while(1) { \
             switch(NEXT().opcode) {
 
@@ -39,9 +34,9 @@
 #define V_NIL (vm->lib.nil)
 
 #define INSTRUCTION(opcode, code) \
-                case opcode: \
+                case opcode: { \
                     code \
-                break;
+                } break;
     
 #define VM_END \
             } \
