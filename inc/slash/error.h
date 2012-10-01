@@ -6,10 +6,7 @@
 
 typedef enum sl_unwind_type {
     SL_UNWIND_EXCEPTION = 1,
-    SL_UNWIND_RETURN    = 2,
     SL_UNWIND_EXIT      = 4,
-    SL_UNWIND_NEXT      = 8,
-    SL_UNWIND_LAST      = 16,
     SL_UNWIND_ALL       = 0xff
 }
 sl_unwind_type_t;
@@ -42,9 +39,6 @@ sl_throw(struct sl_vm* vm, SLVAL error);
 
 void
 sl_rethrow(struct sl_vm* vm, sl_catch_frame_t* frame);
-
-void
-sl_return(struct sl_vm* vm, SLVAL value);
 
 void
 sl_exit(struct sl_vm* vm, SLVAL value);
