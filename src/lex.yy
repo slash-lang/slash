@@ -113,6 +113,8 @@ HEX [0-9a-fA-F]
 <SLASH>"next"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_NEXT)); }
 <SLASH>"last"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_LAST)); }
 
+<SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
+
 <SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng)); }
 <SLASH>"$"{ID}      { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_GLOBAL, yytext + 1, yyleng - 1)); }
