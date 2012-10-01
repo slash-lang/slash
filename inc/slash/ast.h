@@ -148,7 +148,6 @@ sl_node_try_t;
 
 typedef struct sl_node_send {
     sl_node_base_t base;
-    uint8_t* file;
     sl_node_base_t* recv;
     SLVAL id;
     sl_node_base_t** args;

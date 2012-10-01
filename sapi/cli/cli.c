@@ -28,7 +28,7 @@ run(sl_vm_t* vm, void* state)
     sl_vm_exec_ctx_t ctx;
     tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
     ast = sl_parse(vm, tokens, token_count, st->filename);
-    section = sl_compile(vm, ast);
+    section = sl_compile(vm, ast, st->filename);
     ctx.vm = vm;
     ctx.section = section;
     ctx.registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
