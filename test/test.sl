@@ -13,6 +13,10 @@ class Test {
         }
     }
     
+    def flunk() {
+        assert(false, "flunked");
+    }
+    
     def assert_equal(expect, what) {
         assert(expect == what, "Expected " + expect.inspect + ", got " + what.inspect);
     }
