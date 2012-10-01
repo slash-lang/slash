@@ -147,6 +147,7 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
     sl_node__register_t node;
     sl_node__register_t* node_p = &node;
     node.base.type = SL_NODE__REGISTER;
+    node.base.line = 0;
     node.reg = reg;
     
     switch(lval->type) {
@@ -171,6 +172,7 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
             sl_throw_message2(cs->vm, cs->vm->lib.TypeError, "Invalid lval in assignment");
     }
     
+    a_var.base.line = 0;
     a_var.lval = (void*)lval;
     a_var.rval = (sl_node_base_t*)&node;
     compile_node(cs, (sl_node_base_t*)&a_var, dest_reg);
