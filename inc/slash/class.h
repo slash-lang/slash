@@ -48,6 +48,12 @@ sl_class_set_const(sl_vm_t* vm, SLVAL klass, char* name, SLVAL val);
 void
 sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val);
 
+SLVAL
+sl_class_own_instance_methods(sl_vm_t* vm, SLVAL klass);
+
+SLVAL
+sl_class_instance_methods(sl_vm_t* vm, SLVAL klass);
+
 int
 sl_is_a(struct sl_vm* vm, SLVAL obj, SLVAL klass);
 

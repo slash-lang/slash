@@ -7,6 +7,7 @@
 #include <slash/string.h>
 #include <slash/method.h>
 #include <slash/platform.h>
+#include <slash/lib/array.h>
 
 void
 sl_pre_init_object(sl_vm_t* vm)
@@ -42,6 +43,12 @@ sl_object_is_a(sl_vm_t* vm, SLVAL self, SLVAL klass);
 static SLVAL
 sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name);
 
+static SLVAL
+sl_object_own_methods(sl_vm_t* vm, SLVAL self);
+
+static SLVAL
+sl_object_methods(sl_vm_t* vm, SLVAL self);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -54,6 +61,8 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
     sl_define_method(vm, vm->lib.Object, "method", 1, sl_object_method);
+    sl_define_method(vm, vm->lib.Object, "own_methods", 0, sl_object_own_methods);
+    sl_define_method(vm, vm->lib.Object, "methods", 0, sl_object_methods);
     sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
     sl_define_method(vm, vm->lib.Object, "!=", 1, sl_object_ne);
 }
@@ -452,4 +461,47 @@ sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     } else {
         return vm->lib.nil;
     }
+}
+
+struct singleton_methods_iter_state {
+    sl_vm_t* vm;
+    SLVAL ary;
+};
+
+static int
+singleton_methods_iter(SLVAL name, SLVAL method, struct singleton_methods_iter_state* state)
+{
+    (void)method;
+    sl_array_push(state->vm, state->ary, 1, &name);
+    return ST_CONTINUE;
+}
+
+static SLVAL
+object_methods_rest(sl_vm_t* vm, SLVAL self, SLVAL starting_array)
+{
+    sl_object_t* obj = sl_get_ptr(self);
+    if(sl_get_primitive_type(self) != SL_T_INT && obj->singleton_methods) {
+        SLVAL singletons = sl_make_array(vm, 0, NULL);
+        struct singleton_methods_iter_state state;
+        state.vm = vm;
+        state.ary = singletons;
+        st_foreach(obj->singleton_methods, singleton_methods_iter, (st_data_t)&state);
+        return sl_array_concat(vm, singletons, starting_array);
+    } else {
+        return starting_array;
+    }
+}
+
+static SLVAL
+sl_object_own_methods(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL ary = sl_class_own_instance_methods(vm, sl_class_of(vm, self));
+    return object_methods_rest(vm, self, ary);
+}
+
+static SLVAL
+sl_object_methods(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL ary = sl_class_instance_methods(vm, sl_class_of(vm, self));
+    return object_methods_rest(vm, self, ary);
 }

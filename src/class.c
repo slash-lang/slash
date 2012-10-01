@@ -7,6 +7,7 @@
 #include <slash/method.h>
 #include <slash/object.h>
 #include <slash/mem.h>
+#include <slash/lib/array.h>
 
 static sl_object_t*
 allocate_class(sl_vm_t* vm)
@@ -22,10 +23,7 @@ allocate_class(sl_vm_t* vm)
 static sl_class_t*
 get_class(sl_vm_t* vm, SLVAL klass)
 {
-    if(!sl_is_a(vm, klass, vm->lib.Class)) {
-        /* @TODO error */
-        abort();
-    }
+    sl_expect(vm, klass, vm->lib.Class);
     return (sl_class_t*)sl_get_ptr(klass);
 }
 
@@ -93,6 +91,43 @@ sl_class_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     }
 }
 
+struct own_instance_methods_iter_state {
+    sl_vm_t* vm;
+    SLVAL ary;
+};
+
+static int
+own_instance_methods_iter(SLVAL name, SLVAL method, struct own_instance_methods_iter_state* state)
+{
+    (void)method;
+    sl_array_push(state->vm, state->ary, 1, &name);
+    return ST_CONTINUE;
+}
+
+SLVAL
+sl_class_own_instance_methods(sl_vm_t* vm, SLVAL klass)
+{
+    sl_class_t* class = get_class(vm, klass);
+    SLVAL ary = sl_make_array(vm, 0, NULL);
+    struct own_instance_methods_iter_state state;
+    state.vm = vm;
+    state.ary = ary;
+    st_foreach(class->instance_methods, own_instance_methods_iter, (st_data_t)&state);
+    return ary;
+}
+
+SLVAL
+sl_class_instance_methods(sl_vm_t* vm, SLVAL klass)
+{
+    sl_class_t* class = get_class(vm, klass);
+    SLVAL ary = sl_class_own_instance_methods(vm, klass);
+    while(sl_get_primitive_type(class->super) == SL_T_CLASS) {
+        ary = sl_array_concat(vm, ary, sl_class_own_instance_methods(vm, class->super));
+        class = (sl_class_t*)sl_get_ptr(class->super);
+    }
+    return ary;
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -105,6 +140,8 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "inspect", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "new", -1, sl_new);
     sl_define_method(vm, vm->lib.Class, "instance_method", 1, sl_class_instance_method);
+    sl_define_method(vm, vm->lib.Class, "own_instance_methods", 0, sl_class_own_instance_methods);
+    sl_define_method(vm, vm->lib.Class, "instance_methods", 0, sl_class_instance_methods);
 }
 
 SLVAL
