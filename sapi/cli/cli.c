@@ -15,6 +15,7 @@ output(sl_vm_t* vm, char* buff, size_t len)
 {
     (void)vm;
     fwrite(buff, len, 1, stdout);
+    fflush(stdout);
 }
 
 static void
