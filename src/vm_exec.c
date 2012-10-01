@@ -47,7 +47,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
     volatile int line = 0;
     sl_vm_t* vm = ctx->vm;
     sl_catch_frame_t frame;
-    sl_vm_exception_handler_t* exception_handler = NULL;
+    sl_vm_exception_handler_t* volatile exception_handler = NULL;
     
     #if 0
         void* jump_table[] = {
