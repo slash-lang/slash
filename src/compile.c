@@ -800,11 +800,84 @@ NODE(sl_node_assign_var_t, assign_global)
     emit(cs, insn);
 }
 
+static void
+emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval, sl_node_base_t* rval, sl_vm_opcode_t opcode, size_t dest)
+{
+    sl_vm_insn_t insn;
+    size_t arg_base, receiver = reg_alloc(cs);
+    size_t fixup, i;
+    
+    compile_node(cs, lval->recv, receiver);
+    
+    arg_base = reg_alloc_block(cs, lval->arg_count + 1);
+    for(i = 0; i < lval->arg_count; i++) {
+        compile_node(cs, lval->args[i], arg_base + i);
+    }
+    
+    /* compile the lval */
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = receiver; /* recv */
+    emit(cs, insn);
+    insn.imm = lval->id;
+    emit(cs, insn);
+    insn.uint = arg_base;
+    emit(cs, insn);
+    insn.uint = lval->arg_count;
+    emit(cs, insn);
+    insn.uint = dest; /* destination */
+    emit(cs, insn);
+
+    insn.opcode = opcode; /* SL_OP_JUMP_{IF, UNLESS} */
+    emit(cs, insn);
+    insn.uint = 0xdeafbeef;
+    fixup = emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    /* compile the rval */
+    compile_node(cs, rval, arg_base + lval->arg_count);
+
+    /* call the = version of the method to assign the value back */
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = receiver; /* recv */
+    emit(cs, insn);
+    insn.imm = sl_string_concat(cs->vm, lval->id, sl_make_cstring(cs->vm, "="));
+    emit(cs, insn);
+    insn.uint = arg_base;
+    emit(cs, insn);
+    insn.uint = lval->arg_count + 1;
+    emit(cs, insn);
+    insn.uint = dest; /* destination */
+    emit(cs, insn);
+    
+    /* move the rval back to dest reg */
+    insn.opcode = SL_OP_MOV;
+    emit(cs, insn);
+    insn.uint = arg_base + lval->arg_count;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    
+    cs->section->insns[fixup].uint = cs->section->insns_count;
+}
+
 NODE(sl_node_assign_send_t, assign_send)
 {
     sl_vm_insn_t insn;
-    size_t arg_base, i, receiver = reg_alloc(cs);
+    size_t arg_base, i, receiver;
     
+    if(node->op_method && strcmp(node->op_method, "||") == 0) {
+        emit_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_IF, dest);
+        return;
+    } else if(node->op_method && strcmp(node->op_method, "&&") == 0) {
+        emit_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_UNLESS, dest);
+        return;
+    }
+    
+    receiver = reg_alloc(cs);
+
     compile_node(cs, node->lval->recv, receiver);
     
     arg_base = reg_alloc_block(cs, node->lval->arg_count + 1);
@@ -812,7 +885,9 @@ NODE(sl_node_assign_send_t, assign_send)
         compile_node(cs, node->lval->args[i], arg_base + i);
     }
     
-    if(node->op_method) {    
+    if(node->op_method == NULL) {
+        compile_node(cs, node->rval, arg_base + node->lval->arg_count);
+    } else {
         /* compile the lval */
         insn.opcode = SL_OP_SEND;
         emit(cs, insn);
@@ -843,8 +918,6 @@ NODE(sl_node_assign_send_t, assign_send)
         emit(cs, insn);
         insn.uint = arg_base + node->lval->arg_count; /* destination */
         emit(cs, insn);
-    } else {    
-        compile_node(cs, node->rval, arg_base + node->lval->arg_count);
     }
     
     /* call the = version of the method to assign the value back */
