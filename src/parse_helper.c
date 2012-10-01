@@ -137,7 +137,6 @@ sl_node_base_t*
 sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id, size_t argc, sl_node_base_t** argv)
 {
     MAKE_NODE(SL_NODE_SEND, sl_node_send_t, {
-        node->file = ps->filename;
         node->recv = recv;
         node->id = id;
         node->arg_count = argc;

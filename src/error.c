@@ -17,7 +17,6 @@ sl_error_t;
 
 typedef struct sl_error_frame {
     sl_object_t base;
-    SLVAL receiver;
     SLVAL method;
     SLVAL file;
     SLVAL line;
@@ -37,8 +36,6 @@ static sl_object_t*
 allocate_error_frame(sl_vm_t* vm)
 {
     sl_error_frame_t* frame = sl_alloc(vm->arena, sizeof(sl_error_frame_t));
-    frame->receiver = vm->lib.nil;
-    frame->method = vm->lib.nil;
     frame->file = vm->lib.nil;
     frame->line = vm->lib.nil;
     return (sl_object_t*)frame;
@@ -104,12 +101,6 @@ sl_error_to_s(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
-sl_error_frame_receiver(sl_vm_t* vm, SLVAL self)
-{
-    return get_error_frame(vm, self)->receiver;
-}
-
-static SLVAL
 sl_error_frame_method(sl_vm_t* vm, SLVAL self)
 {
     return get_error_frame(vm, self)->method;
@@ -131,9 +122,7 @@ static SLVAL
 sl_error_frame_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_error_frame_t* frame = get_error_frame(vm, self);
-    SLVAL str = sl_to_s_no_throw(vm, frame->receiver);
-    str = sl_string_concat(vm, str, sl_make_cstring(vm, "#"));
-    str = sl_string_concat(vm, str, frame->method);
+    SLVAL str = frame->method;
     str = sl_string_concat(vm, str, sl_make_cstring(vm, " in "));
     str = sl_string_concat(vm, str, frame->file);
     str = sl_string_concat(vm, str, sl_make_cstring(vm, ", line "));
@@ -142,12 +131,11 @@ sl_error_frame_to_s(sl_vm_t* vm, SLVAL self)
 }
 
 void
-sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL receiver, SLVAL method, SLVAL file, SLVAL line)
+sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line)
 {
     sl_error_t* e = get_error(vm, error);
     SLVAL frv = sl_allocate(vm, vm->lib.Error_Frame);
     sl_error_frame_t* frame = (sl_error_frame_t*)sl_get_ptr(frv);
-    frame->receiver = receiver;
     frame->method = sl_is_a(vm, method, vm->lib.String) ? method : sl_make_cstring(vm, "");
     frame->file = sl_is_a(vm, file, vm->lib.String) ? file : sl_make_cstring(vm, "");
     frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : sl_make_int(vm, 0);
@@ -167,7 +155,6 @@ sl_init_error(sl_vm_t* vm)
     
     vm->lib.Error_Frame = sl_define_class3(vm, sl_make_cstring(vm, "Frame"), vm->lib.Object, vm->lib.Error);
     sl_class_set_allocator(vm, vm->lib.Error_Frame, allocate_error_frame);
-    sl_define_method(vm, vm->lib.Error_Frame, "receiver", 0, sl_error_frame_receiver);
     sl_define_method(vm, vm->lib.Error_Frame, "method", 0, sl_error_frame_method);
     sl_define_method(vm, vm->lib.Error_Frame, "file", 0, sl_error_frame_file);
     sl_define_method(vm, vm->lib.Error_Frame, "line", 0, sl_error_frame_line);

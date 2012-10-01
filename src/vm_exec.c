@@ -77,7 +77,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx)
         } else {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
-                sl_error_add_frame(vm, frame.value, ctx->self, V_NIL, V_NIL, sl_make_int(vm, line));
+                sl_error_add_frame(vm, frame.value, ctx->section->name, sl_make_cstring(vm, (char*)ctx->section->filename), sl_make_int(vm, line));
             }
             sl_rethrow(vm, &frame);
             /* shut up gcc */

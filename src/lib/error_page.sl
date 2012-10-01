@@ -81,14 +81,7 @@
         <ul>
             <% for frame in $err.backtrace { %>
                 <li>
-                    <% if Object == frame.receiver { %>
-                        <code>#<%= frame.method %></code>
-                    <% } elsif frame.receiver.is_a(Class) { %>
-                        <code><%= frame.receiver %>.<%= frame.method %></code>
-                    <% } else { %>
-                        <code><%= frame.receiver.class %>#<%= frame.method %></code>
-                    <% } %>
-                    in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong>
+                    <code>#<%= frame.method %></code> in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong>
                 </li>
             <% } %>
         </ul>

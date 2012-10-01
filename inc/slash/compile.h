@@ -5,6 +5,6 @@
 #include "ast.h"
 
 sl_vm_section_t*
-sl_compile(sl_vm_t* vm, sl_node_base_t* ast);
+sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename);
 
 #endif

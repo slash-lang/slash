@@ -47,7 +47,7 @@ sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, uint8_t* filename)
     
     tokens = sl_lex(vm, filename, src, src_len, &token_count);
     ast = sl_parse(vm, tokens, token_count, filename);
-    section = sl_compile(vm, ast);
+    section = sl_compile(vm, ast, filename);
     ctx->vm = vm;
     ctx->section = section;
     ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);

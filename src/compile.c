@@ -35,6 +35,9 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->parent = parent;
     cs->last_line = 0;
     cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
+    if(parent) {
+        cs->section->filename = parent->section->filename;
+    }
     cs->section->max_registers = init_registers;
     cs->section->arg_registers = 0;
     cs->section->insns_cap = 4;
@@ -323,6 +326,7 @@ NODE(sl_node_def_t, def)
     for(i = 0; i < node->arg_count; i++) {
         st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
     }
+    sub_cs.section->name = node->name;
     sub_cs.section->arg_registers = node->arg_count;
     compile_node(&sub_cs, node->body, 0);
     insn.opcode = SL_OP_RETURN;
@@ -360,6 +364,7 @@ NODE(sl_node_lambda_t, lambda)
         st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
     }
     sub_cs.section->arg_registers = node->arg_count;
+    sub_cs.section->name = sl_make_cstring(cs->vm, "<lambda>");
     compile_node(&sub_cs, node->body, 0);
     insn.opcode = SL_OP_RETURN;
     emit(&sub_cs, insn);
@@ -386,6 +391,7 @@ NODE(sl_node_class_t, class)
     }
     
     init_compile_state(&sub_cs, cs->vm, cs, 1);
+    sub_cs.section->name = sl_string_concat(cs->vm, sl_make_cstring(cs->vm, "class "), node->name);
     compile_node(&sub_cs, node->body, 0);
     insn.opcode = SL_OP_RETURN;
     emit(&sub_cs, insn);
@@ -1211,11 +1217,13 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
 }
 
 sl_vm_section_t*
-sl_compile(sl_vm_t* vm, sl_node_base_t* ast)
+sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
 {
     sl_vm_insn_t insn;
     sl_compile_state_t cs;
     init_compile_state(&cs, vm, NULL, 1);
+    cs.section->filename = filename;
+    cs.section->name = sl_make_cstring(vm, "<main>");
     compile_node(&cs, ast, 0);
     
     insn.opcode = SL_OP_IMMEDIATE;
