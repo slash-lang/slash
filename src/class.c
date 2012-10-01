@@ -17,6 +17,9 @@ allocate_class(sl_vm_t* vm)
     klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
     klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
     klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->super = vm->lib.Object;
+    klass->name = vm->lib.nil;
+    klass->in = vm->lib.Object;
     return (sl_object_t*)klass;
 }
 
