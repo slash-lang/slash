@@ -1,2 +1,2 @@
 language: c
-script: sudo apt-get install libgmp-dev && ./configure --vanilla --sapi=cli && make && make test
+script: sudo apt-get install libgmp-dev && ./configure --debug --vanilla --sapi=cli && make && make test
