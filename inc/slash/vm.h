@@ -70,7 +70,7 @@ typedef struct sl_vm {
 sl_vm_t;
 
 typedef enum sl_vm_opcode {
-    SL_OP_RAW,
+    SL_OP_RAW = 0,
     SL_OP_ECHO,
     SL_OP_ECHO_RAW,
     SL_OP_NOT,
