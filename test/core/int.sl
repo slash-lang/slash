@@ -60,4 +60,8 @@ class IntTest extends Test {
         assert_equal(-1, 100 <=> 200);
         assert_equal(1, 200 <=> 100);
     }
+    
+    def test_class {
+        assert_is_a(Int, 123);
+    }
 }.register;
