@@ -201,6 +201,8 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "hash", 0, sl_array_hash);
     sl_define_method(vm, vm->lib.Array, "sort", 0, sl_array_sort);
+    sl_define_method(vm, vm->lib.Array, "concat", 1, sl_array_concat);
+    sl_define_method(vm, vm->lib.Array, "+", 1, sl_array_concat);
     
     vm->lib.Array_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
@@ -352,4 +354,18 @@ sl_array_items(sl_vm_t* vm, SLVAL array, SLVAL** items)
     *items = sl_alloc(vm->arena, sizeof(SLVAL) * aryp->count);
     memcpy(*items, aryp->items, sizeof(SLVAL) * aryp->count);
     return aryp->count;
+}
+
+SLVAL
+sl_array_concat(sl_vm_t* vm, SLVAL array, SLVAL other)
+{
+    sl_array_t* arrayp = get_array(vm, array);
+    sl_array_t* otherp = get_array(vm, other);
+    sl_array_t* new_ary = get_array(vm, sl_allocate(vm, vm->lib.Array));
+    new_ary->capacity = arrayp->count + otherp->count;
+    new_ary->count = new_ary->capacity;
+    new_ary->items = sl_alloc(vm->arena, sizeof(SLVAL) * new_ary->capacity);
+    memcpy(new_ary->items, arrayp->items, sizeof(SLVAL) * arrayp->count);
+    memcpy(new_ary->items + arrayp->count, otherp->items, sizeof(SLVAL) * otherp->count);
+    return sl_make_ptr((sl_object_t*)new_ary);
 }
