@@ -1,2 +1,2 @@
-language: php
-script: ./configure && make && make test
+language: php # the PHP workers have libgmp
+script: ./configure --vanilla --sapi=cli && make && make test
