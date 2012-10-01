@@ -307,7 +307,8 @@ INSTRUCTION(SL_OP_DICT, {
 /*  0: RETURN
     1: <reg:value> */
 INSTRUCTION(SL_OP_RETURN, {
-    /* @TODO: there may be stuff to clean up in future */
+    /* restore previous exception frame: */
+    vm->catch_stack = frame.prev;
     return NEXT_REG();
 })
 
