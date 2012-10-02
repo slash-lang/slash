@@ -91,11 +91,11 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     sl_catch_frame_t frame;
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
-    SLVAL err, str;
+    SLVAL str;
     if(aryp->inspecting) {
         return sl_make_cstring(vm, "[ <recursive> ]");
     }
-    SL_TRY(frame, SL_UNWIND_ALL, {
+    SL_ENSURE(frame, {
         aryp->inspecting = 1;
         str = sl_make_cstring(vm, "[");
         for(i = 0; i < aryp->count; i++) {
@@ -105,11 +105,8 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
             str = sl_string_concat(vm, str, sl_inspect(vm, aryp->items[i]));
         }    
         str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
+    }, {
         aryp->inspecting = 0;
-    }, err, {
-        aryp->inspecting = 0;
-        sl_rethrow(vm, &frame);
-        return vm->lib.nil; /* never reached */
     });
     return str;
 }
