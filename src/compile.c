@@ -167,8 +167,12 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
             compile_node(cs, (sl_node_base_t*)&send, dest_reg);
             reg_free(cs, dest_reg);
             return;
-        default:
-            sl_throw_message2(cs->vm, cs->vm->lib.TypeError, "Invalid lval in assignment");
+        default: {
+            SLVAL err = sl_make_cstring(cs->vm, "Invalid lval in assignment");
+            err = sl_make_error2(cs->vm, cs->vm->lib.SyntaxError, err);
+            sl_error_add_frame(cs->vm, err, sl_make_cstring(cs->vm, "<compiler>"), sl_make_cstring(cs->vm, (char*)cs->section->filename), sl_make_int(cs->vm, lval->line));
+            sl_throw(cs->vm, err);
+        }
     }
     
     a_var.base.line = 0;
@@ -264,8 +268,10 @@ NODE(sl_node_var_t, var)
     }
     err = sl_make_cstring(cs->vm, "Undefined variable '");
     err = sl_string_concat(cs->vm, err, sl_make_ptr((sl_object_t*)node->name));
-    err = sl_string_concat(cs->vm, err, sl_make_cstring(cs->vm, "'"));
-    sl_throw(cs->vm, sl_make_error2(cs->vm, cs->vm->lib.NameError, err));
+    err = sl_string_concat(cs->vm, err, sl_make_cstring(cs->vm, "' "));
+    err = sl_make_error2(cs->vm, cs->vm->lib.NameError, err);
+    sl_error_add_frame(cs->vm, err, sl_make_cstring(cs->vm, "<compiler>"), sl_make_cstring(cs->vm, (char*)cs->section->filename), sl_make_int(cs->vm, node->base.line));
+    sl_throw(cs->vm, err);
 }
 
 NODE(sl_node_var_t, ivar)
