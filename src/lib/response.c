@@ -219,7 +219,7 @@ response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
 extern char* sl__error_page_src;
 
 void
-sl_render_error_page(sl_vm_t* vm, SLVAL err)
+sl_render_error_page(sl_vm_t* vm, volatile SLVAL err)
 {
     sl_catch_frame_t frame;
     sl_response_internal_opts_t* resp = response(vm);

@@ -66,4 +66,19 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
         } \
     } while(0)
 
+#define SL_ENSURE(frame, code_block, finally_block) do { \
+        frame.prev = vm->catch_stack; \
+        frame.value = vm->lib.nil; \
+        vm->catch_stack = &frame; \
+        if(!setjmp(frame.env)) { \
+            code_block; \
+            vm->catch_stack = frame.prev; \
+            finally_block; \
+        } else { \
+            vm->catch_stack = frame.prev; \
+            finally_block; \
+            sl_rethrow(vm, &frame); \
+        } \
+    } while(0)
+
 #endif

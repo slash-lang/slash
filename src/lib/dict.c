@@ -161,20 +161,18 @@ static SLVAL
 sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
 {
     sl_catch_frame_t frame;
-    SLVAL err, str;
+    SLVAL str;
     sl_dict_t* d = get_dict(vm, dict);
     if(d->inspecting) {
         return sl_make_cstring(vm, "{ <recursive> }");
     }
-    SL_TRY(frame, SL_UNWIND_ALL, {
+    SL_ENSURE(frame, {
         d->inspecting = 1;
         str = sl_make_cstring(vm, "{ ");
         st_foreach(d->st, dict_to_s_iter, (st_data_t)&str);
         str = sl_string_concat(vm, str, sl_make_cstring(vm, " }"));
+    }, {
         d->inspecting = 0;
-    }, err, {
-        d->inspecting = 0;
-        sl_rethrow(vm, &frame);
     });
     return str;
 }
