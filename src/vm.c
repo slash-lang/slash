@@ -99,7 +99,6 @@ sl_init()
     sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
     vm->stack_limit = sl_stack_limit();
-    vm->globals = st_init_table(vm->arena, &sl_string_hash_type);
     
     vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));
@@ -144,35 +143,4 @@ void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val)
 {
     st_insert(vm->store, (st_data_t)key, (st_data_t)sl_get_ptr(val));
-}
-
-SLVAL
-sl_get_global(sl_vm_t* vm, char* name)
-{
-    sl_string_t str;
-    sl_make_cstring_placement(vm, &str, name);
-    return sl_get_global2(vm, &str);
-}
-
-SLVAL
-sl_get_global2(sl_vm_t* vm, sl_string_t* name)
-{
-    SLVAL val;
-    if(st_lookup(vm->globals, (st_data_t)name, (st_data_t*)&val)) {
-        return val;
-    } else {
-        return vm->lib.nil;
-    }
-}
-
-void
-sl_set_global(sl_vm_t* vm, char* name, SLVAL val)
-{
-    sl_set_global2(vm, sl_cstring(vm, name), val);
-}
-
-void
-sl_set_global2(sl_vm_t* vm, sl_string_t* name, SLVAL val)
-{
-    st_insert(vm->globals, (st_data_t)name, (st_data_t)sl_get_ptr(val));
 }

@@ -518,11 +518,6 @@ primary_expression(sl_parse_state_t* ps)
             node = sl_make_var_node(ps, SL_NODE_CVAR,
                 sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
             return node;
-        case SL_TOK_GLOBAL:
-            tok = next_token(ps);
-            node = sl_make_var_node(ps, SL_NODE_GLOBAL,
-                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
-            return node;
         case SL_TOK_IF:
         case SL_TOK_UNLESS:
             return if_expression(ps);
@@ -861,7 +856,6 @@ assignment_expression(sl_parse_state_t* ps)
         case SL_NODE_VAR:
         case SL_NODE_IVAR:
         case SL_NODE_CVAR:
-        case SL_NODE_GLOBAL:
             next_token(ps);
             left = sl_make_simple_assign_node(ps, (sl_node_var_t*)left, assignment_expression(ps), op_method);
             break;

@@ -53,14 +53,6 @@ INSTRUCTION(SL_OP_GET_OUTER, {
     NEXT_REG() = parent_ctx->registers[register_index];
 })
 
-/*  0: GET_GLOBAL
-    1: <str:var_name>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_GET_GLOBAL, {
-    sl_string_t* var_name = NEXT_STR();
-    NEXT_REG() = sl_get_global2(vm, var_name);
-})
-
 /*  0: GET_IVAR
     1: <imm:var_name>
     2: <reg:dst> */
@@ -118,14 +110,6 @@ INSTRUCTION(SL_OP_SET_OUTER, {
     }
     size_t register_index = NEXT_UINT();
     lookup_ctx->registers[register_index] = NEXT_REG();
-})
-
-/*  0: SET_GLOBAL
-    1: <str:var_name>
-    2: <reg:value> */
-INSTRUCTION(SL_OP_SET_GLOBAL, {
-    sl_string_t* var_name = NEXT_STR();
-    sl_set_global2(vm, var_name, NEXT_REG());
 })
 
 /*  0: SET_IVAR

@@ -27,7 +27,6 @@ sl_node_is_lval(sl_node_base_t* node)
         case SL_NODE_IVAR:   return 1;
         case SL_NODE_CVAR:   return 1;
         case SL_NODE_CONST:  return 1;
-        case SL_NODE_GLOBAL: return 1;
         case SL_NODE_SEND:   return ((sl_node_send_t*)node)->arg_count == 0;
         case SL_NODE_ARRAY:
             ary = (sl_node_array_t*)node;
@@ -271,15 +270,6 @@ sl_make_assign_cvar_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base
 }
 
 sl_node_base_t*
-sl_make_assign_global_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval)
-{
-    MAKE_NODE(SL_NODE_ASSIGN_GLOBAL, sl_node_assign_var_t, {
-        node->lval = lval;
-        node->rval = rval;
-    });
-}
-
-sl_node_base_t*
 sl_make_assign_send_node(sl_parse_state_t* ps, sl_node_send_t* lval, sl_node_base_t* rval, char* op_method)
 {
     MAKE_NODE(SL_NODE_ASSIGN_SEND, sl_node_assign_send_t, {
@@ -320,8 +310,6 @@ make_generic_assignment(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_
             return sl_make_assign_ivar_node(ps, lval, rval);
         case SL_NODE_CVAR:
             return sl_make_assign_cvar_node(ps, lval, rval);
-        case SL_NODE_GLOBAL:
-            return sl_make_assign_global_node(ps, lval, rval);
         default:
             return NULL;
     }

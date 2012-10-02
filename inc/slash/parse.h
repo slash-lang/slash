@@ -111,9 +111,6 @@ sl_node_base_t*
 sl_make_assign_cvar_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval);
 
 sl_node_base_t*
-sl_make_assign_global_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_base_t* rval);
-
-sl_node_base_t*
 sl_make_assign_send_node(sl_parse_state_t* ps, sl_node_send_t* lval, sl_node_base_t* rval, char* op_method);
 
 sl_node_base_t*
