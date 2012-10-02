@@ -21,7 +21,9 @@ sl_realpath(sl_vm_t* vm, char* path)
     }
     #ifdef PATH_MAX
         cpath = sl_alloc_buffer(vm->arena, PATH_MAX + 1);
-        realpath(path, cpath);
+        if(!realpath(path, cpath)) {
+            return NULL;
+        }
         return cpath;
     #else
         cpath = realpath(path, NULL);
@@ -56,9 +58,11 @@ int sl_seed()
     if(!stat("/dev/urandom", &s)) {
         f = fopen("/dev/urandom", "rb");
         if(f) {
-            fread(&seed, sizeof(int), 1, f);
+            int success = fread(&seed, sizeof(int), 1, f);
             fclose(f);
-            return seed;
+            if(success) {
+                return seed;
+            }
         }
     }
     gettimeofday(&a, NULL);
