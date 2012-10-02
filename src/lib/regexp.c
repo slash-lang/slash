@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <pcre.h>
 
+static const int DEFAULT_OPTIONS = PCRE_DOLLAR_ENDONLY | PCRE_UTF8;
+
 typedef struct {
     sl_object_t base;
     SLVAL source;
@@ -86,7 +88,7 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
     const char* error;
     char* rez;
     int error_offset;
-    int opts = PCRE_DOLLAR_ENDONLY | PCRE_UTF8;
+    int opts = DEFAULT_OPTIONS;
     pcre* re;
     size_t i;
     for(i = 0; i < opts_len; i++) {
@@ -220,6 +222,18 @@ sl_regexp_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 static SLVAL
+sl_regexp_source(sl_vm_t* vm, SLVAL self)
+{
+    return get_regexp_check(vm, self)->source;
+}
+
+static SLVAL
+sl_regexp_options(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, get_regexp_check(vm, self)->options & ~DEFAULT_OPTIONS);
+}
+
+static SLVAL
 sl_regexp_match_regexp(sl_vm_t* vm, SLVAL self)
 {
     return sl_make_ptr((sl_object_t*)get_regexp_match(vm, self)->re);
@@ -257,7 +271,12 @@ sl_init_regexp(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Regexp, "compile", 0, sl_regexp_compile);
     */
     sl_define_method(vm, vm->lib.Regexp, "match", -2, sl_regexp_match);
+    sl_define_method(vm, vm->lib.Regexp, "source", 0, sl_regexp_source);
+    sl_define_method(vm, vm->lib.Regexp, "options", 0, sl_regexp_options);
     sl_define_method(vm, vm->lib.Regexp, "==", 1, sl_regexp_eq);
+    
+    sl_class_set_const(vm, vm->lib.Regexp, "CASELESS", sl_make_int(vm, PCRE_CASELESS));
+    sl_class_set_const(vm, vm->lib.Regexp, "EXTENDED", sl_make_int(vm, PCRE_EXTENDED));
     
     sl_define_method(vm, vm->lib.Regexp_Match, "regexp", 0, sl_regexp_match_regexp);
     sl_define_method(vm, vm->lib.Regexp_Match, "[]", 1, sl_regexp_match_index);
