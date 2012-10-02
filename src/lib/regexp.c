@@ -140,7 +140,7 @@ sl_regexp_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     sl_string_t* re = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
     sl_string_t* opts;
     if(argc > 1) {
-        opts = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
+        opts = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[1], vm->lib.String));
     } else {
         opts = sl_cstring(vm, "");
     }
