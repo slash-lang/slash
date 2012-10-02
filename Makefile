@@ -46,8 +46,8 @@ src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
 	@echo "flex $<"
 	@flex -o $@ $<
 
-src/lib/error_page.c: src/lib/error_page.sl
-	@perl scripts/txt-to-c.pl sl__error_page_src < $< > $@
+%.c: %.sl
+	@perl scripts/txt-to-c.pl $< > $@
 
 clean:
 	rm -f src/*.o
