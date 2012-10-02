@@ -266,6 +266,46 @@ sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
     return state.keys;
 }
 
+struct dict_eq_iter_state {
+    sl_vm_t* vm;
+    sl_dict_t* other;
+    int success;
+};
+
+static int
+dict_eq_iter(sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
+{
+    SLVAL other_value;
+    if(!st_lookup(state->other->st, (st_data_t)key, (st_data_t*)&other_value)) {
+        state->success = 0;
+        return ST_STOP;
+    }
+    if(!sl_eq(state->vm, value, other_value)) {
+        state->success = 0;
+        return ST_STOP;
+    }
+    return ST_CONTINUE;
+}
+
+static SLVAL
+sl_dict_eq(sl_vm_t* vm, SLVAL dict, SLVAL other)
+{
+    if(!sl_is_a(vm, other, vm->lib.Dict)) {
+        return vm->lib._false;
+    }
+    sl_dict_t* d = get_dict(vm, dict);
+    sl_dict_t* o = get_dict(vm, other);
+    struct dict_eq_iter_state state;
+    state.vm = vm;
+    state.other = o;
+    state.success = 1;
+    if(d->st->num_entries != o->st->num_entries) {
+        return vm->lib._false;
+    }
+    st_foreach(d->st, dict_eq_iter, (st_data_t)&state);
+    return state.success ? vm->lib._true : vm->lib._false;
+}
+
 void
 sl_init_dict(sl_vm_t* vm)
 {
@@ -279,6 +319,7 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
     sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
+    sl_define_method(vm, vm->lib.Dict, "==", 1, sl_dict_eq);
     
     vm->lib.Dict_Enumerator = sl_define_class3(
         vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Dict);
