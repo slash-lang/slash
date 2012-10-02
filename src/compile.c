@@ -154,7 +154,6 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
         case SL_NODE_VAR:    a_var.base.type = SL_NODE_ASSIGN_VAR;    break;
         case SL_NODE_IVAR:   a_var.base.type = SL_NODE_ASSIGN_IVAR;   break;
         case SL_NODE_CVAR:   a_var.base.type = SL_NODE_ASSIGN_CVAR;   break;
-        case SL_NODE_GLOBAL: a_var.base.type = SL_NODE_ASSIGN_GLOBAL; break;
         case SL_NODE_CONST:  a_var.base.type = SL_NODE_ASSIGN_CONST;  break;
         case SL_NODE_ARRAY:  a_var.base.type = SL_NODE_ASSIGN_ARRAY;  break;
         case SL_NODE_SEND:
@@ -291,16 +290,6 @@ NODE(sl_node_var_t, cvar)
     emit(cs, insn);
 }
 
-NODE(sl_node_var_t, global)
-{
-    sl_vm_insn_t insn;
-    insn.opcode = SL_OP_GET_GLOBAL;
-    emit(cs, insn);
-    insn.str = node->name;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-}
 
 NODE(sl_node_immediate_t, immediate)
 {
@@ -828,18 +817,6 @@ NODE(sl_node_assign_cvar_t, assign_cvar)
     emit(cs, insn);
 }
 
-NODE(sl_node_assign_var_t, assign_global)
-{
-    sl_vm_insn_t insn;
-    compile_node(cs, node->rval, dest);
-    insn.opcode = SL_OP_SET_GLOBAL;
-    emit(cs, insn);
-    insn.str = node->lval->name;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-}
-
 static void
 emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval, sl_node_base_t* rval, sl_vm_opcode_t opcode, size_t dest)
 {
@@ -1223,7 +1200,6 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_var_t,           VAR,            var);
         COMPILE(sl_node_var_t,           IVAR,           ivar);
         COMPILE(sl_node_var_t,           CVAR,           cvar);
-        COMPILE(sl_node_var_t,           GLOBAL,         global);
         COMPILE(sl_node_immediate_t,     IMMEDIATE,      immediate);
         COMPILE(sl_node_base_t,          SELF,           self);
         COMPILE(sl_node_class_t,         CLASS,          class);
@@ -1241,7 +1217,6 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_assign_var_t,    ASSIGN_VAR,     assign_var);
         COMPILE(sl_node_assign_ivar_t,   ASSIGN_IVAR,    assign_ivar);
         COMPILE(sl_node_assign_cvar_t,   ASSIGN_CVAR,    assign_cvar);
-        COMPILE(sl_node_assign_var_t,    ASSIGN_GLOBAL,  assign_global);
         COMPILE(sl_node_assign_send_t,   ASSIGN_SEND,    assign_send);
         COMPILE(sl_node_assign_const_t,  ASSIGN_CONST,   assign_const);
         COMPILE(sl_node_assign_array_t,  ASSIGN_ARRAY,   assign_array);
