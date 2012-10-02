@@ -317,7 +317,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
     SLVAL arg;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
-        sl_throw_message2(vm, vm->lib.StackOverflowError, "Stack Overflow");
+        sl_throw(vm, vm->lib.StackOverflowError_instance);
     }
     if(method->arity < 0) {
         if((size_t)(-method->arity - 1) > argc) {
