@@ -127,6 +127,8 @@ sl_init()
     
     String->super = vm->lib.Comparable;
     
+    vm->lib.StackOverflowError_instance = sl_make_error2(vm, vm->lib.StackOverflowError, sl_make_cstring(vm, "Stack Overflow"));
+    
     return vm;
 }
 
