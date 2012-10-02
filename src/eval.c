@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <errno.h>
 
 SLVAL
 sl_do_file(sl_vm_t* vm, uint8_t* filename)
@@ -24,13 +25,22 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     if(!f) {
         err = sl_make_cstring(vm, "Could not load file: ");
         err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)filename));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
         sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
     }
     fseek(f, 0, SEEK_END);
     file_size = ftell(f);
     fseek(f, 0, SEEK_SET);
     src = sl_alloc(vm->arena, file_size);
-    fread(src, file_size, 1, f);
+    if(!fread(src, file_size, 1, f)) {
+        fclose(f);
+        err = sl_make_cstring(vm, "Could not load file: ");
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)filename));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
+        sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
+    }
     fclose(f);
     
     return sl_do_string(vm, src, file_size, filename);
