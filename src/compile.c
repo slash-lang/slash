@@ -1267,7 +1267,6 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
     init_compile_state(&cs, vm, NULL, 1);
     cs.section->filename = filename;
     cs.section->name = sl_make_cstring(vm, "<main>");
-    compile_node(&cs, ast, 0);
     
     insn.opcode = SL_OP_IMMEDIATE;
     emit(&cs, insn);
@@ -1275,6 +1274,9 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
     emit(&cs, insn);
     insn.uint = 0;
     emit(&cs, insn);
+    
+    compile_node(&cs, ast, 0);
+    
     insn.opcode = SL_OP_RETURN;
     emit(&cs, insn);
     insn.uint = 0;
