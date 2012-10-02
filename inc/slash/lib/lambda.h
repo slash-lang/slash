@@ -7,4 +7,7 @@
 SLVAL
 sl_make_lambda(sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx);
 
+SLVAL
+sl_lambda_call(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
+
 #endif

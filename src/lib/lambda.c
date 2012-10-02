@@ -29,7 +29,7 @@ allocate_lambda(sl_vm_t* vm)
     return sl_alloc(vm->arena, sizeof(sl_lambda_t));
 }
 
-static SLVAL
+SLVAL
 sl_lambda_call(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_lambda_t* lambda = get_lambda(vm, self);
