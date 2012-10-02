@@ -217,7 +217,7 @@ response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
     return enabled;
 }
 
-extern char* sl__error_page_src;
+extern char* sl__error_page_sl;
 
 void
 sl_render_error_page(sl_vm_t* vm, SLVAL err)
@@ -228,7 +228,7 @@ sl_render_error_page(sl_vm_t* vm, SLVAL err)
     SLVAL caught_error;
     if(resp->descriptive_error_pages) {
         SL_TRY(frame, SL_UNWIND_EXCEPTION, {
-            SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__error_page_src, strlen(sl__error_page_src), (uint8_t*)"(error-page)");
+            SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__error_page_sl, strlen(sl__error_page_sl), (uint8_t*)"(error-page)");
             sl_lambda_call(vm, error_lambda, 1, &err);
         }, caught_error, {
             sl_response_write(vm, 
