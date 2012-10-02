@@ -134,6 +134,7 @@ sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj)
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         ret = sl_to_s(vm, obj);
     }, err, {
+        (void)err;
         ret = sl_object_inspect(vm, obj);
     });
     return ret;
