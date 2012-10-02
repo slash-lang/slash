@@ -1,6 +1,6 @@
 .PHONY: clean install uninstall
 
-LDFLAGS += -lfcgi -pthreads
+LDFLAGS += -lfcgi -pthread
 
 slash-fcgi: slash-fcgi.c
 
