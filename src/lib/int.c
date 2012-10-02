@@ -129,6 +129,45 @@ sl_int_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
+sl_int_and(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int a = sl_get_int(self);
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_and(vm, sl_make_bignum(vm, a), other);
+    }
+    int oth = sl_get_int(sl_expect(vm, other, vm->lib.Int));
+    return sl_make_int(vm, a & oth);
+}
+
+SLVAL
+sl_int_or(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int a = sl_get_int(self);
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_or(vm, sl_make_bignum(vm, a), other);
+    }
+    int oth = sl_get_int(sl_expect(vm, other, vm->lib.Int));
+    return sl_make_int(vm, a | oth);
+}
+
+SLVAL
+sl_int_xor(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int a = sl_get_int(self);
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_xor(vm, sl_make_bignum(vm, a), other);
+    }
+    int oth = sl_get_int(sl_expect(vm, other, vm->lib.Int));
+    return sl_make_int(vm, a ^ oth);
+}
+
+SLVAL
+sl_int_not(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, ~sl_get_int(self));
+}
+
+SLVAL
 sl_int_to_s(sl_vm_t* vm, SLVAL self)
 {
     int a = sl_get_int(self);
@@ -200,6 +239,10 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, "*", 1, sl_int_mul);
     sl_define_method(vm, vm->lib.Int, "/", 1, sl_int_div);
     sl_define_method(vm, vm->lib.Int, "%", 1, sl_int_mod);
+    sl_define_method(vm, vm->lib.Int, "&", 1, sl_int_and);
+    sl_define_method(vm, vm->lib.Int, "|", 1, sl_int_or);
+    sl_define_method(vm, vm->lib.Int, "^", 1, sl_int_xor);
+    sl_define_method(vm, vm->lib.Int, "~", 1, sl_int_not);
     sl_define_method(vm, vm->lib.Int, "to_s", 0, sl_int_to_s);
     sl_define_method(vm, vm->lib.Int, "inspect", 0, sl_int_to_s);
     sl_define_method(vm, vm->lib.Int, "to_i", 0, sl_int_to_i);

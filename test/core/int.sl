@@ -36,6 +36,23 @@ class IntTest extends Test {
         assert_equal(8, 100 % 23);
     }
     
+    def test_and {
+        assert_equal(0, 127 & 0);
+        assert_equal(14, 126 & 15);
+    }
+    
+    def test_or {
+        assert_equal(127, 127 | 0);
+        assert_equal(127, 126 | 15);
+        assert_equal(65535, 65534 | 3);
+    }
+    
+    def test_xor {
+        assert_equal(127, 127 ^ 0);
+        assert_equal(113, 126 ^ 15);
+        assert_equal(65532, 65535 ^ 3);
+    }
+    
     def test_to_s_and_inspect {
         assert_equal("5", 5.to_s);
         assert_equal("5", 5.inspect);

@@ -106,6 +106,9 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "*", 1, sl_bignum_mul);
     sl_define_method(vm, vm->lib.Bignum, "/", 1, sl_bignum_div);
     sl_define_method(vm, vm->lib.Bignum, "%", 1, sl_bignum_mod);
+    sl_define_method(vm, vm->lib.Bignum, "&", 1, sl_bignum_and);
+    sl_define_method(vm, vm->lib.Bignum, "|", 1, sl_bignum_or);
+    sl_define_method(vm, vm->lib.Bignum, "^", 1, sl_bignum_xor);
     sl_define_method(vm, vm->lib.Bignum, "==", 1, sl_bignum_eq);
     sl_define_method(vm, vm->lib.Bignum, "<=>", 1, sl_bignum_cmp);
     sl_define_method(vm, vm->lib.Bignum, "hash", 0, sl_bignum_hash);
@@ -238,6 +241,51 @@ sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_tdiv_r(c->mpz, a->mpz, b->mpz);
+    return sl_make_ptr((sl_object_t*)c); 
+}
+
+SLVAL
+sl_bignum_and(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_bignum_t* a = get_bignum(vm, self);
+    sl_bignum_t* b;
+    sl_bignum_t* c;
+    if(!sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_and(vm, self, sl_make_bignum(vm, sl_get_int(sl_expect(vm, other, vm->lib.Int))));
+    }
+    b = get_bignum(vm, other);
+    c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
+    mpz_and(c->mpz, a->mpz, b->mpz);
+    return sl_make_ptr((sl_object_t*)c); 
+}
+
+SLVAL
+sl_bignum_or(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_bignum_t* a = get_bignum(vm, self);
+    sl_bignum_t* b;
+    sl_bignum_t* c;
+    if(!sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_or(vm, self, sl_make_bignum(vm, sl_get_int(sl_expect(vm, other, vm->lib.Int))));
+    }
+    b = get_bignum(vm, other);
+    c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
+    mpz_ior(c->mpz, a->mpz, b->mpz);
+    return sl_make_ptr((sl_object_t*)c); 
+}
+
+SLVAL
+sl_bignum_xor(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_bignum_t* a = get_bignum(vm, self);
+    sl_bignum_t* b;
+    sl_bignum_t* c;
+    if(!sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_xor(vm, self, sl_make_bignum(vm, sl_get_int(sl_expect(vm, other, vm->lib.Int))));
+    }
+    b = get_bignum(vm, other);
+    c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
+    mpz_xor(c->mpz, a->mpz, b->mpz);
     return sl_make_ptr((sl_object_t*)c); 
 }
 
