@@ -42,4 +42,16 @@ class RegexpTest extends Test {
         assert(%r{foo} != %r{bar}, "expected two different regexps to not be equal");
         assert(%r{foo}i != %r{foo}x, "expected two regexps with different options to not be equal");
     }
+    
+    def test_source {
+        assert_equal("", %r{}.source);
+        assert_equal("foo", %r{foo}.source);
+    }
+    
+    def test_options {
+        assert_equal(Regexp::CASELESS, %r{}i.options);
+        assert_equal(Regexp::EXTENDED, %r{}x.options);
+        assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}ix.options);
+        assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}xi.options);
+    }
 }.register;
