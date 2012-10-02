@@ -197,6 +197,7 @@ sl_static_init_exts()
 void
 sl_init_exts(sl_vm_t* vm)
 {
+    (void)vm; // avoid unused variable error if no exts are enabled
     $ext_inits
 }
 C
