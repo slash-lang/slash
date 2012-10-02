@@ -348,7 +348,7 @@ sl_string_inspect(sl_vm_t* vm, SLVAL self)
     return sl_make_string(vm, out, out_len);
 }
 
-static SLVAL
+SLVAL
 sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     if(!sl_is_a(vm, other, vm->lib.String)) {
