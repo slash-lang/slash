@@ -220,7 +220,7 @@ INSTRUCTION(SL_OP_DEFINE, {
     NEXT_REG() = vm_helper_define_method(ctx, id, body);
 })
 
-/*  0: DEFINE
+/*  0: DEFINE_ON
     1: <reg:on>
     2: <str:name>
     3: <section:body>
@@ -316,7 +316,7 @@ INSTRUCTION(SL_OP_RANGE_EX, {
     NEXT_REG() = sl_make_range_exclusive(vm, left, right);
 })
 
-/*  0: LINE
+/*  0: LINE_TRACE
     1: <uint:line> */
 INSTRUCTION(SL_OP_LINE_TRACE, {
     line = NEXT_UINT();
