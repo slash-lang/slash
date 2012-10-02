@@ -758,45 +758,51 @@ NODE(sl_node_assign_var_t, assign_var)
 {
     sl_vm_insn_t insn;
     size_t frame;
-    sl_compile_state_t* xcs = cs;
+    sl_compile_state_t* xcs;
     size_t index;
-    compile_node(cs, node->rval, dest);
-    if(cs) {
-        frame = 0;
-        while(xcs) {
-            if(st_lookup(xcs->vars, (st_data_t)node->lval->name, (st_data_t*)&index)) {
-                if(frame == 0) {
-                    insn.opcode = SL_OP_MOV;
-                    emit(cs, insn);
-                    insn.uint = dest;
-                    emit(cs, insn);
-                    insn.uint = index;
-                    emit(cs, insn);
-                } else {
-                    insn.opcode = SL_OP_SET_OUTER;
-                    emit(cs, insn);
-                    insn.uint = frame;
-                    emit(cs, insn);
-                    insn.uint = index;
-                    emit(cs, insn);
-                    insn.uint = dest;
-                    emit(cs, insn);
-                    mark_upper_scopes_as_closure_unsafe(cs, frame);
-                }
-                return;
-            }
-            xcs = xcs->parent;
-            frame++;
+    
+    /* create variable before compiling rval so that constructs such as: f = f; work */
+    xcs = cs;
+    while(xcs) {
+        if(st_lookup(xcs->vars, (st_data_t)node->lval->name, NULL)) {
+            break;
         }
+        xcs = xcs->parent;
     }
-    index = reg_alloc(cs);
-    st_insert(cs->vars, (st_data_t)node->lval->name, (st_data_t)index);
-    insn.opcode = SL_OP_MOV;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.uint = index;
-    emit(cs, insn);
+    if(!xcs) { /* variable does not exist yet */
+        index = reg_alloc(cs);
+        st_insert(cs->vars, (st_data_t)node->lval->name, (st_data_t)index);
+    }
+    
+    compile_node(cs, node->rval, dest);
+    
+    frame = 0;
+    xcs = cs;
+    while(xcs) {
+        if(st_lookup(xcs->vars, (st_data_t)node->lval->name, (st_data_t*)&index)) {
+            if(frame == 0) {
+                insn.opcode = SL_OP_MOV;
+                emit(cs, insn);
+                insn.uint = dest;
+                emit(cs, insn);
+                insn.uint = index;
+                emit(cs, insn);
+            } else {
+                insn.opcode = SL_OP_SET_OUTER;
+                emit(cs, insn);
+                insn.uint = frame;
+                emit(cs, insn);
+                insn.uint = index;
+                emit(cs, insn);
+                insn.uint = dest;
+                emit(cs, insn);
+                mark_upper_scopes_as_closure_unsafe(cs, frame);
+            }
+            return;
+        }
+        xcs = xcs->parent;
+        frame++;
+    }
 }
 
 NODE(sl_node_assign_ivar_t, assign_ivar)
