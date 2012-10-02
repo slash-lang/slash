@@ -37,6 +37,15 @@ SLVAL
 sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL
+sl_bignum_and(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_bignum_or(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
+sl_bignum_xor(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
 sl_bignum_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL
