@@ -7,6 +7,7 @@
 
 typedef struct {
     sl_object_t base;
+    SLVAL source;
     pcre* re;
     pcre_extra* study;
     int options;
@@ -104,7 +105,7 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
     if(memchr(re_buff, 0, re_len)) {
         sl_throw_message2(vm, vm->lib.SyntaxError, "Regular expression contains null byte");
     }
-    rez = sl_alloc(vm->arena, re_len + 1);
+    rez = sl_alloc_buffer(vm->arena, re_len + 1);
     memcpy(rez, re_buff, re_len);
     rez[re_len] = 0;
     re = pcre_compile(rez, opts, &error, &error_offset, NULL);
@@ -119,6 +120,7 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
         */
         pcre_free(re_ptr->re);
     }
+    re_ptr->source = sl_make_string(vm, re_buff, re_len);
     re_ptr->options = opts;
     re_ptr->re = re;
     re_ptr->study = NULL;
@@ -198,6 +200,26 @@ sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 }
 
 static SLVAL
+sl_regexp_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(!sl_is_a(vm, other, vm->lib.Regexp)) {
+        return vm->lib._false;
+    }
+    sl_regexp_t* re = get_regexp(vm, self);
+    sl_regexp_t* oth = get_regexp(vm, other);
+    if(!oth->re || !re->re) {
+        return vm->lib._false;
+    }
+    if(!sl_is_truthy(sl_string_eq(vm, re->source, oth->source))) {
+        return vm->lib._false;
+    }
+    if(re->options != oth->options) {
+        return vm->lib._false;
+    }
+    return vm->lib._true;
+}
+
+static SLVAL
 sl_regexp_match_regexp(sl_vm_t* vm, SLVAL self)
 {
     return sl_make_ptr((sl_object_t*)get_regexp_match(vm, self)->re);
@@ -235,6 +257,7 @@ sl_init_regexp(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Regexp, "compile", 0, sl_regexp_compile);
     */
     sl_define_method(vm, vm->lib.Regexp, "match", -2, sl_regexp_match);
+    sl_define_method(vm, vm->lib.Regexp, "==", 1, sl_regexp_eq);
     
     sl_define_method(vm, vm->lib.Regexp_Match, "regexp", 0, sl_regexp_match_regexp);
     sl_define_method(vm, vm->lib.Regexp_Match, "[]", 1, sl_regexp_match_index);

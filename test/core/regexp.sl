@@ -32,4 +32,14 @@ class RegexpTest extends Test {
         assert(re.match("hello"), "/hello/i matches 'hello'");
         assert(re.match("HELLO"), "/hello/i matches 'HELLO'");
     }
+    
+    def test_eq {
+        assert(%r{} == %r{}, "expected two empty regexps to be equal");
+        assert(%r{foo} == %r{foo}, "expected two non-empty regexps to be equal");
+        assert(%r{}i == %r{}i, "expected two empty regexps with options to be equal");
+        assert(%r{foo}i == %r{foo}i, "expected two non-empty regexps with options to be equal");
+        
+        assert(%r{foo} != %r{bar}, "expected two different regexps to not be equal");
+        assert(%r{foo}i != %r{foo}x, "expected two regexps with different options to not be equal");
+    }
 }.register;
