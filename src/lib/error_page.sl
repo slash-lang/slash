@@ -1,7 +1,8 @@
+<% \(err) { %>
 <!DOCTYPE html>
 <html>
 <head>
-    <title><%= $err.class.to_s %> at <%= Request.uri %></title>
+    <title><%= err.class.to_s %> at <%= Request.uri %></title>
     <style>
     body {
         font-family:Verdana, sans-serif;
@@ -58,20 +59,20 @@
 </head>
 <body>
     <header>
-        <h2><%= $err.class.to_s %> <span>at <%= Request.uri %></span></h2>
+        <h2><%= err.class.to_s %> <span>at <%= Request.uri %></span></h2>
         <table>
             <tr>
                 <th>Message</th>
-                <td><%= $err.message %></td>
+                <td><%= err.message %></td>
             </tr>
-            <% if $err.backtrace.any { %>
+            <% if err.backtrace.any { %>
                 <tr>
                     <th>File</th>
-                    <td><%= $err.backtrace[0].file %></td>
+                    <td><%= err.backtrace[0].file %></td>
                 </tr>
                 <tr>
                     <th>Line</th>
-                    <td><%= $err.backtrace[0].line %></td>
+                    <td><%= err.backtrace[0].line %></td>
                 </tr>
             <% } %>
         </table>
@@ -79,7 +80,7 @@
     <section class="backtrace">
         <h2>Backtrace</h2>
         <ul>
-            <% for frame in $err.backtrace { %>
+            <% for frame in err.backtrace { %>
                 <li>
                     <code>#<%= frame.method %></code> in <strong><%= frame.file %></strong>, line <strong><%= frame.line %></strong>
                 </li>
@@ -96,3 +97,4 @@
     </section>
 </body>
 </html>
+<% } %>

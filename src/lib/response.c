@@ -1,5 +1,6 @@
 #include <string.h>
 #include <slash/lib/response.h>
+#include <slash/lib/lambda.h>
 #include <slash/lib/dict.h>
 
 static int Response_;
@@ -219,21 +220,22 @@ response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
 extern char* sl__error_page_src;
 
 void
-sl_render_error_page(sl_vm_t* vm, volatile SLVAL err)
+sl_render_error_page(sl_vm_t* vm, SLVAL err)
 {
     sl_catch_frame_t frame;
     sl_response_internal_opts_t* resp = response(vm);
     resp->status = 500;
+    SLVAL caught_error;
     if(resp->descriptive_error_pages) {
         SL_TRY(frame, SL_UNWIND_EXCEPTION, {
-            sl_set_global(vm, "err", err);
-            sl_do_string(vm, (uint8_t*)sl__error_page_src, strlen(sl__error_page_src), (uint8_t*)"(error-page)");
-        }, err, {
+            SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__error_page_src, strlen(sl__error_page_src), (uint8_t*)"(error-page)");
+            sl_lambda_call(vm, error_lambda, 1, &err);
+        }, caught_error, {
             sl_response_write(vm, 
                 sl_string_concat(vm,
                     sl_make_cstring(vm, "<h1>Internal Server Error</h1><pre>"),
                     sl_string_concat(vm,
-                        sl_string_html_escape(vm, sl_to_s_no_throw(vm, err)),
+                        sl_string_html_escape(vm, sl_to_s_no_throw(vm, caught_error)),
                         sl_make_cstring(vm, "</pre>"))));
         });
     } else {
