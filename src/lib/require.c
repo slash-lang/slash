@@ -36,8 +36,9 @@ require(sl_vm_t* vm, SLVAL self, SLVAL file)
 void
 sl_init_require(sl_vm_t* vm)
 {
-    SLVAL inc[1];
+    SLVAL inc[2];
     inc[0] = sl_make_cstring(vm, ".");
-    sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, 1, inc));
+    inc[1] = sl_make_cstring(vm, "");
+    sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, 2, inc));
     sl_define_method(vm, vm->lib.Object, "require", 1, require);
 }
