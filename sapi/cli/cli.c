@@ -35,7 +35,7 @@ run(sl_vm_t* vm, void* state)
     ctx.registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
     ctx.self = vm->lib.Object;
     ctx.parent = NULL;
-    sl_vm_exec(&ctx);
+    sl_vm_exec(&ctx, 0);
 }
 
 static void
