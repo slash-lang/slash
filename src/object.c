@@ -368,7 +368,14 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
             ctx->registers[i + 1] = argv[i];
         }
         
-        return sl_vm_exec(ctx);
+        if(argc > ctx->section->arg_registers) {
+            argc = ctx->section->arg_registers;
+        }
+        if(ctx->section->opt_skip) {
+            return sl_vm_exec(ctx, ctx->section->opt_skip[argc - ctx->section->req_registers]);
+        } else {
+            return sl_vm_exec(ctx, 0);
+        }
     }
     return vm->lib.nil;
 }

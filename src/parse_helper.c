@@ -204,14 +204,16 @@ sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl
 }
 
 sl_node_base_t*
-sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t arg_count, sl_string_t** args, sl_node_base_t* body)
+sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_DEF, sl_node_def_t, {
         sl_expect(ps->vm, name, ps->vm->lib.String);
         node->name = name;
         node->on = on;
-        node->args = args;
-        node->arg_count = arg_count;
+        node->req_args = req_args;
+        node->req_arg_count = req_arg_count;
+        node->opt_args = opt_args;
+        node->opt_arg_count = opt_arg_count;
         node->body = body;
     });
 }

@@ -63,5 +63,5 @@ sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, uint8_t* filename)
     ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
     ctx->self = vm->lib.Object;
     ctx->parent = NULL;
-    return sl_vm_exec(ctx);
+    return sl_vm_exec(ctx, 0);
 }

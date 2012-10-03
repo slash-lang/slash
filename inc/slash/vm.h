@@ -124,7 +124,9 @@ typedef struct sl_vm_section {
     size_t insns_cap;
     sl_vm_insn_t* insns;
     size_t max_registers;
+    size_t req_registers;
     size_t arg_registers;
+    size_t* opt_skip;
     int can_stack_alloc_frame;
     uint8_t* filename;
     SLVAL name;
@@ -155,6 +157,6 @@ void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val);
 
 SLVAL
-sl_vm_exec(sl_vm_exec_ctx_t* ctx);
+sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip);
 
 #endif
