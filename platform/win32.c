@@ -83,7 +83,7 @@ void*
 sl_stack_limit()
 {
     MEMORY_BASIC_INFORMATION mem;
-    if(!VirtualQuery((void*)((size_t)&mem & ~4095), &mem, sizeof(mem))) {
+    if(!VirtualQuery(&mem, &mem, sizeof(mem))) {
         fprintf(stderr, "VirtualQuery() failed in sl_stack_limit()\n");
         abort();
     }
