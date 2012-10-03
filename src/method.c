@@ -72,7 +72,11 @@ sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, sl_vm_section_t* section, s
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
     methp->name = sl_expect(vm, name, vm->lib.String);
     methp->is_c_func = 0;
-    methp->arity = (int)section->arg_registers;
+    if(section->req_registers < section->arg_registers) {
+        methp->arity = -section->req_registers - 1;
+    } else {
+        methp->arity = (int)section->arg_registers;
+    }
     methp->klass = sl_expect(vm, klass, vm->lib.Class);
     methp->as.sl.section = section;
     methp->as.sl.parent_ctx = parent_ctx;

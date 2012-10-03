@@ -39,11 +39,13 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
         cs->section->filename = parent->section->filename;
     }
     cs->section->max_registers = init_registers;
+    cs->section->req_registers = 0;
     cs->section->arg_registers = 0;
     cs->section->insns_cap = 4;
     cs->section->insns_count = 0;
     cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
     cs->section->can_stack_alloc_frame = 1;
+    cs->section->opt_skip = NULL;
     cs->registers = sl_alloc(vm->arena, cs->section->max_registers);
     for(i = 0; i < init_registers; i++) {
         cs->registers[i] = 1;
@@ -317,12 +319,24 @@ NODE(sl_node_def_t, def)
     sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i, on_reg;
-    init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
-    for(i = 0; i < node->arg_count; i++) {
-        st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
+    init_compile_state(&sub_cs, cs->vm, cs, node->req_arg_count + node->opt_arg_count + 1);
+    for(i = 0; i < node->req_arg_count; i++) {
+        st_insert(sub_cs.vars, (st_data_t)node->req_args[i], (st_data_t)(i + 1));
+    }
+    for(i = 0; i < node->opt_arg_count; i++) {
+        st_insert(sub_cs.vars, (st_data_t)node->opt_args[i].name, (st_data_t)(node->req_arg_count + i + 1));
     }
     sub_cs.section->name = node->name;
-    sub_cs.section->arg_registers = node->arg_count;
+    sub_cs.section->req_registers = node->req_arg_count;
+    sub_cs.section->arg_registers = node->req_arg_count + node->opt_arg_count;
+    sub_cs.section->opt_skip = sl_alloc(cs->vm->arena, sizeof(size_t) * (node->opt_arg_count + 1));
+    
+    for(i = 0; i < node->opt_arg_count; i++) {
+        sub_cs.section->opt_skip[i] = sub_cs.section->insns_count;
+        compile_node(&sub_cs, node->opt_args[i].default_value, node->req_arg_count + i + 1);
+    }
+    sub_cs.section->opt_skip[node->opt_arg_count] = sub_cs.section->insns_count;
+    
     compile_node(&sub_cs, node->body, 0);
     insn.opcode = SL_OP_RETURN;
     emit(&sub_cs, insn);
@@ -358,6 +372,7 @@ NODE(sl_node_lambda_t, lambda)
     for(i = 0; i < node->arg_count; i++) {
         st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
     }
+    sub_cs.section->req_registers = node->arg_count;
     sub_cs.section->arg_registers = node->arg_count;
     sub_cs.section->name = sl_make_cstring(cs->vm, "<lambda>");
     compile_node(&sub_cs, node->body, 0);

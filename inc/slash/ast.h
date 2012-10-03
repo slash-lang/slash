@@ -95,12 +95,20 @@ typedef struct sl_node_class {
 }
 sl_node_class_t;
 
+typedef struct sl_node_opt_arg {
+    sl_string_t* name;
+    sl_node_base_t* default_value;
+}
+sl_node_opt_arg_t;
+
 typedef struct sl_node_def {
     sl_node_base_t base;
     sl_node_base_t* on;
     SLVAL name;
-    sl_string_t** args;
-    size_t arg_count;
+    sl_string_t** req_args;
+    size_t req_arg_count;
+    sl_node_opt_arg_t* opt_args;
+    size_t opt_arg_count;
     sl_node_base_t* body;
 }
 sl_node_def_t;

@@ -41,9 +41,8 @@ typedef struct sl_vm_exception_handler {
 sl_vm_exception_handler_t;
 
 SLVAL
-sl_vm_exec(sl_vm_exec_ctx_t* ctx)
+sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
 {
-    size_t ip = 0;
     volatile int line = 0;
     sl_vm_t* vm = ctx->vm;
     sl_catch_frame_t frame;
@@ -124,7 +123,7 @@ vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_s
     subctx->registers = sl_alloc(ctx->vm->arena, sizeof(SLVAL) * section->max_registers);
     subctx->self = klass;
     subctx->parent = ctx;
-    sl_vm_exec(subctx);
+    sl_vm_exec(subctx, 0);
     return klass;
 }
 

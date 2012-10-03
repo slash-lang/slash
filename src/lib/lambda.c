@@ -57,7 +57,7 @@ sl_lambda_call(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     for(i = 0; i < lambda->section->arg_registers; i++) {
         subctx->registers[i + 1] = argv[i];
     }
-    return sl_vm_exec(subctx);
+    return sl_vm_exec(subctx, 0);
 }
 
 void

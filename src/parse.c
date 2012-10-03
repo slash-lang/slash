@@ -276,8 +276,10 @@ def_expression(sl_parse_state_t* ps)
     sl_node_base_t* on = NULL;
     sl_node_base_t* body;
     sl_token_t* tok;
-    size_t arg_count = 0, arg_cap = 2;
-    sl_string_t** args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * arg_cap);
+    size_t req_arg_count = 0, req_arg_cap = 2;
+    sl_string_t** req_args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * req_arg_cap);
+    size_t opt_arg_count = 0, opt_arg_cap = 2;
+    sl_node_opt_arg_t* opt_args = sl_alloc(ps->vm->arena, sizeof(sl_node_opt_arg_t*) * opt_arg_cap);
     sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_DEF);
     switch(peek_token(ps)->type) {
@@ -306,16 +308,31 @@ def_expression(sl_parse_state_t* ps)
         next_token(ps);
         name = sl_string_concat(ps->vm, name, sl_make_cstring(ps->vm, "="));
     }
+    int at_opt_args = 0;
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
-            if(arg_count >= arg_cap) {
-                arg_cap *= 2;
-                args = sl_realloc(ps->vm->arena, args, sizeof(sl_string_t*) * arg_cap);
-            }
             tok = expect_token(ps, SL_TOK_IDENTIFIER);
-            args[arg_count++] = (sl_string_t*)sl_get_ptr(
-                sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            if(peek_token(ps)->type == SL_TOK_EQUALS) {
+                at_opt_args = 1;
+            }
+            if(at_opt_args) {
+                expect_token(ps, SL_TOK_EQUALS);
+                if(opt_arg_count >= opt_arg_cap) {
+                    opt_arg_cap *= 2;
+                    opt_args = sl_realloc(ps->vm->arena, opt_args, sizeof(sl_string_t*) * opt_arg_cap);
+                }
+                opt_args[opt_arg_count].name = (sl_string_t*)sl_get_ptr(
+                    sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+                opt_args[opt_arg_count++].default_value = expression(ps);
+            } else {
+                if(req_arg_count >= req_arg_cap) {
+                    req_arg_cap *= 2;
+                    req_args = sl_realloc(ps->vm->arena, req_args, sizeof(sl_string_t*) * req_arg_cap);
+                }
+                req_args[req_arg_count++] = (sl_string_t*)sl_get_ptr(
+                    sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            }
             if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
                 expect_token(ps, SL_TOK_COMMA);
             }
@@ -328,7 +345,7 @@ def_expression(sl_parse_state_t* ps)
     body = body_expression(ps);
     ps->scope = scope.prev;
     ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
-    return sl_make_def_node(ps, name, on, arg_count, args, body);
+    return sl_make_def_node(ps, name, on, req_arg_count, req_args, opt_arg_count, opt_args, body);
 }
 
 static sl_node_base_t*
