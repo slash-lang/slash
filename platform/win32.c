@@ -82,6 +82,10 @@ sl_seed()
 void*
 sl_stack_limit()
 {
-    /* TODO: VirtualQuery dwTopOfStack for length */
-    return NULL;
+    MEMORY_BASIC_INFORMATION mem;
+    if(!VirtualQuery((void*)((size_t)&mem & ~4095), &mem, sizeof(mem))) {
+        fprintf(stderr, "VirtualQuery() failed in sl_stack_limit()\n");
+        abort();
+    }
+    return (void*)((size_t)mem.AllocationBase + 65536);
 }
