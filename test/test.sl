@@ -8,9 +8,7 @@ class Test {
     }
     
     def assert(what, message = "Assertion failed") {
-        unless what {
-            throw Failure.new(message);
-        }
+        throw Failure.new(message) unless what;
     }
     
     def flunk {
