@@ -13,7 +13,7 @@ class Test {
         }
     }
     
-    def flunk() {
+    def flunk {
         assert(false, "flunked");
     }
     
