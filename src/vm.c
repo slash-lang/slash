@@ -57,7 +57,7 @@ void sl_init_exts(sl_vm_t* vm);
 
 static void
 sl_init_libs(sl_vm_t* vm)
-{    
+{
     LIB_INIT(nil);
     LIB_INIT(comparable);
     LIB_INIT(number);

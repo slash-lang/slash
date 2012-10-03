@@ -286,7 +286,7 @@ sl_bignum_xor(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_xor(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL

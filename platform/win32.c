@@ -16,7 +16,7 @@ sl_realpath(sl_vm_t* vm, char* path)
         path = gcbuff;
     }
 
-    #ifdef _MAX_PATH 
+    #ifdef _MAX_PATH
         cpath = sl_alloc_buffer(vm->arena, _MAX_PATH + 1);
         cpath = _fullpath(cpath, path, _MAX_PATH);
         return cpath;

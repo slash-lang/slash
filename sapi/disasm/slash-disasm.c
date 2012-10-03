@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 }
 
 void disassemble(sl_vm_section_t* section)
-{    
+{
     size_t ip = 0;
     
     #define NEXT() (section->insns[ip++])

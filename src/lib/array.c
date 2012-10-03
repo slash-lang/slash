@@ -103,7 +103,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
                 str = sl_string_concat(vm, str, sl_make_cstring(vm, ", "));
             }
             str = sl_string_concat(vm, str, sl_inspect(vm, aryp->items[i]));
-        }    
+        }
         str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
     }, {
         aryp->inspecting = 0;
