@@ -279,7 +279,7 @@ def_expression(sl_parse_state_t* ps)
     size_t req_arg_count = 0, req_arg_cap = 2;
     sl_string_t** req_args = sl_alloc(ps->vm->arena, sizeof(sl_string_t*) * req_arg_cap);
     size_t opt_arg_count = 0, opt_arg_cap = 2;
-    sl_node_opt_arg_t* opt_args = sl_alloc(ps->vm->arena, sizeof(sl_node_opt_arg_t*) * opt_arg_cap);
+    sl_node_opt_arg_t* opt_args = sl_alloc(ps->vm->arena, sizeof(sl_node_opt_arg_t) * opt_arg_cap);
     sl_parse_scope_t scope;
     expect_token(ps, SL_TOK_DEF);
     switch(peek_token(ps)->type) {
@@ -320,7 +320,7 @@ def_expression(sl_parse_state_t* ps)
                 expect_token(ps, SL_TOK_EQUALS);
                 if(opt_arg_count >= opt_arg_cap) {
                     opt_arg_cap *= 2;
-                    opt_args = sl_realloc(ps->vm->arena, opt_args, sizeof(sl_string_t*) * opt_arg_cap);
+                    opt_args = sl_realloc(ps->vm->arena, opt_args, sizeof(sl_node_opt_arg_t) * opt_arg_cap);
                 }
                 opt_args[opt_arg_count].name = (sl_string_t*)sl_get_ptr(
                     sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
