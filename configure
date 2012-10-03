@@ -153,9 +153,18 @@ C
 open my $mf, ">$path/local.mk";
 
 my %platforms = (
-    darwin  => sub { print $mf "OBJS+= platform/posix.o platform/darwin.o\n"; $CFLAGS .= " -fPIC" },
-    linux   => sub { print $mf "OBJS+= platform/posix.o platform/linux.o\n"; $CFLAGS .= " -I/usr/include/mysql -fPIC"; $LDFLAGS .= " -lpthread -lm" },
-    msys    => sub { print $mf "OBJS+= platform/win32.o\n"; },
+    darwin => sub {
+        print $mf "OBJS+= platform/posix.o platform/darwin.o\n";
+        $CFLAGS .= " -fPIC"
+    },
+    linux => sub {
+        print $mf "OBJS+= platform/posix.o platform/linux.o\n";
+        $CFLAGS .= " -fPIC";
+        $LDFLAGS .= " -lpthread -lm"
+    },
+    msys => sub {
+        print $mf "OBJS+= platform/win32.o\n";
+    },
 );
 if($platforms{$^O}) {
     $platforms{$^O}->();
