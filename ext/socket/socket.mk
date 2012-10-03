@@ -1,0 +1,1 @@
+OBJS+= ext/socket/socket.o
