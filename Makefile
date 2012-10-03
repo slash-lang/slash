@@ -31,6 +31,7 @@ sapi[%]: libslash.a
 	@echo
 
 libslash.a: $(OBJS)
+	@rm -f $@
 	@echo "ar   $<"
 	@$(AR) r $@ $^
 
