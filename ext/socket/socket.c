@@ -144,6 +144,9 @@ sl_tcp_socket_read_line(sl_vm_t* vm, SLVAL self)
     SLVAL buffered = sl_make_cstring(vm, "");
     while(1) {
         sl_string_t* buffer = (sl_string_t*)sl_get_ptr(sl_tcp_socket_read(vm, self, bytes));
+        if(buffer->buff_len == 0) {
+            return buffered;
+        }
         uint8_t* pos;
         if((pos = memchr(buffer->buff, '\n', buffer->buff_len))) {
             SLVAL retn = sl_string_concat(vm, buffered, sl_make_string(vm, buffer->buff, (pos - buffer->buff) + 1));
@@ -155,6 +158,16 @@ sl_tcp_socket_read_line(sl_vm_t* vm, SLVAL self)
     }
 }
 
+static SLVAL
+sl_tcp_socket_close(sl_vm_t* vm, SLVAL self)
+{
+    sl_socket_t* sock = get_tcp_socket(vm, self);
+    shutdown(sock->socket, SHUT_RDWR);
+    close(sock->socket);
+    sock->socket = -1;
+    return vm->lib.nil;
+}
+
 void
 sl_init_ext_socket(sl_vm_t* vm)
 {
@@ -164,6 +177,7 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, TCPSocket, "write", 1, sl_tcp_socket_write);
     sl_define_method(vm, TCPSocket, "read", 1, sl_tcp_socket_read);
     sl_define_method(vm, TCPSocket, "read_line", 0, sl_tcp_socket_read_line);
+    sl_define_method(vm, TCPSocket, "close", 0, sl_tcp_socket_close);
     
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_make_cstring(vm, "Error"), vm->lib.Error, TCPSocket);
     
