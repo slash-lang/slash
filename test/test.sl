@@ -7,7 +7,7 @@ class Test {
     class Failure extends Error {
     }
     
-    def assert(what, message) {
+    def assert(what, message = "Assertion failed") {
         unless what {
             throw Failure.new(message);
         }
