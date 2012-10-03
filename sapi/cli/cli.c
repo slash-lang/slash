@@ -131,7 +131,7 @@ main(int argc, char** argv)
             sl_free_gc_arena(vm->arena);
             exit(exit_code);
         }
-    });    
+    });
     sl_free_gc_arena(vm->arena);
     return 0;
 }

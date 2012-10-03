@@ -231,7 +231,7 @@ sl_render_error_page(sl_vm_t* vm, SLVAL err)
             SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__error_page_sl, strlen(sl__error_page_sl), (uint8_t*)"(error-page)");
             sl_lambda_call(vm, error_lambda, 1, &err);
         }, caught_error, {
-            sl_response_write(vm, 
+            sl_response_write(vm,
                 sl_string_concat(vm,
                     sl_make_cstring(vm, "<h1>Internal Server Error</h1><pre>"),
                     sl_string_concat(vm,

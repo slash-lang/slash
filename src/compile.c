@@ -258,7 +258,7 @@ NODE(sl_node_var_t, var)
                 insn.uint = frame;
                 emit(cs, insn);
                 mark_upper_scopes_as_closure_unsafe(cs, frame);
-            }    
+            }
             insn.uint = index;
             emit(cs, insn);
             insn.uint = dest;
@@ -475,7 +475,7 @@ NODE(sl_node_if_t, if)
     /* true branch */
     compile_node(cs, node->body, dest);
     
-    /*  emit a jump over the else body, and compensate for the jump 
+    /*  emit a jump over the else body, and compensate for the jump
         by adding two bytes to the fixup's operand */
     cs->section->insns[fixup].uint = cs->section->insns_count + 2 /* JUMP <end> */;
     insn.opcode = SL_OP_JUMP;

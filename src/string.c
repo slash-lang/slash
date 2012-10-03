@@ -414,7 +414,7 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
             }
             haystack_buff++;
             haystack_len--;
-        }    
+        }
         piece = sl_make_string(vm, start_ptr, haystack_buff - start_ptr + haystack_len);
         sl_array_push(vm, ret, 1, &piece);
         return ret;

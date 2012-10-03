@@ -935,7 +935,7 @@ postfix_expression(sl_parse_state_t* ps)
                 break;
             case SL_TOK_UNLESS:
                 next_token(ps);
-                expr = sl_make_if_node(ps, 
+                expr = sl_make_if_node(ps,
                     sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_NOT),
                     expr, NULL);
                 break;
