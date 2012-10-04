@@ -1200,6 +1200,8 @@ NODE(sl_node_base_t, yada_yada)
     sl_vm_insn_t insn;
     insn.opcode = SL_OP_YADA_YADA;
     emit(cs, insn);
+    (void)dest;
+    (void)node;
 }
 
 NODE(sl_node__register_t, _register)
