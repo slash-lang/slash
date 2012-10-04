@@ -57,6 +57,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_inspect);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
+    sl_define_method(vm, vm->lib.Object, "responds_to", 1, sl_responds_to2);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
@@ -210,12 +211,13 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 {
-    return sl_is_truthy(sl_responds_to2(vm, object, sl_cstring(vm, id)));
+    return sl_is_truthy(sl_responds_to2(vm, object, sl_make_cstring(vm, id)));
 }
 
 SLVAL
-sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv)
 {
+    sl_string_t* id = (sl_string_t*)sl_get_ptr(sl_expect(vm, idv, vm->lib.String));
     sl_object_t* recvp = sl_get_ptr(object);
     SLVAL klass = sl_class_of(vm, object);
     sl_class_t* klassp = NULL;

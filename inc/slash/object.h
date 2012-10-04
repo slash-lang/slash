@@ -40,7 +40,7 @@ int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id);
 
 SLVAL
-sl_responds_to2(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv);
 
 SLVAL
 sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
