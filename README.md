@@ -16,9 +16,9 @@ It's inspired by Ruby, Perl and good old PHP.
 
 ### Sane systems
 
-    ./configure
-    make
-    make install
+    $ ./configure
+    $ make
+    # make install
 
 By default, `./configure` will enable all extensions (`mysql`, `json`, `base64`, `gcrypt` and `inflect` at time of writing). To disable an extension, use the `--no-ext=<extname>` option. To enable a disabled extension, use `--ext=<extname>`.
 
