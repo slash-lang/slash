@@ -258,7 +258,7 @@ sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
     sl_class_t* p;
     SLVAL val;
     if(!sl_is_a(vm, object, vm->lib.Class)) {
-        val = sl_class_of(vm, val);
+        object = sl_class_of(vm, object);
     }
     p = (sl_class_t*)sl_get_ptr(object);
     if(st_lookup(p->class_variables, (st_data_t)id, (st_data_t*)&val)) {
@@ -286,7 +286,7 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val)
 {
     sl_class_t* p;
     if(!sl_is_a(vm, object, vm->lib.Class)) {
-        val = sl_class_of(vm, val);
+        object = sl_class_of(vm, object);
     }
     p = (sl_class_t*)sl_get_ptr(object);
     st_insert(p->class_variables, (st_data_t)id, (st_data_t)sl_get_ptr(val));
