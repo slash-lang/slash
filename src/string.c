@@ -388,11 +388,11 @@ SLVAL
 sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 {
     sl_string_t* str = get_string(vm, self);
-    ssize_t idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
+    long idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
     if(idx < 0) {
         idx += str->char_len;
     }
-    if(idx < 0 || idx >= (ssize_t)str->char_len) {
+    if(idx < 0 || idx >= (long)str->char_len) {
         return vm->lib.nil;
     }
     uint8_t* buff_ptr = str->buff;
