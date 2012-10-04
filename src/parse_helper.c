@@ -53,7 +53,9 @@ sl_make_node(sl_parse_state_t* ps, sl_node_type_t type, size_t size)
 sl_node_base_t*
 sl_make_singleton_node(sl_parse_state_t* ps, sl_node_type_t type)
 {
-    return sl_make_node(ps, type, sizeof(sl_node_base_t));
+    sl_node_base_t* node = sl_make_node(ps, type, sizeof(sl_node_base_t));
+    node->line = ps->line;
+    return node;
 }
 
 #define MAKE_NODE(t, type, block) do { \
@@ -68,6 +70,7 @@ sl_make_seq_node(sl_parse_state_t* ps)
 {
     sl_node_seq_t* node = (sl_node_seq_t*)
         sl_make_node(ps, SL_NODE_SEQ, sizeof(sl_node_seq_t));
+    node->base.line = ps->line;
     node->node_capacity = 2;
     node->node_count = 0;
     node->nodes = (sl_node_base_t**)sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * node->node_capacity);
