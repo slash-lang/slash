@@ -291,7 +291,6 @@ sl_string_url_encode(sl_vm_t* vm, SLVAL self)
             continue;
         }
         utf8len = sl_utf32_char_to_utf8(vm, c, utf8buff);
-        size_t i = 0;
         for(unsigned int i = 0; i < utf8len; i++) {
             sprintf((char*)out + out_len, "%%%2X", utf8buff[i]);
             out_len += 3;
@@ -383,6 +382,30 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
     }
     
     return vm->lib.nil;
+}
+
+SLVAL
+sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
+{
+    sl_string_t* str = get_string(vm, self);
+    ssize_t idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
+    if(idx < 0) {
+        idx += str->char_len;
+    }
+    if(idx < 0 || idx >= (ssize_t)str->char_len) {
+        return vm->lib.nil;
+    }
+    uint8_t* buff_ptr = str->buff;
+    size_t len = str->buff_len;
+    while(idx) {
+        sl_utf8_each_char(vm, &buff_ptr, &len);
+        idx--;
+    }
+    size_t slice_len = 1;
+    while(slice_len < len && (buff_ptr[slice_len] & 0xc0) == 0x80) {
+        slice_len++;
+    }
+    return sl_make_string(vm, buff_ptr, slice_len);
 }
 
 SLVAL
@@ -516,7 +539,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
     sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
     sl_define_method(vm, vm->lib.String, "index", 1, sl_string_index);
-    sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_index);
+    sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_char_at_index);
     sl_define_method(vm, vm->lib.String, "split", 1, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
