@@ -516,6 +516,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
     sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
     sl_define_method(vm, vm->lib.String, "index", 1, sl_string_index);
+    sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_index);
     sl_define_method(vm, vm->lib.String, "split", 1, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
