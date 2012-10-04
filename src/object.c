@@ -257,14 +257,16 @@ sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
 SLVAL
 sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
 {
-    sl_class_t* p;
     SLVAL val;
     if(!sl_is_a(vm, object, vm->lib.Class)) {
         object = sl_class_of(vm, object);
     }
-    p = (sl_class_t*)sl_get_ptr(object);
-    if(st_lookup(p->class_variables, (st_data_t)id, (st_data_t*)&val)) {
-        return val;
+    while(sl_get_primitive_type(object) == SL_T_CLASS) {
+        sl_class_t* p = (sl_class_t*)sl_get_ptr(object);
+        if(st_lookup(p->class_variables, (st_data_t)id, (st_data_t*)&val)) {
+            return val;
+        }
+        object = p->super;
     }
     return vm->lib.nil;
 }
