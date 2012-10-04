@@ -37,6 +37,7 @@ class Test {
         for method in obj.own_methods {
             next unless md = %r{^test_(.*)$}.match(method);
             try {
+                obj.before if obj.responds_to("before");
                 obj.send(method);
                 print(".");
             } catch e {
