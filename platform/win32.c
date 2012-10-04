@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <Wincrypt.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 char*
 sl_realpath(sl_vm_t* vm, char* path)
