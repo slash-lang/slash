@@ -291,10 +291,10 @@ sl_string_url_encode(sl_vm_t* vm, SLVAL self)
             continue;
         }
         utf8len = sl_utf32_char_to_utf8(vm, c, utf8buff);
-        while(utf8len) {
-            sprintf((char*)out + out_len, "%%%2X", utf8buff[0]);
+        size_t i = 0;
+        for(unsigned int i = 0; i < utf8len; i++) {
+            sprintf((char*)out + out_len, "%%%2X", utf8buff[i]);
             out_len += 3;
-            utf8len--;
         }
     }
     return sl_make_string(vm, out, out_len);
