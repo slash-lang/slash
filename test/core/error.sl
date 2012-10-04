@@ -31,4 +31,8 @@ class TestError extends Test {
     def test_throwing_non_error_throws_type_error {
         assert_throws(TypeError, \{ throw 1; });
     }
+    
+    def test_yada_yada_operator {
+        assert_throws(NotImplementedError, \{ ... });
+    }
 }.register;
