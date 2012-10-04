@@ -569,6 +569,9 @@ primary_expression(sl_parse_state_t* ps)
                 error(ps, sl_make_cstring(ps->vm, "last invalid outside loop"), tok);
             }
             return sl_make_singleton_node(ps, SL_NODE_LAST);
+        case SL_TOK_RANGE_EX:
+            next_token(ps);
+            return sl_make_singleton_node(ps, SL_NODE_YADA_YADA);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;
