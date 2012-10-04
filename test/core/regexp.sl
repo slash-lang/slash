@@ -11,6 +11,10 @@ class RegexpTest extends Test {
         
         md = %r{hello (.*)!}.match("goodbye world!");
         assert_equal(nil, md);
+        
+        md = %r{hello (?<what>.*)!}.match("hello world!");
+        assert_equal("world", md["what"]);
+        assert_equal(nil, md["not"]);
     }
     
     def test_init {

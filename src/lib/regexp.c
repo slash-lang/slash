@@ -1,6 +1,7 @@
 #include <slash/lib/regexp.h>
 #include <slash/class.h>
 #include <slash/string.h>
+#include <slash/object.h>
 #include <string.h>
 #include <stdio.h>
 #include <pcre.h>
@@ -243,6 +244,14 @@ static SLVAL
 sl_regexp_match_index(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
+    if(sl_is_a(vm, i, vm->lib.String)) {
+        char* named_cap = sl_to_cstr(vm, i);
+        int cap = pcre_get_stringnumber(match->re->re, named_cap);
+        if(cap < 0) {
+            return vm->lib.nil;
+        }
+        return sl_regexp_match_index(vm, self, sl_make_int(vm, cap));
+    }
     int index = sl_get_int(sl_expect(vm, i, vm->lib.Int));
     sl_string_t* str = (sl_string_t*)sl_get_ptr(match->match_string);
     if(index < 0 || index >= match->capture_count) {
