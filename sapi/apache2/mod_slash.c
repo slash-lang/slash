@@ -164,6 +164,9 @@ static int
 slash_handler(request_rec* r)
 {
     int ret;
+    if(r->assbackwards) { /* some garbage HTTP/0.9 request */
+        return DECLINED;
+    }
     if(!r->handler || strcmp(r->handler, "slash") != 0) {
         return DECLINED;
     }
