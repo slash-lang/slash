@@ -331,6 +331,9 @@ sl_string_inspect(sl_vm_t* vm, SLVAL self)
         if(str->buff[str_i] == '"') {
             memcpy(out + out_len, "\\\"", 2);
             out_len += 2;
+        } else if(str->buff[str_i] == '\\') {
+            memcpy(out + out_len, "\\\\", 2);
+            out_len += 2;
         } else if(str->buff[str_i] < 0x20) {
             out[out_len++] = '\\';
             out[out_len++] = 'x';
