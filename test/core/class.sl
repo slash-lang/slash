@@ -49,6 +49,6 @@ class ClassTest extends Test {
     }
     
     def test_class {
-        asset_equal(Class, Foo.class);
+        assert_equal(Class, Foo.class);
     }
 }.register;
