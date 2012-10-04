@@ -352,3 +352,8 @@ INSTRUCTION(SL_OP_END_TRY, {
 INSTRUCTION(SL_OP_CATCH, {
     NEXT_REG() = frame.value;
 })
+
+/*  0: YADA_YADA */
+INSTRUCTION(SL_OP_YADA_YADA, {
+    sl_throw_message2(vm, vm->lib.NotImplementedError, "Not Implemented");
+})

@@ -40,6 +40,7 @@ typedef enum sl_node_type {
     SL_NODE_NEXT,
     SL_NODE_LAST,
     SL_NODE_THROW,
+    SL_NODE_YADA_YADA,
     SL_NODE__REGISTER
 }
 sl_node_type_t;

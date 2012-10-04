@@ -170,6 +170,7 @@ sl_init_error(sl_vm_t* vm)
     ERROR(SyntaxError);
     ERROR(TypeError);
     ERROR(ZeroDivisionError);
+    ERROR(NotImplementedError);
     #undef ERROR
 }
 

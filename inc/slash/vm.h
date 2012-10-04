@@ -24,6 +24,7 @@ typedef struct sl_lib {
     SLVAL SyntaxError;
     SLVAL TypeError;
     SLVAL ZeroDivisionError;
+    SLVAL NotImplementedError;
     
     SLVAL Nil;
     SLVAL nil;
@@ -107,6 +108,7 @@ typedef enum sl_vm_opcode {
     SL_OP_TRY,
     SL_OP_END_TRY,
     SL_OP_CATCH,
+    SL_OP_YADA_YADA
 }
 sl_vm_opcode_t;
 
