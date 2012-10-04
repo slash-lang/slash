@@ -34,6 +34,7 @@ sub success {
 exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
                          "debug"     => \my $debug,
                          "profile"   => \my $profile,
+                         "coverage"  => \my $coverage,
                          "verbose"   => \my $verbose,
                          "prefix=s"  => \$prefix,
                          "cflags=s"  => \$CFLAGS,
@@ -63,6 +64,9 @@ if($lib_dir) {
 }
 if($profile) {
     $CFLAGS .= " -pg";
+}
+if($coverage) {
+    $CFLAGS .= " -fprofile-arcs -ftest-coverage"
 }
 if($debug) {
     $CFLAGS .= " -g -DSL_DEBUG";

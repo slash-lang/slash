@@ -56,6 +56,7 @@ clean:
 	rm -f ext/*/*.o
 	rm -f platform/*.o
 	rm -f libslash.a
+	find . | grep -P '(gcov|gcda|gcno)' | xargs rm -f
 	for d in $(SAPIS); do make -C sapi/$$d clean; done
 
 install:
