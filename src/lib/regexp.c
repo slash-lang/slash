@@ -115,14 +115,6 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
     if(!re) {
         sl_throw_message2(vm, vm->lib.SyntaxError, (char*)error);
     }
-    if(re_ptr->re) {
-        /*
-        if(re_ptr->study) {
-            pcre_free_study(re_ptr->study);
-        }
-        */
-        pcre_free(re_ptr->re);
-    }
     re_ptr->source = sl_make_string(vm, re_buff, re_len);
     re_ptr->options = opts;
     re_ptr->re = re;
@@ -148,6 +140,9 @@ sl_regexp_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         opts = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[1], vm->lib.String));
     } else {
         opts = sl_cstring(vm, "");
+    }
+    if(re_ptr->re) {
+        sl_throw_message2(vm, vm->lib.TypeError, "Cannot reinitialize already initialized Regexp");
     }
     sl_setup_regexp(vm, re_ptr, re->buff, re->buff_len, opts->buff, opts->buff_len);
     return self;
