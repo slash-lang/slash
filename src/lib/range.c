@@ -104,7 +104,7 @@ range_enumerator_current(sl_vm_t* vm, SLVAL self)
     sl_range_enumerator_t* range_enum = get_range_enumerator(vm, self);
     check_range_enumerator(vm, range_enum);
     if(range_enum->state != ES_ITERATING) {
-        sl_throw_message(vm, "Invalid operation on Range::Enumerator");
+        sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Range::Enumerator");
     }
     return range_enum->current;
 }
