@@ -237,6 +237,7 @@ def_expression_method_name(sl_parse_state_t* ps)
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
             return next_token(ps)->str;
+        /* operators: */
         case SL_TOK_SHIFT_LEFT:
         case SL_TOK_SHIFT_RIGHT:
         case SL_TOK_DBL_EQUALS:
@@ -256,6 +257,10 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_TILDE:
         case SL_TOK_AMP:
         case SL_TOK_PIPE:
+            return next_token(ps)->str;
+        /* keywords: */
+        case SL_TOK_LAST:
+        case SL_TOK_NEXT:
             return next_token(ps)->str;
         case SL_TOK_OPEN_BRACKET:
             if(peek_token_n(ps, 2)->type == SL_TOK_CLOSE_BRACKET) {
