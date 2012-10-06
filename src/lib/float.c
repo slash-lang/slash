@@ -125,7 +125,7 @@ sl_float_add(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_add(vm, self, sl_bignum_to_f(vm, other));
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_add(vm, self, sl_make_float(vm, sl_get_int(other)));
+        return sl_float_add(vm, self, sl_make_float(vm, sl_get_int(other)));
     }
     return sl_make_float(vm, sl_get_float(vm, self) + sl_get_float(vm, other));
 }
@@ -137,7 +137,7 @@ sl_float_sub(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_sub(vm, self, sl_bignum_to_f(vm, other));
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_sub(vm, self, sl_make_float(vm, sl_get_int(other)));
+        return sl_float_sub(vm, self, sl_make_float(vm, sl_get_int(other)));
     }
     return sl_make_float(vm, sl_get_float(vm, self) - sl_get_float(vm, other));
 }
@@ -161,7 +161,7 @@ sl_float_div(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_div(vm, self, sl_bignum_to_f(vm, other));
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_div(vm, self, sl_make_float(vm, sl_get_int(other)));
+        return sl_float_div(vm, self, sl_make_float(vm, sl_get_int(other)));
     }
     return sl_make_float(vm, sl_get_float(vm, self) / sl_get_float(vm, other));
 }
@@ -173,7 +173,7 @@ sl_float_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_mod(vm, self, sl_bignum_to_f(vm, other));
     }
     if(sl_is_a(vm, other, vm->lib.Int)) {
-        return sl_bignum_mod(vm, self, sl_make_float(vm, sl_get_int(other)));
+        return sl_float_mod(vm, self, sl_make_float(vm, sl_get_int(other)));
     }
     return sl_make_float(vm, fmod(sl_get_float(vm, self), sl_get_float(vm, other)));
 }
