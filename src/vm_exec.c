@@ -94,7 +94,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
                 #include "vm_defn.inc"
                 
                 default:
-                    sl_throw_message(vm, "BUG: Unknown opcode in VM");
+                    sl_throw_message(vm, "BUG: Unknown opcode in VM"); /* never reached */
             }
         }
     #endif

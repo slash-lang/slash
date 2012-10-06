@@ -112,6 +112,6 @@ sl_hash(sl_vm_t* vm, SLVAL val)
             return sl_get_int(sl_bignum_hash(vm, hash)) ^ vm->hash_seed;
         default:
             sl_throw_message2(vm, vm->lib.TypeError, "Expected #hash method to return Int or Bignum");
+            return 0; /* never reached */
     }
-    return 0;
 }

@@ -277,7 +277,7 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
     err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
     err = sl_string_concat(vm, err, sl_inspect(vm, klass));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
-    return vm->lib.nil;
+    return vm->lib.nil; /* never reached */
 }
 
 void
