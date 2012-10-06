@@ -77,11 +77,11 @@ static SLVAL
 enumerable_length(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
-    SLVAL i = sl_make_int(vm, 0);
+    int i = 0;
     while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        i = sl_send(vm, i, "succ", 0);
+        i++;
     }
-    return i;
+    return sl_make_int(vm, i);
 }
 
 static SLVAL
