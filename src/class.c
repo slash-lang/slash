@@ -223,6 +223,17 @@ sl_class_has_const(sl_vm_t* vm, SLVAL klass, char* name)
     return sl_class_has_const2(vm, klass, sl_make_cstring(vm, name));
 }
 
+static int
+sl_class_has_own_const(sl_vm_t* vm, SLVAL klass, SLVAL name)
+{
+    sl_class_t* klassp;
+    if(!sl_is_a(vm, klass, vm->lib.Class)) {
+        klass = sl_class_of(vm, klass);
+    }
+    klassp = get_class(vm, klass);
+    return st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL);
+}
+
 int
 sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
 {
@@ -231,7 +242,13 @@ sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    return st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL);
+    if(st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL)) {
+        return 1;
+    }
+    if(sl_get_primitive_type(klassp->super) == SL_T_CLASS) {
+        return sl_class_has_const2(vm, klassp->super, name);
+    }
+    return 0;
 }
 
 SLVAL
@@ -252,6 +269,9 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
     if(st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), (st_data_t*)&val)) {
         return val;
     }
+    if(sl_get_primitive_type(klassp->super) == SL_T_CLASS && sl_class_has_const2(vm, klassp->super, name)) {
+        return sl_class_get_const2(vm, klassp->super, name);
+    }
     err = sl_make_cstring(vm, "Undefined constant '");
     err = sl_string_concat(vm, err, name);
     err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
@@ -271,7 +291,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val)
 {
     sl_class_t* klassp;
     SLVAL err;
-    if(sl_class_has_const2(vm, klass, name)) {
+    if(sl_class_has_own_const(vm, klass, name)) {
         err = sl_make_cstring(vm, "Constant '");
         err = sl_string_concat(vm, err, name);
         err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
