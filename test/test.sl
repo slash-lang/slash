@@ -30,10 +30,11 @@ class Test {
     def assert_throws(klass, fn) {
         try {
             fn.call;
-            assert(false, "Expected callback to throw");
         } catch e {
             assert_is_a(klass, e);
-        }
+            return;
+        }    
+        assert(false, "Expected callback to throw");
     }
     
     def self.run {
