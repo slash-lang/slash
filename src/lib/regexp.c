@@ -102,11 +102,11 @@ sl_setup_regexp(sl_vm_t* vm, sl_regexp_t* re_ptr, uint8_t* re_buff, size_t re_le
                 break;
             default:
                 sprintf(buff, "Unknown regular expression option '%c'", opts_buff[i]);
-                sl_throw_message2(vm, vm->lib.SyntaxError, buff);
+                sl_throw_message2(vm, vm->lib.ArgumentError, buff);
         }
     }
     if(memchr(re_buff, 0, re_len)) {
-        sl_throw_message2(vm, vm->lib.SyntaxError, "Regular expression contains null byte");
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Regular expression contains null byte");
     }
     rez = sl_alloc_buffer(vm->arena, re_len + 1);
     memcpy(rez, re_buff, re_len);
