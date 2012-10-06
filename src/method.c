@@ -38,6 +38,20 @@ bound_method_call(sl_vm_t* vm, SLVAL bmethod, size_t argc, SLVAL* argv)
     return sl_apply_method(vm, bmethp->self, &bmethp->method, argc, argv);
 }
 
+static SLVAL
+bound_method_unbind(sl_vm_t* vm, SLVAL bmethod)
+{
+    sl_bound_method_t* bmethp = (sl_bound_method_t*)sl_get_ptr(bmethod);
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(sl_allocate(vm, vm->lib.Method));
+    methp->name         = bmethp->method.name;
+    methp->is_c_func    = bmethp->method.is_c_func;
+    methp->arity        = bmethp->method.arity;
+    methp->klass        = bmethp->method.klass;
+    methp->as           = bmethp->method.as;
+    methp->initialized  = 1;
+    return sl_make_ptr((sl_object_t*)methp);
+}
+
 void
 sl_init_method(sl_vm_t* vm)
 {
@@ -48,6 +62,7 @@ sl_init_method(sl_vm_t* vm)
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
     sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);
+    sl_define_method(vm, vm->lib.BoundMethod, "unbind", 0, bound_method_unbind);
     sl_define_method(vm, vm->lib.BoundMethod, "call", -1, bound_method_call);
 }
 
