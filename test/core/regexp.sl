@@ -1,11 +1,16 @@
 <%
 
 class RegexpTest extends Test {
+    class UninitializedRegexp extends Regexp {
+        def init {}
+    }
+    
     def test_match_data {
         re = %r{hello (.*)!};
         md = re.match("hello world!");
         assert_equal("hello world!", md[0]);
         assert_equal("world", md[1]);
+        assert_equal(nil, md[2]);
         assert_equal(2, md.length);
         assert_equal(re, md.regexp);
         
@@ -17,6 +22,12 @@ class RegexpTest extends Test {
         assert_equal(nil, md["not"]);
     }
     
+    def test_match_from_offset {
+        re = %r{\d+};
+        md = re.match("123 456 789", 3);
+        assert_equal("456", md[0]);
+    }
+    
     def test_init {
         re = Regexp.new("hello");
         assert(re.match("hello"), "/hello/ matches 'hello'");
@@ -25,6 +36,31 @@ class RegexpTest extends Test {
         re = Regexp.new("hello", "i");
         assert(re.match("hello"), "/hello/i matches 'hello'");
         assert(re.match("HELLO"), "/hello/i matches 'HELLO'");
+    }
+    
+    def test_uninitialized_regexp_throws {
+        re = UninitializedRegexp.new;
+        assert_throws(TypeError, \{ re.match("lol"); });
+    }
+    
+    def test_uninitialized_regexp_match_throws {
+        class UninitializedRegexpMatch extends Regexp::Match {
+            def init {}
+        }
+        match = UninitializedRegexpMatch.new;
+        assert_throws(TypeError, \{ match.regexp });
+    }
+    
+    def test_throws_on_invalid_regexp_option {
+        assert_throws(ArgumentError, \{ Regexp.new("", "lol"); });
+    }
+    
+    def test_throws_on_regexp_with_null_byte {
+        assert_throws(ArgumentError, \{ Regexp.new("foo\x00bar"); });
+    }
+    
+    def test_throws_syntax_error_on_bad_regexp {
+        assert_throws(SyntaxError, \{ Regexp.new("["); });
     }
     
     def test_options {
@@ -38,13 +74,16 @@ class RegexpTest extends Test {
     }
     
     def test_eq {
-        assert(%r{} == %r{}, "expected two empty regexps to be equal");
-        assert(%r{foo} == %r{foo}, "expected two non-empty regexps to be equal");
-        assert(%r{}i == %r{}i, "expected two empty regexps with options to be equal");
-        assert(%r{foo}i == %r{foo}i, "expected two non-empty regexps with options to be equal");
+        assert_equal(%r{}, %r{});
+        assert_equal(%r{foo}, %r{foo});
+        assert_equal(%r{}i, %r{}i);
+        assert_equal(%r{foo}i, %r{foo}i);
         
-        assert(%r{foo} != %r{bar}, "expected two different regexps to not be equal");
-        assert(%r{foo}i != %r{foo}x, "expected two regexps with different options to not be equal");
+        assert_unequal(%r{foo}, %r{bar});
+        assert_unequal(%r{foo}i, %r{foo}x);
+        
+        assert_unequal(%r{}, UninitializedRegexp.new);
+        assert_unequal(%r{}, nil);
     }
     
     def test_source {
