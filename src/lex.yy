@@ -59,7 +59,7 @@ HEX [0-9a-fA-F]
 <STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');                    BEGIN(STRING); }
 <STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');                    BEGIN(STRING); }
 <STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');                  BEGIN(STRING); }
-<STRE>"x"{HEX}{1,6} { sl_lex_append_hex_to_string(yyextra, yytext);                   BEGIN(STRING); }
+<STRE>"x"{HEX}{2}   { sl_lex_append_hex_to_string(yyextra, yytext);                   BEGIN(STRING); }
 <STRE>\n            { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); yyextra->line++; }
 <STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); }
 
