@@ -11,6 +11,7 @@ class NilTest extends Test {
     
     def test_equality {
         assert_equal(nil, Nil.new);
+        assert_unequal(nil, false);
         assert(Nil.new == Nil.new, "Expected two different instances of Nil to be considered equal");
     }
     
