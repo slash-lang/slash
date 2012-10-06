@@ -210,7 +210,7 @@ sl_dict_enumerator_next(sl_vm_t* vm, SLVAL self)
 {
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     if(!e->keys) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+        sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at > e->count) {
         return vm->lib._false;
@@ -229,10 +229,10 @@ sl_dict_enumerator_current(sl_vm_t* vm, SLVAL self)
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     SLVAL kv[2];
     if(!e->keys) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+        sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at == 0 || e->at > e->count) {
-        sl_throw_message2(vm, vm->lib.Error, "Invalid operation on Dict::Enumerator");
+        sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     kv[0] = e->keys[e->at - 1];
     kv[1] = sl_dict_get(vm, e->dict, kv[0]);
@@ -262,6 +262,14 @@ sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
     st_foreach(d->st, sl_dict_keys_iter, (st_data_t)&state);
     *count = state.at;
     return state.keys;
+}
+
+static SLVAL
+sl_dict_keys2(sl_vm_t* vm, SLVAL dict)
+{
+    size_t count;
+    SLVAL* keys = sl_dict_keys(vm, dict, &count);
+    return sl_make_array(vm, count, keys);
 }
 
 struct dict_eq_iter_state {
@@ -315,6 +323,7 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "delete", 1, sl_dict_delete);
     sl_define_method(vm, vm->lib.Dict, "merge", 1, sl_dict_merge);
     sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
+    sl_define_method(vm, vm->lib.Dict, "keys", 0, sl_dict_keys2);
     sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "==", 1, sl_dict_eq);
