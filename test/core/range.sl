@@ -13,6 +13,19 @@ class RangeTest extends Test {
         assert_equal([], (1000..1).to_a);
     }
     
+    def test_init {
+        assert_equal([1,2,3,4], Range.new(1, 4).to_a);
+        assert_equal([1,2,3], Range.new(1, 4, true).to_a);
+    }
+    
+    def test_enumerate {
+        enumerator = (0...0).enumerate;
+        assert_throws(TypeError, \{ enumerator.current });
+        assert_equal(false, enumerator.next);
+        assert_throws(TypeError, \{ enumerator.current });
+        assert_equal(false, enumerator.next);
+    }
+    
     class MyOrdinalObject extends Comparable {
         def init(dots) {
             @dots = dots;
@@ -36,5 +49,9 @@ class RangeTest extends Test {
         b = MyOrdinalObject.new(".....");
         assert_equal(["..", "...", "....", "....."], (a..b).map(\x { x.dots }));
         assert_equal(["..", "...", "...."], (a...b).map(\x { x.dots }));
+    }
+
+    def test_uniterable_range {
+        assert_throws(TypeError, \{ (nil..nil).to_a });
     }
 }.register;

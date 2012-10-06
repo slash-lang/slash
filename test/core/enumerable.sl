@@ -43,8 +43,31 @@ class EnumerableTest extends Test {
             }
         }
         
+        class LengthOfExactlyFourEnumerable extends Enumerable {
+            def init {
+                @times = 0;
+            }
+            
+            def enumerate {
+                self;
+            }
+            
+            def next {
+                if @times++ < 4 {
+                    true;
+                } else {
+                    false;
+                }
+            }
+            
+            def current {
+                7;
+            }
+        }
+        
         assert_equal(4, { 1 => 2, 3 => 4, 5 => 6, 7 => 8 }.length);
         assert_equal(0, UselessEnumerable.new.length);
+        assert_equal(4, LengthOfExactlyFourEnumerable.new.length);
     }
     
     def test_empty {
