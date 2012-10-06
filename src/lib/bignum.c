@@ -322,7 +322,14 @@ sl_bignum_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_make_int(vm, mpz_cmp_d(get_bignum(vm, self)->mpz, sl_get_float(vm, other)));
     }
     sl_expect(vm, other, vm->lib.Bignum);
-    return sl_make_int(vm, mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz));
+    int cmp = mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz);
+    /* we'd like to normalize this: */
+    if(cmp > 0) {
+        cmp = 1;
+    } else if(cmp < 0) {
+        cmp = -1;
+    }
+    return sl_make_int(vm, cmp);
 }
 
 SLVAL
