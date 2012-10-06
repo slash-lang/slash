@@ -19,6 +19,10 @@ class Test {
         assert(expect == what, "Expected " + expect.inspect + ", got " + what.inspect);
     }
     
+    def assert_unequal(expect, what) {
+        assert(expect != what, "Expected value to not equal " + expect.inspect);
+    }
+    
     def assert_is_a(klass, what) {
         assert(what.is_a(klass), "Expected " + what.inspect + " to be a " + klass.name);
     }

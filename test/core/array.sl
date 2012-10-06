@@ -9,6 +9,7 @@ class ArrayTest extends Test {
     def test_enumerate {
         a = [1,2,3];
         enumerator = a.enumerate;
+        assert_throws(Error, \{ enumerator.current });
         assert_equal(true, enumerator.next);
         assert_equal(1, enumerator.current);
         assert_equal(true, enumerator.next);
@@ -16,6 +17,17 @@ class ArrayTest extends Test {
         assert_equal(true, enumerator.next);
         assert_equal(3, enumerator.current);
         assert_equal(false, enumerator.next);
+        assert_equal(false, enumerator.next);
+        assert_throws(Error, \{ enumerator.current });
+    }
+    
+    def test_enumerator_throws_when_invalid {
+        class AESub extends Array::Enumerator {
+            def init {}
+        }
+        enumerator = AESub.new;
+        assert_throws(Error, \{ enumerator.current });
+        assert_throws(Error, \{ enumerator.next });
     }
     
     def test_get {
@@ -23,7 +35,11 @@ class ArrayTest extends Test {
         assert_equal(1, a[0]);
         assert_equal(2, a[1]);
         assert_equal(3, a[2]);
+        assert_equal(3, a[-1]);
+        assert_equal(2, a[-2]);
+        assert_equal(1, a[-3]);
         assert_equal(nil, a[1000]);
+        assert_equal(nil, a[-1000]);
         assert_throws(TypeError, \{
             a["hello"]
         });
@@ -37,8 +53,13 @@ class ArrayTest extends Test {
         assert_equal([456, nil, nil, 123], a);
         a[3] = nil;
         assert_equal([456, nil, nil, nil], a);
+        a[-2] = "foo";
+        assert_equal([456, nil, "foo", nil], a);
         assert_throws(TypeError, \{
             a["hello"] = 789;
+        });
+        assert_throws(ArgumentError, \{
+            a[-1000] = 789;
         });
     }
     
@@ -117,5 +138,29 @@ class ArrayTest extends Test {
         assert_equal([1, 2, 3], [1, 2, 3] + []);
         assert_equal([1, 2, 3], [] + [1, 2, 3]);
         assert_equal([1, 2, 3, 4], [1, 2] + [3, 4]);
+    }
+    
+    def test_resize {
+        a = [];
+        for i in 1..100 {
+            a.push(i);
+        }
+        for i in 1..100 {
+            a.pop();
+            assert_equal(100 - i, a.length);
+        }
+    }
+    
+    def test_eq {
+        assert_equal([1,2,3,4], [1,2,3,4]);
+        assert_unequal([1,2,3,4], [1,2,3,4,5]);
+        assert_unequal([1,2,3,4], [5,6,7,8]);
+        assert_unequal([1,2,3,4], []);
+        assert_unequal([], true);
+    }
+    
+    def test_array_hash {
+        assert_equal([1,2,3,4].hash, [1,2,3,4].hash);
+        assert_unequal([5,6,7,8].hash, [1,2,3,4].hash);
     }
 }.register;
