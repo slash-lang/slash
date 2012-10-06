@@ -2,6 +2,8 @@
 
 class ClassTest extends Test {
     class Foo {
+        SOME_CONST = 456;
+        
         MYMETHOD = def foo {
             123;
         };
@@ -32,6 +34,7 @@ class ClassTest extends Test {
     def test_instance_method {
         assert_equal(Foo::MYMETHOD, Foo.instance_method("foo"));
         assert_equal(Foo::MYMETHOD, Bar.instance_method("foo"));
+        assert_equal(nil, Foo.instance_method("hello"));
     }
     
     def test_own_instance_method {
@@ -46,6 +49,23 @@ class ClassTest extends Test {
     def test_own_instance_methods {
         assert_equal(["foo"], Foo.own_instance_methods);
         assert_equal([], Bar.own_instance_methods);
+    }
+    
+    def test_get_constant {
+        assert_equal(456, Foo::SOME_CONST);
+        assert_equal(456, Bar::SOME_CONST);
+        assert_throws(NameError, \{ Foo::NOT_SOME_CONST });
+    }
+    
+    def test_get_constant_of_instance {
+        assert_equal(456, Foo.new::SOME_CONST);
+    }
+    
+    def test_set_constant {
+        assert_throws(NameError, \{ Foo::IN_TEST_SET_CONSTANT });
+        Foo::IN_TEST_SET_CONSTANT = "hello";
+        assert_equal("hello", Foo::IN_TEST_SET_CONSTANT);
+        assert_throws(NameError, \{ Foo::IN_TEST_SET_CONSTANT = "redefined"; });
     }
     
     def test_class {
