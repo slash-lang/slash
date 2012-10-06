@@ -4,6 +4,9 @@
 *.so
 *.dSYM
 *.supp
+*.gcov
+*.gcda
+*.gcno
 local.mk
 src/init_exts.c
 src/lib/error_page.c
