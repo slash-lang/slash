@@ -997,6 +997,7 @@ NODE(sl_node_assign_const_t, assign_const)
         /* SL_OP_SET_OBJECT_CONST */
         reg = reg_alloc(cs);
         compile_node(cs, node->lval->obj, reg);
+        compile_node(cs, node->rval, dest);
         insn.opcode = SL_OP_SET_OBJECT_CONST;
         emit(cs, insn);
         insn.uint = reg;
