@@ -11,6 +11,7 @@ class TrueTest extends Test {
     
     def test_equality {
         assert_equal(true, True.new);
+        assert_unequal(true, false);
         assert(True.new == True.new, "Expected two different instances of True to be considered equal");
     }
     

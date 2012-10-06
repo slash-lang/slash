@@ -11,6 +11,7 @@ class FalseTest extends Test {
     
     def test_equality {
         assert_equal(false, False.new);
+        assert_unequal(false, true);
         assert(False.new == False.new, "Expected two different instances of False to be considered equal");
     }
     
