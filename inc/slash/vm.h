@@ -54,6 +54,8 @@ typedef struct sl_lib {
     SLVAL Method;
     SLVAL BoundMethod;
     SLVAL Lambda;
+    
+    SLVAL Time;
 }
 sl_lib_t;
 

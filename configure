@@ -154,6 +154,15 @@ int main() {
 }
 C
 
+print "Checking for a thread-safe time.h... ";
+if(0 && compile("", "#include <stdlib.h>\n#include <time.h>\n\nint main() { asctime_r(NULL, NULL); gmtime_r(NULL, NULL); localtime_r(NULL, NULL); }")) {
+    print "ok\n";
+    $CFLAGS .= " -DSL_HAS_THREADSAFE_TIME";
+} else {
+    printf "failed\n";
+    warning "Slash is being compiled without support for threadsafe time handling. You should not consider this build production-safe.";
+}
+
 open my $mf, ">$path/local.mk";
 
 my %platforms = (

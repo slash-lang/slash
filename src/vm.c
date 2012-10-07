@@ -52,6 +52,7 @@ LIB(response);
 LIB(system);
 LIB(regexp);
 LIB(range);
+LIB(time);
 
 void sl_init_exts(sl_vm_t* vm);
 
@@ -78,6 +79,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(system);
     LIB_INIT(regexp);
     LIB_INIT(range);
+    LIB_INIT(time);
     
     sl_init_exts(vm);
 }
