@@ -115,7 +115,7 @@ sl_init_bignum(sl_vm_t* vm)
 }
 
 SLVAL
-sl_make_bignum(sl_vm_t* vm, int n)
+sl_make_bignum(sl_vm_t* vm, long n)
 {
     SLVAL bnv = sl_allocate(vm, vm->lib.Bignum);
     sl_bignum_t* bn = get_bignum(vm, bnv);

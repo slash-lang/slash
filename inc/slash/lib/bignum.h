@@ -4,7 +4,7 @@
 #include <slash.h>
 
 SLVAL
-sl_make_bignum(sl_vm_t* vm, int n);
+sl_make_bignum(sl_vm_t* vm, long n);
 
 SLVAL
 sl_make_bignum_s(sl_vm_t* vm, char* s);

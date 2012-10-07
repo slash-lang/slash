@@ -99,7 +99,7 @@ sl_object_t*
 sl_get_ptr(SLVAL val);
 
 SLVAL
-sl_make_int(struct sl_vm* vm, int n);
+sl_make_int(struct sl_vm* vm, long n);
 
 SLVAL
 sl_make_ptr(sl_object_t* ptr);
