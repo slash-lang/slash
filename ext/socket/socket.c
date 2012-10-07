@@ -2,11 +2,31 @@
 #include <errno.h>
 #include <string.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
+#ifdef __WIN32
+    #define _WIN32_WINNT 0x0501
+    
+    #include <Windows.h>
+    #include <winsock2.h>
+    #include <winsock.h>
+    #include <Ws2tcpip.h>
+    #include <stdio.h>
+    
+    static WSADATA wsaData;
+#else
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <unistd.h>
+    #include <arpa/inet.h>
+    #include <netdb.h>
+#endif
+
+void
+sl_static_init_ext_socket()
+{
+    #ifdef __WIN32
+        WSAStartup(MAKEWORD(2, 2), &wsaData);
+    #endif
+}
 
 typedef struct {
     sl_object_t base;
@@ -25,7 +45,11 @@ static void
 free_socket(sl_socket_t* sock)
 {
     if(sock->socket != -1) {
-        close(sock->socket);
+        #ifdef __WIN32
+            closesocket(sock->socket);
+        #else
+            close(sock->socket);
+        #endif
     }
 }
 
@@ -111,7 +135,7 @@ sl_tcp_socket_write(sl_vm_t* vm, SLVAL self, SLVAL strv)
 {
     sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, strv, vm->lib.String));
     sl_socket_t* sock = get_tcp_socket(vm, self);
-    ssize_t sent = send(sock->socket, str->buff, str->buff_len, 0);
+    long sent = send(sock->socket, (char*)str->buff, str->buff_len, 0);
     if(sent == -1) {
         tcp_socket_error(vm, "Could not write to TCPSocket: ", strerror(errno));
     }
@@ -129,7 +153,7 @@ sl_tcp_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
     }
     int bytes = sl_get_int(sl_expect(vm, bytesv, vm->lib.Int));
     void* buffer = sl_alloc_buffer(vm->arena, bytes + 1);
-    ssize_t read = recv(sock->socket, buffer, bytes, 0);
+    long read = recv(sock->socket, buffer, bytes, 0);
     if(read == -1) {
         tcp_socket_error(vm, "Could not read from TCPSocket: ", strerror(errno));
     }
@@ -162,8 +186,13 @@ static SLVAL
 sl_tcp_socket_close(sl_vm_t* vm, SLVAL self)
 {
     sl_socket_t* sock = get_tcp_socket(vm, self);
-    shutdown(sock->socket, SHUT_RDWR);
-    close(sock->socket);
+    #ifdef __WIN32
+        shutdown(sock->socket, SD_BOTH);
+        closesocket(sock->socket);
+    #else
+        shutdown(sock->socket, SHUT_RDWR);
+        close(sock->socket);
+    #endif
     sock->socket = -1;
     return vm->lib.nil;
 }
