@@ -155,7 +155,7 @@ int main() {
 C
 
 print "Checking for a thread-safe time.h... ";
-if(0 && compile("", "#include <stdlib.h>\n#include <time.h>\n\nint main() { asctime_r(NULL, NULL); gmtime_r(NULL, NULL); localtime_r(NULL, NULL); }")) {
+if(compile("", "#define __USE_POSIX\n#include <stdlib.h>\n#include <time.h>\n\nint main() { asctime_r(NULL, NULL); gmtime_r(NULL, NULL); localtime_r(NULL, NULL); }")) {
     print "ok\n";
     $CFLAGS .= " -DSL_HAS_THREADSAFE_TIME";
 } else {

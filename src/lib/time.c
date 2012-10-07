@@ -2,6 +2,7 @@
 #include <slash/class.h>
 #include <slash/object.h>
 #include <slash/string.h>
+#define __USE_POSIX
 #include <time.h>
 
 /*
