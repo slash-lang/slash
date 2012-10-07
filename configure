@@ -9,6 +9,7 @@ use Getopt::Long;
 my @exts = qw(mysql json base64 gcrypt inflect);
 my @sapis = qw(cli);
 
+our @lib_dirs;
 our $path = dirname(rel2abs($0));
 
 our $CFLAGS = "";
@@ -31,7 +32,7 @@ sub success {
     print "\n\e[32m$message\n\e[0m";
 };
 
-exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
+exit 1 unless GetOptions "with-lib-dir=s"  => sub { push @lib_dirs, $_[1] },
                          "debug"     => \my $debug,
                          "profile"   => \my $profile,
                          "coverage"  => \my $coverage,
@@ -59,8 +60,8 @@ exit 1 unless GetOptions "with-lib-dir=s"  => \my $lib_dir,
                              @sapis = grep { $_ ne $sapi } @sapis;
                          };
 
-if($lib_dir) {
-    $CFLAGS .= " -I$lib_dir/include -L$lib_dir/lib";
+for(@lib_dirs) {
+    $CFLAGS .= " -I$_/include -L$_/lib";
 }
 if($profile) {
     $CFLAGS .= " -pg";
