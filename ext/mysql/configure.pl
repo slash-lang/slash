@@ -1,3 +1,10 @@
+if($^O eq "linux") {
+    $CFLAGS .= " -I/usr/include/mysql";
+    foreach(@lib_dirs) {
+        $CFLAGS .= " -I$_/mysql";
+    }
+}
+
 check_lib "mysqlclient", <<C;
     #include <mysql.h>
     
