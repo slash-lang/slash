@@ -24,7 +24,7 @@ sl_object_t* sl_get_ptr(SLVAL val)
 }
 
 SLVAL
-sl_make_int(sl_vm_t* vm, int n)
+sl_make_int(sl_vm_t* vm, long n)
 {
     SLVAL v;
     if(n > SL_MAX_INT || n < SL_MIN_INT) {
