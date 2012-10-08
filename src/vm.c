@@ -101,6 +101,7 @@ sl_init()
     sl_rand_init_mt(vm);
     vm->hash_seed = sl_rand(vm);
     vm->stack_limit = sl_stack_limit();
+    vm->required = st_init_table(vm->arena, &sl_string_hash_type);
     
     vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));
