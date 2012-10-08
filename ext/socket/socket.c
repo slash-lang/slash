@@ -157,6 +157,9 @@ sl_tcp_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
     if(read == -1) {
         tcp_socket_error(vm, "Could not read from TCPSocket: ", strerror(errno));
     }
+    if(read == 0) {
+        return vm->lib.nil;
+    }
     return sl_make_string(vm, buffer, read);
 }
 
@@ -167,7 +170,14 @@ sl_tcp_socket_read_line(sl_vm_t* vm, SLVAL self)
     SLVAL bytes = sl_make_int(vm, 65536);
     SLVAL buffered = sl_make_cstring(vm, "");
     while(1) {
-        sl_string_t* buffer = (sl_string_t*)sl_get_ptr(sl_tcp_socket_read(vm, self, bytes));
+        SLVAL read = sl_tcp_socket_read(vm, self, bytes);
+        if(sl_get_primitive_type(read) == SL_T_NIL) {
+            if(sl_get_int(sl_string_length(vm, buffered)) == 0) {
+                return vm->lib.nil;
+            }
+            return buffered;
+        }
+        sl_string_t* buffer = (sl_string_t*)sl_get_ptr(read);
         if(buffer->buff_len == 0) {
             return buffered;
         }
