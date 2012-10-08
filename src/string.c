@@ -483,13 +483,12 @@ sl_string_encode(sl_vm_t* vm, SLVAL self, char* encoding)
     size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
     char *inbuff = buff, *outbuf = sl_alloc_buffer(vm->arena, out_bytes_left), *retn_outbuf = outbuf;
     size_t ret;
-    const char* can_encoding = iconv_canonicalize(encoding);
-    if(strcmp(can_encoding, "ISO-8859-1") && strcmp(can_encoding, "UTF-8")) {
+    if(strcmp(encoding, "ISO-8859-1") && strcmp(encoding, "UTF-8")) {
         char* err_buff = sl_alloc_buffer(vm->arena, 32 + strlen(encoding));
         sprintf(err_buff, "Unknown encoding: '%s'", encoding);
         sl_throw_message2(vm, vm->lib.EncodingError, err_buff);
     }
-    iconv_t cd = iconv_open(can_encoding, str->encoding);
+    iconv_t cd = iconv_open(encoding, str->encoding);
     while(1) {
         ret = iconv(cd, &inbuff, &in_bytes_left, &outbuf, &out_bytes_left);
         
