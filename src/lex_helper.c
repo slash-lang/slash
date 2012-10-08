@@ -78,8 +78,8 @@ void
 sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
 {
     size_t i;
-    uint32_t c = 0;
-    for(i = 1; hex[i]; i++) {
+    char c = 0;
+    for(i = 0; hex[i]; i++) {
         c *= 16;
         if('0' <= hex[i] && hex[i] <= '9') {
             c += hex[i] - '0';
@@ -91,7 +91,7 @@ sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
             c += hex[i] - 'A' + 10;
         }
     }
-    sl_lex_append_to_string(st, c);
+    sl_lex_append_byte_to_string(st, c);
 }
 
 void
