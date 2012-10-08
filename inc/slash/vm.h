@@ -69,6 +69,7 @@ typedef struct sl_vm {
     void* stack_limit;
     char* cwd;
     sl_gc_arena_t* arena;
+    st_table_t* required;
 }
 sl_vm_t;
 

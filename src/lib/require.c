@@ -1,34 +1,53 @@
 #include <slash.h>
 #include <string.h>
 
-SLVAL
-sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
+static sl_string_t*
+resolve_require_path(sl_vm_t* vm, char* path)
 {
+    if(sl_abs_file_exists(path)) {
+        return sl_cstring(vm, path);
+    }
     SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
-    SLVAL err;
-    char *canon_path;
-    size_t i, len;
-    sl_string_t* spath;
     sl_expect(vm, include_dirs, vm->lib.Array);
-    sl_expect(vm, file, vm->lib.String);
-    len = sl_get_int(sl_array_length(vm, include_dirs));
-    for(i = 0; i < len; i++) {
-        spath = (sl_string_t*)sl_get_ptr(
+    size_t len = sl_get_int(sl_array_length(vm, include_dirs));
+    SLVAL pathv = sl_make_cstring(vm, path);
+    for(size_t i = 0; i < len; i++) {
+        sl_string_t* spath = (sl_string_t*)sl_get_ptr(
             sl_string_concat(vm, sl_array_get(vm, include_dirs, i),
-                sl_string_concat(vm, sl_make_cstring(vm, "/"), file)));
+                sl_string_concat(vm, sl_make_cstring(vm, "/"), pathv)));
         if(memchr(spath->buff, 0, spath->buff_len)) {
-            /* path contains a NULL byte, ignore */
             continue;
         }
         if(sl_file_exists(vm, (char*)spath->buff)) {
-            canon_path = sl_realpath(vm, (char*)spath->buff);
-            return sl_do_file(vm, (uint8_t*)canon_path);
+            return spath;
         }
     }
-    err = sl_make_cstring(vm, "Could not load '");
+    return NULL;
+}
+
+SLVAL
+sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
+{
+    sl_expect(vm, file, vm->lib.String);
+    char* file_cstr = sl_to_cstr(vm, file);
+    sl_string_t* resolved = resolve_require_path(vm, file_cstr);
+    
+    if(resolved) {
+        SLVAL retn;
+        if(st_lookup(vm->required, (st_data_t)resolved, (st_data_t*)&retn)) {
+            return retn;
+        }
+        st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(vm->lib.nil));
+        retn = sl_do_file(vm, (uint8_t*)sl_to_cstr(vm, sl_make_ptr((sl_object_t*)resolved)));
+        st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(retn));
+        return retn;
+    }
+    
+    SLVAL err = sl_make_cstring(vm, "Could not load '");
     err = sl_string_concat(vm, err, file);
     err = sl_string_concat(vm, err, sl_make_cstring(vm, "'"));
     sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
+
     (void)self;
     return vm->lib.nil;
 }
@@ -49,7 +68,6 @@ sl_init_require(sl_vm_t* vm)
 {
     SLVAL inc[2];
     inc[0] = sl_make_cstring(vm, ".");
-    inc[1] = sl_make_cstring(vm, "");
     sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, 2, inc));
     sl_define_method(vm, vm->lib.Object, "require", 1, sl_require);
 }
