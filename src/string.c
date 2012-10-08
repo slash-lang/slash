@@ -161,6 +161,24 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
+sl_string_times(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_string_t* str = get_string(vm, self);
+    long mul = sl_get_int(sl_expect(vm, other, vm->lib.Int));
+    if(mul && (size_t)LONG_MAX / mul < str->buff_len) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier is too big");
+    }
+    sl_string_t* new_str = get_string(vm, sl_make_string(vm, NULL, 0));
+    new_str->buff_len = str->buff_len * mul;
+    new_str->buff = sl_alloc(vm->arena, new_str->buff_len);
+    for(size_t i = 0; i < new_str->buff_len; i += str->buff_len) {
+        memcpy(new_str->buff + i, str->buff, str->buff_len);
+    }
+    new_str->char_len = str->char_len * mul;
+    return sl_make_ptr((sl_object_t*)new_str);
+}
+
+SLVAL
 sl_string_html_escape(sl_vm_t* vm, SLVAL self)
 {
     sl_string_t* str = get_string(vm, self);
@@ -602,6 +620,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
     sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);
+    sl_define_method(vm, vm->lib.String, "*", 1, sl_string_times);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
     sl_define_method(vm, vm->lib.String, "to_i", 0, sl_string_to_i);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);

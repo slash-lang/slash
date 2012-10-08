@@ -18,6 +18,14 @@ class StringTest extends Test {
         assert_equal("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", "АБВГДЕЖЗИЙКЛМНО" + "ПРСТУФХЦЧШЩЪЫЬЭЮЯ");
     }
     
+    def test_times {
+        assert_equal("", "x" * 0);
+        assert_equal("xxxxx", "x" * 5);
+        assert_equal("\x00\x00\x00\x00\x00\x00", "\x00" * 6);
+        assert_equal("†††", "†" * 3);
+        assert_throws(TypeError, \{ "x" * 10000000000000000 });
+    }
+    
     def test_to_s {
         assert_equal("", "".to_s);
         assert_equal("hello", "hello".to_s);
