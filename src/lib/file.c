@@ -1,6 +1,10 @@
 #include <slash.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
+
+static int
+cFile_InvalidOperation;
 
 typedef struct {
     sl_object_t base;
@@ -57,8 +61,10 @@ file_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     f = sl_realpath(vm, f);
     file->file = fopen(f, mode);
     if(!file->file) {
-        err = sl_make_cstring(vm, "No such file: ");
+        err = sl_make_cstring(vm, "Couldn't open ");
         err = sl_string_concat(vm, err, argv[0]);
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
         sl_throw(vm, sl_make_error2(vm, sl_class_get_const(vm, vm->lib.File, "NotFound"), err));
     }
     return self;
@@ -70,9 +76,47 @@ file_write(sl_vm_t* vm, SLVAL self, SLVAL str)
     sl_file_t* file = get_file(vm, self);
     sl_string_t* strp = (sl_string_t*)sl_get_ptr(sl_to_s(vm, str));
     if(!file->file) {
-        sl_throw_message2(vm, sl_class_get_const(vm, vm->lib.File, "InvalidOperation"), "Can't write to closed file");
+        sl_throw_message2(vm, sl_vm_store_get(vm, &cFile_InvalidOperation), "Can't write to closed file");
     }
     return sl_make_int(vm, fwrite(strp->buff, 1, strp->buff_len, file->file));
+}
+
+static SLVAL
+file_read(sl_vm_t* vm, SLVAL self)
+{
+    sl_file_t* file = get_file(vm, self);
+    if(!file->file) {
+        sl_throw_message2(vm, sl_vm_store_get(vm, &cFile_InvalidOperation), "Can't write to closed file");
+    }
+    SLVAL str = sl_make_cstring(vm, "");
+    while(!feof(file->file)) {
+        uint8_t buff[4096];
+        int read = fread(buff, 1, 4096, file->file);
+        str = sl_string_concat(vm, str, sl_make_string(vm, buff, read));
+    }
+    return str;
+}
+
+static SLVAL
+file_close(sl_vm_t* vm, SLVAL self)
+{
+    sl_file_t* file = get_file(vm, self);
+    if(file->file) {
+        fclose(file->file);
+        file->file = NULL;
+    }
+    return vm->lib.nil;
+}
+
+static SLVAL
+file_closed(sl_vm_t* vm, SLVAL self)
+{
+    sl_file_t* file = get_file(vm, self);
+    if(file->file) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
 }
 
 void
@@ -80,8 +124,12 @@ sl_init_file(sl_vm_t* vm)
 {
     vm->lib.File = sl_define_class(vm, "File", vm->lib.Object);
     sl_define_class3(vm, sl_make_cstring(vm, "NotFound"), vm->lib.Error, vm->lib.File);
-    sl_define_class3(vm, sl_make_cstring(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
+    SLVAL File_InvalidOperation = sl_define_class3(vm, sl_make_cstring(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
+    sl_vm_store_put(vm, &cFile_InvalidOperation, File_InvalidOperation);
     sl_class_set_allocator(vm, vm->lib.File, allocate_file);
     sl_define_method(vm, vm->lib.File, "init", -2, file_init);
     sl_define_method(vm, vm->lib.File, "write", 1, file_write);
+    sl_define_method(vm, vm->lib.File, "read", 0, file_read);
+    sl_define_method(vm, vm->lib.File, "close", 0, file_close);
+    sl_define_method(vm, vm->lib.File, "closed", 0, file_closed);
 }
