@@ -64,6 +64,7 @@ install:
 	mkdir -p $(INSTALL_PREFIX)/lib
 	mkdir -p $(INSTALL_PREFIX)/include
 	cp libslash.a $(INSTALL_PREFIX)/lib
+	cp -r lib/* $(INSTALL_PREFIX)/lib
 	cp -r inc/* $(INSTALL_PREFIX)/include
 	for sapi in $(SAPIS_ENABLED); do make -C sapi/$$sapi install; done
 

@@ -1,8 +1,8 @@
 #include <slash.h>
 #include <string.h>
 
-static SLVAL
-require(sl_vm_t* vm, SLVAL self, SLVAL file)
+SLVAL
+sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
 {
     SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
     SLVAL err;
@@ -34,11 +34,22 @@ require(sl_vm_t* vm, SLVAL self, SLVAL file)
 }
 
 void
+sl_require_path_add(sl_vm_t* vm, char* path)
+{
+    SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
+    if(!sl_is_a(vm, include_dirs, vm->lib.Array)) {
+        return;
+    }
+    SLVAL pathv = sl_make_cstring(vm, path);
+    sl_array_push(vm, include_dirs, 1, &pathv);
+}
+
+void
 sl_init_require(sl_vm_t* vm)
 {
     SLVAL inc[2];
     inc[0] = sl_make_cstring(vm, ".");
     inc[1] = sl_make_cstring(vm, "");
     sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, 2, inc));
-    sl_define_method(vm, vm->lib.Object, "require", 1, require);
+    sl_define_method(vm, vm->lib.Object, "require", 1, sl_require);
 }

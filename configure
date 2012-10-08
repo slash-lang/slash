@@ -206,6 +206,10 @@ for my $ext (@exts) {
 }
 
 open my $init_exts, ">$path/src/init_exts.c";
+my $require_path = "$prefix/lib/slash/";
+$require_path =~ s/\\/\\\\/g;
+$require_path =~ s/"/\\"/g;
+$require_path =~ s/\n/\\\n/g;
 print $init_exts <<"C";
 #include <slash.h>
 
@@ -220,7 +224,7 @@ sl_static_init_exts()
 void
 sl_init_exts(sl_vm_t* vm)
 {
-    (void)vm; // avoid unused variable error if no exts are enabled
+    sl_require_path_add(vm, "$require_path");
     $ext_inits
 }
 C
