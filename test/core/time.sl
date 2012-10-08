@@ -43,13 +43,4 @@ class TimeTest extends Test {
         }
         assert_equal(padding + "Saturday" + padding, Time.new(2000, 1, 1, 0, 0, 0).strftime(padding + "%A" + padding));
     }
-    
-    def test_clock_is_monotonic {
-        last_clock = 0;
-        for i in 1..100 {
-            next_clock = Time.clock;
-            assert(next_clock > last_clock, "clock is always greater than last clock");
-            last_clock = next_clock;
-        }
-    }
 }.register;
