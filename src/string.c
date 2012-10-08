@@ -77,45 +77,19 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 {
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
-    str->char_len = sl_utf8_strlen(vm, buff, buff_len);
+    if(sl_is_valid_utf8(vm, buff, buff_len)) {
+        str->encoding = "UTF-8";
+        str->char_len = sl_utf8_strlen(vm, buff, buff_len);
+    } else {
+        str->encoding = "CP1252";
+        str->char_len = buff_len;
+    }
     str->buff = sl_alloc_buffer(vm->arena, buff_len + 1);
     memcpy(str->buff, buff, buff_len);
     str->buff[buff_len] = 0;
     str->buff_len = buff_len;
     str->hash_set = 0;
     return vstr;
-}
-
-SLVAL
-sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding)
-{
-    size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
-    char *inbuff = buff, *outbuf = sl_alloc_buffer(vm->arena, out_bytes_left), *retn_outbuf = outbuf;
-    size_t ret;
-    iconv_t cd = iconv_open("UTF-8", encoding);
-    if(cd == (iconv_t)(-1)) {
-        sl_throw_message2(vm, vm->lib.EncodingError, "Unknown source encoding");
-    }
-    while(1) {
-        ret = iconv(cd, &inbuff, &in_bytes_left, &outbuf, &out_bytes_left);
-        
-        if(ret != (size_t)-1) {
-            break;
-        }
-        if(errno == E2BIG) {
-            out_bytes_left = buff_len;
-            cap += buff_len;
-            outbuf = sl_realloc(vm->arena, outbuf, cap);
-            continue;
-        }
-        
-        if(errno == EILSEQ || errno == EINVAL) {
-            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid source string");
-        }
-        break;
-    }
-    iconv_close(cd);
-    return sl_make_string(vm, (uint8_t*)retn_outbuf, cap - out_bytes_left);
 }
 
 SLVAL
@@ -133,7 +107,13 @@ sl_make_cstring_placement(sl_vm_t* vm, sl_string_t* placement, char* cstr)
     placement->base.singleton_methods = NULL;
     placement->buff = (uint8_t*)cstr;
     placement->buff_len = strlen(cstr);
-    placement->char_len = placement->buff_len;
+    if(sl_is_valid_utf8(vm, placement->buff, placement->buff_len)) {
+        placement->encoding = "UTF-8";
+        placement->char_len = sl_utf8_strlen(vm, placement->buff, placement->buff_len);
+    } else {
+        placement->encoding = "ISO-8859-1";
+        placement->char_len = placement->buff_len;
+    }
     placement->hash_set = 0;
     return sl_make_ptr((sl_object_t*)placement);
 }
@@ -149,6 +129,7 @@ allocate_string(sl_vm_t* vm)
 {
     sl_object_t* obj = (sl_object_t*)sl_alloc(vm->arena, sizeof(sl_string_t));
     obj->primitive_type = SL_T_STRING;
+    ((sl_string_t*)obj)->encoding = "UTF-8";
     return obj;
 }
 
@@ -170,6 +151,9 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     sl_string_t* a = get_string(vm, self);
     sl_string_t* b = get_string(vm, other);
+    if(strcmp(a->encoding, b->encoding) != 0) {
+        return sl_string_concat(vm, self, sl_string_encode(vm, other, a->encoding));
+    }
     uint8_t* buff = (uint8_t*)sl_alloc_buffer(vm->arena, a->buff_len + b->buff_len);
     memcpy(buff, a->buff, a->buff_len);
     memcpy(buff + a->buff_len, b->buff, b->buff_len);
@@ -333,6 +317,15 @@ sl_string_inspect(sl_vm_t* vm, SLVAL self)
         } else if(str->buff[str_i] == '\\') {
             memcpy(out + out_len, "\\\\", 2);
             out_len += 2;
+        } else if(str->buff[str_i] == '\n') {
+            memcpy(out + out_len, "\\n", 2);
+            out_len += 2;
+        } else if(str->buff[str_i] == '\r') {
+            memcpy(out + out_len, "\\r", 2);
+            out_len += 2;
+        } else if(str->buff[str_i] == '\t') {
+            memcpy(out + out_len, "\\t", 2);
+            out_len += 2;
         } else if(str->buff[str_i] < 0x20) {
             out[out_len++] = '\\';
             out[out_len++] = 'x';
@@ -356,11 +349,27 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     if(!sl_is_a(vm, other, vm->lib.String)) {
         return vm->lib._false;
     }
-    if(str_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
+    sl_string_t* a = get_string(vm, self);
+    sl_string_t* b = get_string(vm, other);
+    if(a->encoding == b->encoding) {
+        if(str_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
+            return vm->lib._true;
+        } else {
+            return vm->lib._false;
+        }
     }
+    sl_catch_frame_t frame;
+    SLVAL retn, err;
+    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
+        retn = sl_string_eq(vm, self, sl_string_encode(vm, other, a->encoding));
+    }, err, {
+        if(sl_is_a(vm, err, vm->lib.EncodingError)) {
+            retn = sl_string_eq(vm, other, self);
+        } else {
+            sl_rethrow(vm, &frame);
+        }
+    });
+    return retn;
 }
 
 SLVAL
@@ -373,11 +382,17 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
     uint8_t* haystack_buff = haystack->buff;
     size_t haystack_len = haystack->buff_len;
     size_t i = 0;
+    int utf8 = strcmp(haystack->encoding, "UTF-8") == 0;
     while(haystack_len >= needle->buff_len) {
         if(memcmp(haystack_buff, needle->buff, needle->buff_len) == 0) {
             return sl_make_int(vm, i);
         }
-        sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+        if(utf8) {
+            sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+        } else {
+            haystack_buff++;
+            haystack_len--;
+        }
         i++;
     }
     
@@ -396,16 +411,20 @@ sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
         return vm->lib.nil;
     }
     uint8_t* buff_ptr = str->buff;
-    size_t len = str->buff_len;
-    while(idx) {
-        sl_utf8_each_char(vm, &buff_ptr, &len);
-        idx--;
+    if(strcmp(str->encoding, "UTF-8") == 0) {
+        size_t len = str->buff_len;
+        while(idx) {
+            sl_utf8_each_char(vm, &buff_ptr, &len);
+            idx--;
+        }
+        size_t slice_len = 1;
+        while(slice_len < len && (buff_ptr[slice_len] & 0xc0) == 0x80) {
+            slice_len++;
+        }
+        return sl_make_string(vm, buff_ptr, slice_len);
+    } else {
+        return sl_make_string(vm, &buff_ptr[idx], 1);
     }
-    size_t slice_len = 1;
-    while(slice_len < len && (buff_ptr[slice_len] & 0xc0) == 0x80) {
-        slice_len++;
-    }
-    return sl_make_string(vm, buff_ptr, slice_len);
 }
 
 SLVAL
@@ -421,11 +440,18 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
     size_t buff_len;
     uint32_t c;
     if(needle->buff_len == 0) {
-        while(haystack_len) {
-            c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
-            buff_len = sl_utf32_char_to_utf8(vm, c, buff);
-            piece = sl_make_string(vm, buff, buff_len);
-            sl_array_push(vm, ret, 1, &piece);
+        if(strcmp(haystack->encoding, "UTF-8") == 0) {
+            while(haystack_len) {
+                c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+                buff_len = sl_utf32_char_to_utf8(vm, c, buff);
+                piece = sl_make_string(vm, buff, buff_len);
+                sl_array_push(vm, ret, 1, &piece);
+            }
+        } else {
+            for(size_t i = 0; i < haystack_len; i++) {
+                piece = sl_make_string(vm, &buff[i], 1);
+                sl_array_push(vm, ret, 1, &piece);
+            }
         }
         return ret;
     } else {
@@ -446,6 +472,51 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
         return ret;
     }
     return vm->lib.nil;
+}
+
+SLVAL
+sl_string_encode(sl_vm_t* vm, SLVAL self, char* encoding)
+{
+    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, self, vm->lib.String));
+    char* buff = (char*)str->buff;
+    size_t buff_len = str->buff_len;
+    size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
+    char *inbuff = buff, *outbuf = sl_alloc_buffer(vm->arena, out_bytes_left), *retn_outbuf = outbuf;
+    size_t ret;
+    const char* can_encoding = iconv_canonicalize(encoding);
+    if(strcmp(can_encoding, "ISO-8859-1") && strcmp(can_encoding, "UTF-8")) {
+        char* err_buff = sl_alloc_buffer(vm->arena, 32 + strlen(encoding));
+        sprintf(err_buff, "Unknown encoding: '%s'", encoding);
+        sl_throw_message2(vm, vm->lib.EncodingError, err_buff);
+    }
+    iconv_t cd = iconv_open(can_encoding, str->encoding);
+    while(1) {
+        ret = iconv(cd, &inbuff, &in_bytes_left, &outbuf, &out_bytes_left);
+        
+        if(ret != (size_t)-1) {
+            break;
+        }
+        if(errno == E2BIG) {
+            out_bytes_left = buff_len;
+            cap += buff_len;
+            outbuf = sl_realloc(vm->arena, outbuf, cap);
+            continue;
+        }
+        
+        if(errno == EILSEQ || errno == EINVAL) {
+            iconv_close(cd);
+            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid source string");
+        }
+        break;
+    }
+    iconv_close(cd);
+    return sl_make_string(vm, (uint8_t*)retn_outbuf, cap - out_bytes_left);
+}
+
+SLVAL
+sl_string_encode2(sl_vm_t* vm, SLVAL self, SLVAL encoding)
+{
+    return sl_string_encode(vm, self, sl_to_cstr(vm, encoding));
 }
 
 int
@@ -546,4 +617,5 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
     sl_define_method(vm, vm->lib.String, "%", 1, sl_string_mod);
     sl_define_method(vm, vm->lib.String, "format", -1, sl_string_format);
+    sl_define_method(vm, vm->lib.String, "encode", 1, sl_string_encode2);
 }

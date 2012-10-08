@@ -50,6 +50,46 @@ sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
     return utf8len;
 }
 
+int
+sl_is_valid_utf8(sl_vm_t* vm, uint8_t* buff, size_t len)
+{
+    size_t i, bytes = 0, j, utf8len = 0;
+    uint8_t c;
+    uint32_t c32;
+    for(i = 0; i < len; i++) {
+        c = buff[i];
+        if(c & 0x80) {
+            if((c & 0xe0) == 0xc0) {
+                c32 = c & 0x1f;
+                bytes = 2;
+            } else if((c & 0xf0) == 0xe0) {
+                c32 = c & 0x0f;
+                bytes = 3;
+            } else if((c & 0xf8) == 0xf0) {
+                c32 = c & 0x07;
+                bytes = 4;
+            } else {
+                return 2;
+            }
+        } else {
+            c32 = c;
+            bytes = 1;
+        }
+        if(i + bytes > len) {
+            return 1;
+        }
+        for(j = 1; j < bytes; j++) {
+            c32 <<= 6;
+            c32 |= buff[++i] & 0x3f;
+        }
+        if(c32 < utf8_code_point_limit[bytes - 1]) {
+            return 1;
+        }
+        utf8len++;
+    }
+    return 1;
+}
+
 uint32_t*
 sl_utf8_to_utf32(sl_vm_t* vm, uint8_t* buff, size_t len, size_t* out_len)
 {

@@ -56,7 +56,7 @@ sl_class_t;
 
 typedef struct sl_string {
     sl_object_t base;
-    /* utf8: */
+    char* encoding;
     uint8_t* buff;
     size_t buff_len;
     size_t char_len;
