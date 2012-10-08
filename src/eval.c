@@ -33,7 +33,7 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     file_size = ftell(f);
     fseek(f, 0, SEEK_SET);
     src = sl_alloc(vm->arena, file_size);
-    if(!fread(src, file_size, 1, f)) {
+    if(file_size && !fread(src, file_size, 1, f)) {
         fclose(f);
         err = sl_make_cstring(vm, "Could not load file: ");
         err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)filename));
