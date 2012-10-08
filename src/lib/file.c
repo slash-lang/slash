@@ -113,9 +113,9 @@ file_closed(sl_vm_t* vm, SLVAL self)
 {
     sl_file_t* file = get_file(vm, self);
     if(file->file) {
-        return vm->lib._true;
-    } else {
         return vm->lib._false;
+    } else {
+        return vm->lib._true;
     }
 }
 
