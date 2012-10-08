@@ -117,7 +117,7 @@ time_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 }
 
 static SLVAL
-time_to_s(sl_vm_t* vm, SLVAL self)
+time_inspect(sl_vm_t* vm, SLVAL self)
 {
     char time_str[128];
     time_t utc_time = get_time(vm, self)->tm;
@@ -174,19 +174,47 @@ time_strftime(sl_vm_t* vm, SLVAL self, SLVAL format)
     return sl_make_cstring(vm, buff);
 }
 
+static SLVAL
+time_cmp(sl_vm_t* vm, SLVAL selfv, SLVAL otherv)
+{
+    sl_time_t* self = get_time(vm, selfv);
+    sl_time_t* other = get_time(vm, otherv);
+    if(self->tm > other->tm) {
+        return sl_make_int(vm, 1);
+    } else if(self->tm < other->tm) {
+        return sl_make_int(vm, -1);
+    } else {
+        return sl_make_int(vm, 0);
+    }
+}
+
+static SLVAL
+time_eq(sl_vm_t* vm, SLVAL selfv, SLVAL otherv)
+{
+    sl_time_t* self = get_time(vm, selfv);
+    sl_time_t* other = get_time(vm, otherv);
+    if(self->tm == other->tm) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 void
 sl_init_time(sl_vm_t* vm)
 {
-    vm->lib.Time = sl_define_class(vm, "Time", vm->lib.Object);
+    vm->lib.Time = sl_define_class(vm, "Time", vm->lib.Comparable);
     sl_class_set_allocator(vm, vm->lib.Time, time_allocate);
     sl_define_singleton_method(vm, vm->lib.Time, "now", 0, time_now);
     sl_define_singleton_method(vm, vm->lib.Time, "local", -1, time_local);
     sl_define_singleton_method(vm, vm->lib.Time, "clock", 0, time_clock);
     sl_class_set_const(vm, vm->lib.Time, "CLOCKS_PER_SEC", sl_make_int(vm, CLOCKS_PER_SEC));
     sl_define_method(vm, vm->lib.Time, "init", -1, time_init);
-    sl_define_method(vm, vm->lib.Time, "to_s", 0, time_to_s);
+    sl_define_method(vm, vm->lib.Time, "inspect", 0, time_inspect);
     sl_define_method(vm, vm->lib.Time, "to_i", 0, time_to_i);
     sl_define_method(vm, vm->lib.Time, "+", 1, time_add);
     sl_define_method(vm, vm->lib.Time, "-", 1, time_sub);
+    sl_define_method(vm, vm->lib.Time, "<=>", 1, time_cmp);
+    sl_define_method(vm, vm->lib.Time, "==", 1, time_eq);
     sl_define_method(vm, vm->lib.Time, "strftime", 1, time_strftime);
 }
