@@ -133,6 +133,12 @@ time_to_s(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+time_to_i(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, get_time(vm, self)->tm);
+}
+
+static SLVAL
 time_add(sl_vm_t* vm, SLVAL self, SLVAL offset)
 {
     sl_expect(vm, offset, vm->lib.Int);
@@ -179,6 +185,7 @@ sl_init_time(sl_vm_t* vm)
     sl_class_set_const(vm, vm->lib.Time, "CLOCKS_PER_SEC", sl_make_int(vm, CLOCKS_PER_SEC));
     sl_define_method(vm, vm->lib.Time, "init", -1, time_init);
     sl_define_method(vm, vm->lib.Time, "to_s", 0, time_to_s);
+    sl_define_method(vm, vm->lib.Time, "to_i", 0, time_to_i);
     sl_define_method(vm, vm->lib.Time, "+", 1, time_add);
     sl_define_method(vm, vm->lib.Time, "-", 1, time_sub);
     sl_define_method(vm, vm->lib.Time, "strftime", 1, time_strftime);
