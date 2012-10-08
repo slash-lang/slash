@@ -21,9 +21,7 @@ sl_realpath(sl_vm_t* vm, char* path)
     }
     #ifdef PATH_MAX
         cpath = sl_alloc_buffer(vm->arena, PATH_MAX + 1);
-        if(!realpath(path, cpath)) {
-            return NULL;
-        }
+        (void)realpath(path, cpath);
         return cpath;
     #else
         cpath = realpath(path, NULL);
