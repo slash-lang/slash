@@ -37,10 +37,7 @@ class TimeTest extends Test {
     }
     
     def test_strftime_with_resize {
-        padding = ".";
-        for i in 1..10 {
-            padding = padding + padding;
-        }
+        padding = "." * 1024;
         assert_equal(padding + "Saturday" + padding, Time.new(2000, 1, 1, 0, 0, 0).strftime(padding + "%A" + padding));
     }
 }.register;
