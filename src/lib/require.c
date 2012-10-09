@@ -1,6 +1,9 @@
 #include <slash.h>
 #include <string.h>
 
+static char*
+suffixes[] = { "", ".sl" };
+
 static sl_string_t*
 resolve_require_path(sl_vm_t* vm, char* path)
 {
@@ -11,15 +14,23 @@ resolve_require_path(sl_vm_t* vm, char* path)
     sl_expect(vm, include_dirs, vm->lib.Array);
     size_t len = sl_get_int(sl_array_length(vm, include_dirs));
     SLVAL pathv = sl_make_cstring(vm, path);
-    for(size_t i = 0; i < len; i++) {
-        sl_string_t* spath = (sl_string_t*)sl_get_ptr(
-            sl_string_concat(vm, sl_array_get(vm, include_dirs, i),
-                sl_string_concat(vm, sl_make_cstring(vm, "/"), pathv)));
-        if(memchr(spath->buff, 0, spath->buff_len)) {
-            continue;
-        }
-        if(sl_file_exists(vm, (char*)spath->buff)) {
-            return spath;
+    for(size_t inc_i = 0; inc_i < len; inc_i++) {
+        for(size_t suff_i = 0; suff_i < sizeof(suffixes) / sizeof(*suffixes); suff_i++) {
+            
+            SLVAL full_path = sl_array_get(vm, include_dirs, inc_i);
+            full_path = sl_string_concat(vm, full_path, sl_make_cstring(vm, "/"));
+            full_path = sl_string_concat(vm, full_path, pathv);
+            full_path = sl_string_concat(vm, full_path, sl_make_cstring(vm, suffixes[suff_i]));
+            
+            sl_string_t* spath = (sl_string_t*)sl_get_ptr(full_path);
+            
+            if(memchr(spath->buff, 0, spath->buff_len)) {
+                continue;
+            }
+            
+            if(sl_file_exists(vm, (char*)spath->buff)) {
+                return spath;
+            }
         }
     }
     return NULL;
