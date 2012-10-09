@@ -66,8 +66,7 @@ sl_require_path_add(sl_vm_t* vm, char* path)
 void
 sl_init_require(sl_vm_t* vm)
 {
-    SLVAL inc[2];
-    inc[0] = sl_make_cstring(vm, ".");
-    sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, 2, inc));
+    SLVAL inc[] = { sl_make_cstring(vm, ".") };
+    sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, sizeof(inc) / sizeof(*inc), inc));
     sl_define_method(vm, vm->lib.Object, "require", 1, sl_require);
 }
