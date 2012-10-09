@@ -316,6 +316,9 @@ def_expression(sl_parse_state_t* ps)
     int at_opt_args = 0;
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
+        if(peek_token(ps)->type == SL_TOK_SELF) {
+            error(ps, sl_make_cstring(ps->vm, "not a chance"), peek_token(ps));
+        }
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             tok = expect_token(ps, SL_TOK_IDENTIFIER);
             if(peek_token(ps)->type == SL_TOK_EQUALS) {
