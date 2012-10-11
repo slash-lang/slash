@@ -100,6 +100,11 @@ class DictTest extends Test {
         assert_equal([1, 2, 3], { 1 => 2, 2 => 3, 3 => 4 }.keys.sort);
     }
     
+    def test_has_key {
+        assert_equal(false, {}.has_key("foo"));
+        assert_equal(true, { "foo" => "bar" }.has_key("foo"));
+    }
+    
     def test_throws_if_key_compare_returns_non_int {
         a = Object.new;
         b = Object.new;
