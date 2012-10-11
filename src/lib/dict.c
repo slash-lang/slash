@@ -272,6 +272,17 @@ sl_dict_keys2(sl_vm_t* vm, SLVAL dict)
     return sl_make_array(vm, count, keys);
 }
 
+static SLVAL
+sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
+{
+    sl_dict_key_t k = { .vm = vm, .key = key };
+    if(st_lookup(get_dict(vm, dict)->st, (st_data_t)&k, NULL)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 struct dict_eq_iter_state {
     sl_vm_t* vm;
     sl_dict_t* other;
@@ -324,6 +335,7 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "merge", 1, sl_dict_merge);
     sl_define_method(vm, vm->lib.Dict, "enumerate", 0, sl_dict_enumerate);
     sl_define_method(vm, vm->lib.Dict, "keys", 0, sl_dict_keys2);
+    sl_define_method(vm, vm->lib.Dict, "has_key", 1, sl_dict_has_key);
     sl_define_method(vm, vm->lib.Dict, "to_s", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "inspect", 0, sl_dict_to_s);
     sl_define_method(vm, vm->lib.Dict, "==", 1, sl_dict_eq);
