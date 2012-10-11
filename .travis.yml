@@ -1,7 +1,7 @@
 language: c
 before_script:
   - sudo apt-get install libgmp-dev
-script: ./configure --vanilla --sapi=cli ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
+script: ./configure --vanilla --sapi=cli --prefix=`pwd` ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
 notifications:
   irc:
     channels:
