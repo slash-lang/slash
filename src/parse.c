@@ -41,11 +41,9 @@ next_token(sl_parse_state_t* ps)
 static void
 error(sl_parse_state_t* ps, SLVAL err, sl_token_t* tok)
 {
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, " in "));
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, (char*)ps->filename));
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, ", line "));
-    err = sl_string_concat(ps->vm, err, sl_to_s(ps->vm, sl_make_int(ps->vm, tok->line)));
-    sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
+    err = sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err);
+    sl_error_add_frame(ps->vm, err, sl_make_cstring(ps->vm, "<parser>"), sl_make_cstring(ps->vm, (char*)ps->filename), sl_make_int(ps->vm, tok->line));
+    sl_throw(ps->vm, err);
 }
 
 static void
