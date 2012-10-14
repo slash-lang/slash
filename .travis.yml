@@ -1,7 +1,7 @@
 language: c
 before_script:
-  - sudo apt-get install libgmp-dev libmysqlclient-dev libyajl-dev libyajl libgcrypt-dev
-script: ./configure --prefix=`pwd` ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
+  - sudo apt-get install libgmp-dev libmysqlclient-dev libgcrypt-dev
+script: ./configure --prefix=`pwd` --no-ext=json ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
 notifications:
   irc:
     channels:
