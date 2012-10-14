@@ -1,6 +1,5 @@
 #include <slash.h>
 #include <yajl/yajl_parse.h>
-#include <gc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
