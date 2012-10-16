@@ -597,11 +597,12 @@ sl_string_format(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     while(argc && prev + 1 < end_of_buffer && (next_percent = memchr(prev, '%', (size_t)(end_of_buffer - next_percent))) != NULL) {
         buff = sl_string_concat(vm, buff, sl_make_string(vm, prev, (size_t)(next_percent - prev)));
         switch(next_percent[1]) {
-            case 's':
+            case 's': {
                 buff = sl_string_concat(vm, buff, sl_to_s(vm, *argv));
                 argc--;
                 argv++;
                 break;
+            }
             default:
                 buff = sl_string_concat(vm, buff, sl_make_string(vm, next_percent, 2));
                 break;
@@ -618,7 +619,7 @@ sl_init_string(sl_vm_t* vm)
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (st_data_t)sl_cstring(vm, "String"), (st_data_t)vm->lib.String.i);
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
-    sl_define_method(vm, vm->lib.String, "concat", 0, sl_string_concat);
+    sl_define_method(vm, vm->lib.String, "concat", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "*", 1, sl_string_times);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
