@@ -119,6 +119,20 @@ file_closed(sl_vm_t* vm, SLVAL self)
     }
 }
 
+static SLVAL
+file_class_read(sl_vm_t* vm, SLVAL self, SLVAL filename)
+{
+    SLVAL f = sl_new(vm, vm->lib.File, 1, &filename);
+    sl_catch_frame_t frame;
+    SLVAL retn;
+    SL_ENSURE(frame, {
+        retn = file_read(vm, f);
+    }, {
+        file_close(vm, f);
+    });
+    return retn;
+}
+
 void
 sl_init_file(sl_vm_t* vm)
 {
@@ -132,4 +146,6 @@ sl_init_file(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.File, "read", 0, file_read);
     sl_define_method(vm, vm->lib.File, "close", 0, file_close);
     sl_define_method(vm, vm->lib.File, "closed", 0, file_closed);
+    /* class convenience methods: */
+    sl_define_singleton_method(vm, vm->lib.File, "read", 1, file_class_read);
 }
