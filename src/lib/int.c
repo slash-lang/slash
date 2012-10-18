@@ -129,6 +129,37 @@ sl_int_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
+sl_int_pow(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int a = sl_get_int(self);
+    if(sl_is_a(vm, other, vm->lib.Bignum)) {
+        return sl_bignum_pow(vm, sl_make_bignum(vm, a), other);
+    }
+    if(sl_is_a(vm, other, vm->lib.Float)) {
+        return sl_float_pow(vm, sl_make_float(vm, a), other);
+    }
+    int b = sl_get_int(sl_expect(vm, other, vm->lib.Int));
+    if(highest_set_bit(a) < SL_MAX_INT / b) {
+        return sl_bignum_pow(vm, sl_make_bignum(vm, a), sl_make_bignum(vm, b));
+    }
+    if(b < 0) {
+        return sl_float_pow(vm, sl_make_float(vm, a), sl_make_float(vm, b));
+    }
+    int res = 1;
+    int mul = 1;
+    while(b) {
+        if(b % 1) {
+            mul *= a;
+            b--;
+        } else {
+            a *= a;
+            b /= 2;
+        }
+    }
+    return sl_make_int(vm, res * mul);
+}
+
+SLVAL
 sl_int_and(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
@@ -239,6 +270,7 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, "*", 1, sl_int_mul);
     sl_define_method(vm, vm->lib.Int, "/", 1, sl_int_div);
     sl_define_method(vm, vm->lib.Int, "%", 1, sl_int_mod);
+    sl_define_method(vm, vm->lib.Int, "**", 1, sl_int_pow);
     sl_define_method(vm, vm->lib.Int, "&", 1, sl_int_and);
     sl_define_method(vm, vm->lib.Int, "|", 1, sl_int_or);
     sl_define_method(vm, vm->lib.Int, "^", 1, sl_int_xor);

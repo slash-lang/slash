@@ -44,6 +44,12 @@ class IntTest extends Test {
         assert_throws(ZeroDivisionError, \{ 1 % 0 });
     }
     
+    def test_power {
+        assert_equal(16, 2 ** 4);
+        assert_equal(4, 16 ** 0.5);
+        assert_equal(1, 2 ** Bignum.new);
+    }
+    
     def test_and {
         assert_equal(0, 127 & 0);
         assert_equal(14, 126 & 15);

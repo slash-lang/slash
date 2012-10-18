@@ -28,6 +28,9 @@ SLVAL
 sl_float_mod(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL
+sl_float_pow(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
 sl_float_eq(sl_vm_t* vm, SLVAL self, SLVAL other);
 
 SLVAL

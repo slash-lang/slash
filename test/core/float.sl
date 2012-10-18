@@ -51,6 +51,12 @@ class FloatTest extends Test {
         assert_equal(0.5, 1234.5 % 1234);
     }
     
+    def test_power {
+        assert_equal(2.0, 4.0 ** 0.5);
+        assert_equal(16.0, 4.0 ** 2);
+        assert_equal(1.0, 4.0 ** Bignum.new);
+    }
+    
     def test_to_s_and_inspect {
         assert_equal("5.5", 5.5.to_s);
         assert_equal("5.5", 5.5.inspect);
