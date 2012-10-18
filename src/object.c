@@ -63,6 +63,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "responds_to", 1, sl_responds_to2);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
+    sl_define_method(vm, vm->lib.Object, "is_an", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
     sl_define_method(vm, vm->lib.Object, "method", 1, sl_object_method);
     sl_define_method(vm, vm->lib.Object, "own_method", 1, sl_object_own_method);
