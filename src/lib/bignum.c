@@ -106,6 +106,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "*", 1, sl_bignum_mul);
     sl_define_method(vm, vm->lib.Bignum, "/", 1, sl_bignum_div);
     sl_define_method(vm, vm->lib.Bignum, "%", 1, sl_bignum_mod);
+    sl_define_method(vm, vm->lib.Bignum, "**", 1, sl_bignum_pow);
     sl_define_method(vm, vm->lib.Bignum, "&", 1, sl_bignum_and);
     sl_define_method(vm, vm->lib.Bignum, "|", 1, sl_bignum_or);
     sl_define_method(vm, vm->lib.Bignum, "^", 1, sl_bignum_xor);
@@ -242,6 +243,28 @@ sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_tdiv_r(c->mpz, a->mpz, b->mpz);
     return sl_make_ptr((sl_object_t*)c); 
+}
+
+SLVAL
+sl_bignum_pow(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_bignum_t* a = get_bignum(vm, self);
+    if(sl_is_a(vm, other, vm->lib.Float)) {
+        return sl_float_pow(vm, sl_make_float(vm, mpz_get_d(a->mpz)), other);
+    }
+    if(sl_is_a(vm, other, vm->lib.Int)) {
+        return sl_bignum_pow(vm, self, sl_make_bignum(vm, sl_get_int(other)));
+    }
+    sl_bignum_t* b = get_bignum(vm, other);
+    if(mpz_sgn(b->mpz) < 0) {
+        return sl_float_pow(vm, sl_bignum_to_f(vm, self), sl_bignum_to_f(vm, other));
+    }
+    if(mpz_cmp_si(b->mpz, LONG_MAX) > 0) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "exponent too large");
+    }
+    sl_bignum_t* c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
+    mpz_pow_ui(c->mpz, a->mpz, mpz_get_si(b->mpz));
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
