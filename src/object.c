@@ -44,6 +44,9 @@ static SLVAL
 sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name);
 
 static SLVAL
+sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name);
+
+static SLVAL
 sl_object_own_methods(sl_vm_t* vm, SLVAL self);
 
 static SLVAL
@@ -62,6 +65,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
     sl_define_method(vm, vm->lib.Object, "method", 1, sl_object_method);
+    sl_define_method(vm, vm->lib.Object, "own_method", 1, sl_object_own_method);
     sl_define_method(vm, vm->lib.Object, "own_methods", 0, sl_object_own_methods);
     sl_define_method(vm, vm->lib.Object, "methods", 0, sl_object_methods);
     sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
@@ -473,6 +477,24 @@ sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     } else {
         return vm->lib.nil;
     }
+}
+
+static SLVAL
+sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
+{
+    SLVAL method;
+    sl_expect(vm, method_name, vm->lib.String);
+    if(sl_get_primitive_type(self) != SL_T_INT) {
+        sl_object_t* obj = sl_get_ptr(self);
+        if(obj->singleton_methods && st_lookup(obj->singleton_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+            return method;
+        }
+    }
+    sl_class_t* klass = (sl_class_t*)sl_get_ptr(sl_class_of(vm, self));
+    if(st_lookup(klass->instance_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+        return sl_method_bind(vm, method, self);
+    }
+    return vm->lib.nil;
 }
 
 struct singleton_methods_iter_state {
