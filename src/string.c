@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <slash/string.h>
 #include <slash/value.h>
 #include <slash/vm.h>
@@ -666,6 +667,48 @@ sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
     }
 }
 
+SLVAL
+sl_string_upper(sl_vm_t* vm, SLVAL selfv)
+{
+    sl_string_t* self = get_string(vm, selfv);
+    sl_string_t* retn = get_string(vm, sl_allocate(vm, vm->lib.String));
+    memcpy(retn, self, sizeof(sl_string_t));
+    retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
+    
+    size_t len = self->buff_len;
+    uint8_t* buff = self->buff;
+    size_t out_offset = 0;
+    
+    while(len) {
+        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+        uint32_t upper_c = toupper(c);
+        out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
+    }
+    
+    return sl_make_ptr((sl_object_t*)retn);
+}
+
+SLVAL
+sl_string_lower(sl_vm_t* vm, SLVAL selfv)
+{
+    sl_string_t* self = get_string(vm, selfv);
+    sl_string_t* retn = get_string(vm, sl_allocate(vm, vm->lib.String));
+    memcpy(retn, self, sizeof(sl_string_t));
+    retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
+
+    size_t len = self->buff_len;
+    uint8_t* buff = self->buff;
+    size_t out_offset = 0;
+    
+    while(len) {
+        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+        uint32_t lower_c = tolower(c);
+        out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
+    }
+    
+    return sl_make_ptr((sl_object_t*)retn);
+}
+
 void
 sl_init_string(sl_vm_t* vm)
 {
@@ -691,4 +734,6 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "format", -1, sl_string_format);
     sl_define_method(vm, vm->lib.String, "encode", 1, sl_string_encode2);
     sl_define_method(vm, vm->lib.String, "replace", 2, sl_string_replace);
+    sl_define_method(vm, vm->lib.String, "upper", 0, sl_string_upper);
+    sl_define_method(vm, vm->lib.String, "lower", 0, sl_string_lower);
 }

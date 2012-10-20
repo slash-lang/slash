@@ -132,4 +132,14 @@ class StringTest extends Test {
     def test_replace_regexp_lambda {
         assert_equal("A:B::C", "A1B2C".replace(%r{\d}, \x { ":" * x[0].to_i }));
     }
+    
+    def test_lower {
+        assert_equal("abcdef", "AbCdEf".lower);
+        assert_equal("åéîøü", "ÅÉÎØÜ".lower);
+    }
+    
+    def test_upper {
+        assert_equal("ABCDEF", "AbCdEf".upper);
+        assert_equal("ÅÉÎØÜ", "åéîøü".upper);
+    }
 }.register;
