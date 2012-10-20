@@ -1,4 +1,5 @@
 #include <slash/lib/regexp.h>
+#include <slash/lib/array.h>
 #include <slash/class.h>
 #include <slash/string.h>
 #include <slash/object.h>
@@ -235,25 +236,70 @@ sl_regexp_match_regexp(sl_vm_t* vm, SLVAL self)
     return sl_make_ptr((sl_object_t*)get_regexp_match(vm, self)->re);
 }
 
+static int
+cap_index(sl_vm_t* vm, SLVAL regexp_match, SLVAL i)
+{
+    sl_regexp_match_t* match = get_regexp_match(vm, regexp_match);
+    int index;
+    if(sl_is_a(vm, i, vm->lib.String)) {
+        char* named_cap = sl_to_cstr(vm, i);
+        index = pcre_get_stringnumber(match->re->re, named_cap);
+        if(index < 0) {
+            return -1;
+        }
+    } else {
+        index = sl_get_int(sl_expect(vm, i, vm->lib.Int));
+    }
+    if(index < 0 || index >= match->capture_count) {
+        return -1;
+    }
+    return index * 2;
+}
+
+static SLVAL
+sl_regexp_match_byte_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
+{
+    sl_regexp_match_t* match = get_regexp_match(vm, self);
+    int index = cap_index(vm, self, i);
+    if(index < 0) {
+        return vm->lib.nil;
+    }
+    return sl_make_int(vm, match->captures[index]);
+}
+
 static SLVAL
 sl_regexp_match_index(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
-    if(sl_is_a(vm, i, vm->lib.String)) {
-        char* named_cap = sl_to_cstr(vm, i);
-        int cap = pcre_get_stringnumber(match->re->re, named_cap);
-        if(cap < 0) {
-            return vm->lib.nil;
-        }
-        return sl_regexp_match_index(vm, self, sl_make_int(vm, cap));
-    }
-    int index = sl_get_int(sl_expect(vm, i, vm->lib.Int));
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(match->match_string);
-    if(index < 0 || index >= match->capture_count) {
+    int index = cap_index(vm, self, i);
+    if(index < 0) {
         return vm->lib.nil;
     }
-    index *= 2;
+    sl_string_t* str = (sl_string_t*)sl_get_ptr(match->match_string);
     return sl_make_string(vm, str->buff + match->captures[index], match->captures[index + 1] - match->captures[index]);
+}
+
+static SLVAL
+sl_regexp_match_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
+{
+    sl_regexp_match_t* match = get_regexp_match(vm, self);
+    int index = cap_index(vm, self, i);
+    if(index < 0) {
+        return vm->lib.nil;
+    }
+    int offset = match->captures[index];
+    return sl_make_int(vm, sl_string_index_for_byte_offset(vm, match->match_string, offset));
+}
+
+static SLVAL
+sl_regexp_match_capture(sl_vm_t* vm, SLVAL self, SLVAL i)
+{
+    sl_regexp_match_t* match = get_regexp_match(vm, self);
+    int index = cap_index(vm, self, i);
+    int start = sl_string_index_for_byte_offset(vm, match->match_string, match->captures[index]);
+    int end = sl_string_index_for_byte_offset(vm, match->match_string, match->captures[index + 1]);
+    SLVAL off_len[] = { sl_make_int(vm, start), sl_make_int(vm, end - start) };
+    return sl_make_array(vm, 2, off_len);
 }
 
 static SLVAL
@@ -284,5 +330,8 @@ sl_init_regexp(sl_vm_t* vm)
     
     sl_define_method(vm, vm->lib.Regexp_Match, "regexp", 0, sl_regexp_match_regexp);
     sl_define_method(vm, vm->lib.Regexp_Match, "[]", 1, sl_regexp_match_index);
+    sl_define_method(vm, vm->lib.Regexp_Match, "byte_offset", 1, sl_regexp_match_byte_offset);
+    sl_define_method(vm, vm->lib.Regexp_Match, "offset", 1, sl_regexp_match_offset);
+    sl_define_method(vm, vm->lib.Regexp_Match, "capture", 1, sl_regexp_match_capture);
     sl_define_method(vm, vm->lib.Regexp_Match, "length", 0, sl_regexp_match_length);
 }

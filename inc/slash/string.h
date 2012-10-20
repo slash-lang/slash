@@ -60,6 +60,9 @@ sl_string_encode2(sl_vm_t* vm, SLVAL self, SLVAL encoding);
 int
 sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL str, int index);
 
+int
+sl_string_index_for_byte_offset(sl_vm_t* vm, SLVAL str, int byte_offset);
+
 void
 sl_init_string(sl_vm_t* vm);
 
