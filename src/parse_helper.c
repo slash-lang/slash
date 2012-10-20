@@ -149,6 +149,15 @@ sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id, size_t a
 }
 
 sl_node_base_t*
+sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
+{
+    MAKE_NODE(SL_NODE_BIND_METHOD, sl_node_bind_method_t, {
+        node->recv = recv;
+        node->id = id;
+    });
+}
+
+sl_node_base_t*
 sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL id)
 {
     MAKE_NODE(type, sl_node_var_t, {

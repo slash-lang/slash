@@ -111,7 +111,8 @@ typedef enum sl_vm_opcode {
     SL_OP_TRY,
     SL_OP_END_TRY,
     SL_OP_CATCH,
-    SL_OP_YADA_YADA
+    SL_OP_YADA_YADA,
+    SL_OP_BIND_METHOD
 }
 sl_vm_opcode_t;
 

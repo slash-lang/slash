@@ -109,6 +109,7 @@ typedef enum sl_token_type {
     SL_TOK_RANGE,
     SL_TOK_DOT,
     SL_TOK_PAAMAYIM_NEKUDOTAYIM,
+    SL_TOK_COLON,
     SL_TOK_END
 }
 sl_token_type_t;

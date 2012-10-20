@@ -78,6 +78,9 @@ call_expression(sl_parse_state_t* ps);
 static sl_node_base_t*
 low_precedence_logical_expression(sl_parse_state_t* ps);
 
+static SLVAL
+def_expression_method_name(sl_parse_state_t* ps);
+
 static sl_token_t*
 expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 {
@@ -609,19 +612,24 @@ call_expression(sl_parse_state_t* ps)
         left = send_with_args_expression(ps, sl_make_self_node(ps),
             sl_make_ptr((sl_object_t*)((sl_node_var_t*)left)->name));
     }
-    while(peek_token(ps)->type == SL_TOK_DOT
-        || peek_token(ps)->type == SL_TOK_PAAMAYIM_NEKUDOTAYIM
-        || peek_token(ps)->type == SL_TOK_OPEN_BRACKET) {
-        tok = next_token(ps);
+    while(1) {
+        tok = peek_token(ps);
         switch(tok->type) {
             case SL_TOK_DOT:
+                next_token(ps);
                 left = send_expression(ps, left);
                 break;
+            case SL_TOK_COLON:
+                next_token(ps);
+                left = sl_make_bind_method_node(ps, left, def_expression_method_name(ps));
+                break;
             case SL_TOK_PAAMAYIM_NEKUDOTAYIM:
+                next_token(ps);
                 tok = expect_token(ps, SL_TOK_CONSTANT);
                 left = sl_make_const_node(ps, left, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
                 break;
             case SL_TOK_OPEN_BRACKET:
+                next_token(ps);
                 node_cap = 1;
                 node_len = 0;
                 nodes = sl_alloc(ps->vm->arena, sizeof(SLVAL) * node_cap);
@@ -638,10 +646,10 @@ call_expression(sl_parse_state_t* ps)
                 expect_token(ps, SL_TOK_CLOSE_BRACKET);
                 left = sl_make_send_node(ps, left, sl_make_cstring(ps->vm, "[]"), node_len, nodes);
                 break;
-            default: break;
+            default:
+                return left;
         }
     }
-    return left;
 }
 
 static sl_node_base_t*

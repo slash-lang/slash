@@ -357,3 +357,20 @@ INSTRUCTION(SL_OP_CATCH, {
 INSTRUCTION(SL_OP_YADA_YADA, {
     sl_throw_message2(vm, vm->lib.NotImplementedError, "Not Implemented");
 })
+
+/*  0: BIND_METHOD
+    1: <reg:receiver>
+    2: <str:method_name>
+    3: <reg:dest> */
+INSTRUCTION(SL_OP_BIND_METHOD, {
+    SLVAL recv = NEXT_REG();
+    sl_string_t* method_name = NEXT_STR();
+    sl_method_t* method = sl_lookup_method(vm, recv, method_name);
+    if(method) {
+        NEXT_REG() = sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), recv);
+    } else {
+        SLVAL msg = sl_make_cstring(vm, "No such method ");
+        msg = sl_string_concat(vm, msg, sl_make_ptr((sl_object_t*)method_name));
+        sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, msg));
+    }
+})
