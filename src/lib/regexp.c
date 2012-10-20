@@ -162,7 +162,7 @@ sl_regexp_compile(sl_vm_t* vm, SLVAL self)
 }
 */
 
-static SLVAL
+SLVAL
 sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_regexp_t* re = get_regexp_check(vm, self);
@@ -256,7 +256,7 @@ cap_index(sl_vm_t* vm, SLVAL regexp_match, SLVAL i)
     return index * 2;
 }
 
-static SLVAL
+SLVAL
 sl_regexp_match_byte_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
@@ -267,7 +267,7 @@ sl_regexp_match_byte_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
     return sl_make_int(vm, match->captures[index]);
 }
 
-static SLVAL
+SLVAL
 sl_regexp_match_index(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
@@ -279,7 +279,7 @@ sl_regexp_match_index(sl_vm_t* vm, SLVAL self, SLVAL i)
     return sl_make_string(vm, str->buff + match->captures[index], match->captures[index + 1] - match->captures[index]);
 }
 
-static SLVAL
+SLVAL
 sl_regexp_match_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
@@ -291,7 +291,7 @@ sl_regexp_match_offset(sl_vm_t* vm, SLVAL self, SLVAL i)
     return sl_make_int(vm, sl_string_index_for_byte_offset(vm, match->match_string, offset));
 }
 
-static SLVAL
+SLVAL
 sl_regexp_match_capture(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
@@ -311,8 +311,8 @@ sl_regexp_match_length(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, get_regexp_match(vm, self)->capture_count);
 }
 
-static SLVAL
-sl_regexp_before(sl_vm_t* vm, SLVAL self)
+SLVAL
+sl_regexp_match_before(sl_vm_t* vm, SLVAL self)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
     int index = cap_index(vm, self, sl_make_int(vm, 0));
@@ -320,8 +320,8 @@ sl_regexp_before(sl_vm_t* vm, SLVAL self)
     return sl_make_string(vm, str->buff, match->captures[index]);
 }
 
-static SLVAL
-sl_regexp_after(sl_vm_t* vm, SLVAL self)
+SLVAL
+sl_regexp_match_after(sl_vm_t* vm, SLVAL self)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
     int index = cap_index(vm, self, sl_make_int(vm, 0));
@@ -355,6 +355,6 @@ sl_init_regexp(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Regexp_Match, "offset", 1, sl_regexp_match_offset);
     sl_define_method(vm, vm->lib.Regexp_Match, "capture", 1, sl_regexp_match_capture);
     sl_define_method(vm, vm->lib.Regexp_Match, "length", 0, sl_regexp_match_length);
-    sl_define_method(vm, vm->lib.Regexp_Match, "before", 0, sl_regexp_before);
-    sl_define_method(vm, vm->lib.Regexp_Match, "after", 0, sl_regexp_after);
+    sl_define_method(vm, vm->lib.Regexp_Match, "before", 0, sl_regexp_match_before);
+    sl_define_method(vm, vm->lib.Regexp_Match, "after", 0, sl_regexp_match_after);
 }
