@@ -552,6 +552,25 @@ sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL strv, int index)
     return -1;
 }
 
+int
+sl_string_index_for_byte_offset(sl_vm_t* vm, SLVAL strv, int byte_offset)
+{
+    sl_string_t* str = get_string(vm, strv);
+    uint8_t* buff = str->buff;
+    size_t len = str->buff_len;
+    int index = 0;
+    while(len && byte_offset > 0) {
+        size_t old_len = len;
+        sl_utf8_each_char(vm, &buff, &len);
+        index++;
+        byte_offset -= old_len - len;
+    }
+    if(byte_offset > 0) {
+        return -1;
+    }
+    return index;
+}
+
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
