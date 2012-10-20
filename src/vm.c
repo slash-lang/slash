@@ -25,12 +25,6 @@ sl_static_init()
     }
     sl_statically_initialized = 1;
     sl_static_init_exts();
-    
-    if(getenv("LANG")) {
-        setlocale(LC_ALL, getenv("LANG"));
-    } else {
-        setlocale(LC_ALL, "en_US.UTF-8");
-    }
 }
 
 #define LIB(lib) void sl_init_##lib(sl_vm_t*)
