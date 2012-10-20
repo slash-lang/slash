@@ -22,6 +22,30 @@ class RegexpTest extends Test {
         assert_equal(nil, md["not"]);
     }
     
+    def test_match_data_offset {
+        re = %r{héllö (.*)!};
+        md = re.match("héllö world!");
+        assert_equal(0, md.offset(0));
+        assert_equal(6, md.offset(1));
+        assert_equal(nil, md.offset(2));
+    }
+    
+    def test_match_data_byte_offset {
+        re = %r{héllö (.*)!};
+        md = re.match("héllö world!");
+        assert_equal(0, md.byte_offset(0));
+        assert_equal(8, md.byte_offset(1));
+        assert_equal(nil, md.byte_offset(2));
+    }
+    
+    def test_match_data_capture {
+        re = %r{héllö (.*)!};
+        md = re.match("héllö world!");
+        assert_equal([0, 12], md.capture(0));
+        assert_equal([6, 5], md.capture(1));
+        assert_equal(nil, md.capture(2));
+    }
+    
     def test_match_from_offset {
         re = %r{\d+};
         md = re.match("123 456 789", 3);
