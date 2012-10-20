@@ -657,9 +657,7 @@ sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
             if(sl_is_a(vm, replace, vm->lib.String)) {
                 part = sl_string_concat(vm, part, replace);
             } else {
-                part = sl_string_concat(vm, part,
-                    sl_send(vm, replace, "call", 1,
-                        sl_regexp_match_index(vm, match, sl_make_int(vm, 0))));
+                part = sl_string_concat(vm, part, sl_send(vm, replace, "call", 1, match));
             }
             retn = sl_string_concat(vm, retn, part);
         }

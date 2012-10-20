@@ -130,7 +130,7 @@ class StringTest extends Test {
     }
     
     def test_replace_regexp_lambda {
-        assert_equal("A:B::C", "A1B2C".replace(%r{\d}, \x { ":" * x[0].to_i }));
+        assert_equal("A:B::C", "A<1>B<2>C".replace(%r{<(\d+)>}, \x { ":" * x[1].to_i }));
     }
     
     def test_lower {
