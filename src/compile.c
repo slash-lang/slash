@@ -696,6 +696,21 @@ NODE(sl_node_send_t, send)
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
+NODE(sl_node_bind_method_t, bind_method)
+{
+    sl_vm_insn_t insn;
+    compile_node(cs, node->recv, dest);
+    
+    insn.opcode = SL_OP_BIND_METHOD;
+    emit(cs, insn);
+    insn.uint = dest; /* recv */
+    emit(cs, insn);
+    insn.imm = node->id; /* id */
+    emit(cs, insn);
+    insn.uint = dest; /* dest */
+    emit(cs, insn);
+}
+
 NODE(sl_node_const_t, const)
 {
     sl_vm_insn_t insn;
@@ -1247,6 +1262,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_while_t,         WHILE,          while);
         COMPILE(sl_node_for_t,           FOR,            for);
         COMPILE(sl_node_send_t,          SEND,           send);
+        COMPILE(sl_node_bind_method_t,   BIND_METHOD,    bind_method);
         COMPILE(sl_node_const_t,         CONST,          const);
         COMPILE(sl_node_binary_t,        AND,            and);
         COMPILE(sl_node_binary_t,        OR,             or);

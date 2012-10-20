@@ -7,6 +7,7 @@ class MethodTest extends Test {
     
     def test_call {
         assert_equal(3, 1.method("+").call(2));
+        assert_equal(5, 2:+.call(3));
         assert_equal(3, Int.instance_method("+").call(1, 2));
     }
     
@@ -20,6 +21,8 @@ class MethodTest extends Test {
         assert_equal(3, Int.instance_method("+").bind(1).call(2));
         assert_is_a(BoundMethod, 7.method("+").unbind.bind(1));
         assert_is_a(BoundMethod, 7.method("+").bind(1));
+        assert_is_a(BoundMethod, 7:+);
+        assert_is_a(BoundMethod, 7:+.unbind.bind(1));
     }
     
     def test_bind_will_not_bind_to_unrelated_object {

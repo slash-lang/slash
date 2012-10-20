@@ -182,6 +182,7 @@ HEX [0-9a-fA-F]
 <NKW_ID>{ID}        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng));  BEGIN(SLASH); }
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
+<SLASH>":"          { ADD_TOKEN(sl_make_token(SL_TOK_COLON)); }
 
 <SLASH>[ \t\r]      { /* ignore */ }
 <SLASH>\n           { yyextra->line++; }

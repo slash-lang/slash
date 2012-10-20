@@ -21,6 +21,7 @@ typedef enum sl_node_type {
     SL_NODE_FOR,
     SL_NODE_WHILE,
     SL_NODE_SEND,
+    SL_NODE_BIND_METHOD,
     SL_NODE_CONST,
     SL_NODE_AND,
     SL_NODE_OR,
@@ -162,6 +163,13 @@ typedef struct sl_node_send {
     size_t arg_count;
 }
 sl_node_send_t;
+
+typedef struct sl_node_bind_method {
+    sl_node_base_t base;
+    sl_node_base_t* recv;
+    SLVAL id;
+}
+sl_node_bind_method_t;
 
 typedef struct sl_node_const_get {
     sl_node_base_t base;
