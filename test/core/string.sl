@@ -120,4 +120,16 @@ class StringTest extends Test {
         assert_equal("hello world!", "hello %s%s" % ["world", "!"]);
         assert_equal("hello world%s", "hello %s%s" % ["world"]);
     }
+    
+    def test_replace_string_string {
+        assert_equal("A::B::C", "A,B,C".replace(",", "::"));
+    }
+    
+    def test_replace_regexp_string {
+        assert_equal("A::B::C", "A1B2C".replace(%r{\d}, "::"));
+    }
+    
+    def test_replace_regexp_lambda {
+        assert_equal("A:B::C", "A1B2C".replace(%r{\d}, \x { ":" * x[0].to_i }));
+    }
 }.register;

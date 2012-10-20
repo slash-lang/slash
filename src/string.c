@@ -10,6 +10,8 @@
 #include <slash/utf8.h>
 #include <slash/lib/array.h>
 #include <slash/lib/number.h>
+#include <slash/lib/regexp.h>
+#include <slash/lib/enumerable.h>
 
 static int
 str_hash(sl_string_t* str)
@@ -632,6 +634,38 @@ sl_string_format(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     return buff;
 }
 
+static SLVAL
+sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
+{
+    if(sl_is_a(vm, search, vm->lib.String)) {
+        return sl_enumerable_join(vm, sl_string_split(vm, self, search), 1, &replace);
+    }
+    
+    sl_expect(vm, search, vm->lib.Regexp);
+    
+    SLVAL retn = sl_make_cstring(vm, "");
+    
+    while(1) {
+        SLVAL match = sl_regexp_match(vm, search, 1, &self);
+        
+        if(!sl_is_truthy(match)) {
+            return sl_string_concat(vm, retn, self);
+        } else {
+            SLVAL part = sl_regexp_match_before(vm, match);
+            if(sl_is_a(vm, replace, vm->lib.String)) {
+                part = sl_string_concat(vm, part, replace);
+            } else {
+                part = sl_string_concat(vm, part,
+                    sl_send(vm, replace, "call", 1,
+                        sl_regexp_match_index(vm, match, sl_make_int(vm, 0))));
+            }
+            retn = sl_string_concat(vm, retn, part);
+        }
+        
+        self = sl_regexp_match_after(vm, match);
+    }
+}
+
 void
 sl_init_string(sl_vm_t* vm)
 {
@@ -656,4 +690,5 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "%", 1, sl_string_mod);
     sl_define_method(vm, vm->lib.String, "format", -1, sl_string_format);
     sl_define_method(vm, vm->lib.String, "encode", 1, sl_string_encode2);
+    sl_define_method(vm, vm->lib.String, "replace", 2, sl_string_replace);
 }
