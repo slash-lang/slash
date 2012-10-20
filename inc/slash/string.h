@@ -57,6 +57,12 @@ sl_string_encode(sl_vm_t* vm, SLVAL self, char* encoding);
 SLVAL
 sl_string_encode2(sl_vm_t* vm, SLVAL self, SLVAL encoding);
 
+SLVAL
+sl_string_upper(sl_vm_t* vm, SLVAL self);
+
+SLVAL
+sl_string_lower(sl_vm_t* vm, SLVAL self);
+
 int
 sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL str, int index);
 
