@@ -46,6 +46,16 @@ class RegexpTest extends Test {
         assert_equal(nil, md.capture(2));
     }
     
+    def test_match_data_after {
+        re = %r{world};
+        md = re.match("héllö world!ß");
+        assert_equal("héllö ", md.before);
+        assert_equal("!ß", md.after);
+        md = re.match("world");
+        assert_equal("", md.before);
+        assert_equal("", md.after);
+    }
+    
     def test_match_from_offset {
         re = %r{\d+};
         md = re.match("123 456 789", 3);
