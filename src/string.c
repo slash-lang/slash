@@ -9,6 +9,7 @@
 #include <slash/vm.h>
 #include <slash/class.h>
 #include <slash/utf8.h>
+#include <slash/unicode.h>
 #include <slash/lib/array.h>
 #include <slash/lib/number.h>
 #include <slash/lib/regexp.h>
@@ -675,14 +676,23 @@ sl_string_upper(sl_vm_t* vm, SLVAL selfv)
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
     
-    size_t len = self->buff_len;
-    uint8_t* buff = self->buff;
-    size_t out_offset = 0;
-    
-    while(len) {
-        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
-        uint32_t upper_c = toupper(c);
-        out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
+    if(strcmp(retn->encoding, "UTF-8") == 0) {
+        size_t len = self->buff_len;
+        uint8_t* buff = self->buff;
+        size_t out_offset = 0;
+        uint32_t upper_c;
+        
+        while(len) {
+            uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+            upper_c = sl_unicode_toupper(c);
+            out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
+        }
+    } else {
+        for(size_t i = 0; i < retn->buff_len; i++) {
+            if(retn->buff[i] >= 'a' && retn->buff[i] <= 'z') {
+                retn->buff[i] -= 'a' - 'A';
+            }
+        }
     }
     
     return sl_make_ptr((sl_object_t*)retn);
@@ -695,15 +705,24 @@ sl_string_lower(sl_vm_t* vm, SLVAL selfv)
     sl_string_t* retn = get_string(vm, sl_allocate(vm, vm->lib.String));
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
-
-    size_t len = self->buff_len;
-    uint8_t* buff = self->buff;
-    size_t out_offset = 0;
     
-    while(len) {
-        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
-        uint32_t lower_c = tolower(c);
-        out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
+    if(strcmp(retn->encoding, "UTF-8") == 0) {
+        size_t len = self->buff_len;
+        uint8_t* buff = self->buff;
+        size_t out_offset = 0;
+        uint32_t lower_c;
+        
+        while(len) {
+            uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+            lower_c = sl_unicode_tolower(c);
+            out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
+        }
+    } else {
+        for(size_t i = 0; i < retn->buff_len; i++) {
+            if(retn->buff[i] >= 'A' && retn->buff[i] <= 'Z') {
+                retn->buff[i] += 'a' - 'A';
+            }
+        }
     }
     
     return sl_make_ptr((sl_object_t*)retn);
