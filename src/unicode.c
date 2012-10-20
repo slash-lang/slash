@@ -794,18 +794,11 @@ sl_unicode_tolower(uint32_t c)
 uint32_t
 sl_unicode_toupper(uint32_t c)
 {
-    int left = 0;
-    int right = (sizeof(mappings) / sizeof(mappings[0])) - 2;
-    while(left <= right) {
-        int mid = (left + right) / 2;
-        if(mappings[mid].lower == c) {
-            return mappings[mid].upper;
-        }
-        if(mappings[mid].lower < c) {
-            left = mid + 1;
-        }
-        if(mappings[mid].lower > c) {
-            right = mid - 1;
+    /* we can't binary search toupper because the mappings are sorted in order
+       of the capital letters, not the lower case letters */
+    for(int i = 0; i < (sizeof(mappings) / sizeof(mappings[0])) - 1; i++) {
+        if(mappings[i].lower == c) {
+            return mappings[i].upper;
         }
     }
     return c;
