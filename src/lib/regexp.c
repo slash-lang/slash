@@ -296,6 +296,9 @@ sl_regexp_match_capture(sl_vm_t* vm, SLVAL self, SLVAL i)
 {
     sl_regexp_match_t* match = get_regexp_match(vm, self);
     int index = cap_index(vm, self, i);
+    if(index < 0) {
+        return vm->lib.nil;
+    }
     int start = sl_string_index_for_byte_offset(vm, match->match_string, match->captures[index]);
     int end = sl_string_index_for_byte_offset(vm, match->match_string, match->captures[index + 1]);
     SLVAL off_len[] = { sl_make_int(vm, start), sl_make_int(vm, end - start) };
