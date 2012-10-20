@@ -37,9 +37,6 @@ libslash.a: $(OBJS)
 
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 
-src/unicode.c: src/CaseFolding-3.2.0.txt scripts/generate-unicode-c.pl
-	perl scripts/generate-unicode-c.pl
-
 %.o: %.c inc/*.h inc/*/*.h inc/*/*/*.h Makefile local.mk
 	@echo "cc   $<"
 	@$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
