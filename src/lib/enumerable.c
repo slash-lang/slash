@@ -180,6 +180,43 @@ enumerable_sort(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     return sl_array_sort(vm, enumerable_to_a(vm, self), argc, argv);
 }
 
+static SLVAL
+enumerable_drop(sl_vm_t* vm, SLVAL self, SLVAL countv)
+{
+    SLVAL ary = sl_make_array(vm, 0, NULL);
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    
+    for(int count = sl_get_int(countv); count > 0; count--) {
+        if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+            return ary;
+        }
+    }
+    
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        SLVAL elem = sl_send(vm, enumerator, "current", 0);
+        sl_array_push(vm, ary, 1, &elem);
+    }
+    
+    return ary;
+}
+
+static SLVAL
+enumerable_take(sl_vm_t* vm, SLVAL self, SLVAL countv)
+{
+    SLVAL ary = sl_make_array(vm, 0, NULL);
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    
+    for(int count = sl_get_int(countv); count > 0; count--) {
+        if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+            return ary;
+        }
+        SLVAL elem = sl_send(vm, enumerator, "current", 0);
+        sl_array_push(vm, ary, 1, &elem);
+    }
+    
+    return ary;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -197,4 +234,6 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "filter", 1, enumerable_filter);
     sl_define_method(vm, vm->lib.Enumerable, "reject", 1, enumerable_reject);
     sl_define_method(vm, vm->lib.Enumerable, "sort", -1, enumerable_sort);
+    sl_define_method(vm, vm->lib.Enumerable, "drop", 1, enumerable_drop);
+    sl_define_method(vm, vm->lib.Enumerable, "take", 1, enumerable_take);
 }
