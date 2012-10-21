@@ -16,10 +16,12 @@ class TestError extends Test {
         try {
             \{ \{ throw Error.new; }.call; }.call;
         } catch e {
-            assert_equal(3, e.backtrace.length);
+            assert_equal(5, e.backtrace.length);
             assert_equal("<lambda>", e.backtrace[0].method);
-            assert_equal("<lambda>", e.backtrace[1].method);
-            assert_equal("test_backtrace", e.backtrace[2].method);
+            assert_equal("call", e.backtrace[1].method);
+            assert_equal("<lambda>", e.backtrace[2].method);
+            assert_equal("call", e.backtrace[3].method);
+            assert_equal("test_backtrace", e.backtrace[4].method);
         }
     }
     
