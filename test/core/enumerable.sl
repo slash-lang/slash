@@ -150,4 +150,19 @@ class EnumerableTest extends Test {
         
         assert_equal(["z", "cc", "aaa"], Enumerable.instance_method("sort").bind(["aaa", "cc", "z"]).call(\(a,b) { a.length <=> b.length }));
     }
+    
+    def test_take {
+        assert_equal([], [1,2,3,4,5].take(0));
+        assert_equal([1,2,3], [1,2,3,4,5].take(3));
+        assert_equal([1,2,3,4,5], [1,2,3,4,5].take(9));
+        assert_equal([1,2], [1,2].take(3));
+    }
+    
+    def test_drop {
+        assert_equal([1,2,3,4,5], [1,2,3,4,5].drop(0));
+        assert_equal([4,5], [1,2,3,4,5].drop(3));
+        assert_equal([], [1,2,3,4,5].drop(9));
+        assert_equal([], [1,2].drop(3));
+        assert_equal([], [1,2].drop(2));
+    }
 }.register;
