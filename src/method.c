@@ -19,11 +19,11 @@ allocate_bound_method(sl_vm_t* vm)
 }
 
 static SLVAL
-method_call(sl_vm_t* vm, SLVAL method, size_t argc, SLVAL* argv)
+method_apply(sl_vm_t* vm, SLVAL method, size_t argc, SLVAL* argv)
 {
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
     if(!methp->initialized) {
-        sl_throw_message2(vm, vm->lib.TypeError, "Can't call uninitialized Method");
+        sl_throw_message2(vm, vm->lib.TypeError, "Can't apply uninitialized Method");
     }
     return sl_apply_method(vm, argv[0], methp, argc - 1, argv + 1);
 }
@@ -58,7 +58,7 @@ sl_init_method(sl_vm_t* vm)
     vm->lib.Method = sl_define_class(vm, "Method", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Method, allocate_method);
     sl_define_method(vm, vm->lib.Method, "bind", 1, sl_method_bind);
-    sl_define_method(vm, vm->lib.Method, "call", -2, method_call);
+    sl_define_method(vm, vm->lib.Method, "apply", -2, method_apply);
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
     sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);

@@ -8,7 +8,11 @@ class MethodTest extends Test {
     def test_call {
         assert_equal(3, 1.method("+").call(2));
         assert_equal(5, 2:+.call(3));
-        assert_equal(3, Int.instance_method("+").call(1, 2));
+    }
+    
+    def test_apply {
+        assert_equal(3, Int.instance_method("+").apply(1, 2));
+        assert_equal(5, 1.method("+").apply(3, 2));
     }
     
     def test_unbind {
@@ -31,10 +35,15 @@ class MethodTest extends Test {
     }
     
     def test_cannot_call_uninitialized_method {
-        method = Method.new;
-        assert_throws(TypeError, \{ method.call(nil); });
         bound_method = BoundMethod.new;
         assert_throws(TypeError, \{ bound_method.call });
+    }
+    
+    def test_cannot_apply_uninitialized_method {
+        method = Method.new;
+        assert_throws(TypeError, \{ method.apply(nil); });
+        bound_method = BoundMethod.new;
+        assert_throws(TypeError, \{ bound_method.apply(nil) });
     }
     
     def test_cannot_bind_uninitialized_method {
