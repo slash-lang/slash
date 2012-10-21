@@ -380,6 +380,14 @@ sl_array_sort(sl_vm_t* vm, SLVAL array, size_t argc, SLVAL* argv)
 }
 
 size_t
+sl_array_items_no_copy(sl_vm_t* vm, SLVAL array, SLVAL** items)
+{
+    sl_array_t* aryp = get_array(vm, array);
+    *items = aryp->items;
+    return aryp->count;
+}
+
+size_t
 sl_array_items(sl_vm_t* vm, SLVAL array, SLVAL** items)
 {
     sl_array_t* aryp = get_array(vm, array);

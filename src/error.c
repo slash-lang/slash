@@ -135,11 +135,26 @@ void
 sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line)
 {
     sl_error_t* e = get_error(vm, error);
+    
     SLVAL frv = sl_allocate(vm, vm->lib.Error_Frame);
     sl_error_frame_t* frame = (sl_error_frame_t*)sl_get_ptr(frv);
     frame->method = sl_is_a(vm, method, vm->lib.String) ? method : sl_make_cstring(vm, "");
-    frame->file = sl_is_a(vm, file, vm->lib.String) ? file : sl_make_cstring(vm, "");
-    frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : sl_make_int(vm, 0);
+    frame->file = sl_is_a(vm, file, vm->lib.String) ? file : vm->lib.nil;
+    frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : vm->lib.nil;
+    
+    if(sl_is_truthy(file) && sl_is_truthy(line)) {
+        SLVAL* prev_frames;
+        size_t prev_frames_count = sl_array_items_no_copy(vm, e->backtrace, &prev_frames);
+        for(size_t i = 0; i < prev_frames_count; i++) {
+            sl_error_frame_t* prev_frame = (sl_error_frame_t*)sl_get_ptr(prev_frames[prev_frames_count - i - 1]);
+            if(sl_is_truthy(prev_frame->file) && sl_is_truthy(prev_frame->line)) {
+                break;
+            }
+            prev_frame->file = frame->file;
+            prev_frame->line = frame->line;
+        }
+    }
+    
     sl_array_push(vm, e->backtrace, 1, &frv);
 }
 
