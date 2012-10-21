@@ -34,7 +34,7 @@ SLVAL
 sl_array_shift(sl_vm_t* vm, SLVAL array);
 
 SLVAL
-sl_array_sort(sl_vm_t* vm, SLVAL array);
+sl_array_sort(sl_vm_t* vm, SLVAL array, size_t argc, SLVAL* argv);
 
 size_t
 sl_array_items(sl_vm_t* vm, SLVAL array, SLVAL** items);

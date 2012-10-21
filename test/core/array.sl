@@ -131,6 +131,7 @@ class ArrayTest extends Test {
     
     def test_sort {
         assert_equal([1,2,3,4], [4,3,2,1].sort);
+        assert_equal(["z", "cc", "aaa"], ["aaa", "cc", "z"].sort(\(a,b) { a.length <=> b.length }));
     }
     
     def test_concat {

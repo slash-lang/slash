@@ -147,5 +147,7 @@ class EnumerableTest extends Test {
     def test_sort {
         assert_equal([1,2,3,4], Enumerable.instance_method("sort").bind([4,3,2,1]).call);
         assert_equal([], Enumerable.instance_method("sort").bind([]).call);
+        
+        assert_equal(["z", "cc", "aaa"], Enumerable.instance_method("sort").bind(["aaa", "cc", "z"]).call(\(a,b) { a.length <=> b.length }));
     }
 }.register;
