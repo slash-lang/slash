@@ -216,7 +216,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "to_s", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "inspect", 0, sl_array_to_s);
     sl_define_method(vm, vm->lib.Array, "hash", 0, sl_array_hash);
-    sl_define_method(vm, vm->lib.Array, "sort", 0, sl_array_sort);
+    sl_define_method(vm, vm->lib.Array, "sort", -1, sl_array_sort);
     sl_define_method(vm, vm->lib.Array, "concat", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "+", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "==", 1, sl_array_eq);
@@ -338,7 +338,7 @@ sl_array_shift(sl_vm_t* vm, SLVAL array)
 }
 
 static void
-quicksort(sl_vm_t* vm, SLVAL* items, size_t count)
+quicksort(sl_vm_t* vm, SLVAL* items, size_t count, SLVAL* comparator)
 {
     size_t pivot_idx, m, i;
     SLVAL pivot, tmp;
@@ -349,7 +349,14 @@ quicksort(sl_vm_t* vm, SLVAL* items, size_t count)
     items[count - 1] = pivot;
     m = 0;
     for(i = 0; i < count - 1; i++) {
-        if(sl_cmp(vm, items[i], pivot) < 0) {
+        int cmp_result;
+        if(comparator) {
+            SLVAL cmpv = sl_expect(vm, sl_send(vm, *comparator, "call", 2, items[i], pivot), vm->lib.Int);
+            cmp_result = sl_get_int(cmpv);
+        } else {
+            cmp_result = sl_cmp(vm, items[i], pivot);
+        }
+        if(cmp_result < 0) {
             tmp = items[i];
             items[i] = items[m];
             items[m] = tmp;
@@ -359,16 +366,16 @@ quicksort(sl_vm_t* vm, SLVAL* items, size_t count)
     tmp = items[m];
     items[m] = items[count - 1];
     items[count - 1] = tmp;
-    quicksort(vm, items, m);
-    quicksort(vm, items + m + 1, count - m - 1);
+    quicksort(vm, items, m, comparator);
+    quicksort(vm, items + m + 1, count - m - 1, comparator);
 }
 
 SLVAL
-sl_array_sort(sl_vm_t* vm, SLVAL array)
+sl_array_sort(sl_vm_t* vm, SLVAL array, size_t argc, SLVAL* argv)
 {
     sl_array_t* aryp = get_array(vm, array);
     sl_array_t* copy = get_array(vm, sl_make_array(vm, aryp->count, aryp->items));
-    quicksort(vm, copy->items, copy->count);
+    quicksort(vm, copy->items, copy->count, argc ? &argv[0] : NULL);
     return sl_make_ptr((sl_object_t*)copy);
 }
 
