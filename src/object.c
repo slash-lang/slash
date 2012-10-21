@@ -316,6 +316,33 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
     return sl_send2(vm, recv, sl_make_cstring_placement(vm, &id_placement, id), argc, argv);
 }
 
+static SLVAL
+call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
+{
+    sl_catch_frame_t frame;
+    SLVAL err, retn;
+    
+    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
+        if(method->arity < 0) {
+            retn = method->as.c.func(vm, recv, argc, argv);
+        } else {
+            switch(method->arity) {
+                case 0: retn = method->as.c.func(vm, recv); break;
+                case 1: retn = method->as.c.func(vm, recv, argv[0]); break;
+                case 2: retn = method->as.c.func(vm, recv, argv[0], argv[1]); break;
+                case 3: retn = method->as.c.func(vm, recv, argv[0], argv[1], argv[2]); break;
+                case 4: retn = method->as.c.func(vm, recv, argv[0], argv[1], argv[2], argv[3]); break;
+                default:
+                    sl_throw_message(vm, "Too many arguments for C function");
+            }
+        }
+    }, err, {
+        sl_error_add_frame(vm, frame.value, method->name, vm->lib.nil, vm->lib.nil);
+        sl_rethrow(vm, &frame);
+    });
+    return retn;
+}
+
 SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
@@ -344,18 +371,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
         }
     }
     if(method->is_c_func) {
-        if(method->arity < 0) {
-            return method->as.c.func(vm, recv, argc, argv);
-        }
-        switch(method->arity) {
-            case 0: return method->as.c.func(vm, recv);
-            case 1: return method->as.c.func(vm, recv, argv[0]);
-            case 2: return method->as.c.func(vm, recv, argv[0], argv[1]);
-            case 3: return method->as.c.func(vm, recv, argv[0], argv[1], argv[2]);
-            case 4: return method->as.c.func(vm, recv, argv[0], argv[1], argv[2], argv[3]);
-            default:
-                sl_throw_message(vm, "Too many arguments for C function");
-        }
+        return call_c_func(vm, recv, method, argc, argv);
     } else {
         if(method->as.sl.section->can_stack_alloc_frame) {
             ctx = &stack_ctx;
