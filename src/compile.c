@@ -639,7 +639,7 @@ NODE(sl_node_for_t, for)
     
     while(nl.last_fixups) {
         cs->section->insns[nl.last_fixups->fixup].uint = cs->section->insns_count;
-        nl.next_fixups = nl.next_fixups->next;
+        nl.last_fixups = nl.last_fixups->next;
     }
     
     cs->section->insns[end_jump_fixup].uint = cs->section->insns_count;
