@@ -65,12 +65,21 @@ str_hash(sl_string_t* str)
 static int
 str_cmp(sl_string_t* a, sl_string_t* b)
 {
-    if(a->buff_len < b->buff_len) {
-        return -1;
-    } else if(a->buff_len > b->buff_len) {
-        return 1;
+    for(size_t i = 0;; i++) {
+        if(i == a->buff_len && i == b->buff_len) {
+            return 0;
+        }
+        if(i == a->buff_len) {
+            return -1;
+        }
+        if(i == b->buff_len) {
+            return 1;
+        }
+        if(a->buff[i] != b->buff[i]) {
+            return a->buff[i] - b->buff[i];
+        }
     }
-    return memcmp(a->buff, b->buff, a->buff_len);
+    return 0;
 }
 
 struct st_hash_type
