@@ -72,7 +72,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
         frame.prev = vm->catch_stack;
         vm->catch_stack = &frame;
         
-        if(setjmp(frame.env)) {
+        if(sl_setjmp(frame.env)) {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
                 sl_error_add_frame(vm, frame.value, ctx->section->name, sl_make_cstring(vm, (char*)ctx->section->filename), sl_make_int(vm, line));

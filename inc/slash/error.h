@@ -2,6 +2,7 @@
 #define SL_ERROR_H
 
 #include <setjmp.h>
+#include <slash/platform.h>
 #include "vm.h"
 
 typedef enum sl_unwind_type {
@@ -53,7 +54,7 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
         frame.prev = vm->catch_stack; \
         frame.value = vm->lib.nil; \
         vm->catch_stack = &frame; \
-        if(!setjmp(frame.env)) { \
+        if(!sl_setjmp(frame.env)) { \
             try_block; \
             vm->catch_stack = frame.prev; \
         } else { \
@@ -70,7 +71,7 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
         frame.prev = vm->catch_stack; \
         frame.value = vm->lib.nil; \
         vm->catch_stack = &frame; \
-        if(!setjmp(frame.env)) { \
+        if(!sl_setjmp(frame.env)) { \
             code_block; \
             vm->catch_stack = frame.prev; \
             finally_block; \
