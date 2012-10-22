@@ -71,11 +71,7 @@ sl_allocate(sl_vm_t* vm, SLVAL vklass)
 {
     sl_class_t* klass;
     sl_object_t* obj;
-    if(sl_get_primitive_type(vklass) != SL_T_CLASS) {
-        /* throw type error... @TODO */
-        (void)vm;
-        abort();
-    }
+    sl_expect(vm, vklass, vm->lib.Class);
     klass = (sl_class_t*)sl_get_ptr(vklass);
     if(klass->allocator) {
         obj = klass->allocator(vm);
