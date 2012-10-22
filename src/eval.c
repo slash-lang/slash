@@ -15,16 +15,17 @@
 #include <errno.h>
 
 SLVAL
-sl_do_file(sl_vm_t* vm, uint8_t* filename)
+sl_do_file(sl_vm_t* vm, char* filename)
 {
-    FILE* f = fopen((char*)filename, "rb");
+    filename = sl_realpath(vm, filename);
+    FILE* f = fopen(filename, "rb");
     uint8_t* src;
     size_t file_size;
     SLVAL err;
     
     if(!f) {
         err = sl_make_cstring(vm, "Could not load file: ");
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)filename));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, filename));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
         sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
@@ -36,7 +37,7 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
     if(file_size && !fread(src, file_size, 1, f)) {
         fclose(f);
         err = sl_make_cstring(vm, "Could not load file: ");
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)filename));
+        err = sl_string_concat(vm, err, sl_make_cstring(vm, filename));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
         sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
@@ -47,7 +48,7 @@ sl_do_file(sl_vm_t* vm, uint8_t* filename)
 }
 
 SLVAL
-sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, uint8_t* filename)
+sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename)
 {
     size_t token_count;
     sl_token_t* tokens;
@@ -55,9 +56,9 @@ sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, uint8_t* filename)
     sl_vm_exec_ctx_t* ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
     sl_vm_section_t* section;
     
-    tokens = sl_lex(vm, filename, src, src_len, &token_count);
-    ast = sl_parse(vm, tokens, token_count, filename);
-    section = sl_compile(vm, ast, filename);
+    tokens = sl_lex(vm, (uint8_t*)filename, src, src_len, &token_count);
+    ast = sl_parse(vm, tokens, token_count, (uint8_t*)filename);
+    section = sl_compile(vm, ast, (uint8_t*)filename);
     ctx->vm = vm;
     ctx->section = section;
     ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);

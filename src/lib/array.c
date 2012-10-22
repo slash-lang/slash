@@ -91,7 +91,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     sl_catch_frame_t frame;
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
-    SLVAL str;
+    volatile SLVAL str;
     if(aryp->inspecting) {
         return sl_make_cstring(vm, "[ <recursive> ]");
     }

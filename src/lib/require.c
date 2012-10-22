@@ -49,7 +49,7 @@ sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
             return retn;
         }
         st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(vm->lib.nil));
-        retn = sl_do_file(vm, (uint8_t*)sl_to_cstr(vm, sl_make_ptr((sl_object_t*)resolved)));
+        retn = sl_do_file(vm, sl_to_cstr(vm, sl_make_ptr((sl_object_t*)resolved)));
         st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(retn));
         return retn;
     }
