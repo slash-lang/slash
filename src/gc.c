@@ -2,6 +2,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <slash/mem.h>
+#include <slash/platform.h>
 #include <stdint.h>
 
 #define POINTER_ALIGN_BYTES (4)
@@ -237,7 +238,7 @@ void
 sl_gc_run(sl_gc_arena_t* arena)
 {
     jmp_buf regs;
-    setjmp(regs); /* dump registers to stack */
+    sl_setjmp(regs); /* dump registers to stack */
     
     arena->allocs_since_gc = 0;
     arena->mark_flag = !arena->mark_flag;

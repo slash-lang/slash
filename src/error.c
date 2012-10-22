@@ -213,7 +213,7 @@ sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
     }
     vm->catch_stack->value = value;
     vm->catch_stack->type = type;
-    longjmp(vm->catch_stack->env, 1);
+    sl_longjmp(vm->catch_stack->env, 1);
 }
 
 void
