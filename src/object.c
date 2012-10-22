@@ -320,7 +320,8 @@ static SLVAL
 call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
     sl_catch_frame_t frame;
-    SLVAL err, retn;
+    SLVAL err;
+    volatile SLVAL retn;
     
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         if(method->arity < 0) {

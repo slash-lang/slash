@@ -41,7 +41,7 @@ typedef struct sl_vm_exception_handler {
 sl_vm_exception_handler_t;
 
 SLVAL
-sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
+sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
 {
     volatile int line = 0;
     sl_vm_t* vm = ctx->vm;

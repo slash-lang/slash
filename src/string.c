@@ -90,7 +90,7 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 {
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
-    if(sl_is_valid_utf8(vm, buff, buff_len)) {
+    if(sl_is_valid_utf8(buff, buff_len)) {
         str->encoding = "UTF-8";
         str->char_len = sl_utf8_strlen(vm, buff, buff_len);
     } else {
@@ -120,7 +120,7 @@ sl_make_cstring_placement(sl_vm_t* vm, sl_string_t* placement, char* cstr)
     placement->base.singleton_methods = NULL;
     placement->buff = (uint8_t*)cstr;
     placement->buff_len = strlen(cstr);
-    if(sl_is_valid_utf8(vm, placement->buff, placement->buff_len)) {
+    if(sl_is_valid_utf8(placement->buff, placement->buff_len)) {
         placement->encoding = "UTF-8";
         placement->char_len = sl_utf8_strlen(vm, placement->buff, placement->buff_len);
     } else {
@@ -390,7 +390,8 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
         }
     }
     sl_catch_frame_t frame;
-    SLVAL retn, err;
+    SLVAL err;
+    volatile SLVAL retn;
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         retn = sl_string_eq(vm, self, sl_string_encode(vm, other, a->encoding));
     }, err, {

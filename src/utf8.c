@@ -51,7 +51,7 @@ sl_utf8_strlen(sl_vm_t* vm, uint8_t* buff, size_t len)
 }
 
 int
-sl_is_valid_utf8(sl_vm_t* vm, uint8_t* buff, size_t len)
+sl_is_valid_utf8(uint8_t* buff, size_t len)
 {
     size_t i, bytes = 0, j, utf8len = 0;
     uint8_t c;

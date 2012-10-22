@@ -18,6 +18,7 @@
 #include "slash/lib/int.h"
 #include "slash/lib/rand.h"
 #include "slash/lib/comparable.h"
+#include "slash/lib/require.h"
 #include "slash/lib/request.h"
 #include "slash/lib/response.h"
 
