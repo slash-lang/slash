@@ -3,11 +3,20 @@
 
 #include "vm.h"
 
-char* sl_realpath(sl_vm_t* vm, char* path);
-int sl_file_exists(sl_vm_t* vm, char* path);
-int sl_abs_file_exists(char* path);
-int sl_seed();
-void* sl_stack_limit();
+char*
+sl_realpath(sl_vm_t* vm, char* path);
+
+int
+sl_file_exists(sl_vm_t* vm, char* path);
+
+int
+sl_abs_file_exists(char* path);
+
+int
+sl_seed();
+
+void*
+sl_stack_limit();
 
 #ifdef _WIN32
     #include <malloc.h>
