@@ -175,6 +175,9 @@ sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         offset = sl_get_int(sl_expect(vm, argv[1], vm->lib.Int));
     }
     offset = sl_string_byte_offset_for_index(vm, argv[0], offset);
+    if(offset < 0) {
+        return vm->lib.nil;
+    }
     pcre_fullinfo(re->re, re->study, PCRE_INFO_CAPTURECOUNT, &ncaps);
     ncaps += 1;
     ncaps *= 3;
