@@ -32,7 +32,7 @@ sapi[%]: libslash.a
 
 libslash.a: $(OBJS)
 	@rm -f $@
-	@echo "ar   $<"
+	@echo "ar   $@"
 	@$(AR) r $@ $^
 
 src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
