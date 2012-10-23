@@ -166,7 +166,7 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
     /*if(!alloc->scan_pointers) {
         return;
     }*/
-    for(; addr < max; addr += POINTER_ALIGN_BYTES) {
+    for(; addr + (intptr_t)sizeof(void*) <= max; addr += POINTER_ALIGN_BYTES) {
         ptr = *(intptr_t*)addr;
         if(ptr & (POINTER_ALIGN_BYTES - 1)) {
             /* if the pointer is not aligned, ignore it */
