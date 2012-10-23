@@ -21,15 +21,12 @@ output(sl_vm_t* vm, char* buff, size_t len)
 static void
 run(sl_vm_t* vm, void* state)
 {
-    size_t token_count;
-    sl_token_t* tokens;
-    sl_node_base_t* ast;
-    sl_vm_section_t* section;
     cli_state_t* st = state;
+    size_t token_count;
+    sl_token_t* tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
+    sl_node_base_t* ast = sl_parse(vm, tokens, token_count, st->filename);
+    sl_vm_section_t* section = sl_compile(vm, ast, st->filename);
     sl_vm_exec_ctx_t ctx;
-    tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
-    ast = sl_parse(vm, tokens, token_count, st->filename);
-    section = sl_compile(vm, ast, st->filename);
     ctx.vm = vm;
     ctx.section = section;
     ctx.registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
@@ -94,12 +91,11 @@ main(int argc, char** argv)
 {
     cli_state_t state;
     FILE* f;
-    sl_vm_t* vm;
     sl_catch_frame_t exit_frame;
     SLVAL err;
     int exit_code;
     sl_static_init();
-    vm = sl_init();
+    sl_vm_t* vm = sl_init();
     sl_gc_set_stack_top(vm->arena, &argc);
     setup_request_response(vm);
     SLVAL sl_argv = sl_make_array(vm, 0, NULL);
