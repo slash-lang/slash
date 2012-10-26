@@ -47,6 +47,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
     sl_vm_t* vm = ctx->vm;
     sl_catch_frame_t frame;
     sl_vm_exception_handler_t* volatile exception_handler = NULL;
+    sl_vm_section_t* section = ctx->section;
     
     #if 0
         void* jump_table[] = {
@@ -75,7 +76,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
         if(sl_setjmp(frame.env)) {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
-                sl_error_add_frame(vm, frame.value, ctx->section->name, sl_make_cstring(vm, (char*)ctx->section->filename), sl_make_int(vm, line));
+                sl_error_add_frame(vm, frame.value, section->name, sl_make_cstring(vm, (char*)section->filename), sl_make_int(vm, line));
             }
             if(exception_handler && (frame.type & SL_UNWIND_EXCEPTION)) {
                 ip = exception_handler->catch_ip;
