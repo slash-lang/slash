@@ -319,11 +319,13 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
 static SLVAL
 call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
-    sl_catch_frame_t frame;
-    SLVAL err;
-    volatile SLVAL retn;
+    sl_catch_frame_t frame;   
+    frame.prev = vm->catch_stack;
+    frame.value = vm->lib.nil;
+    vm->catch_stack = &frame;
     
-    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
+    if(!sl_setjmp(frame.env)) {
+        SLVAL retn;
         if(method->arity < 0) {
             retn = method->as.c.func(vm, recv, argc, argv);
         } else {
@@ -337,11 +339,16 @@ call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* ar
                     sl_throw_message(vm, "Too many arguments for C function");
             }
         }
-    }, err, {
-        sl_error_add_frame(vm, frame.value, method->name, vm->lib.nil, vm->lib.nil);
+        vm->catch_stack = frame.prev;
+        return retn;
+    } else {    
+        vm->catch_stack = frame.prev;
+        if(frame.type & SL_UNWIND_EXCEPTION) {
+            sl_error_add_frame(vm, frame.value, method->name, vm->lib.nil, vm->lib.nil);
+        }
         sl_rethrow(vm, &frame);
-    });
-    return retn;
+        return vm->lib.nil; /* never reached */
+    }
 }
 
 SLVAL
