@@ -105,10 +105,6 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         sl_gc_run(arena);
     }
     
-    /* align size: */
-    size += sizeof(intptr_t) - 1;
-    size &= ~(sizeof(intptr_t) - 1);
-    
     ptr = malloc(size);
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
@@ -163,9 +159,9 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
         return;
     }
     alloc->mark_flag = arena->mark_flag;
-    /*if(!alloc->scan_pointers) {
+    if(!alloc->scan_pointers) {
         return;
-    }*/
+    }
     for(; addr + (intptr_t)sizeof(void*) <= max; addr += POINTER_ALIGN_BYTES) {
         ptr = *(intptr_t*)addr;
         if(ptr & (POINTER_ALIGN_BYTES - 1)) {
@@ -189,7 +185,7 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
     /* start at the top of the stack and work downwards, testing for pointers */
     for(addr = arena->stack_top; addr > stack_bottom; addr -= POINTER_ALIGN_BYTES) {
         ptr = *(intptr_t*)addr;
-        if(ptr & (sizeof(intptr_t) - 1)) {
+        if(ptr & (POINTER_ALIGN_BYTES - 1)) {
             /* if the pointer is not aligned, ignore it */
             continue;
         }
