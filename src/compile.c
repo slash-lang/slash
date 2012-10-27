@@ -136,6 +136,24 @@ emit_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
 }
 
 static void
+emit_send(sl_compile_state_t* cs, size_t recv, SLVAL id, size_t arg_base, size_t arg_size, size_t return_reg)
+{
+    sl_vm_insn_t insn;
+    insn.opcode = SL_OP_SEND;
+    emit(cs, insn);
+    insn.uint = recv;
+    emit(cs, insn);
+    insn.imm = id;
+    emit(cs, insn);
+    insn.uint = arg_base;
+    emit(cs, insn);
+    insn.uint = arg_size;
+    emit(cs, insn);
+    insn.uint = return_reg;
+    emit(cs, insn);
+}
+
+static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest);
 
 static void
@@ -561,33 +579,11 @@ NODE(sl_node_for_t, for)
     insn.uint = has_looped_reg;
     emit(cs, insn);
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = expr_reg;
-    emit(cs, insn);
-    insn.imm = sl_make_cstring(cs->vm, "enumerate");
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = enum_reg;
-    emit(cs, insn);
+    emit_send(cs, expr_reg, sl_make_cstring(cs->vm, "enumerate"), 0, 0, enum_reg);
     
     begin = cs->section->insns_count;
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = enum_reg;
-    emit(cs, insn);
-    insn.imm = sl_make_cstring(cs->vm, "next");
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_send(cs, enum_reg, sl_make_cstring(cs->vm, "next"), 0, 0, dest);
     
     insn.opcode = SL_OP_JUMP_UNLESS;
     emit(cs, insn);
@@ -603,18 +599,7 @@ NODE(sl_node_for_t, for)
     insn.uint = has_looped_reg;
     emit(cs, insn);
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = enum_reg;
-    emit(cs, insn);
-    insn.imm = sl_make_cstring(cs->vm, "current");
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_send(cs, enum_reg, sl_make_cstring(cs->vm, "current"), 0, 0, dest);
     
     emit_assignment(cs, node->lval, dest);
     
@@ -672,7 +657,6 @@ NODE(sl_node_for_t, for)
 
 NODE(sl_node_send_t, send)
 {
-    sl_vm_insn_t insn;
     size_t arg_base, i;
     /* compile the receiver into our 'dest' register */
     compile_node(cs, node->recv, dest);
@@ -681,18 +665,7 @@ NODE(sl_node_send_t, send)
         compile_node(cs, node->args[i], arg_base + i);
     }
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = dest; /* recv */
-    emit(cs, insn);
-    insn.imm = node->id;
-    emit(cs, insn);
-    insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = node->arg_count;
-    emit(cs, insn);
-    insn.uint = dest; /* destination */
-    emit(cs, insn);
+    emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
@@ -874,18 +847,7 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     }
     
     /* compile the lval */
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = receiver; /* recv */
-    emit(cs, insn);
-    insn.imm = lval->id;
-    emit(cs, insn);
-    insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = lval->arg_count;
-    emit(cs, insn);
-    insn.uint = dest; /* destination */
-    emit(cs, insn);
+    emit_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
 
     insn.opcode = opcode; /* SL_OP_JUMP_{IF, UNLESS} */
     emit(cs, insn);
@@ -898,18 +860,7 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     compile_node(cs, rval, arg_base + lval->arg_count);
 
     /* call the = version of the method to assign the value back */
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = receiver; /* recv */
-    emit(cs, insn);
-    insn.imm = sl_string_concat(cs->vm, lval->id, sl_make_cstring(cs->vm, "="));
-    emit(cs, insn);
-    insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = lval->arg_count + 1;
-    emit(cs, insn);
-    insn.uint = dest; /* destination */
-    emit(cs, insn);
+    emit_send(cs, receiver, sl_string_concat(cs->vm, lval->id, sl_make_cstring(cs->vm, "=")), arg_base, lval->arg_count + 1, dest);
     
     /* move the rval back to dest reg */
     insn.opcode = SL_OP_MOV;
@@ -948,50 +899,16 @@ NODE(sl_node_assign_send_t, assign_send)
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
     } else {
         /* compile the lval */
-        insn.opcode = SL_OP_SEND;
-        emit(cs, insn);
-        insn.uint = receiver; /* recv */
-        emit(cs, insn);
-        insn.imm = node->lval->id;
-        emit(cs, insn);
-        insn.uint = arg_base;
-        emit(cs, insn);
-        insn.uint = node->lval->arg_count;
-        emit(cs, insn);
-        insn.uint = dest; /* destination */
-        emit(cs, insn);
+        emit_send(cs, receiver, node->lval->id, arg_base, node->lval->arg_count, dest);
     
         /* compile the rval */
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
     
-        /* emit instructions to send op_method to lval with rval as arg */
-        insn.opcode = SL_OP_SEND;
-        emit(cs, insn);
-        insn.uint = dest; /* recv */
-        emit(cs, insn);
-        insn.imm = sl_make_cstring(cs->vm, node->op_method);
-        emit(cs, insn);
-        insn.uint = arg_base + node->lval->arg_count;
-        emit(cs, insn);
-        insn.uint = 1;
-        emit(cs, insn);
-        insn.uint = arg_base + node->lval->arg_count; /* destination */
-        emit(cs, insn);
+        emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), arg_base + node->lval->arg_count, 1, arg_base + node->lval->arg_count);
     }
     
     /* call the = version of the method to assign the value back */
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = receiver; /* recv */
-    emit(cs, insn);
-    insn.imm = sl_string_concat(cs->vm, node->lval->id, sl_make_cstring(cs->vm, "="));
-    emit(cs, insn);
-    insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = node->lval->arg_count + 1;
-    emit(cs, insn);
-    insn.uint = dest; /* destination */
-    emit(cs, insn);
+    emit_send(cs, receiver, sl_string_concat(cs->vm, node->lval->id, sl_make_cstring(cs->vm, "=")), arg_base, node->lval->arg_count + 1, dest);
     
     insn.opcode = SL_OP_MOV;
     emit(cs, insn);
@@ -1060,47 +977,24 @@ NODE(sl_node_assign_array_t, assign_array)
 
 NODE(sl_node_mutate_t, prefix_mutate)
 {
-    sl_vm_insn_t insn;
-    
     compile_node(cs, node->lval, dest);
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.imm = sl_make_cstring(cs->vm, node->op_method);
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, dest);
     
     emit_assignment(cs, node->lval, dest);
 }
 
 NODE(sl_node_mutate_t, postfix_mutate)
 {
-    sl_vm_insn_t insn;
     size_t temp_reg = reg_alloc(cs);
     
     compile_node(cs, node->lval, dest);
     
-    insn.opcode = SL_OP_SEND;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.imm = sl_make_cstring(cs->vm, node->op_method);
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = 0;
-    emit(cs, insn);
-    insn.uint = temp_reg;
-    emit(cs, insn);
+    emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, temp_reg);
     
     emit_assignment(cs, node->lval, temp_reg);
+    
+    reg_free(cs, temp_reg);
 }
 
 NODE(sl_node_array_t, array)
