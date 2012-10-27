@@ -45,6 +45,7 @@ class Test {
                 obj.before if obj.responds_to("before");
                 obj.send(method);
                 print(".");
+                GC.run;
             } catch e {
                 print("F");
                 FAILURES.push([name() + " " + md[1], e]);
