@@ -370,7 +370,7 @@ lambda_expression(sl_parse_state_t* ps)
         tok = next_token(ps);
         args[arg_count++] = (sl_string_t*)sl_get_ptr(
             sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
-    } else if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
+    } else if(peek_token(ps)->type != SL_TOK_OPEN_BRACE && peek_token(ps)->type != SL_TOK_DOT) {
         expect_token(ps, SL_TOK_OPEN_PAREN);
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             if(arg_count >= arg_cap) {
@@ -389,7 +389,12 @@ lambda_expression(sl_parse_state_t* ps)
     scope.prev = ps->scope;
     scope.flags = SL_PF_CAN_RETURN;
     ps->scope = &scope;
-    body = body_expression(ps);
+    if(peek_token(ps)->type == SL_TOK_DOT) {
+        next_token(ps);
+        body = expression(ps);
+    } else {
+        body = body_expression(ps);
+    }
     ps->scope = scope.prev;
     ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
     return sl_make_lambda_node(ps, arg_count, args, body);
