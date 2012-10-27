@@ -7,6 +7,7 @@
 
 #define POINTER_ALIGN_BYTES (4)
 #define ALLOCS_PER_GC_RUN (10000)
+#define ALLOC_BUCKET_COUNT (65536)
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
@@ -44,7 +45,7 @@ sl_gc_arena_t*
 sl_make_gc_arena()
 {
     sl_gc_arena_t* arena = malloc(sizeof(sl_gc_arena_t));
-    arena->table_count = 65536;
+    arena->table_count = ALLOC_BUCKET_COUNT;
     arena->pointer_mask = arena->table_count - 1;
     arena->table = calloc(arena->table_count, sizeof(sl_gc_alloc_t*));
     arena->alloc_count = 0;
