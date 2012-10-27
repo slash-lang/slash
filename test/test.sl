@@ -31,8 +31,10 @@ class Test {
         try {
             fn.call;
         } catch e {
-            assert_is_a(klass, e);
-            return;
+            if e.is_a(klass) {
+                return;
+            }
+            throw e; # rethrow
         }    
         assert(false, "Expected callback to throw");
     }
