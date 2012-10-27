@@ -37,4 +37,17 @@ class TestError extends Test {
     def test_yada_yada_operator {
         assert_throws(NotImplementedError, \{ ... });
     }
+    
+    def test_jump_out_of_try_block {
+        assert_throws(TypeError, \{
+            while true {
+                try {
+                    last;
+                } catch e {
+                    assert(false, "exception delivered to incorrect catch");
+                }
+            }
+            throw TypeError.new;
+        });
+    }
 }.register;
