@@ -12,6 +12,7 @@ typedef struct next_last_frame {
     struct next_last_frame* prev;
     fixup_t* next_fixups;
     fixup_t* last_fixups;
+    size_t try_catch_blocks;
 }
 next_last_frame_t;
 
@@ -417,7 +418,15 @@ NODE(sl_node_try_t, try)
     insn.uint = 0xdeadbeef;
     catch_fixup = emit(cs, insn);
     
+    if(cs->next_last_frames) {
+        cs->next_last_frames->try_catch_blocks++;
+    }
+    
     compile_node(cs, node->body, dest);
+
+    if(cs->next_last_frames) {
+        cs->next_last_frames->try_catch_blocks--;
+    }
 
     insn.opcode = SL_OP_END_TRY;
     emit(cs, insn);
@@ -532,6 +541,7 @@ NODE(sl_node_while_t, while)
     /* push this loop on to the next/last fixup stack */
     nl.next_fixups = NULL;
     nl.last_fixups = NULL;
+    nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
     
@@ -605,6 +615,7 @@ NODE(sl_node_for_t, for)
     
     nl.next_fixups = NULL;
     nl.last_fixups = NULL;
+    nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
     
@@ -1071,6 +1082,10 @@ NODE(sl_node_base_t, next)
     fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
     fixup->next = cs->next_last_frames->next_fixups;
     cs->next_last_frames->next_fixups = fixup;
+    for(size_t i = 0; i < cs->next_last_frames->try_catch_blocks; i++) {
+        insn.opcode = SL_OP_END_TRY;
+        emit(cs, insn);
+    }
     insn.opcode = SL_OP_JUMP;
     emit(cs, insn);
     insn.uint = 0x0000CAFE;
@@ -1086,6 +1101,10 @@ NODE(sl_node_base_t, last)
     fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
     fixup->next = cs->next_last_frames->last_fixups;
     cs->next_last_frames->last_fixups = fixup;
+    for(size_t i = 0; i < cs->next_last_frames->try_catch_blocks; i++) {
+        insn.opcode = SL_OP_END_TRY;
+        emit(cs, insn);
+    }
     insn.opcode = SL_OP_JUMP;
     emit(cs, insn);
     insn.uint = 0x0000CAFE;
