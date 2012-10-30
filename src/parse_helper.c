@@ -9,33 +9,42 @@
 void
 sl_parse_error(sl_parse_state_t* ps, char* message)
 {
-    SLVAL err = sl_make_cstring(ps->vm, message);
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, " in "));
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, (char*)ps->filename));
-    err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, ", line "));
-    err = sl_string_concat(ps->vm, err, sl_to_s(ps->vm, sl_make_int(ps->vm, ps->line)));
-    sl_throw(ps->vm, sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, err));
+    SLVAL err = sl_make_error2(ps->vm, ps->vm->lib.SyntaxError, sl_make_cstring(ps->vm, message));
+    sl_error_add_frame(ps->vm, err, sl_make_cstring(ps->vm, "<parser>"), sl_make_cstring(ps->vm, (char*)ps->filename), sl_make_int(ps->vm, ps->line));
+    sl_throw(ps->vm, err);
 }
 
 int
 sl_node_is_lval(sl_node_base_t* node)
 {
-    size_t i = 0;
-    sl_node_array_t* ary;
     switch(node->type) {
         case SL_NODE_VAR:    return 1;
         case SL_NODE_IVAR:   return 1;
         case SL_NODE_CVAR:   return 1;
         case SL_NODE_CONST:  return 1;
         case SL_NODE_SEND:   return ((sl_node_send_t*)node)->arg_count == 0;
-        case SL_NODE_ARRAY:
-            ary = (sl_node_array_t*)node;
-            for(i = 0; i < ary->node_count; i++) {
+        case SL_NODE_ARRAY: {
+            sl_node_array_t* ary = (sl_node_array_t*)node;
+            for(size_t i = 0; i < ary->node_count; i++) {
                 if(!sl_node_is_lval(ary->nodes[i])) {
                     return 0;
                 }
             }
             return 1;
+        }
+        default:
+            return 0;
+    }
+}
+
+int
+sl_node_is_mutable_lval(sl_node_base_t* node)
+{
+    switch(node->type) {
+        case SL_NODE_VAR:    return 1;
+        case SL_NODE_IVAR:   return 1;
+        case SL_NODE_CVAR:   return 1;
+        case SL_NODE_SEND:   return ((sl_node_send_t*)node)->arg_count == 0;
         default:
             return 0;
     }
