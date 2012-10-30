@@ -669,7 +669,7 @@ inc_dec_expression(sl_parse_state_t* ps)
         return sl_make_prefix_mutate_node(ps, call_expression(ps), "pred");
     }
     sl_node_base_t* lval = call_expression(ps);
-    if(sl_node_is_lval(lval)) {
+    if(sl_node_is_mutable_lval(lval)) {
         if(peek_token(ps)->type == SL_TOK_INCREMENT) {
             next_token(ps);
             return sl_make_postfix_mutate_node(ps, lval, "succ");
