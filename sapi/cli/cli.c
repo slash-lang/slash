@@ -23,7 +23,7 @@ run(sl_vm_t* vm, void* state)
 {
     cli_state_t* st = state;
     size_t token_count;
-    sl_token_t* tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count);
+    sl_token_t* tokens = sl_lex(vm, st->filename, st->src, st->len, &token_count, 0);
     sl_node_base_t* ast = sl_parse(vm, tokens, token_count, st->filename);
     sl_vm_section_t* section = sl_compile(vm, ast, st->filename);
     sl_vm_exec_ctx_t ctx;

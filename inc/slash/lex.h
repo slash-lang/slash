@@ -140,7 +140,7 @@ typedef struct sl_lex_state {
 sl_lex_state_t;
 
 sl_token_t*
-sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count);
+sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count, int start_in_slash);
 
 /* helper functions defined in lex_helper.c */
 

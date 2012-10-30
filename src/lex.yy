@@ -193,7 +193,7 @@ HEX [0-9a-fA-F]
 %%
 
 sl_token_t*
-sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count)
+sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_count, int start_in_slash)
 {
     yyscan_t yyscanner;
     YY_BUFFER_STATE buff_state = 0;
@@ -207,8 +207,10 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.filename = filename;
     ls.line = 1;
     
-    ls.tokens[ls.len].line = 1;
-    ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
+    if(!start_in_slash) {
+        ls.tokens[ls.len].line = 1;
+        ls.tokens[ls.len++].type = SL_TOK_CLOSE_TAG;
+    }
     
     yylex_init_extra(&ls, &yyscanner);
     SL_TRY(frame, SL_UNWIND_ALL, {
