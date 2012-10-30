@@ -319,36 +319,42 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
 static SLVAL
 call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
+    if(method->arity < 0) {
+        return method->as.c.func(vm, recv, argc, argv);
+    } else {
+        switch(method->arity) {
+            case 0: return method->as.c.func(vm, recv);
+            case 1: return method->as.c.func(vm, recv, argv[0]);
+            case 2: return method->as.c.func(vm, recv, argv[0], argv[1]);
+            case 3: return method->as.c.func(vm, recv, argv[0], argv[1], argv[2]);
+            case 4: return method->as.c.func(vm, recv, argv[0], argv[1], argv[2], argv[3]);
+            default:
+                sl_throw_message(vm, "Too many arguments for C function");
+        }
+    }
+    return vm->lib.nil; /* never reached */
+}
+
+static SLVAL
+call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
+{
     sl_catch_frame_t frame;   
     frame.prev = vm->catch_stack;
     frame.value = vm->lib.nil;
     vm->catch_stack = &frame;
     
     if(!sl_setjmp(frame.env)) {
-        SLVAL retn;
-        if(method->arity < 0) {
-            retn = method->as.c.func(vm, recv, argc, argv);
-        } else {
-            switch(method->arity) {
-                case 0: retn = method->as.c.func(vm, recv); break;
-                case 1: retn = method->as.c.func(vm, recv, argv[0]); break;
-                case 2: retn = method->as.c.func(vm, recv, argv[0], argv[1]); break;
-                case 3: retn = method->as.c.func(vm, recv, argv[0], argv[1], argv[2]); break;
-                case 4: retn = method->as.c.func(vm, recv, argv[0], argv[1], argv[2], argv[3]); break;
-                default:
-                    sl_throw_message(vm, "Too many arguments for C function");
-            }
-        }
+        SLVAL retn = call_c_func(vm, recv, method, argc, argv);
         vm->catch_stack = frame.prev;
         return retn;
-    } else {    
+    } else {
         vm->catch_stack = frame.prev;
         if(frame.type & SL_UNWIND_EXCEPTION) {
             sl_error_add_frame(vm, frame.value, method->name, vm->lib.nil, vm->lib.nil);
         }
         sl_rethrow(vm, &frame);
-        return vm->lib.nil; /* never reached */
     }
+    return vm->lib.nil; /* never reached */
 }
 
 SLVAL
@@ -379,7 +385,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
         }
     }
     if(method->is_c_func) {
-        return call_c_func(vm, recv, method, argc, argv);
+        return call_c_func_guard(vm, recv, method, argc, argv);
     } else {
         if(method->as.sl.section->can_stack_alloc_frame) {
             ctx = &stack_ctx;
@@ -453,39 +459,28 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
 SLVAL
 sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
 {
-    sl_method_t* method;
-    SLVAL klass = sl_class_of(vm, recv);
-    sl_class_t* klassp;
-    SLVAL* argv2;
-    sl_string_t* id;
-    SLVAL error;
-    
     sl_expect(vm, idv, vm->lib.String);
-    id = (sl_string_t*)sl_get_ptr(idv);
+    sl_string_t* id = (sl_string_t*)sl_get_ptr(idv);
     
-    method = sl_lookup_method(vm, recv, id);
+    sl_method_t* method = sl_lookup_method(vm, recv, id);
     if(method) {
         return sl_apply_method(vm, recv, method, argc, argv);
     }
     
     /* look for method_missing method */
     
-    argv2 = alloca((argc + 1) * sizeof(SLVAL));
+    SLVAL* argv2 = sl_alloc(vm->arena, (argc + 1) * sizeof(SLVAL));
     memcpy(argv2 + 1, argv, sizeof(SLVAL) * argc);
     argv2[0] = sl_make_ptr((sl_object_t*)id);
-    id = sl_cstring(vm, "method_missing");
     
-    klassp = (sl_class_t*)sl_get_ptr(klass);
-    while(klassp->base.primitive_type != SL_T_NIL) {
-        if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
-            return sl_apply_method(vm, recv, method, argc, argv);
-        }
-        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
+    method = sl_lookup_method(vm, recv, sl_cstring(vm, "method_missing"));
+    if(method) {
+        return sl_apply_method(vm, recv, method, argc + 1, argv2);
     }
     
     /* nope */
     
-    error = sl_make_cstring(vm, "Undefined method '");
+    SLVAL error = sl_make_cstring(vm, "Undefined method '");
     error = sl_string_concat(vm, error, idv);
     error = sl_string_concat(vm, error, sl_make_cstring(vm, "' on "));
     error = sl_string_concat(vm, error, sl_object_inspect(vm, recv));
