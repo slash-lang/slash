@@ -41,7 +41,7 @@ int main(int argc, char** argv)
     SL_TRY(frame, SL_UNWIND_ALL, {
         
         size_t token_count;
-        sl_token_t* tokens = sl_lex(vm, (uint8_t*)argv[1], source, size, &token_count);
+        sl_token_t* tokens = sl_lex(vm, (uint8_t*)argv[1], source, size, &token_count, 0);
         
         sl_node_base_t* ast = sl_parse(vm, tokens, token_count, (uint8_t*)argv[1]);
         
