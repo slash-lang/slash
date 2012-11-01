@@ -73,6 +73,10 @@ reg_alloc(sl_compile_state_t* cs)
 static size_t
 reg_alloc_block(sl_compile_state_t* cs, size_t count)
 {
+    if(count == 0) {
+        return 0;
+    }
+    
     size_t i, j;
     for(i = 0; i + count < cs->section->max_registers + 1; i++) {
         if(cs->registers[i]) {
