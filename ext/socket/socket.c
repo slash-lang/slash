@@ -133,7 +133,7 @@ sl_tcp_socket_init(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
 static SLVAL
 sl_tcp_socket_write(sl_vm_t* vm, SLVAL self, SLVAL strv)
 {
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, strv, vm->lib.String));
+    sl_string_t* str = sl_get_string(vm, strv);
     sl_socket_t* sock = get_tcp_socket(vm, self);
     long sent = send(sock->socket, (char*)str->buff, str->buff_len, 0);
     if(sent == -1) {

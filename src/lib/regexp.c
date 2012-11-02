@@ -135,10 +135,10 @@ static SLVAL
 sl_regexp_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_regexp_t* re_ptr = get_regexp(vm, self);
-    sl_string_t* re = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
+    sl_string_t* re = sl_get_string(vm, argv[0]);
     sl_string_t* opts;
     if(argc > 1) {
-        opts = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[1], vm->lib.String));
+        opts = sl_get_string(vm, argv[1]);
     } else {
         opts = sl_cstring(vm, "");
     }
@@ -166,7 +166,7 @@ SLVAL
 sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_regexp_t* re = get_regexp_check(vm, self);
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, argv[0], vm->lib.String));
+    sl_string_t* str = sl_get_string(vm, argv[0]);
     int offset = 0, rc, ncaps;
     int* caps;
     char err_buff[256];

@@ -222,7 +222,7 @@ sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 SLVAL
 sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv)
 {
-    sl_string_t* id = (sl_string_t*)sl_get_ptr(sl_expect(vm, idv, vm->lib.String));
+    sl_string_t* id = sl_get_string(vm, idv);
     sl_object_t* recvp = sl_get_ptr(object);
     SLVAL klass = sl_class_of(vm, object);
     sl_class_t* klassp = NULL;
