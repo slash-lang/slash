@@ -1044,7 +1044,8 @@ statement(sl_parse_state_t* ps)
             node = expression(ps);
             if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
                 && peek_token(ps)->type != SL_TOK_CLOSE_BRACE
-                && token(ps)->type != SL_TOK_CLOSE_BRACE) {
+                && token(ps)->type != SL_TOK_CLOSE_BRACE
+                && peek_token(ps)->type != SL_TOK_END) {
                 expect_token(ps, SL_TOK_SEMICOLON);
             }
             return node;
