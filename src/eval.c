@@ -74,14 +74,18 @@ sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int star
 }
 
 static SLVAL
-sl_eval(sl_vm_t* vm, SLVAL self, SLVAL str)
+sl_eval(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_string_t* src = sl_get_string(vm, str);
-    return sl_do_string2(vm, src->buff, src->buff_len, "(eval)", 1, self);
+    sl_string_t* src = sl_get_string(vm, argv[0]);
+    char* filename = "(eval)";
+    if(argc > 1) {
+        filename = sl_to_cstr(vm, argv[1]);
+    }
+    return sl_do_string2(vm, src->buff, src->buff_len, filename, 1, self);
 }
 
 void
 sl_init_eval(sl_vm_t* vm)
 {
-    sl_define_method(vm, vm->lib.Object, "eval", 1, sl_eval);
+    sl_define_method(vm, vm->lib.Object, "eval", -2, sl_eval);
 }
