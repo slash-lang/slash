@@ -6,8 +6,18 @@ class Test {
     
     class Failure extends Error {
     }
+
+    def self.assertions         { @@assertions ||= 0; }
+    def self.assertions=(val)   { @@assertions = val; }
+    
+    def self.failures           { @@failures ||= 0; }
+    def self.failures=(val)     { @@failures = val; }
+    
+    def self.passes             { @@passes ||= 0; }
+    def self.passes=(val)       { @@passes = val; }
     
     def assert(what, message = "Assertion failed") {
+        Test.assertions++;
         throw Failure.new(message) unless what;
     }
     
@@ -28,6 +38,7 @@ class Test {
     }
     
     def assert_throws(klass, fn) {
+        Test.assertions++;
         try {
             fn.call;
         } catch e {
@@ -36,7 +47,7 @@ class Test {
             }
             throw e; # rethrow
         }    
-        assert(false, "Expected callback to throw");
+        throw Failure.new("Expected callback to throw");
     }
     
     def self.run {
@@ -47,8 +58,10 @@ class Test {
                 obj.before if obj.responds_to("before");
                 obj.send(method);
                 print(".");
+                Test.passes++;
                 GC.run;
             } catch e {
+                Test.failures++;
                 print("F");
                 FAILURES.push([name() + " " + md[1], e]);
             }
@@ -79,4 +92,5 @@ for test_name, failure in Test::FAILURES {
     print("\n");
 }
 
+print("Tests finished. ", Test.passes, " passes, ", Test.failures, " failures, ", Test.assertions, " assertions.\n");
 exit(1) if Test::FAILURES.any;
