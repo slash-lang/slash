@@ -21,6 +21,9 @@ sl_make_cstring_placement(struct sl_vm* vm, sl_string_t* placement, char* cstr);
 sl_string_t*
 sl_cstring(struct sl_vm* vm, char* cstr);
 
+sl_string_t*
+sl_get_string(sl_vm_t* vm, SLVAL str);
+
 SLVAL
 sl_string_length(sl_vm_t* vm, SLVAL self);
 

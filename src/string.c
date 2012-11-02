@@ -146,8 +146,8 @@ allocate_string(sl_vm_t* vm)
     return obj;
 }
 
-static sl_string_t*
-get_string(sl_vm_t* vm, SLVAL obj)
+sl_string_t*
+sl_get_string(sl_vm_t* vm, SLVAL obj)
 {
     sl_expect(vm, obj, vm->lib.String);
     return (sl_string_t*)sl_get_ptr(obj);
@@ -156,14 +156,14 @@ get_string(sl_vm_t* vm, SLVAL obj)
 SLVAL
 sl_string_length(sl_vm_t* vm, SLVAL self)
 {
-    return sl_make_int(vm, get_string(vm, self)->char_len);
+    return sl_make_int(vm, sl_get_string(vm, self)->char_len);
 }
 
 SLVAL
 sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    sl_string_t* a = get_string(vm, self);
-    sl_string_t* b = get_string(vm, other);
+    sl_string_t* a = sl_get_string(vm, self);
+    sl_string_t* b = sl_get_string(vm, other);
     if(strcmp(a->encoding, b->encoding) != 0) {
         return sl_string_concat(vm, self, sl_string_encode(vm, other, a->encoding));
     }
@@ -176,12 +176,12 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 SLVAL
 sl_string_times(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     long mul = sl_get_int(sl_expect(vm, other, vm->lib.Int));
     if(mul && (size_t)LONG_MAX / mul < str->buff_len) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier is too big");
     }
-    sl_string_t* new_str = get_string(vm, sl_make_string(vm, NULL, 0));
+    sl_string_t* new_str = sl_get_string(vm, sl_make_string(vm, NULL, 0));
     new_str->buff_len = str->buff_len * mul;
     new_str->buff = sl_alloc(vm->arena, new_str->buff_len);
     for(size_t i = 0; i < new_str->buff_len; i += str->buff_len) {
@@ -194,7 +194,7 @@ sl_string_times(sl_vm_t* vm, SLVAL self, SLVAL other)
 SLVAL
 sl_string_html_escape(sl_vm_t* vm, SLVAL self)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
     size_t str_i;
@@ -235,7 +235,7 @@ is_hex_char(uint8_t c)
 SLVAL
 sl_string_url_decode(sl_vm_t* vm, SLVAL self)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
     uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
@@ -270,7 +270,7 @@ sl_string_url_decode(sl_vm_t* vm, SLVAL self)
 SLVAL
 sl_string_url_encode(sl_vm_t* vm, SLVAL self)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
     uint8_t* out = sl_alloc_buffer(vm->arena, out_cap);
@@ -324,14 +324,14 @@ sl_string_to_s(sl_vm_t* vm, SLVAL self)
 static SLVAL
 sl_string_to_i(sl_vm_t* vm, SLVAL self)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     return sl_integer_parse(vm, str->buff, str->buff_len);
 }
 
 SLVAL
 sl_string_inspect(sl_vm_t* vm, SLVAL self)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     size_t out_cap = 32;
     size_t out_len = 0;
     size_t str_i;
@@ -380,8 +380,8 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     if(!sl_is_a(vm, other, vm->lib.String)) {
         return vm->lib._false;
     }
-    sl_string_t* a = get_string(vm, self);
-    sl_string_t* b = get_string(vm, other);
+    sl_string_t* a = sl_get_string(vm, self);
+    sl_string_t* b = sl_get_string(vm, other);
     if(a->encoding == b->encoding) {
         if(str_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
             return vm->lib._true;
@@ -407,8 +407,8 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 SLVAL
 sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
 {
-    sl_string_t* haystack = get_string(vm, self);
-    sl_string_t* needle = get_string(vm, substr);
+    sl_string_t* haystack = sl_get_string(vm, self);
+    sl_string_t* needle = sl_get_string(vm, substr);
     
     /* @TODO use a more efficient algorithm */
     uint8_t* haystack_buff = haystack->buff;
@@ -434,7 +434,7 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
 SLVAL
 sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     long idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
     if(idx < 0) {
         idx += str->char_len;
@@ -462,8 +462,8 @@ sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 SLVAL
 sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
 {
-    sl_string_t* haystack = get_string(vm, self);
-    sl_string_t* needle = get_string(vm, substr);
+    sl_string_t* haystack = sl_get_string(vm, self);
+    sl_string_t* needle = sl_get_string(vm, substr);
     SLVAL ret = sl_make_array(vm, 0, NULL), piece;
     uint8_t* haystack_buff = haystack->buff;
     uint8_t* start_ptr = haystack_buff;
@@ -553,7 +553,7 @@ sl_string_encode2(sl_vm_t* vm, SLVAL self, SLVAL encoding)
 int
 sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL strv, int index)
 {
-    sl_string_t* str = get_string(vm, strv);
+    sl_string_t* str = sl_get_string(vm, strv);
     uint8_t* buff = str->buff;
     size_t len = str->buff_len;
     while(len) {
@@ -569,7 +569,7 @@ sl_string_byte_offset_for_index(sl_vm_t* vm, SLVAL strv, int index)
 int
 sl_string_index_for_byte_offset(sl_vm_t* vm, SLVAL strv, int byte_offset)
 {
-    sl_string_t* str = get_string(vm, strv);
+    sl_string_t* str = sl_get_string(vm, strv);
     uint8_t* buff = str->buff;
     size_t len = str->buff_len;
     int index = 0;
@@ -588,13 +588,13 @@ sl_string_index_for_byte_offset(sl_vm_t* vm, SLVAL strv, int byte_offset)
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    return sl_make_int(vm, str_cmp(get_string(vm, self), get_string(vm, other)));
+    return sl_make_int(vm, str_cmp(sl_get_string(vm, self), sl_get_string(vm, other)));
 }
 
 static SLVAL
 sl_string_hash(sl_vm_t* vm, SLVAL self)
 {
-    return sl_make_int(vm, str_hash(get_string(vm, self)));
+    return sl_make_int(vm, str_hash(sl_get_string(vm, self)));
 }
 
 void
@@ -620,7 +620,7 @@ sl_string_mod(sl_vm_t* vm, SLVAL self, SLVAL arg)
 SLVAL
 sl_string_format(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_string_t* str = get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, self);
     uint8_t* buff_ptr = str->buff;
     size_t buff_len = str->buff_len;
     uint8_t* end_of_buffer = buff_ptr + buff_len;
@@ -679,8 +679,8 @@ sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
 SLVAL
 sl_string_upper(sl_vm_t* vm, SLVAL selfv)
 {
-    sl_string_t* self = get_string(vm, selfv);
-    sl_string_t* retn = get_string(vm, sl_allocate(vm, vm->lib.String));
+    sl_string_t* self = sl_get_string(vm, selfv);
+    sl_string_t* retn = sl_get_string(vm, sl_allocate(vm, vm->lib.String));
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
     
@@ -709,8 +709,8 @@ sl_string_upper(sl_vm_t* vm, SLVAL selfv)
 SLVAL
 sl_string_lower(sl_vm_t* vm, SLVAL selfv)
 {
-    sl_string_t* self = get_string(vm, selfv);
-    sl_string_t* retn = get_string(vm, sl_allocate(vm, vm->lib.String));
+    sl_string_t* self = sl_get_string(vm, selfv);
+    sl_string_t* retn = sl_get_string(vm, sl_allocate(vm, vm->lib.String));
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
     
