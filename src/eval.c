@@ -48,7 +48,7 @@ sl_do_file(sl_vm_t* vm, char* filename)
 }
 
 SLVAL
-sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int start_in_slash)
+sl_do_string2(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int start_in_slash, SLVAL self)
 {
     size_t token_count;
     sl_token_t* tokens;
@@ -62,7 +62,26 @@ sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int star
     ctx->vm = vm;
     ctx->section = section;
     ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
-    ctx->self = vm->lib.Object;
+    ctx->self = self;
     ctx->parent = NULL;
     return sl_vm_exec(ctx, 0);
+}
+
+SLVAL
+sl_do_string(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int start_in_slash)
+{
+    return sl_do_string2(vm, src, src_len, filename, start_in_slash, vm->lib.Object);
+}
+
+static SLVAL
+sl_eval(sl_vm_t* vm, SLVAL self, SLVAL str)
+{
+    sl_string_t* src = sl_get_string(vm, str);
+    return sl_do_string2(vm, src->buff, src->buff_len, "(eval)", 1, self);
+}
+
+void
+sl_init_eval(sl_vm_t* vm)
+{
+    sl_define_method(vm, vm->lib.Object, "eval", 1, sl_eval);
 }

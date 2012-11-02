@@ -55,6 +55,7 @@ LIB(regexp);
 LIB(range);
 LIB(time);
 LIB(gc);
+LIB(eval);
 
 void sl_init_exts(sl_vm_t* vm);
 
@@ -83,6 +84,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(range);
     LIB_INIT(time);
     LIB_INIT(gc);
+    LIB_INIT(eval);
     
     sl_init_exts(vm);
 }
