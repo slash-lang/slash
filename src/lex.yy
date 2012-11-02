@@ -215,6 +215,10 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     yylex_init_extra(&ls, &yyscanner);
     SL_TRY(frame, SL_UNWIND_ALL, {
         buff_state = yy_scan_bytes((char*)buff, len, yyscanner);
+        if(start_in_slash) {
+            struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
+            BEGIN(SLASH);
+        }
         yylex(yyscanner);
     }, err, {
         /* clean up to avoid memory leaks */
