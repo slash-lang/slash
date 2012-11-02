@@ -106,7 +106,7 @@ static SLVAL
 sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
     mysql_t* mysql = get_mysql(vm, self);
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, query, vm->lib.String));
+    sl_string_t* str = sl_get_string(vm, query);
     MYSQL_RES* result;
     MYSQL_FIELD* fields;
     MYSQL_ROW row;
@@ -152,7 +152,7 @@ static SLVAL
 sl_mysql_escape(sl_vm_t* vm, SLVAL self, SLVAL str)
 {
     mysql_t* mysql = get_mysql(vm, self);
-    sl_string_t* s = (sl_string_t*)sl_get_ptr(sl_expect(vm, str, vm->lib.String));
+    sl_string_t* s = sl_get_string(vm, str);
     char* esc = sl_alloc(vm->arena, s->buff_len * 2 + 1);
     size_t esc_len = mysql_real_escape_string(&mysql->mysql, esc, (char*)s->buff, s->buff_len);
     return sl_make_string(vm, (uint8_t*)esc, esc_len);

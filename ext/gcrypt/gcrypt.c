@@ -55,7 +55,7 @@ static SLVAL
 sl_gcrypt_algorithm_hex_digest(sl_vm_t* vm, SLVAL self, SLVAL strv)
 {
     size_t i;
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, strv, vm->lib.String));
+    sl_string_t* str = sl_get_string(vm, strv);
     gcrypt_algorithm_t* algo = get_algo_check(vm, self);
     size_t digest_len = gcry_md_get_algo_dlen(algo->algo);
     char* digest = alloca(digest_len);

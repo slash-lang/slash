@@ -509,7 +509,7 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
 SLVAL
 sl_string_encode(sl_vm_t* vm, SLVAL self, char* encoding)
 {
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, self, vm->lib.String));
+    sl_string_t* str = sl_get_string(vm, self);
     char* buff = (char*)str->buff;
     size_t buff_len = str->buff_len;
     size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;

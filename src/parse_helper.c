@@ -170,7 +170,7 @@ sl_node_base_t*
 sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL id)
 {
     MAKE_NODE(type, sl_node_var_t, {
-        node->name = (sl_string_t*)sl_get_ptr(sl_expect(ps->vm, id, ps->vm->lib.String));
+        node->name = sl_get_string(ps->vm, id);
     });
 }
 
