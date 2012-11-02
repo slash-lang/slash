@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #define POINTER_ALIGN_BYTES (4)
-#define ALLOCS_PER_GC_RUN (10000)
+#define ALLOCS_PER_GC_RUN (100000)
 #define ALLOC_BUCKET_COUNT (65536)
 
 typedef struct sl_gc_alloc {
