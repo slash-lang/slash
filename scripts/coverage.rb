@@ -17,7 +17,7 @@ Dir.chdir "#{__FILE__}/../.."
 sources = Dir["src/**/*.c"]
 
 cmd "make clean"
-cmd "./configure --vanilla --coverage --debug --sapi=cli"
+cmd "./configure --vanilla --coverage --debug --prefix=`pwd` --sapi=cli"
 cmd "make -j 8"
 
 cmd "make test"
@@ -46,7 +46,7 @@ sources.each do |source|
   end
   missed.each do |line|
     puts "    #{line}"
-  end if missed.size < 20
+  end #if missed.size < 20
   #require "pry"
   #pry binding
   #puts "\e[33;1mCoverage report for #{source}\e[0m"
