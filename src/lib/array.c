@@ -276,6 +276,9 @@ sl_array_set2(sl_vm_t* vm, SLVAL array, SLVAL vi, SLVAL val)
     if((size_t)i >= aryp->capacity) {
         array_resize(vm, aryp, (size_t)i + 1);
     }
+    if((size_t)i >= aryp->count) {
+        aryp->count = (size_t)i + 1;
+    }
     return aryp->items[i] = val;
 }
 
