@@ -50,15 +50,11 @@ sl_do_file(sl_vm_t* vm, char* filename)
 SLVAL
 sl_do_string2(sl_vm_t* vm, uint8_t* src, size_t src_len, char* filename, int start_in_slash, SLVAL self)
 {
-    size_t token_count;
-    sl_token_t* tokens;
-    sl_node_base_t* ast;
     sl_vm_exec_ctx_t* ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
-    sl_vm_section_t* section;
-    
-    tokens = sl_lex(vm, (uint8_t*)filename, src, src_len, &token_count, start_in_slash);
-    ast = sl_parse(vm, tokens, token_count, (uint8_t*)filename);
-    section = sl_compile(vm, ast, (uint8_t*)filename);
+    size_t token_count;
+    sl_token_t* tokens = sl_lex(vm, (uint8_t*)filename, src, src_len, &token_count, start_in_slash);
+    sl_node_base_t* ast = sl_parse(vm, tokens, token_count, (uint8_t*)filename);
+    sl_vm_section_t* section = sl_compile(vm, ast, (uint8_t*)filename);
     ctx->vm = vm;
     ctx->section = section;
     ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * section->max_registers);
