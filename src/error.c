@@ -36,6 +36,7 @@ static sl_object_t*
 allocate_error_frame(sl_vm_t* vm)
 {
     sl_error_frame_t* frame = sl_alloc(vm->arena, sizeof(sl_error_frame_t));
+    frame->method = vm->lib.nil;
     frame->file = vm->lib.nil;
     frame->line = vm->lib.nil;
     return (sl_object_t*)frame;
