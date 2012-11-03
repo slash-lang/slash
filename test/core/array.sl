@@ -63,6 +63,17 @@ class ArrayTest extends Test {
         });
     }
     
+    def test_resizes_on_set {
+        a = [];
+        assert_equal(0, a.length);
+        a[0] = 1;
+        assert_equal(1, a.length);
+        a[1] = 2;
+        assert_equal(2, a.length);
+        a[99] = 1;
+        assert_equal(100, a.length);
+    }
+    
     def test_length {
         assert_equal(0, [].length);
         assert_equal(4, [1,2,3,4].length);
