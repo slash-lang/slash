@@ -170,7 +170,6 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
     size_t dest_reg = reg_alloc(cs);
     
     sl_node__register_t node;
-    sl_node__register_t* node_p = &node;
     node.base.type = SL_NODE__REGISTER;
     node.base.line = 0;
     node.reg = reg;
@@ -187,8 +186,10 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
                which also handles compound assignments. */
             memcpy(&send, lval, sizeof(sl_node_send_t));
             send.id = sl_string_concat(cs->vm, send.id, sl_make_cstring(cs->vm, "="));
-            send.arg_count = 1;
-            send.args = (sl_node_base_t**)&node_p;
+            sl_node_base_t** args = sl_alloc(cs->vm->arena, sizeof(sl_node_base_t*) * (send.arg_count + 1));
+            memcpy(args, send.args, sizeof(sl_node_base_t*) * send.arg_count);
+            args[send.arg_count++] = (sl_node_base_t*)&node;
+            send.args = args;
             compile_node(cs, (sl_node_base_t*)&send, dest_reg);
             reg_free(cs, dest_reg);
             return;
