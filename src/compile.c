@@ -916,10 +916,10 @@ NODE(sl_node_assign_send_t, assign_send)
     } else {
         /* compile the lval */
         emit_send(cs, receiver, node->lval->id, arg_base, node->lval->arg_count, dest);
-    
+        
         /* compile the rval */
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
-    
+        
         emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), arg_base + node->lval->arg_count, 1, arg_base + node->lval->arg_count);
     }
     
@@ -993,24 +993,66 @@ NODE(sl_node_assign_array_t, assign_array)
 
 NODE(sl_node_mutate_t, prefix_mutate)
 {
-    compile_node(cs, node->lval, dest);
-    
-    emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, dest);
-    
-    emit_assignment(cs, node->lval, dest);
+    if(node->lval->type == SL_NODE_SEND) {
+        sl_node_send_t* send = (sl_node_send_t*)node->lval;
+        size_t recv = reg_alloc(cs);
+        compile_node(cs, send->recv, recv);
+        
+        size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
+        for(size_t i = 0; i < send->arg_count; i++) {
+            compile_node(cs, send->args[i], args_regs + i);
+        }
+        emit_send(cs, recv, send->id, args_regs, send->arg_count, dest);
+        
+        emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
+        
+        SLVAL assign_id = sl_string_concat(cs->vm, send->id, sl_make_cstring(cs->vm, "="));
+        emit_send(cs, recv, assign_id, args_regs, send->arg_count + 1, recv);
+        
+        reg_free(cs, recv);
+        reg_free_block(cs, args_regs, send->arg_count + 1);
+        
+        sl_vm_insn_t insn;
+        insn.opcode = SL_OP_MOV;
+        emit(cs, insn);
+        insn.uint = args_regs + send->arg_count;
+        emit(cs, insn);
+        insn.uint = dest;
+        emit(cs, insn);
+    } else {
+        compile_node(cs, node->lval, dest);
+        emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, dest);
+        emit_assignment(cs, node->lval, dest);
+    }
 }
 
 NODE(sl_node_mutate_t, postfix_mutate)
 {
-    size_t temp_reg = reg_alloc(cs);
-    
-    compile_node(cs, node->lval, dest);
-    
-    emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, temp_reg);
-    
-    emit_assignment(cs, node->lval, temp_reg);
-    
-    reg_free(cs, temp_reg);
+    if(node->lval->type == SL_NODE_SEND) {
+        sl_node_send_t* send = (sl_node_send_t*)node->lval;
+        size_t recv = reg_alloc(cs);
+        compile_node(cs, send->recv, recv);
+        
+        size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
+        for(size_t i = 0; i < send->arg_count; i++) {
+            compile_node(cs, send->args[i], args_regs + i);
+        }
+        emit_send(cs, recv, send->id, args_regs, send->arg_count, dest);
+        
+        emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
+        
+        SLVAL assign_id = sl_string_concat(cs->vm, send->id, sl_make_cstring(cs->vm, "="));
+        emit_send(cs, recv, assign_id, args_regs, send->arg_count + 1, recv);
+        
+        reg_free(cs, recv);
+        reg_free_block(cs, args_regs, send->arg_count + 1);
+    } else {
+        size_t temp_reg = reg_alloc(cs);
+        compile_node(cs, node->lval, dest);
+        emit_send(cs, dest, sl_make_cstring(cs->vm, node->op_method), 0, 0, temp_reg);
+        emit_assignment(cs, node->lval, temp_reg);
+        reg_free(cs, temp_reg);
+    }
 }
 
 NODE(sl_node_array_t, array)
