@@ -22,7 +22,7 @@ sl_node_is_lval(sl_node_base_t* node)
         case SL_NODE_IVAR:   return 1;
         case SL_NODE_CVAR:   return 1;
         case SL_NODE_CONST:  return 1;
-        case SL_NODE_SEND:   return ((sl_node_send_t*)node)->arg_count == 0;
+        case SL_NODE_SEND:   return 1;
         case SL_NODE_ARRAY: {
             sl_node_array_t* ary = (sl_node_array_t*)node;
             for(size_t i = 0; i < ary->node_count; i++) {
@@ -44,7 +44,7 @@ sl_node_is_mutable_lval(sl_node_base_t* node)
         case SL_NODE_VAR:    return 1;
         case SL_NODE_IVAR:   return 1;
         case SL_NODE_CVAR:   return 1;
-        case SL_NODE_SEND:   return ((sl_node_send_t*)node)->arg_count == 0;
+        case SL_NODE_SEND:   return 1;
         default:
             return 0;
     }
