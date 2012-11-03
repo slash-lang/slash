@@ -46,8 +46,11 @@ class IntTest extends Test {
     
     def test_power {
         assert_equal(16, 2 ** 4);
+        assert_equal(32, 2 ** 5);
+        assert_equal(64, 2 ** 6);
         assert_equal(4, 16 ** 0.5);
         assert_equal(1, 2 ** Bignum.new);
+        assert_equal(0.5, 2 ** -1);
     }
     
     def test_and {
