@@ -146,17 +146,16 @@ sl_int_pow(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_float_pow(vm, sl_make_float(vm, a), sl_make_float(vm, b));
     }
     int res = 1;
-    int mul = 1;
     while(b) {
-        if(b % 1) {
-            mul *= a;
+        if(b % 2) {
+            res *= a;
             b--;
         } else {
             a *= a;
             b /= 2;
         }
     }
-    return sl_make_int(vm, res * mul);
+    return sl_make_int(vm, res);
 }
 
 SLVAL
