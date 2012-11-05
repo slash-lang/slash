@@ -299,7 +299,7 @@ sl_mysql_stmt_insert_id(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
-sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
+sl_mysql_raw_query(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
     mysql_t* mysql = get_mysql(vm, self);
     sl_string_t* str = sl_get_string(vm, query);
@@ -340,6 +340,16 @@ sl_mysql_query(sl_vm_t* vm, SLVAL self, SLVAL query)
 }
 
 static SLVAL
+sl_mysql_query(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    if(argc == 1) {
+        return sl_mysql_raw_query(vm, self, argv[0]);
+    }
+    SLVAL stmt = sl_mysql_prepare(vm, self, argv[0]);
+    return sl_mysql_stmt_execute(vm, stmt, argc - 1, argv + 1);
+}
+
+static SLVAL
 sl_mysql_escape(sl_vm_t* vm, SLVAL self, SLVAL str)
 {
     mysql_t* mysql = get_mysql(vm, self);
@@ -364,7 +374,7 @@ sl_init_ext_mysql(sl_vm_t* vm)
     sl_class_set_allocator(vm, MySQL, allocate_mysql);
     sl_define_method(vm, MySQL, "init", 3, sl_mysql_init);
     sl_define_method(vm, MySQL, "use", 1, sl_mysql_use);
-    sl_define_method(vm, MySQL, "query", 1, sl_mysql_query);
+    sl_define_method(vm, MySQL, "query", -2, sl_mysql_query);
     sl_define_method(vm, MySQL, "prepare", 1, sl_mysql_prepare);
     sl_define_method(vm, MySQL, "escape", 1, sl_mysql_escape);
     sl_define_method(vm, MySQL, "insert_id", 0, sl_mysql_insert_id);
