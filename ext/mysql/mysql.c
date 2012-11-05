@@ -193,7 +193,7 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     
     for(size_t i = 0; i < req; i++) {
         stmt->bind[i].buffer_type = MYSQL_TYPE_STRING;
-        sl_string_t* str = sl_get_string(vm, argv[i]);
+        sl_string_t* str = sl_get_string(vm, sl_to_s(vm, argv[i]));
         stmt->bind[i].buffer = str->buff;
         stmt->bind[i].buffer_length = str->buff_len;
         stmt->bind[i].length = NULL;
