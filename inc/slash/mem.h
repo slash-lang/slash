@@ -30,4 +30,10 @@ sl_gc_set_finalizer(sl_gc_arena_t* arena, void* ptr, void(*finalizer)(void*));
 void
 sl_free_gc_arena(sl_gc_arena_t* arena);
 
+void
+sl_gc_enable(sl_gc_arena_t* arena);
+
+void
+sl_gc_disable(sl_gc_arena_t* arena);
+
 #endif

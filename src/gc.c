@@ -27,6 +27,7 @@ struct sl_gc_arena {
     size_t allocs_since_gc;
     intptr_t stack_top;
     int mark_flag;
+    int enabled;
 };
 
 static intptr_t
@@ -51,6 +52,7 @@ sl_make_gc_arena()
     arena->alloc_count = 0;
     arena->allocs_since_gc = 0;
     arena->mark_flag = 0;
+    arena->enabled = 0;
     return arena;
 }
 
@@ -234,6 +236,11 @@ sl_gc_sweep(sl_gc_arena_t* arena)
 void
 sl_gc_run(sl_gc_arena_t* arena)
 {
+    if(!arena->enabled) {
+        arena->allocs_since_gc = 0;
+        return;
+    }
+    
     jmp_buf regs;
     sl_setjmp(regs); /* dump registers to stack */
     
@@ -253,4 +260,16 @@ void
 sl_gc_set_finalizer(sl_gc_arena_t* arena, void* ptr, void(*finalizer)(void*))
 {
     sl_gc_find_alloc(arena, ptr, NULL)->finalizer = finalizer;
+}
+
+void
+sl_gc_enable(sl_gc_arena_t* arena)
+{
+    arena->enabled = 1;
+}
+
+void
+sl_gc_disable(sl_gc_arena_t* arena)
+{
+    arena->enabled = 0;
 }
