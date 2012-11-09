@@ -88,13 +88,17 @@ file_read(sl_vm_t* vm, SLVAL self)
     if(!file->file) {
         sl_throw_message2(vm, sl_vm_store_get(vm, &cFile_InvalidOperation), "Can't write to closed file");
     }
-    SLVAL str = sl_make_cstring(vm, "");
+    uint8_t* buff = sl_alloc_buffer(vm->arena, 4096);
+    size_t buff_cap = 4096, buff_len = 0;
     while(!feof(file->file)) {
-        uint8_t buff[4096];
-        int read = fread(buff, 1, 4096, file->file);
-        str = sl_string_concat(vm, str, sl_make_string(vm, buff, read));
+        int read = fread(buff + buff_len, 1, 4096, file->file);
+        buff_len += read;
+        if(buff_len + 4096 >= buff_cap) {
+            buff_cap *= 2;
+            buff = sl_realloc(vm->arena, buff, buff_cap);
+        }
     }
-    return str;
+    return sl_make_string(vm, buff, buff_len);
 }
 
 static SLVAL
