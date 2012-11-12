@@ -36,4 +36,10 @@ sl_gc_enable(sl_gc_arena_t* arena);
 void
 sl_gc_disable(sl_gc_arena_t* arena);
 
+size_t
+sl_gc_alloc_count(sl_gc_arena_t* arena);
+
+size_t
+sl_gc_memory_usage(sl_gc_arena_t* arena);
+
 #endif
