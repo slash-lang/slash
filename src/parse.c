@@ -176,10 +176,10 @@ for_expression(sl_parse_state_t* ps)
     if(!sl_node_is_lval(lval)) {
         unexpected(ps, tok);
     }
-    if(peek_token(ps)->type == SL_TOK_COMMA) {
+    if(peek_token(ps)->type == SL_TOK_COMMA || peek_token(ps)->type == SL_TOK_FAT_COMMA) {
         seq_lval = sl_make_seq_node(ps);
         seq_lval->nodes[seq_lval->node_count++] = lval;
-        while(peek_token(ps)->type == SL_TOK_COMMA) {
+        while(peek_token(ps)->type == SL_TOK_COMMA || peek_token(ps)->type == SL_TOK_FAT_COMMA) {
             next_token(ps);
             if(seq_lval->node_count == seq_lval->node_capacity) {
                 seq_lval->node_capacity *= 2;
