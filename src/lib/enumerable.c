@@ -217,6 +217,28 @@ enumerable_take(sl_vm_t* vm, SLVAL self, SLVAL countv)
     return ary;
 }
 
+static SLVAL
+enumerable_first(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    if(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        return sl_send(vm, enumerator, "current", 0);
+    } else {
+        return vm->lib.nil;
+    }
+}
+
+static SLVAL
+enumerable_last(sl_vm_t* vm, SLVAL self)
+{
+    SLVAL enumerator = sl_send(vm, self, "enumerate", 0);
+    SLVAL last = vm->lib.nil;
+    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        last = sl_send(vm, enumerator, "current", 0);
+    }
+    return last;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -236,4 +258,6 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "sort", -1, enumerable_sort);
     sl_define_method(vm, vm->lib.Enumerable, "drop", 1, enumerable_drop);
     sl_define_method(vm, vm->lib.Enumerable, "take", 1, enumerable_take);
+    sl_define_method(vm, vm->lib.Enumerable, "first", 0, enumerable_first);
+    sl_define_method(vm, vm->lib.Enumerable, "last", 0, enumerable_last);
 }
