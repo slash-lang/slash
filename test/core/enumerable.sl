@@ -1,6 +1,51 @@
 <%
 
 class EnumerableTest extends Test {
+    class UselessEnumerable extends Enumerable {
+        def enumerate {
+            obj = Object.new;
+            def obj.next {
+                false;
+            }
+            obj;
+        }
+    }
+    
+    class LengthOfExactlyFourEnumerable extends Enumerable {
+        def init {
+            @times = 0;
+        }
+        
+        def enumerate {
+            self;
+        }
+        
+        def next {
+            if @times++ < 4 {
+                true;
+            } else {
+                false;
+            }
+        }
+        
+        def current {
+            @times;
+        }
+    }
+    
+    class InfiniteEnumerable extends Enumerable {
+        def enumerate {
+            obj = Object.new;
+            def obj.next {
+                true;
+            }
+            def obj.current {
+                true;
+            }
+            obj;
+        }
+    }
+    
     def test_map {
         assert_equal([], [].map(\x { x }));
         assert_equal([1,2,3], [1,2,3].map(\x { x }));
@@ -33,38 +78,6 @@ class EnumerableTest extends Test {
     }
     
     def test_length {
-        class UselessEnumerable extends Enumerable {
-            def enumerate {
-                obj = Object.new;
-                def obj.next {
-                    false;
-                }
-                obj;
-            }
-        }
-        
-        class LengthOfExactlyFourEnumerable extends Enumerable {
-            def init {
-                @times = 0;
-            }
-            
-            def enumerate {
-                self;
-            }
-            
-            def next {
-                if @times++ < 4 {
-                    true;
-                } else {
-                    false;
-                }
-            }
-            
-            def current {
-                7;
-            }
-        }
-        
         assert_equal(4, { 1 => 2, 3 => 4, 5 => 6, 7 => 8 }.length);
         assert_equal(0, UselessEnumerable.new.length);
         assert_equal(4, LengthOfExactlyFourEnumerable.new.length);
@@ -77,19 +90,6 @@ class EnumerableTest extends Test {
         assert_equal(true, {}.empty);
         assert_equal(false, { 1 => 2 }.empty);
         
-        class InfiniteEnumerable extends Enumerable {
-            def enumerate {
-                obj = Object.new;
-                def obj.next {
-                    true;
-                }
-                def obj.current {
-                    nil;
-                }
-                obj;
-            }
-        }
-        
         assert_equal(false, InfiniteEnumerable.new.empty);
     }
     
@@ -101,19 +101,6 @@ class EnumerableTest extends Test {
         
         assert_equal(false, [1,2,3].any(\x { x > 3 }));
         assert_equal(true, [1,2,3,4].any(\x { x > 3 }));
-        
-        class InfiniteEnumerable extends Enumerable {
-            def enumerate {
-                obj = Object.new;
-                def obj.next {
-                    true;
-                }
-                def obj.current {
-                    true;
-                }
-                obj;
-            }
-        }
         
         assert_equal(true, InfiniteEnumerable.new.any);
     }
@@ -164,5 +151,19 @@ class EnumerableTest extends Test {
         assert_equal([], [1,2,3,4,5].drop(9));
         assert_equal([], [1,2].drop(3));
         assert_equal([], [1,2].drop(2));
+    }
+    
+    def test_first {
+        assert_equal(1, LengthOfExactlyFourEnumerable.new.first);
+        assert_equal(nil, UselessEnumerable.new.first);
+    }
+    
+    def test_first_works_on_infinite_enumerables {
+        assert_equal(true, InfiniteEnumerable.new.first);
+    }
+    
+    def test_last {
+        assert_equal(4, LengthOfExactlyFourEnumerable.new.last);
+        assert_equal(nil, UselessEnumerable.new.last);
     }
 }.register;
