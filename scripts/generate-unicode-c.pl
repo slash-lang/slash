@@ -18,7 +18,7 @@ C
 
 while(<$case_folding>) {
     next unless /^([A-F0-9]+); [CS]; ([A-F0-9]+); # (.*)$/;
-    print $output "    { 0x$1, 0x$2 }, // $3 \n";
+    print $output "    { 0x$1, 0x$2 }, // $3\n";
 }
 
 print $output <<C;

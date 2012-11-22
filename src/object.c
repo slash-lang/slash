@@ -338,7 +338,7 @@ call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* ar
 static SLVAL
 call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
-    sl_catch_frame_t frame;   
+    sl_catch_frame_t frame;
     frame.prev = vm->catch_stack;
     frame.value = vm->lib.nil;
     vm->catch_stack = &frame;
