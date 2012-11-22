@@ -164,7 +164,7 @@ sl_bignum_add(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_add(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -182,7 +182,7 @@ sl_bignum_sub(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_sub(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -200,7 +200,7 @@ sl_bignum_mul(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_mul(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -221,7 +221,7 @@ sl_bignum_div(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_tdiv_q(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -242,7 +242,7 @@ sl_bignum_mod(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_tdiv_r(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -279,7 +279,7 @@ sl_bignum_and(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_and(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL
@@ -294,7 +294,7 @@ sl_bignum_or(sl_vm_t* vm, SLVAL self, SLVAL other)
     b = get_bignum(vm, other);
     c = get_bignum(vm, sl_allocate(vm, vm->lib.Bignum));
     mpz_ior(c->mpz, a->mpz, b->mpz);
-    return sl_make_ptr((sl_object_t*)c); 
+    return sl_make_ptr((sl_object_t*)c);
 }
 
 SLVAL

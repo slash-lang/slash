@@ -67,7 +67,7 @@ class Highlighter {
                     @tokens[-1][1] += str[0];
                 } else {
                     @tokens.push(["unknown", str[0]]);
-                }    
+                }
                 str = str.split("").drop(1).join; # TODO: implement string slicing...
             }
         }

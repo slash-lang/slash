@@ -46,7 +46,7 @@ class Test {
                 return;
             }
             throw e; # rethrow
-        }    
+        }
         throw Failure.new("Expected callback to throw");
     }
     
