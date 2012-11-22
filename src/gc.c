@@ -4,6 +4,7 @@
 #include <slash/mem.h>
 #include <slash/platform.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #define POINTER_ALIGN_BYTES (4)
 #define ALLOCS_PER_GC_RUN (100000)
@@ -54,7 +55,7 @@ sl_make_gc_arena()
     arena->memory_usage = sizeof(*arena) + (arena->table_count * sizeof(sl_gc_alloc_t*));
     arena->allocs_since_gc = 0;
     arena->mark_flag = 0;
-    arena->enabled = 0;
+    arena->enabled = 1;
     return arena;
 }
 
@@ -202,8 +203,6 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
         }
     }
 }
-
-#include <stdio.h>
 
 static void
 sl_gc_sweep(sl_gc_arena_t* arena)
