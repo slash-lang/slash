@@ -4,7 +4,6 @@
 #include <slash/mem.h>
 #include <slash/platform.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #define POINTER_ALIGN_BYTES (4)
 #define ALLOCS_PER_GC_RUN (100000)
@@ -12,13 +11,40 @@
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
-    void* ptr;
+    struct sl_gc_alloc* prev;
     size_t size;
     char mark_flag;
     char scan_pointers;
     void(*finalizer)(void*);
 }
 sl_gc_alloc_t;
+
+static void*
+ptr_for_alloc(sl_gc_alloc_t* alloc)
+{
+    return alloc + 1;
+}
+
+static sl_gc_alloc_t*
+alloc_for_ptr(void* ptr)
+{
+    return (sl_gc_alloc_t*)ptr - 1;
+}
+
+static void
+free_alloc(sl_gc_alloc_t* alloc)
+{
+    if(alloc->finalizer) {
+        alloc->finalizer(ptr_for_alloc(alloc));
+    }
+    if(alloc->prev) {
+        alloc->prev->next = alloc->next;
+    }
+    if(alloc->next) {
+        alloc->next->prev = alloc->prev;
+    }
+    free(alloc);
+}
 
 struct sl_gc_arena {
     sl_gc_alloc_t** table;
@@ -68,11 +94,7 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
         alloc = arena->table[i];
         while(alloc) {
             next = alloc->next;
-            if(alloc->finalizer) {
-                alloc->finalizer(alloc->ptr);
-            }
-            free(alloc->ptr);
-            free(alloc);
+            free_alloc(alloc);
             alloc = next;
         }
     }
@@ -81,21 +103,15 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
 }
 
 static sl_gc_alloc_t*
-sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
+sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr)
 {
     intptr_t hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     sl_gc_alloc_t *alloc = arena->table[hash];
     while(alloc) {
-        if(alloc->ptr == ptr) {
+        if(ptr_for_alloc(alloc) == ptr) {
             return alloc;
         }
-        if(prev) {
-            *prev = alloc;
-        }
         alloc = alloc->next;
-    }
-    if(prev) {
-        *prev = NULL;
     }
     return NULL;
 }
@@ -103,8 +119,8 @@ sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
 void*
 sl_alloc(sl_gc_arena_t* arena, size_t size)
 {
-    sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t));
-    arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t));
+    sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t) + size);
+    arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t)) + size;
     void* ptr;
     intptr_t hash;
     
@@ -112,13 +128,15 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         sl_gc_run(arena);
     }
     
-    ptr = malloc(size);
-    arena->memory_usage += size;
+    ptr = ptr_for_alloc(alloc);
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
-    alloc->ptr = ptr;
     alloc->size = size;
     alloc->next = arena->table[hash];
+    if(alloc->next) {
+        alloc->next->prev = alloc;
+    }
+    alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
     alloc->finalizer = NULL;
     alloc->mark_flag = arena->mark_flag;
     alloc->scan_pointers = 1;
@@ -132,7 +150,7 @@ void*
 sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 {
     void* ptr = sl_alloc(arena, size);
-    sl_gc_find_alloc(arena, ptr, NULL)->scan_pointers = 0;
+    sl_gc_find_alloc(arena, ptr)->scan_pointers = 0;
     return ptr;
 }
 
@@ -146,9 +164,9 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
     if(ptr == NULL) {
         return sl_alloc(arena, new_size);
     }
-    old_alloc = sl_gc_find_alloc(arena, ptr, NULL);
+    old_alloc = sl_gc_find_alloc(arena, ptr);
     new_ptr = sl_alloc(arena, new_size);
-    new_alloc = sl_gc_find_alloc(arena, new_ptr, NULL);
+    new_alloc = sl_gc_find_alloc(arena, new_ptr);
     new_alloc->scan_pointers = old_alloc->scan_pointers;
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
@@ -160,7 +178,7 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    intptr_t addr = (intptr_t)alloc->ptr;
+    intptr_t addr = (intptr_t)ptr_for_alloc(alloc);
     intptr_t max = addr + alloc->size;
     intptr_t ptr;
     if(alloc->mark_flag == arena->mark_flag) {
@@ -176,7 +194,7 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
             /* if the pointer is not aligned, ignore it */
             continue;
         }
-        alloc = sl_gc_find_alloc(arena, (void*)ptr, NULL);
+        alloc = sl_gc_find_alloc(arena, (void*)ptr);
         if(alloc) {
             sl_gc_mark_allocation(arena, alloc);
         }
@@ -197,39 +215,29 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
             /* if the pointer is not aligned, ignore it */
             continue;
         }
-        alloc = sl_gc_find_alloc(arena, (void*)ptr, NULL);
+        alloc = sl_gc_find_alloc(arena, (void*)ptr);
         if(alloc) {
             sl_gc_mark_allocation(arena, alloc);
         }
     }
 }
 
+#include <stdio.h>
+
 static void
 sl_gc_sweep(sl_gc_arena_t* arena)
 {
-    sl_gc_alloc_t *alloc, *prev, *next;
+    sl_gc_alloc_t *alloc, *next;
     size_t i;
     size_t collected = 0;
     for(i = 0; i < arena->table_count; i++) {
-        prev = (sl_gc_alloc_t*)&arena->table[i];
         alloc = arena->table[i];
         while(alloc) {
             next = alloc->next;
             if(alloc->mark_flag != arena->mark_flag) {
-                if(alloc->finalizer) {
-                    alloc->finalizer(alloc->ptr);
-                }
-                arena->memory_usage -= alloc->size;
-                free(alloc->ptr);
-                arena->memory_usage -= sizeof(sl_gc_alloc_t);
-                free(alloc);
-                prev->next = next;
-                alloc = next;
-                arena->alloc_count--;
+                free_alloc(alloc);
                 collected++;
-                continue;
             }
-            prev = alloc;
             alloc = next;
         }
     }
@@ -264,7 +272,7 @@ sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 void
 sl_gc_set_finalizer(sl_gc_arena_t* arena, void* ptr, void(*finalizer)(void*))
 {
-    sl_gc_find_alloc(arena, ptr, NULL)->finalizer = finalizer;
+    sl_gc_find_alloc(arena, ptr)->finalizer = finalizer;
 }
 
 void
