@@ -11,13 +11,25 @@
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
-    void* ptr;
+    size_t ref_count;
     size_t size;
     char mark_flag;
     char scan_pointers;
     void(*finalizer)(void*);
 }
 sl_gc_alloc_t;
+
+static void*
+ptr_for_alloc(sl_gc_alloc_t* alloc)
+{
+    return alloc + 1;
+}
+
+static sl_gc_alloc_t*
+alloc_for_ptr(void* ptr)
+{
+    return (sl_gc_alloc_t*)ptr - 1;
+}
 
 struct sl_gc_arena {
     sl_gc_alloc_t** table;
@@ -54,7 +66,7 @@ sl_make_gc_arena()
     arena->memory_usage = sizeof(*arena) + (arena->table_count * sizeof(sl_gc_alloc_t*));
     arena->allocs_since_gc = 0;
     arena->mark_flag = 0;
-    arena->enabled = 0;
+    arena->enabled = 1;
     return arena;
 }
 
@@ -68,9 +80,8 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
         while(alloc) {
             next = alloc->next;
             if(alloc->finalizer) {
-                alloc->finalizer(alloc->ptr);
+                alloc->finalizer(ptr_for_alloc(alloc));
             }
-            free(alloc->ptr);
             free(alloc);
             alloc = next;
         }
@@ -85,7 +96,7 @@ sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
     intptr_t hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     sl_gc_alloc_t *alloc = arena->table[hash];
     while(alloc) {
-        if(alloc->ptr == ptr) {
+        if(ptr_for_alloc(alloc) == ptr) {
             return alloc;
         }
         if(prev) {
@@ -102,7 +113,7 @@ sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr, sl_gc_alloc_t** prev)
 void*
 sl_alloc(sl_gc_arena_t* arena, size_t size)
 {
-    sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t));
+    sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t) + size);
     arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t));
     void* ptr;
     intptr_t hash;
@@ -111,11 +122,11 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         sl_gc_run(arena);
     }
     
-    ptr = malloc(size);
+    ptr = ptr_for_alloc(alloc);
     arena->memory_usage += size;
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
-    alloc->ptr = ptr;
+    alloc->ref_count = 1;
     alloc->size = size;
     alloc->next = arena->table[hash];
     alloc->finalizer = NULL;
@@ -159,7 +170,7 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    intptr_t addr = (intptr_t)alloc->ptr;
+    intptr_t addr = (intptr_t)ptr_for_alloc(alloc);
     intptr_t max = addr + alloc->size;
     intptr_t ptr;
     if(alloc->mark_flag == arena->mark_flag) {
@@ -218,10 +229,9 @@ sl_gc_sweep(sl_gc_arena_t* arena)
             next = alloc->next;
             if(alloc->mark_flag != arena->mark_flag) {
                 if(alloc->finalizer) {
-                    alloc->finalizer(alloc->ptr);
+                    alloc->finalizer(ptr_for_alloc(alloc));
                 }
                 arena->memory_usage -= alloc->size;
-                free(alloc->ptr);
                 arena->memory_usage -= sizeof(sl_gc_alloc_t);
                 free(alloc);
                 prev->next = next;
