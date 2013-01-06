@@ -86,8 +86,9 @@ sl_class_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
     sl_class_t* klass = get_class(vm, self);
     SLVAL method;
+    SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
-    if(st_lookup(klass->instance_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
         return method;
     } else if(sl_get_primitive_type(klass->super) == SL_T_CLASS) {
         return sl_class_instance_method(vm, klass->super, method_name);
@@ -100,8 +101,9 @@ sl_class_own_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
     sl_class_t* klass = get_class(vm, self);
     SLVAL method;
+    SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
-    if(st_lookup(klass->instance_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
         return method;
     } else {
         return vm->lib.nil;
