@@ -41,7 +41,7 @@ typedef struct {
     sl_object_t base;
     SLVAL current;
     SLVAL right;
-    char* method;
+    SLID method;
     sl_range_enumerator_state_t state;
 }
 sl_range_enumerator_t;
@@ -52,7 +52,6 @@ allocate_range_enumerator(sl_vm_t* vm)
     sl_range_enumerator_t* range_enum = sl_alloc(vm->arena, sizeof(sl_range_enumerator_t));
     range_enum->current = vm->lib.nil;
     range_enum->right   = vm->lib.nil;
-    range_enum->method  = NULL;
     range_enum->state   = ES_DONE;
     return (sl_object_t*)range_enum;
 }
@@ -68,7 +67,7 @@ static void
 check_range_enumerator(sl_vm_t* vm, sl_range_enumerator_t* range_enum)
 {
     if(sl_responds_to(vm, range_enum->current, "succ")) {
-        if(sl_responds_to(vm, range_enum->current, range_enum->method)) {
+        if(sl_responds_to2(vm, range_enum->current, range_enum->method)) {
             return;
         }
     }
@@ -94,7 +93,7 @@ range_enumerate(sl_vm_t* vm, SLVAL self)
     sl_range_enumerator_t* range_enum = get_range_enumerator(vm, sl_allocate(vm, vm->lib.Range_Enumerator));
     range_enum->current     = range->left;
     range_enum->right       = range->right;
-    range_enum->method      = range->exclusive ? "<" : "<=";
+    range_enum->method      = range->exclusive ? vm->id.op_lt : vm->id.op_lte;
     range_enum->state       = ES_BEFORE;
     return sl_make_ptr((sl_object_t*)range_enum);
 }
@@ -123,7 +122,7 @@ range_enumerator_next(sl_vm_t* vm, SLVAL self)
     } else {
         range_enum->current = sl_send_id(vm, range_enum->current, vm->id.succ, 0);
     }
-    if(sl_is_truthy(sl_send(vm, range_enum->current, range_enum->method, 1, range_enum->right))) {
+    if(sl_is_truthy(sl_send_id(vm, range_enum->current, range_enum->method, 1, range_enum->right))) {
         return vm->lib._true;
     } else {
         range_enum->state = ES_DONE;
