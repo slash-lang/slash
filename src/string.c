@@ -600,7 +600,8 @@ sl_string_hash(sl_vm_t* vm, SLVAL self)
 void
 sl_pre_init_string(sl_vm_t* vm)
 {
-    vm->lib.String = sl_define_class2(vm, vm->lib.nil, vm->lib.Object);
+    SLID no_id = { 0 };
+    vm->lib.String = sl_define_class2(vm, no_id, vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.String, allocate_string);
 }
 
