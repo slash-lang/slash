@@ -716,6 +716,8 @@ NODE(sl_node_const_t, const)
     } else {
         insn.opcode = SL_OP_GET_CONST;
         emit(cs, insn);
+        insn.ic = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_cache_t));
+        emit(cs, insn);
         insn.imm = node->id;
         emit(cs, insn);
         insn.uint = dest;

@@ -26,6 +26,7 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, s
 #define NEXT_IMM() (NEXT().imm)
 #define NEXT_UINT() (NEXT().uint)
 #define NEXT_PTR() ((void*)NEXT().uint)
+#define NEXT_IC() (NEXT().ic)
 #define NEXT_REG() (ctx->registers[NEXT_UINT()])
 #define NEXT_STR() (NEXT().str)
 #define NEXT_SECTION() (NEXT().section)

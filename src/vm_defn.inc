@@ -70,21 +70,29 @@ INSTRUCTION(SL_OP_GET_CVAR, {
 })
 
 /*  0: GET_CONST
-    1: <str:const_name>
-    2: <reg:dest> */
+    1: <ic:inline_cache>
+    2: <str:const_name>
+    3: <reg:dest> */
 INSTRUCTION(SL_OP_GET_CONST, {
+    sl_vm_inline_cache_t* ic = NEXT_IC();
     SLVAL const_name = NEXT_IMM();
-    sl_vm_exec_ctx_t* lookup_ctx = ctx;
-    while(lookup_ctx) {
-        if(sl_class_has_const2(vm, lookup_ctx->self, const_name)) {
-            NEXT_REG() = sl_class_get_const2(vm, lookup_ctx->self, const_name);
-            break;
+    if(ic->state == vm->state_constant) {
+        NEXT_REG() = ic->value;
+    } else {
+        sl_vm_exec_ctx_t* lookup_ctx = ctx;
+        while(lookup_ctx) {
+            if(sl_class_has_const2(vm, lookup_ctx->self, const_name)) {
+                ic->state = vm->state_constant;
+                ic->value = sl_class_get_const2(vm, lookup_ctx->self, const_name);
+                NEXT_REG() = ic->value;
+                break;
+            }
+            lookup_ctx = lookup_ctx->parent;
         }
-        lookup_ctx = lookup_ctx->parent;
-    }
-    if(!lookup_ctx) {
-        /* force exception */
-        sl_class_get_const2(vm, ctx->self, const_name);
+        if(!lookup_ctx) {
+            /* force exception */
+            sl_class_get_const2(vm, ctx->self, const_name);
+        }
     }
 })
 
