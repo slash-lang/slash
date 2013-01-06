@@ -178,12 +178,22 @@ INSTRUCTION(SL_OP_SEND, {
     if(sl_get_primitive_type(receiver) != SL_T_INT && sl_get_ptr(receiver)->singleton_methods) {
         NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
     } else {
+        sl_method_t* method;
         SLVAL recv_klass = sl_class_of(vm, receiver);
         if(ic->state < vm->state_method || ic->klass.i != recv_klass.i) {
             ic->klass = recv_klass;
-            ic->value.i = (intptr_t)sl_lookup_method(vm, receiver, id);
+            method = sl_lookup_method(vm, receiver, id);
+            if(method) {
+                ic->value = sl_make_ptr((sl_object_t*)method);
+            }
+        } else {
+            method = (sl_method_t*)sl_get_ptr(ic->value);
         }
-        NEXT_REG() = sl_apply_method(vm, receiver, (sl_method_t*)ic->value.i, argc, argv);
+        if(method) {
+            NEXT_REG() = sl_apply_method(vm, receiver, method, argc, argv);
+        } else {
+            NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+        }
     }
 })
 
