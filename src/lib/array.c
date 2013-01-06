@@ -354,7 +354,7 @@ quicksort(sl_vm_t* vm, SLVAL* items, size_t count, SLVAL* comparator)
     for(i = 0; i < count - 1; i++) {
         int cmp_result;
         if(comparator) {
-            SLVAL cmpv = sl_expect(vm, sl_send(vm, *comparator, "call", 2, items[i], pivot), vm->lib.Int);
+            SLVAL cmpv = sl_expect(vm, sl_send_id(vm, *comparator, vm->id.call, 2, items[i], pivot), vm->lib.Int);
             cmp_result = sl_get_int(cmpv);
         } else {
             cmp_result = sl_cmp(vm, items[i], pivot);

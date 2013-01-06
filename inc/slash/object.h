@@ -39,7 +39,7 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLID name, SLVAL method);
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id);
 
-SLVAL
+int
 sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID idv);
 
 SLVAL
@@ -62,6 +62,9 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
 
 SLVAL
 sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);
+
+SLVAL
+sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, ...);
 
 SLVAL
 sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv);

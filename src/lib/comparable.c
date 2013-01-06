@@ -3,7 +3,7 @@
 int
 sl_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 {
-    SLVAL ret = sl_send(vm, a, "<=>", 1, b);
+    SLVAL ret = sl_send_id(vm, a, vm->id.op_cmp, 1, b);
     sl_expect(vm, ret, vm->lib.Int);
     return sl_get_int(ret);
 }

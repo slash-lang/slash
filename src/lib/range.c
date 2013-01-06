@@ -121,7 +121,7 @@ range_enumerator_next(sl_vm_t* vm, SLVAL self)
     if(range_enum->state == ES_BEFORE) {
         range_enum->state = ES_ITERATING;
     } else {
-        range_enum->current = sl_send(vm, range_enum->current, "succ", 0);
+        range_enum->current = sl_send_id(vm, range_enum->current, vm->id.succ, 0);
     }
     if(sl_is_truthy(sl_send(vm, range_enum->current, range_enum->method, 1, range_enum->right))) {
         return vm->lib._true;
