@@ -215,6 +215,5 @@ sl_intern2(sl_vm_t* vm, SLVAL str)
 SLID
 sl_intern(sl_vm_t* vm, char* cstr)
 {
-    printf("sl_intern(%s)\n", cstr);
     return sl_intern2(vm, sl_make_cstring(vm, cstr));
 }

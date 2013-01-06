@@ -28,7 +28,7 @@ static int
 dict_key_cmp(sl_dict_key_t* a, sl_dict_key_t* b)
 {
     sl_vm_t* vm = a->vm;
-    SLVAL cmp = sl_send(vm, a->key, "<=>", 1, b->key);
+    SLVAL cmp = sl_send_id(vm, a->key, vm->id.op_cmp, 1, b->key);
     if(sl_get_primitive_type(cmp) != SL_T_INT) {
         sl_throw_message2(vm, vm->lib.TypeError, "Expected <=> to return Int in Dict key");
     }

@@ -66,7 +66,7 @@ get_range_enumerator(sl_vm_t* vm, SLVAL obj)
 static void
 check_range_enumerator(sl_vm_t* vm, sl_range_enumerator_t* range_enum)
 {
-    if(sl_responds_to(vm, range_enum->current, "succ")) {
+    if(sl_responds_to2(vm, range_enum->current, vm->id.succ)) {
         if(sl_responds_to2(vm, range_enum->current, range_enum->method)) {
             return;
         }
