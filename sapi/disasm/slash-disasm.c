@@ -74,8 +74,9 @@ void disassemble(sl_vm_section_t* section)
     #define NEXT_IMM() (NEXT().imm)
     #define NEXT_UINT() (NEXT().uint)
     #define NEXT_PTR() ((void*)NEXT().uint)
+    #define NEXT_ID() (NEXT().id)
     
-    printf("%s (%p):\n", sl_to_cstr(vm, section->name), section);
+    printf("%s (%p):\n", sl_to_cstr(vm, sl_id_to_string(vm, section->name)), section);
     
     while(ip < section->insns_count) {
         switch(NEXT().opcode) {

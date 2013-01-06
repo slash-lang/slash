@@ -55,8 +55,8 @@ sl_object_methods(sl_vm_t* vm, SLVAL self);
 void
 sl_init_object(sl_vm_t* vm)
 {
-    st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
-        (st_data_t)sl_cstring(vm, "Object"), (st_data_t)vm->lib.Object.i);
+    sl_class_t* objectp = (sl_class_t*)sl_get_ptr(vm->lib.Object);
+    st_insert(objectp->constants, (st_data_t)sl_intern(vm, "Object").id, (st_data_t)sl_get_ptr(vm->lib.Object));
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_inspect);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
@@ -486,7 +486,8 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
 static SLVAL
 sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
-    sl_method_t* method = sl_lookup_method(vm, self, sl_intern2(vm, method_name));
+    SLID mid = sl_intern2(vm, method_name);
+    sl_method_t* method = sl_lookup_method(vm, self, mid);
     if(method) {
         return sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), self);
     } else {
@@ -497,16 +498,17 @@ sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 static SLVAL
 sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
+    SLID mid = sl_intern2(vm, method_name);
     SLVAL method;
     sl_expect(vm, method_name, vm->lib.String);
     if(sl_get_primitive_type(self) != SL_T_INT) {
         sl_object_t* obj = sl_get_ptr(self);
-        if(obj->singleton_methods && st_lookup(obj->singleton_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+        if(obj->singleton_methods && st_lookup(obj->singleton_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
             return method;
         }
     }
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(sl_class_of(vm, self));
-    if(st_lookup(klass->instance_methods, (st_data_t)sl_get_ptr(method_name), (st_data_t*)&method)) {
+    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
         return sl_method_bind(vm, method, self);
     }
     return vm->lib.nil;

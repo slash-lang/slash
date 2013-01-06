@@ -114,10 +114,11 @@ struct own_instance_methods_iter_state {
 };
 
 static int
-own_instance_methods_iter(SLVAL name, SLVAL method, struct own_instance_methods_iter_state* state)
+own_instance_methods_iter(SLID name, SLVAL method, struct own_instance_methods_iter_state* state)
 {
     (void)method;
-    sl_array_push(state->vm, state->ary, 1, &name);
+    SLVAL namev = sl_id_to_string(state->vm, name);
+    sl_array_push(state->vm, state->ary, 1, &namev);
     return ST_CONTINUE;
 }
 
@@ -148,8 +149,10 @@ sl_class_instance_methods(sl_vm_t* vm, SLVAL klass)
 void
 sl_init_class(sl_vm_t* vm)
 {
-    st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
-        (st_data_t)sl_intern(vm, "Class").id, (st_data_t)vm->lib.Class.i);
+    sl_class_t* objectp = (sl_class_t*)sl_get_ptr(vm->lib.Object);
+    SLID cid = sl_intern(vm, "Class");
+    st_insert(objectp->constants, (st_data_t)cid.id, (st_data_t)sl_get_ptr(vm->lib.Class));
+
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
