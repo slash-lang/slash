@@ -142,8 +142,8 @@ void
 sl_init_file(sl_vm_t* vm)
 {
     vm->lib.File = sl_define_class(vm, "File", vm->lib.Object);
-    sl_define_class3(vm, sl_make_cstring(vm, "NotFound"), vm->lib.Error, vm->lib.File);
-    SLVAL File_InvalidOperation = sl_define_class3(vm, sl_make_cstring(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
+    sl_define_class3(vm, sl_intern(vm, "NotFound"), vm->lib.Error, vm->lib.File);
+    SLVAL File_InvalidOperation = sl_define_class3(vm, sl_intern(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
     sl_vm_store_put(vm, &cFile_InvalidOperation, File_InvalidOperation);
     sl_class_set_allocator(vm, vm->lib.File, allocate_file);
     sl_define_method(vm, vm->lib.File, "init", -2, file_init);

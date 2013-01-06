@@ -341,7 +341,7 @@ sl_init_dict(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Dict, "==", 1, sl_dict_eq);
     
     vm->lib.Dict_Enumerator = sl_define_class3(
-        vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Dict);
+        vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Dict);
         
     sl_class_set_allocator(vm, vm->lib.Dict_Enumerator, allocate_dict_enumerator);
     sl_define_method(vm, vm->lib.Dict_Enumerator, "init", 1, sl_dict_enumerator_init);

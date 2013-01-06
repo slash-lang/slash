@@ -222,7 +222,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "==", 1, sl_array_eq);
     
     vm->lib.Array_Enumerator = sl_define_class3(
-        vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
+        vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
         
     sl_class_set_allocator(vm, vm->lib.Array_Enumerator, allocate_array_enumerator);
     sl_define_method(vm, vm->lib.Array_Enumerator, "init", 1, sl_array_enumerator_init);

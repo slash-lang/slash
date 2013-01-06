@@ -337,7 +337,7 @@ sl_init_regexp(sl_vm_t* vm)
 {
     vm->lib.Regexp = sl_define_class(vm, "Regexp", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Regexp, allocate_regexp);
-    vm->lib.Regexp_Match = sl_define_class3(vm, sl_make_cstring(vm, "Match"), vm->lib.Object, vm->lib.Regexp);
+    vm->lib.Regexp_Match = sl_define_class3(vm, sl_intern(vm, "Match"), vm->lib.Object, vm->lib.Regexp);
     sl_class_set_allocator(vm, vm->lib.Regexp_Match, allocate_regexp_match);
     
     sl_define_method(vm, vm->lib.Regexp, "init", -2, sl_regexp_init);
