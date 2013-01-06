@@ -148,6 +148,7 @@ sl_init()
     vm->lib.StackOverflowError_instance = sl_make_error2(vm, vm->lib.StackOverflowError, sl_make_cstring(vm, "Stack Overflow"));
     
     vm->state_constant = 1;
+    vm->state_method = 1;
 
     return vm;
 }
@@ -176,6 +177,8 @@ sl_init_id(sl_vm_t* vm)
     OP(eq,  "==");
     OP(lt,  "<");
     OP(lte, "<=");
+    OP(add, "+");
+    OP(sub, "-");
 
     ID(call);
     ID(current);

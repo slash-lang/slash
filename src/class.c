@@ -219,6 +219,7 @@ sl_define_method3(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL method)
 {
     sl_expect(vm, method, vm->lib.Method);
     st_insert(get_class(vm, klass)->instance_methods, (st_data_t)name.id, (st_data_t)sl_get_ptr(method));
+    vm->state_method++;
 }
 
 int

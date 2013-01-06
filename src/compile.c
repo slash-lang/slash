@@ -155,6 +155,8 @@ emit_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t 
     emit(cs, insn);
     insn.uint = arg_size;
     emit(cs, insn);
+    insn.ic = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_cache_t));
+    emit(cs, insn);
     insn.uint = return_reg;
     emit(cs, insn);
 }

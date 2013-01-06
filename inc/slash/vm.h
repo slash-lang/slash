@@ -12,6 +12,8 @@ struct sl_vm_ids {
     SLID op_eq;
     SLID op_lt;
     SLID op_lte;
+    SLID op_add;
+    SLID op_sub;
     /* methods */
     SLID call;
     SLID current;
@@ -90,6 +92,7 @@ typedef struct sl_vm {
     sl_gc_arena_t* arena;
     st_table_t* required;
     uint32_t state_constant;
+    uint32_t state_method;
     struct {
         st_table_t* name_to_id;
         SLVAL* id_to_name;
@@ -138,12 +141,14 @@ typedef enum sl_vm_opcode {
     SL_OP_END_TRY,
     SL_OP_CATCH,
     SL_OP_YADA_YADA,
-    SL_OP_BIND_METHOD
+    SL_OP_BIND_METHOD,
+    SL_OP_ADD
 }
 sl_vm_opcode_t;
 
 typedef struct sl_vm_inline_cache {
     uint32_t state;
+    SLVAL klass;
     SLVAL value;
 }
 sl_vm_inline_cache_t;

@@ -167,14 +167,24 @@ INSTRUCTION(SL_OP_IMMEDIATE, {
     2: <id:name>
     3: <reg:first_arg> // arguments must be in a contiguous register region
     4: <uint:arg_count>
-    5: <reg:dest> */
+    5: <ic:inline_cache>
+    6: <reg:dest> */
 INSTRUCTION(SL_OP_SEND, {
     SLVAL receiver = NEXT_REG();
     SLID id = NEXT_ID();
     SLVAL* argv = &NEXT_REG();
     size_t argc = NEXT_UINT();
-    /* @TODO: backtrace stuff */
-    NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+    sl_vm_inline_cache_t* ic = NEXT_IC();
+    if(sl_get_primitive_type(receiver) != SL_T_INT && sl_get_ptr(receiver)->singleton_methods) {
+        NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+    } else {
+        SLVAL recv_klass = sl_class_of(vm, receiver);
+        if(ic->state < vm->state_method || ic->klass.i != recv_klass.i) {
+            ic->klass = recv_klass;
+            ic->value.i = (intptr_t)sl_lookup_method(vm, receiver, id);
+        }
+        NEXT_REG() = sl_apply_method(vm, receiver, (sl_method_t*)ic->value.i, argc, argv);
+    }
 })
 
 /*  0: JUMP
