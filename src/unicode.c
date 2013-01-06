@@ -1,5 +1,6 @@
 #include <slash.h>
 #include <stddef.h>
+#include <stdint.h>
 
 static struct {
     uint32_t upper;
@@ -796,7 +797,7 @@ sl_unicode_toupper(uint32_t c)
 {
     /* we can't binary search toupper because the mappings are sorted in order
        of the capital letters, not the lower case letters */
-    for(int i = 0; i < (sizeof(mappings) / sizeof(mappings[0])) - 1; i++) {
+    for(size_t i = 0; i < (sizeof(mappings) / sizeof(mappings[0])) - 1; i++) {
         if(mappings[i].lower == c) {
             return mappings[i].upper;
         }
