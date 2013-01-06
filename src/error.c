@@ -170,7 +170,7 @@ sl_init_error(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Error, "backtrace", 0, sl_error_backtrace);
     sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
     
-    vm->lib.Error_Frame = sl_define_class3(vm, sl_make_cstring(vm, "Frame"), vm->lib.Object, vm->lib.Error);
+    vm->lib.Error_Frame = sl_define_class3(vm, sl_intern(vm, "Frame"), vm->lib.Object, vm->lib.Error);
     sl_class_set_allocator(vm, vm->lib.Error_Frame, allocate_error_frame);
     sl_define_method(vm, vm->lib.Error_Frame, "method", 0, sl_error_frame_method);
     sl_define_method(vm, vm->lib.Error_Frame, "file", 0, sl_error_frame_file);
