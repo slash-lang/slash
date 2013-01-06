@@ -70,6 +70,7 @@ typedef struct sl_vm {
     char* cwd;
     sl_gc_arena_t* arena;
     st_table_t* required;
+    uint32_t state_constant;
 }
 sl_vm_t;
 
@@ -116,12 +117,19 @@ typedef enum sl_vm_opcode {
 }
 sl_vm_opcode_t;
 
+typedef struct sl_vm_inline_cache {
+    uint32_t state;
+    SLVAL value;
+}
+sl_vm_inline_cache_t;
+
 typedef union sl_vm_insn {
-    sl_vm_opcode_t        opcode;
-    size_t                uint;
-    struct sl_vm_section* section;
-    SLVAL                 imm;
-    sl_string_t*          str;
+    sl_vm_opcode_t          opcode;
+    size_t                  uint;
+    struct sl_vm_section*   section;
+    SLVAL                   imm;
+    sl_string_t*            str;
+    sl_vm_inline_cache_t*   ic;
 }
 sl_vm_insn_t;
 
