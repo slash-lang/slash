@@ -1,6 +1,7 @@
 #include <slash/class.h>
 #include <slash/method.h>
 #include <slash/object.h>
+#include <slash/string.h>
 
 static sl_object_t*
 allocate_method(sl_vm_t* vm)
@@ -151,4 +152,39 @@ sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver)
     
     bmethp->self = sl_expect(vm, receiver, methp->klass);
     return sl_make_ptr((sl_object_t*)bmethp);
+}
+
+SLVAL
+sl_id_to_string(sl_vm_t* vm, size_t id)
+{
+    if(id >= vm->intern.id_to_name_size) {
+        return vm->lib.nil;
+    }
+    return vm->intern.id_to_name[id];
+}
+
+size_t
+sl_intern2(sl_vm_t* vm, SLVAL str)
+{
+    size_t id;
+
+    if(st_lookup(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t*)&id)) {
+        return id;
+    }
+
+    id = vm->intern.id_to_name_size++;
+    st_insert(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t)id);
+    if(vm->intern.id_to_name_size >= vm->intern.id_to_name_cap) {
+        vm->intern.id_to_name_cap *= 2;
+        vm->intern.id_to_name = sl_realloc(vm->arena, vm->intern.id_to_name, sizeof(SLVAL) * vm->intern.id_to_name_cap);
+    }
+    vm->intern.id_to_name[id] = str;
+
+    return id;
+}
+
+size_t
+sl_intern(sl_vm_t* vm, char* cstr)
+{
+    return sl_intern2(vm, sl_make_cstring(vm, cstr));
 }

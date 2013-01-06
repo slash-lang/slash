@@ -10,12 +10,21 @@ void
 sl_init_method(sl_vm_t* vm);
 
 SLVAL
-sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*c_func)());
+sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLID name, int arity, SLVAL(*c_func)());
 
 SLVAL
-sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx);
+sl_make_method(sl_vm_t* vm, SLVAL klass, SLID name, sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx);
 
 SLVAL
 sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver);
+
+SLVAL
+sl_id_to_string(sl_vm_t* vm, SLID id);
+
+SLID
+sl_intern2(sl_vm_t* vm, SLVAL str);
+
+SLID
+sl_intern(sl_vm_t* vm, char* cstr);
 
 #endif
