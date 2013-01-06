@@ -18,7 +18,7 @@ allocate_class(sl_vm_t* vm)
     klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
     klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
     klass->super = vm->lib.Object;
-    klass->name = vm->lib.nil;
+    klass->name.id = 0;
     klass->in = vm->lib.Object;
     return (sl_object_t*)klass;
 }
@@ -35,7 +35,7 @@ sl_pre_init_class(sl_vm_t* vm)
 {
     sl_class_t* obj = sl_alloc(vm->arena, sizeof(sl_class_t));
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
-    obj->name = vm->lib.nil;
+    obj->name.id = 0;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
     obj->constants = st_init_table(vm->arena, &sl_string_hash_type);
@@ -53,20 +53,20 @@ sl_class_to_s(sl_vm_t* vm, SLVAL self)
     sl_class_t* klass = get_class(vm, self);
     sl_class_t* object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     if(klass == object || sl_get_ptr(klass->in) == (sl_object_t*)object) {
-        return get_class(vm, self)->name;
+        return sl_id_to_string(vm, get_class(vm, self)->name);
     } else {
         return sl_string_concat(vm,
             sl_class_to_s(vm, klass->in),
             sl_string_concat(vm,
                 sl_make_cstring(vm, "::"),
-                klass->name));
+                sl_id_to_string(vm, klass->name)));
     }
 }
 
 static SLVAL
 sl_class_name(sl_vm_t* vm, SLVAL self)
 {
-    return get_class(vm, self)->name;
+    return sl_id_to_string(vm, get_class(vm, self)->name);
 }
 
 static SLVAL
@@ -149,7 +149,7 @@ void
 sl_init_class(sl_vm_t* vm)
 {
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
-        (st_data_t)sl_intern(vm, "Class"), (st_data_t)vm->lib.Class.i);
+        (st_data_t)sl_intern(vm, "Class").id, (st_data_t)vm->lib.Class.i);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
@@ -165,27 +165,27 @@ sl_init_class(sl_vm_t* vm)
 SLVAL
 sl_define_class(sl_vm_t* vm, char* name, SLVAL super)
 {
-    return sl_define_class2(vm, sl_make_cstring(vm, name), super);
+    return sl_define_class2(vm, sl_intern(vm, name), super);
 }
 
 SLVAL
-sl_define_class2(sl_vm_t* vm, SLVAL name, SLVAL super)
+sl_define_class2(sl_vm_t* vm, SLID name, SLVAL super)
 {
     return sl_define_class3(vm, name, super, vm->lib.Object);
 }
 
 SLVAL
-sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in)
+sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
 {
     SLVAL vklass = sl_allocate(vm, vm->lib.Class);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
     klass->super = sl_expect(vm, super, vm->lib.Class);
-    klass->name = sl_expect(vm, name, vm->lib.String);
+    klass->name = name;
     klass->in = sl_expect(vm, in, vm->lib.Class);
     klass->allocator = get_class(vm, super)->allocator;
     if(!vm->initializing) {
         st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
-            (st_data_t)sl_intern2(vm, name), (st_data_t)vklass.i);
+            (st_data_t)name.id, (st_data_t)klass);
     }
     return vklass;
 }
@@ -199,50 +199,49 @@ sl_class_set_allocator(sl_vm_t* vm, SLVAL klass, sl_object_t*(*allocator)(sl_vm_
 void
 sl_define_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)())
 {
-    sl_define_method2(vm, klass, sl_make_cstring(vm, name), arity, func);
+    sl_define_method2(vm, klass, sl_intern(vm, name), arity, func);
 }
 
 void
-sl_define_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)())
+sl_define_method2(sl_vm_t* vm, SLVAL klass, SLID name, int arity, SLVAL(*func)())
 {
     SLVAL method = sl_make_c_func(vm, klass, name, arity, func);
     sl_define_method3(vm, klass, name, method);
 }
 
 void
-sl_define_method3(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL method)
+sl_define_method3(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL method)
 {
-    sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, method, vm->lib.Method);
-    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_intern2(vm, name), (st_data_t)sl_get_ptr(method));
+    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)name.id, (st_data_t)sl_get_ptr(method));
 }
 
 int
 sl_class_has_const(sl_vm_t* vm, SLVAL klass, char* name)
 {
-    return sl_class_has_const2(vm, klass, sl_make_cstring(vm, name));
+    return sl_class_has_const2(vm, klass, sl_intern(vm, name));
 }
 
 static int
-sl_class_has_own_const(sl_vm_t* vm, SLVAL klass, SLVAL name)
+sl_class_has_own_const(sl_vm_t* vm, SLVAL klass, SLID name)
 {
     sl_class_t* klassp;
     if(!sl_is_a(vm, klass, vm->lib.Class)) {
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    return st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL);
+    return st_lookup(klassp->constants, (st_data_t)name.id, NULL);
 }
 
 int
-sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
+sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLID name)
 {
     sl_class_t* klassp;
     if(!sl_is_a(vm, klass, vm->lib.Class)) {
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    if(st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), NULL)) {
+    if(st_lookup(klassp->constants, (st_data_t)name.id, NULL)) {
         return 1;
     }
     if(sl_get_primitive_type(klassp->super) == SL_T_CLASS) {
@@ -254,11 +253,11 @@ sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
 SLVAL
 sl_class_get_const(sl_vm_t* vm, SLVAL klass, char* name)
 {
-    return sl_class_get_const2(vm, klass, sl_make_cstring(vm, name));
+    return sl_class_get_const2(vm, klass, sl_intern(vm, name));
 }
 
 SLVAL
-sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
+sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLID name)
 {
     sl_class_t* klassp;
     SLVAL val, err;
@@ -266,14 +265,14 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    if(st_lookup(klassp->constants, (st_data_t)sl_get_ptr(name), (st_data_t*)&val)) {
+    if(st_lookup(klassp->constants, (st_data_t)name.id, (st_data_t*)&val)) {
         return val;
     }
     if(sl_get_primitive_type(klassp->super) == SL_T_CLASS && sl_class_has_const2(vm, klassp->super, name)) {
         return sl_class_get_const2(vm, klassp->super, name);
     }
     err = sl_make_cstring(vm, "Undefined constant '");
-    err = sl_string_concat(vm, err, name);
+    err = sl_string_concat(vm, err, sl_id_to_string(vm, name));
     err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
     err = sl_string_concat(vm, err, sl_inspect(vm, klass));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
@@ -283,17 +282,17 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLVAL name)
 void
 sl_class_set_const(sl_vm_t* vm, SLVAL klass, char* name, SLVAL val)
 {
-    sl_class_set_const2(vm, klass, sl_make_cstring(vm, name), val);
+    sl_class_set_const2(vm, klass, sl_intern(vm, name), val);
 }
 
 void
-sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val)
+sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL val)
 {
     sl_class_t* klassp;
     SLVAL err;
     if(sl_class_has_own_const(vm, klass, name)) {
         err = sl_make_cstring(vm, "Constant '");
-        err = sl_string_concat(vm, err, name);
+        err = sl_string_concat(vm, err, sl_id_to_string(vm, name));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
         err = sl_string_concat(vm, err, sl_inspect(vm, klass));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, " already defined"));
@@ -301,7 +300,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val)
     }
     klassp = get_class(vm, klass);
     sl_expect(vm, klass, vm->lib.Class);
-    st_insert(klassp->constants, (st_data_t)sl_intern2(vm, name), (st_data_t)sl_get_ptr(val));
+    st_insert(klassp->constants, (st_data_t)name.id, (st_data_t)sl_get_ptr(val));
 }
 
 int
@@ -334,7 +333,7 @@ sl_new(sl_vm_t* vm, SLVAL klass, size_t argc, SLVAL* argv)
 {
     SLVAL obj = sl_allocate(vm, klass);
     if(sl_responds_to(vm, obj, "init")) {
-        sl_send2(vm, obj, sl_make_cstring(vm, "init"), argc, argv);
+        sl_send2(vm, obj, sl_intern(vm, "init"), argc, argv);
     }
     return obj;
 }
