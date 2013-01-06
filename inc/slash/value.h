@@ -17,7 +17,7 @@ typedef union slval {
 SLVAL;
 
 typedef union slid {
-    size_t i;
+    size_t id;
 }
 SLID;
 
@@ -49,7 +49,7 @@ sl_object_t;
 
 typedef struct sl_class {
     sl_object_t base;
-    SLVAL name;
+    SLID name;
     SLVAL super;
     SLVAL in;
     st_table_t* constants;
@@ -72,7 +72,7 @@ sl_string_t;
 
 typedef struct sl_method {
     sl_object_t base;
-    SLVAL name;
+    SLID name;
     SLVAL klass;
     char initialized;
     char is_c_func;
