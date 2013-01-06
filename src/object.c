@@ -86,7 +86,7 @@ sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 int
 sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b)
 {
-    return sl_is_truthy(sl_send(vm, a, "==", 1, b));
+    return sl_is_truthy(sl_send_id(vm, a, vm->id.op_eq, 1, b));
 }
 
 static SLVAL
@@ -102,7 +102,7 @@ sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 static SLVAL
 sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_is_truthy(sl_send(vm, self, "==", 1, other))) {
+    if(sl_is_truthy(sl_send_id(vm, self, vm->id.op_eq, 1, other))) {
         return vm->lib._false;
     } else {
         return vm->lib._true;
@@ -128,7 +128,7 @@ sl_object_is_a(sl_vm_t* vm, SLVAL self, SLVAL klass)
 SLVAL
 sl_to_s(sl_vm_t* vm, SLVAL obj)
 {
-    SLVAL s = sl_send(vm, obj, "to_s", 0);
+    SLVAL s = sl_send_id(vm, obj, vm->id.to_s, 0);
     if(sl_get_primitive_type(s) == SL_T_STRING) {
         return s;
     } else {
@@ -153,7 +153,7 @@ sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj)
 SLVAL
 sl_inspect(sl_vm_t* vm, SLVAL obj)
 {
-    SLVAL s = sl_send(vm, obj, "inspect", 0);
+    SLVAL s = sl_send_id(vm, obj, vm->id.inspect, 0);
     if(sl_get_primitive_type(s) == SL_T_STRING) {
         return s;
     } else {
@@ -175,7 +175,7 @@ sl_to_cstr(sl_vm_t* vm, SLVAL obj)
 SLVAL
 sl_object_to_s(sl_vm_t* vm, SLVAL self)
 {
-    return sl_send(vm, self, "inspect", 0);
+    return sl_send_id(vm, self, vm->id.inspect, 0);
 }
 
 SLVAL
@@ -219,17 +219,21 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLID name, SLVAL method)
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 {
-    return sl_is_truthy(sl_responds_to2(vm, object, sl_intern(vm, id)));
+    return sl_responds_to2(vm, object, sl_intern(vm, id));
 }
 
 static SLVAL
 sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv)
 {
     SLID id = sl_intern2(vm, idv);
-    return sl_responds_to2(vm, object, id);
+    if(sl_responds_to2(vm, object, id)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
 }
 
-SLVAL
+int
 sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID id)
 {
     sl_object_t* recvp = sl_get_ptr(object);
@@ -238,19 +242,19 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID id)
     
     if(sl_get_primitive_type(object) != SL_T_INT && recvp->singleton_methods) {
         if(st_lookup(recvp->singleton_methods, (st_data_t)id.id, NULL)) {
-            return vm->lib._true;
+            return 1;
         }
     }
     
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
         if(st_lookup(klassp->instance_methods, (st_data_t)id.id, NULL)) {
-            return vm->lib._true;
+            return 1;
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
     }
     
-    return vm->lib._false;
+    return 0;
 }
 
 SLVAL
@@ -308,6 +312,20 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
     }
     p = (sl_class_t*)sl_get_ptr(object);
     st_insert(p->class_variables, (st_data_t)id.id, (st_data_t)sl_get_ptr(val));
+}
+
+SLVAL
+sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, ...)
+{
+    SLVAL* argv = alloca(argc * sizeof(SLVAL));
+    va_list va;
+    size_t i;
+    va_start(va, argc);
+    for(i = 0; i < argc; i++) {
+        argv[i] = va_arg(va, SLVAL);
+    }
+    va_end(va);
+    return sl_send2(vm, recv, id, argc, argv);
 }
 
 SLVAL
@@ -478,7 +496,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
     memcpy(argv2 + 1, argv, sizeof(SLVAL) * argc);
     argv2[0] = sl_id_to_string(vm, id);
     
-    method = sl_lookup_method(vm, recv, sl_intern(vm, "method_missing"));
+    method = sl_lookup_method(vm, recv, vm->id.method_missing);
     if(method) {
         return sl_apply_method(vm, recv, method, argc + 1, argv2);
     }

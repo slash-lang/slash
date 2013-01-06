@@ -6,7 +6,24 @@
 #include "error.h"
 #include "mem.h"
 
-typedef struct sl_lib {
+struct sl_vm_ids {
+    /* operators */
+    SLID op_cmp;
+    SLID op_eq;
+    /* methods */
+    SLID call;
+    SLID current;
+    SLID enumerate;
+    SLID hash;
+    SLID init;
+    SLID inspect;
+    SLID method_missing;
+    SLID next;
+    SLID succ;
+    SLID to_s;
+};
+
+struct sl_vm_lib {
     SLVAL Object;
     SLVAL Class;
     SLVAL String;
@@ -56,12 +73,12 @@ typedef struct sl_lib {
     SLVAL Lambda;
     
     SLVAL Time;
-}
-sl_lib_t;
+};
 
 typedef struct sl_vm {
     int initializing;
-    sl_lib_t lib;
+    struct sl_vm_lib lib;
+    struct sl_vm_ids id;
     struct sl_catch_frame* catch_stack;
     void* data;
     st_table_t* store;

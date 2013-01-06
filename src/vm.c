@@ -90,6 +90,9 @@ sl_init_libs(sl_vm_t* vm)
     sl_init_exts(vm);
 }
 
+static void
+sl_init_id(sl_vm_t* vm);
+
 sl_vm_t*
 sl_init()
 {
@@ -130,6 +133,8 @@ sl_init()
     
     vm->initializing = 0;
     
+    sl_init_id(vm);
+
     sl_init_method(vm);
     sl_init_class(vm);
     sl_init_object(vm);
@@ -137,7 +142,7 @@ sl_init()
     sl_init_error(vm);
     
     sl_init_libs(vm);
-    
+
     String->super = vm->lib.Comparable;
     
     vm->lib.StackOverflowError_instance = sl_make_error2(vm, vm->lib.StackOverflowError, sl_make_cstring(vm, "Stack Overflow"));
@@ -159,4 +164,25 @@ void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val)
 {
     st_insert(vm->store, (st_data_t)key, (st_data_t)sl_get_ptr(val));
+}
+
+static void
+sl_init_id(sl_vm_t* vm)
+{
+    #define ID(name)        vm->id.name = sl_intern(vm, #name)
+    #define OP(name, cstr)  vm->id.op_##name = sl_intern(vm, cstr)
+
+    OP(cmp, "<=>");
+    OP(eq, "==");
+
+    ID(call);
+    ID(current);
+    ID(enumerate);
+    ID(hash);
+    ID(init);
+    ID(inspect);
+    ID(method_missing);
+    ID(next);
+    ID(succ);
+    ID(to_s);
 }

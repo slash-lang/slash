@@ -100,7 +100,7 @@ sl_is_truthy(SLVAL val)
 int
 sl_hash(sl_vm_t* vm, SLVAL val)
 {
-    SLVAL hash = sl_send(vm, val, "hash", 0);
+    SLVAL hash = sl_send_id(vm, val, vm->id.hash, 0);
     switch(sl_get_primitive_type(hash)) {
         case SL_T_INT:
             return sl_get_int(hash) ^ vm->hash_seed;
