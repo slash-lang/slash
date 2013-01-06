@@ -134,6 +134,7 @@ typedef union sl_vm_insn {
     size_t                  uint;
     struct sl_vm_section*   section;
     SLVAL                   imm;
+    SLID                    id;
     sl_string_t*            str;
     sl_vm_inline_cache_t*   ic;
 }
@@ -149,7 +150,7 @@ typedef struct sl_vm_section {
     size_t* opt_skip;
     int can_stack_alloc_frame;
     uint8_t* filename;
-    SLVAL name;
+    SLID name;
 }
 sl_vm_section_t;
 
