@@ -3,6 +3,27 @@
 #include <slash/object.h>
 #include <slash/string.h>
 
+static int
+id_hash(SLID id)
+{
+    return (int)id.id;
+}
+
+static int
+id_cmp(SLID a, SLID b)
+{
+    if(a.id > b.id) {
+        return 1;
+    } else if(a.id < b.id) {
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+struct st_hash_type
+sl_id_hash_type = { id_cmp, id_hash };
+
 static sl_object_t*
 allocate_method(sl_vm_t* vm)
 {

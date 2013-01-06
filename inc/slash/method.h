@@ -6,6 +6,9 @@
 #include "ast.h"
 #include "eval.h"
 
+extern struct st_hash_type
+sl_id_hash_type;
+
 void
 sl_init_method(sl_vm_t* vm);
 

@@ -14,9 +14,9 @@ allocate_class(sl_vm_t* vm)
 {
     sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
-    klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
-    klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
-    klass->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->constants = st_init_table(vm->arena, &sl_id_hash_type);
+    klass->class_variables = st_init_table(vm->arena, &sl_id_hash_type);
+    klass->instance_methods = st_init_table(vm->arena, &sl_id_hash_type);
     klass->super = vm->lib.Object;
     klass->name.id = 0;
     klass->in = vm->lib.Object;
@@ -38,13 +38,13 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->name.id = 0;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
-    obj->constants = st_init_table(vm->arena, &sl_string_hash_type);
-    obj->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
-    obj->instance_methods = st_init_table(vm->arena, &sl_string_hash_type);
+    obj->constants = st_init_table(vm->arena, &sl_id_hash_type);
+    obj->class_variables = st_init_table(vm->arena, &sl_id_hash_type);
+    obj->instance_methods = st_init_table(vm->arena, &sl_id_hash_type);
     obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
     obj->base.primitive_type = SL_T_CLASS;
-    obj->base.instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    obj->base.instance_variables = st_init_table(vm->arena, &sl_id_hash_type);
 }
 
 static SLVAL
