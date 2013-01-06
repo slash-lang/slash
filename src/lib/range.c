@@ -2,6 +2,7 @@
 #include <slash/object.h>
 #include <slash/class.h>
 #include <slash/string.h>
+#include <slash/method.h>
 #include <slash/mem.h>
 
 typedef struct {
@@ -160,7 +161,7 @@ sl_init_range(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Range, "init", -3, range_init);
     sl_define_method(vm, vm->lib.Range, "enumerate", 0, range_enumerate);
     
-    vm->lib.Range_Enumerator = sl_define_class3(vm, sl_make_cstring(vm, "Enumerator"), vm->lib.Object, vm->lib.Range);
+    vm->lib.Range_Enumerator = sl_define_class3(vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Range);
     sl_class_set_allocator(vm, vm->lib.Range_Enumerator, allocate_range_enumerator);
     sl_define_method(vm, vm->lib.Range_Enumerator, "current", 0, range_enumerator_current);
     sl_define_method(vm, vm->lib.Range_Enumerator, "next", 0, range_enumerator_next);
