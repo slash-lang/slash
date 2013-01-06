@@ -9,6 +9,7 @@
 #include <slash/object.h>
 #include <slash/error.h>
 #include <slash/platform.h>
+#include <slash/method.h>
 #include <slash/mem.h>
 
 static int
@@ -123,9 +124,9 @@ sl_init()
     Object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     Class = (sl_class_t*)sl_get_ptr(vm->lib.Class);
     String = (sl_class_t*)sl_get_ptr(vm->lib.String);
-    Object->name = sl_make_cstring(vm, "Object");
-    Class->name = sl_make_cstring(vm, "Class");
-    String->name = sl_make_cstring(vm, "String");
+    Object->name = sl_intern(vm, "Object");
+    Class->name = sl_intern(vm, "Class");
+    String->name = sl_intern(vm, "String");
     
     vm->initializing = 0;
     
