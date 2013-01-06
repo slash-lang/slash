@@ -52,6 +52,9 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self);
 static SLVAL
 sl_object_methods(sl_vm_t* vm, SLVAL self);
 
+static SLVAL
+sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -60,7 +63,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "to_s", 0, sl_object_to_s);
     sl_define_method(vm, vm->lib.Object, "inspect", 0, sl_object_inspect);
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
-    sl_define_method(vm, vm->lib.Object, "responds_to", 1, sl_responds_to2);
+    sl_define_method(vm, vm->lib.Object, "responds_to", 1, sl_responds_to_slval);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "is_an", 1, sl_object_is_a);
@@ -217,6 +220,13 @@ int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 {
     return sl_is_truthy(sl_responds_to2(vm, object, sl_intern(vm, id)));
+}
+
+static SLVAL
+sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv)
+{
+    SLID id = sl_intern2(vm, idv);
+    return sl_responds_to2(vm, object, id);
 }
 
 SLVAL
