@@ -218,7 +218,7 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, TCPSocket, "read_line", 0, sl_tcp_socket_read_line);
     sl_define_method(vm, TCPSocket, "close", 0, sl_tcp_socket_close);
     
-    SLVAL TCPSocket_Error = sl_define_class3(vm, sl_make_cstring(vm, "Error"), vm->lib.Error, TCPSocket);
+    SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
     
     sl_vm_store_put(vm, &cTCPSocket, TCPSocket);
     sl_vm_store_put(vm, &cTCPSocket_Error, TCPSocket_Error);

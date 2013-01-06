@@ -4,6 +4,7 @@
 #include "slash/mem.h"
 #include "slash/value.h"
 #include "slash/vm.h"
+#include "slash/method.h"
 #include "slash/lex.h"
 #include "slash/object.h"
 #include "slash/parse.h"

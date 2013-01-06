@@ -379,9 +379,9 @@ sl_init_ext_mysql(sl_vm_t* vm)
     sl_define_method(vm, MySQL, "escape", 1, sl_mysql_escape);
     sl_define_method(vm, MySQL, "insert_id", 0, sl_mysql_insert_id);
     
-    MySQL_Error = sl_define_class3(vm, sl_make_cstring(vm, "Error"), vm->lib.Error, MySQL);
+    MySQL_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, MySQL);
     
-    MySQL_Statement = sl_define_class3(vm, sl_make_cstring(vm, "Statement"), vm->lib.Object, MySQL);
+    MySQL_Statement = sl_define_class3(vm, sl_intern(vm, "Statement"), vm->lib.Object, MySQL);
     sl_class_set_allocator(vm, MySQL_Statement, allocate_mysql_stmt);
     sl_define_method(vm, MySQL_Statement, "param_count", 0, sl_mysql_stmt_param_count);
     sl_define_method(vm, MySQL_Statement, "execute", -1, sl_mysql_stmt_execute);
