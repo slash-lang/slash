@@ -4,6 +4,7 @@
 #include <slash/class.h>
 #include <slash/lib/lambda.h>
 #include <slash/object.h>
+#include <slash/method.h>
 #include <string.h>
 
 void
@@ -146,7 +147,7 @@ sl_make_immediate_node(sl_parse_state_t* ps, SLVAL val)
 }
 
 sl_node_base_t*
-sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id, size_t argc, sl_node_base_t** argv)
+sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv)
 {
     MAKE_NODE(SL_NODE_SEND, sl_node_send_t, {
         node->recv = recv;
@@ -158,7 +159,7 @@ sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id, size_t a
 }
 
 sl_node_base_t*
-sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id)
+sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id)
 {
     MAKE_NODE(SL_NODE_BIND_METHOD, sl_node_bind_method_t, {
         node->recv = recv;
@@ -175,7 +176,7 @@ sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL id)
 }
 
 sl_node_base_t*
-sl_make_const_node(sl_parse_state_t* ps, sl_node_base_t* obj, SLVAL id)
+sl_make_const_node(sl_parse_state_t* ps, sl_node_base_t* obj, SLID id)
 {
     MAKE_NODE(SL_NODE_CONST, sl_node_const_t, {
         node->obj = obj;
@@ -214,10 +215,9 @@ sl_make_for_node(sl_parse_state_t* ps, sl_node_base_t* lval, sl_node_base_t* exp
 }
 
 sl_node_base_t*
-sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl_node_base_t* body)
+sl_make_class_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* extends, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_CLASS, sl_node_class_t, {
-        sl_expect(ps->vm, name, ps->vm->lib.String);
         node->name = name;
         node->extends = extends;
         node->body = body;
@@ -225,10 +225,9 @@ sl_make_class_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* extends, sl
 }
 
 sl_node_base_t*
-sl_make_def_node(sl_parse_state_t* ps, SLVAL name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body)
+sl_make_def_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_DEF, sl_node_def_t, {
-        sl_expect(ps->vm, name, ps->vm->lib.String);
         node->name = name;
         node->on = on;
         node->req_args = req_args;
@@ -353,7 +352,7 @@ sl_make_simple_assign_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_ba
             make_generic_assignment(ps, lval, rval), (sl_node_base_t*)lval);
     }
     return make_generic_assignment(ps, lval,
-        sl_make_send_node(ps, (sl_node_base_t*)lval, sl_make_cstring(ps->vm, op_method), 1, &rval));
+        sl_make_send_node(ps, (sl_node_base_t*)lval, sl_intern(ps->vm, op_method), 1, &rval));
 }
 
 sl_node_base_t*
