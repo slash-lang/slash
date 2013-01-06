@@ -13,13 +13,13 @@
 #include <stdio.h>
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_section_t* section);
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section);
 
 static SLVAL
-vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLVAL name, sl_vm_section_t* section);
+vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, sl_vm_section_t* section);
 
 static SLVAL
-vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, sl_vm_section_t* section);
+vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl_vm_section_t* section);
 
 #define NEXT() (ctx->section->insns[ip++])
 
@@ -27,6 +27,7 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, s
 #define NEXT_UINT() (NEXT().uint)
 #define NEXT_PTR() ((void*)NEXT().uint)
 #define NEXT_IC() (NEXT().ic)
+#define NEXT_ID() (NEXT().id)
 #define NEXT_REG() (ctx->registers[NEXT_UINT()])
 #define NEXT_STR() (NEXT().str)
 #define NEXT_SECTION() (NEXT().section)
@@ -77,7 +78,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
         if(sl_setjmp(frame.env)) {
             vm->catch_stack = frame.prev;
             if(frame.type & SL_UNWIND_EXCEPTION) {
-                sl_error_add_frame(vm, frame.value, section->name, sl_make_cstring(vm, (char*)section->filename), sl_make_int(vm, line));
+                sl_error_add_frame(vm, frame.value, sl_id_to_string(vm, section->name), sl_make_cstring(vm, (char*)section->filename), sl_make_int(vm, line));
             }
             if(exception_handler && (frame.type & SL_UNWIND_EXCEPTION)) {
                 ip = exception_handler->catch_ip;
@@ -105,7 +106,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
 /* helper functions */
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_section_t* section)
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section)
 {
     SLVAL klass, in;
     sl_vm_exec_ctx_t* subctx;
@@ -130,7 +131,7 @@ vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL name, SLVAL extends, sl_vm_s
 }
 
 static SLVAL
-vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLVAL name, sl_vm_section_t* section)
+vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, sl_vm_section_t* section)
 {
     SLVAL on = ctx->self, method;
     if(!sl_is_a(ctx->vm, on, ctx->vm->lib.Class)) {
@@ -142,7 +143,7 @@ vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLVAL name, sl_vm_section_t* sect
 }
 
 static SLVAL
-vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLVAL name, sl_vm_section_t* section)
+vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl_vm_section_t* section)
 {
     SLVAL klass = on, method;
     if(!sl_is_a(ctx->vm, klass, ctx->vm->lib.Class)) {

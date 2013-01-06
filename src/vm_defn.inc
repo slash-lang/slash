@@ -54,28 +54,28 @@ INSTRUCTION(SL_OP_GET_OUTER, {
 })
 
 /*  0: GET_IVAR
-    1: <imm:var_name>
+    1: <id:var_name>
     2: <reg:dst> */
 INSTRUCTION(SL_OP_GET_IVAR, {
-    sl_string_t* var_name = NEXT_STR();
+    SLID var_name = NEXT_ID();
     NEXT_REG() = sl_get_ivar(vm, ctx->self, var_name);
 })
 
 /*  0: GET_CVAR
-    1: <str:var_name>
+    1: <id:var_name>
     2: <reg:dest> */
 INSTRUCTION(SL_OP_GET_CVAR, {
-    sl_string_t* var_name = NEXT_STR();
+    SLID var_name = NEXT_ID();
     NEXT_REG() = sl_get_cvar(vm, ctx->self, var_name);
 })
 
 /*  0: GET_CONST
     1: <ic:inline_cache>
-    2: <str:const_name>
+    2: <id:const_name>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_GET_CONST, {
     sl_vm_inline_cache_t* ic = NEXT_IC();
-    SLVAL const_name = NEXT_IMM();
+    SLID const_name = NEXT_ID();
     if(ic->state == vm->state_constant) {
         NEXT_REG() = ic->value;
     } else {
@@ -98,11 +98,11 @@ INSTRUCTION(SL_OP_GET_CONST, {
 
 /*  0: GET_OBJECT_CONST
     1: <reg:object>
-    2: <str:const_name>
+    2: <id:const_name>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_GET_OBJECT_CONST, {
     SLVAL obj = NEXT_REG();
-    SLVAL const_name = NEXT_IMM();
+    SLID const_name = NEXT_ID();
     NEXT_REG() = sl_class_get_const2(vm, obj, const_name);
 })
 
@@ -121,36 +121,36 @@ INSTRUCTION(SL_OP_SET_OUTER, {
 })
 
 /*  0: SET_IVAR
-    1: <imm:var_name>
+    1: <id:var_name>
     2: <reg:value> */
 INSTRUCTION(SL_OP_SET_IVAR, {
-    sl_string_t* var_name = NEXT_STR();
+    SLID var_name = NEXT_ID();
     sl_set_ivar(vm, ctx->self, var_name, NEXT_REG());
 })
 
 /*  0: SET_CVAR
-    1: <str:var_name>
+    1: <id:var_name>
     2: <reg:value> */
 INSTRUCTION(SL_OP_SET_CVAR, {
-    sl_string_t* var_name = NEXT_STR();
+    SLID var_name = NEXT_ID();
     sl_set_cvar(vm, ctx->self, var_name, NEXT_REG());
 })
 
 /*  0: SET_CONST
-    1: <str:const_name>
+    1: <id:const_name>
     2: <reg:value> */
 INSTRUCTION(SL_OP_SET_CONST, {
-    SLVAL const_name = NEXT_IMM();
+    SLID const_name = NEXT_ID();
     sl_class_set_const2(vm, ctx->self, const_name, NEXT_REG());
 })
 
 /*  0: SET_OBJECT_CONST
     1: <reg:object>
-    2: <str:const_name>
+    2: <id:const_name>
     3: <reg:value> */
 INSTRUCTION(SL_OP_SET_OBJECT_CONST, {
     SLVAL obj = NEXT_REG();
-    SLVAL const_name = NEXT_IMM();
+    SLID const_name = NEXT_ID();
     sl_class_set_const2(vm, obj, const_name, NEXT_REG());
 })
 
@@ -164,13 +164,13 @@ INSTRUCTION(SL_OP_IMMEDIATE, {
 
 /*  0: SEND
     1: <reg:object>
-    2: <str:name>
+    2: <id:name>
     3: <reg:first_arg> // arguments must be in a contiguous register region
     4: <uint:arg_count>
     5: <reg:dest> */
 INSTRUCTION(SL_OP_SEND, {
     SLVAL receiver = NEXT_REG();
-    SLVAL id = NEXT_IMM();
+    SLID id = NEXT_ID();
     SLVAL* argv = &NEXT_REG();
     size_t argc = NEXT_UINT();
     /* @TODO: backtrace stuff */
@@ -207,35 +207,35 @@ INSTRUCTION(SL_OP_JUMP_UNLESS, {
 })
 
 /*  0: CLASS
-    1: <str:name>
+    1: <id:name>
     2: <reg:extends>
     3: <section:body>
     4: <reg:dest> */
 INSTRUCTION(SL_OP_CLASS, {
-    SLVAL class_name = NEXT_IMM();
+    SLID class_name = NEXT_ID();
     SLVAL super_class = NEXT_REG();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_class(ctx, class_name, super_class, body);
 })
 
 /*  0: DEFINE
-    1: <str:name>
+    1: <id:name>
     2: <section:body>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE, {
-    SLVAL id = NEXT_IMM();
+    SLID id = NEXT_ID();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_method(ctx, id, body);
 })
 
 /*  0: DEFINE_ON
     1: <reg:on>
-    2: <str:name>
+    2: <id:name>
     3: <section:body>
     4: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE_ON, {
     SLVAL obj = NEXT_REG();
-    SLVAL id = NEXT_IMM();
+    SLID id = NEXT_ID();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_singleton_method(ctx, obj, id, body);
 })
@@ -368,17 +368,17 @@ INSTRUCTION(SL_OP_YADA_YADA, {
 
 /*  0: BIND_METHOD
     1: <reg:receiver>
-    2: <str:method_name>
+    2: <id:method_name>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_BIND_METHOD, {
     SLVAL recv = NEXT_REG();
-    sl_string_t* method_name = NEXT_STR();
+    SLID method_name = NEXT_ID();
     sl_method_t* method = sl_lookup_method(vm, recv, method_name);
     if(method) {
         NEXT_REG() = sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), recv);
     } else {
         SLVAL msg = sl_make_cstring(vm, "No such method ");
-        msg = sl_string_concat(vm, msg, sl_make_ptr((sl_object_t*)method_name));
+        msg = sl_string_concat(vm, msg, sl_id_to_string(vm, method_name));
         sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, msg));
     }
 })
