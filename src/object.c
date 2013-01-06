@@ -15,7 +15,7 @@ sl_pre_init_object(sl_vm_t* vm)
     sl_class_t* klass;
     klass = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     klass->super = vm->lib.nil;
-    klass->name = vm->lib.nil;
+    klass->name.id = 0;
     klass->in = vm->lib.nil;
     klass->constants = st_init_table(vm->arena, &sl_string_hash_type);
     klass->class_variables = st_init_table(vm->arena, &sl_string_hash_type);
@@ -76,7 +76,8 @@ sl_init_object(sl_vm_t* vm)
 static SLVAL
 sl_object_send(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    return sl_send2(vm, self, argv[0], argc - 1, argv + 1);
+    SLID mid = sl_intern2(vm, argv[0]);
+    return sl_send2(vm, self, mid, argc - 1, argv + 1);
 }
 
 int
@@ -189,20 +190,19 @@ sl_object_inspect(sl_vm_t* vm, SLVAL self)
 void
 sl_define_singleton_method(sl_vm_t* vm, SLVAL object, char* name, int arity, SLVAL(*func)())
 {
-    sl_define_singleton_method2(vm, object, sl_make_cstring(vm, name), arity, func);
+    sl_define_singleton_method2(vm, object, sl_intern(vm, name), arity, func);
 }
 
 void
-sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLVAL name, int arity, SLVAL(*func)())
+sl_define_singleton_method2(sl_vm_t* vm, SLVAL object, SLID name, int arity, SLVAL(*func)())
 {
     SLVAL method = sl_make_c_func(vm, sl_class_of(vm, object), name, arity, func);
     sl_define_singleton_method3(vm, object, name, method);
 }
 
 void
-sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
+sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLID name, SLVAL method)
 {
-    sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, method, vm->lib.Method);
     if(sl_is_a(vm, object, vm->lib.Int)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Can't define singleton method on Int object");
@@ -210,32 +210,31 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method)
     if(!sl_get_ptr(object)->singleton_methods) {
         sl_get_ptr(object)->singleton_methods = st_init_table(vm->arena, &sl_string_hash_type);
     }
-    st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
+    st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)name.id, (st_data_t)sl_get_ptr(method));
 }
 
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 {
-    return sl_is_truthy(sl_responds_to2(vm, object, sl_make_cstring(vm, id)));
+    return sl_is_truthy(sl_responds_to2(vm, object, sl_intern(vm, id)));
 }
 
 SLVAL
-sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv)
+sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID id)
 {
-    sl_string_t* id = sl_get_string(vm, idv);
     sl_object_t* recvp = sl_get_ptr(object);
     SLVAL klass = sl_class_of(vm, object);
     sl_class_t* klassp = NULL;
     
     if(sl_get_primitive_type(object) != SL_T_INT && recvp->singleton_methods) {
-        if(st_lookup(recvp->singleton_methods, (st_data_t)id, NULL)) {
+        if(st_lookup(recvp->singleton_methods, (st_data_t)id.id, NULL)) {
             return vm->lib._true;
         }
     }
     
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
-        if(st_lookup(klassp->instance_methods, (st_data_t)id, NULL)) {
+        if(st_lookup(klassp->instance_methods, (st_data_t)id.id, NULL)) {
             return vm->lib._true;
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
@@ -245,7 +244,7 @@ sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv)
 }
 
 SLVAL
-sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+sl_get_ivar(sl_vm_t* vm, SLVAL object, SLID id)
 {
     sl_object_t* p;
     SLVAL val;
@@ -253,14 +252,14 @@ sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
         return vm->lib.nil;
     }
     p = sl_get_ptr(object);
-    if(p->instance_variables && st_lookup(p->instance_variables, (st_data_t)id, (st_data_t*)&val)) {
+    if(p->instance_variables && st_lookup(p->instance_variables, (st_data_t)id.id, (st_data_t*)&val)) {
         return val;
     }
     return vm->lib.nil;
 }
 
 SLVAL
-sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
+sl_get_cvar(sl_vm_t* vm, SLVAL object, SLID id)
 {
     SLVAL val;
     if(!sl_is_a(vm, object, vm->lib.Class)) {
@@ -268,7 +267,7 @@ sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
     }
     while(sl_get_primitive_type(object) == SL_T_CLASS) {
         sl_class_t* p = (sl_class_t*)sl_get_ptr(object);
-        if(st_lookup(p->class_variables, (st_data_t)id, (st_data_t*)&val)) {
+        if(st_lookup(p->class_variables, (st_data_t)id.id, (st_data_t*)&val)) {
             return val;
         }
         object = p->super;
@@ -277,7 +276,7 @@ sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id)
 }
 
 void
-sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val)
+sl_set_ivar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
 {
     sl_object_t* p;
     if(sl_is_a(vm, object, vm->lib.Int)) {
@@ -287,18 +286,18 @@ sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val)
     if(!p->instance_variables) {
         p->instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
     }
-    st_insert(p->instance_variables, (st_data_t)id, (st_data_t)sl_get_ptr(val));
+    st_insert(p->instance_variables, (st_data_t)id.id, (st_data_t)sl_get_ptr(val));
 }
 
 void
-sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val)
+sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
 {
     sl_class_t* p;
     if(!sl_is_a(vm, object, vm->lib.Class)) {
         object = sl_class_of(vm, object);
     }
     p = (sl_class_t*)sl_get_ptr(object);
-    st_insert(p->class_variables, (st_data_t)id, (st_data_t)sl_get_ptr(val));
+    st_insert(p->class_variables, (st_data_t)id.id, (st_data_t)sl_get_ptr(val));
 }
 
 SLVAL
@@ -307,13 +306,12 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
     SLVAL* argv = alloca(argc * sizeof(SLVAL));
     va_list va;
     size_t i;
-    sl_string_t id_placement;
     va_start(va, argc);
     for(i = 0; i < argc; i++) {
         argv[i] = va_arg(va, SLVAL);
     }
     va_end(va);
-    return sl_send2(vm, recv, sl_make_cstring_placement(vm, &id_placement, id), argc, argv);
+    return sl_send2(vm, recv, sl_intern(vm, id), argc, argv);
 }
 
 static SLVAL
@@ -350,7 +348,7 @@ call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLV
     } else {
         vm->catch_stack = frame.prev;
         if(frame.type & SL_UNWIND_EXCEPTION) {
-            sl_error_add_frame(vm, frame.value, method->name, vm->lib.nil, vm->lib.nil);
+            sl_error_add_frame(vm, frame.value, sl_id_to_string(vm, method->name), vm->lib.nil, vm->lib.nil);
         }
         sl_rethrow(vm, &frame);
     }
@@ -420,7 +418,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
 }
 
 sl_method_t*
-sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
+sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
 {
     sl_method_t* method;
     sl_object_t* recvp = sl_get_ptr(recv);
@@ -428,7 +426,7 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
     sl_class_t* klassp;
     
     if(sl_get_primitive_type(recv) != SL_T_INT && recvp->singleton_methods) {
-        if(st_lookup(recvp->singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
+        if(st_lookup(recvp->singleton_methods, (st_data_t)id.id, (st_data_t*)&method)) {
             return method;
         }
     }
@@ -437,7 +435,7 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
         klassp = (sl_class_t*)recvp;
         while(klassp->base.primitive_type != SL_T_NIL) {
             if(klassp->base.singleton_methods) {
-                if(st_lookup(klassp->base.singleton_methods, (st_data_t)id, (st_data_t*)&method)) {
+                if(st_lookup(klassp->base.singleton_methods, (st_data_t)id.id, (st_data_t*)&method)) {
                     return method;
                 }
             }
@@ -447,7 +445,7 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
     
     klassp = (sl_class_t*)sl_get_ptr(klass);
     while(klassp->base.primitive_type != SL_T_NIL) {
-        if(st_lookup(klassp->instance_methods, (st_data_t)id, (st_data_t*)&method)) {
+        if(st_lookup(klassp->instance_methods, (st_data_t)id.id, (st_data_t*)&method)) {
             return method;
         }
         klassp = (sl_class_t*)sl_get_ptr(klassp->super);
@@ -457,11 +455,8 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id)
 }
 
 SLVAL
-sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
+sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
 {
-    sl_expect(vm, idv, vm->lib.String);
-    sl_string_t* id = (sl_string_t*)sl_get_ptr(idv);
-    
     sl_method_t* method = sl_lookup_method(vm, recv, id);
     if(method) {
         return sl_apply_method(vm, recv, method, argc, argv);
@@ -471,9 +466,9 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     
     SLVAL* argv2 = sl_alloc(vm->arena, (argc + 1) * sizeof(SLVAL));
     memcpy(argv2 + 1, argv, sizeof(SLVAL) * argc);
-    argv2[0] = sl_make_ptr((sl_object_t*)id);
+    argv2[0] = sl_id_to_string(vm, id);
     
-    method = sl_lookup_method(vm, recv, sl_cstring(vm, "method_missing"));
+    method = sl_lookup_method(vm, recv, sl_intern(vm, "method_missing"));
     if(method) {
         return sl_apply_method(vm, recv, method, argc + 1, argv2);
     }
@@ -481,7 +476,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
     /* nope */
     
     SLVAL error = sl_make_cstring(vm, "Undefined method '");
-    error = sl_string_concat(vm, error, idv);
+    error = sl_string_concat(vm, error, sl_id_to_string(vm, id));
     error = sl_string_concat(vm, error, sl_make_cstring(vm, "' on "));
     error = sl_string_concat(vm, error, sl_object_inspect(vm, recv));
     sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, error));
@@ -491,7 +486,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL idv, size_t argc, SLVAL* argv)
 static SLVAL
 sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
-    sl_method_t* method = sl_lookup_method(vm, self, (sl_string_t*)sl_get_ptr(sl_to_s(vm, method_name)));
+    sl_method_t* method = sl_lookup_method(vm, self, sl_intern2(vm, method_name));
     if(method) {
         return sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), self);
     } else {
