@@ -307,7 +307,7 @@ NODE(sl_node_var_t, ivar)
     sl_vm_insn_t insn;
     insn.opcode = SL_OP_GET_IVAR;
     emit(cs, insn);
-    insn.str = node->name;
+    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name));
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
@@ -318,7 +318,7 @@ NODE(sl_node_var_t, cvar)
     sl_vm_insn_t insn;
     insn.opcode = SL_OP_GET_CVAR;
     emit(cs, insn);
-    insn.str = node->name;
+    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name));
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
@@ -835,7 +835,7 @@ NODE(sl_node_assign_ivar_t, assign_ivar)
     compile_node(cs, node->rval, dest);
     insn.opcode = SL_OP_SET_IVAR;
     emit(cs, insn);
-    insn.str = node->lval->name;
+    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name));
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
@@ -847,7 +847,7 @@ NODE(sl_node_assign_cvar_t, assign_cvar)
     compile_node(cs, node->rval, dest);
     insn.opcode = SL_OP_SET_CVAR;
     emit(cs, insn);
-    insn.str = node->lval->name;
+    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name));
     emit(cs, insn);
     insn.uint = dest;
     emit(cs, insn);
