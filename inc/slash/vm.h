@@ -10,6 +10,8 @@ struct sl_vm_ids {
     /* operators */
     SLID op_cmp;
     SLID op_eq;
+    SLID op_lt;
+    SLID op_lte;
     /* methods */
     SLID call;
     SLID current;

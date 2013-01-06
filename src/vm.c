@@ -173,7 +173,9 @@ sl_init_id(sl_vm_t* vm)
     #define OP(name, cstr)  vm->id.op_##name = sl_intern(vm, cstr)
 
     OP(cmp, "<=>");
-    OP(eq, "==");
+    OP(eq,  "==");
+    OP(lt,  "<");
+    OP(lte, "<=");
 
     ID(call);
     ID(current);
