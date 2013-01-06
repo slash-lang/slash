@@ -42,8 +42,8 @@ sl_init_nil(sl_vm_t* vm)
     sl_class_set_allocator(vm, vm->lib.Nil, allocate_nil);
     nil->klass = vm->lib.Nil;
     nil->primitive_type = SL_T_NIL;
-    nil->instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
-    nil->singleton_methods = st_init_table(vm->arena, &sl_string_hash_type);
+    nil->instance_variables = NULL;
+    nil->singleton_methods = NULL;
     
     sl_define_method(vm, vm->lib.Nil, "to_s", 0, nil_to_s);
     sl_define_method(vm, vm->lib.Nil, "inspect", 0, nil_inspect);
