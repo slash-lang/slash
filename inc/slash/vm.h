@@ -71,6 +71,12 @@ typedef struct sl_vm {
     sl_gc_arena_t* arena;
     st_table_t* required;
     uint32_t state_constant;
+    struct {
+        st_table_t* name_to_id;
+        SLVAL* id_to_name;
+        size_t id_to_name_cap;
+        size_t id_to_name_size;
+    } intern;
 }
 sl_vm_t;
 

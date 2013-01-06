@@ -72,16 +72,16 @@ sl_node_base_t*
 sl_make_immediate_node(sl_parse_state_t* ps, SLVAL val);
 
 sl_node_base_t*
-sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id, size_t argc, sl_node_base_t** argv);
+sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv);
 
 sl_node_base_t*
-sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLVAL id);
+sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id);
 
 sl_node_base_t*
 sl_make_var_node(sl_parse_state_t* ps, sl_node_type_t type, SLVAL id);
 
 sl_node_base_t*
-sl_make_const_node(sl_parse_state_t* ps, sl_node_base_t* obj, SLVAL id);
+sl_make_const_node(sl_parse_state_t* ps, sl_node_base_t* obj, SLID id);
 
 sl_node_base_t*
 sl_make_if_node(sl_parse_state_t* ps, sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* if_false);

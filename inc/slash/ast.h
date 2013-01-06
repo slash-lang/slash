@@ -91,7 +91,7 @@ sl_node_immediate_t;
 
 typedef struct sl_node_class {
     sl_node_base_t base;
-    SLVAL name;
+    SLID name;
     sl_node_base_t* extends;
     sl_node_base_t* body;
 }
@@ -106,7 +106,7 @@ sl_node_opt_arg_t;
 typedef struct sl_node_def {
     sl_node_base_t base;
     sl_node_base_t* on;
-    SLVAL name;
+    SLID name;
     sl_string_t** req_args;
     size_t req_arg_count;
     sl_node_opt_arg_t* opt_args;
@@ -158,7 +158,7 @@ sl_node_try_t;
 typedef struct sl_node_send {
     sl_node_base_t base;
     sl_node_base_t* recv;
-    SLVAL id;
+    SLID id;
     sl_node_base_t** args;
     size_t arg_count;
 }
@@ -167,14 +167,14 @@ sl_node_send_t;
 typedef struct sl_node_bind_method {
     sl_node_base_t base;
     sl_node_base_t* recv;
-    SLVAL id;
+    SLID id;
 }
 sl_node_bind_method_t;
 
 typedef struct sl_node_const_get {
     sl_node_base_t base;
     sl_node_base_t* obj;
-    SLVAL id;
+    SLID id;
 }
 sl_node_const_t;
 

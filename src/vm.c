@@ -107,6 +107,11 @@ sl_init()
     vm->hash_seed = sl_rand(vm);
     vm->stack_limit = sl_stack_limit();
     vm->required = st_init_table(vm->arena, &sl_string_hash_type);
+
+    vm->intern.name_to_id = st_init_table(vm->arena, &sl_string_hash_type);
+    vm->intern.id_to_name_cap = 32;
+    vm->intern.id_to_name_size = 0;
+    vm->intern.id_to_name = sl_alloc(vm->arena, sizeof(SLVAL) * vm->intern.id_to_name_cap);
     
     vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));

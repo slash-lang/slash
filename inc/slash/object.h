@@ -31,28 +31,28 @@ void
 sl_define_singleton_method(sl_vm_t* vm, SLVAL klass, char* name, int arity, SLVAL(*func)());
 
 void
-sl_define_singleton_method2(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*func)());
+sl_define_singleton_method2(sl_vm_t* vm, SLVAL klass, SLID name, int arity, SLVAL(*func)());
 
 void
-sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLVAL name, SLVAL method);
+sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLID name, SLVAL method);
 
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id);
 
 SLVAL
-sl_responds_to2(sl_vm_t* vm, SLVAL object, SLVAL idv);
+sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID idv);
 
 SLVAL
-sl_get_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+sl_get_ivar(sl_vm_t* vm, SLVAL object, SLID id);
 
 SLVAL
-sl_get_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id);
+sl_get_cvar(sl_vm_t* vm, SLVAL object, SLID id);
 
 void
-sl_set_ivar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
+sl_set_ivar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val);
 
 void
-sl_set_cvar(sl_vm_t* vm, SLVAL object, sl_string_t* id, SLVAL val);
+sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val);
 
 int
 sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b);
@@ -64,9 +64,9 @@ SLVAL
 sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...);
 
 SLVAL
-sl_send2(sl_vm_t* vm, SLVAL recv, SLVAL id, size_t argc, SLVAL* argv);
+sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv);
 
 sl_method_t*
-sl_lookup_method(sl_vm_t* vm, SLVAL recv, sl_string_t* id);
+sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id);
 
 #endif

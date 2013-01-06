@@ -16,6 +16,11 @@ typedef union slval {
 }
 SLVAL;
 
+typedef union slid {
+    size_t i;
+}
+SLID;
+
 typedef enum sl_primitive_type {
     SL_T__INVALID = 0,
     SL_T_NIL,

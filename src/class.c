@@ -149,7 +149,7 @@ void
 sl_init_class(sl_vm_t* vm)
 {
     st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
-        (st_data_t)sl_cstring(vm, "Class"), (st_data_t)vm->lib.Class.i);
+        (st_data_t)sl_intern(vm, "Class"), (st_data_t)vm->lib.Class.i);
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
@@ -185,7 +185,7 @@ sl_define_class3(sl_vm_t* vm, SLVAL name, SLVAL super, SLVAL in)
     klass->allocator = get_class(vm, super)->allocator;
     if(!vm->initializing) {
         st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
-            (st_data_t)name.i, (st_data_t)vklass.i);
+            (st_data_t)sl_intern2(vm, name), (st_data_t)vklass.i);
     }
     return vklass;
 }
@@ -214,7 +214,7 @@ sl_define_method3(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL method)
 {
     sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, method, vm->lib.Method);
-    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(method));
+    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)sl_intern2(vm, name), (st_data_t)sl_get_ptr(method));
 }
 
 int
@@ -301,7 +301,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL val)
     }
     klassp = get_class(vm, klass);
     sl_expect(vm, klass, vm->lib.Class);
-    st_insert(klassp->constants, (st_data_t)sl_get_ptr(name), (st_data_t)sl_get_ptr(val));
+    st_insert(klassp->constants, (st_data_t)sl_intern2(vm, name), (st_data_t)sl_get_ptr(val));
 }
 
 int
