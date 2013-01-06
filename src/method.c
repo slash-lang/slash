@@ -36,7 +36,7 @@ sl_method_name(sl_vm_t* vm, SLVAL method)
     if(!methp->initialized) {
         return vm->lib.nil;
     }
-    return methp->name;
+    return sl_id_to_string(vm, methp->name);
 }
 
 static SLVAL
@@ -101,11 +101,11 @@ sl_init_method(sl_vm_t* vm)
 }
 
 SLVAL
-sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*c_func)())
+sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLID name, int arity, SLVAL(*c_func)())
 {
     SLVAL method = sl_allocate(vm, vm->lib.Method);
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
-    methp->name = sl_expect(vm, name, vm->lib.String);
+    methp->name = name;
     methp->is_c_func = 1;
     methp->arity = arity;
     methp->klass = sl_expect(vm, klass, vm->lib.Class);
@@ -115,11 +115,11 @@ sl_make_c_func(sl_vm_t* vm, SLVAL klass, SLVAL name, int arity, SLVAL(*c_func)()
 }
 
 SLVAL
-sl_make_method(sl_vm_t* vm, SLVAL klass, SLVAL name, sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx)
+sl_make_method(sl_vm_t* vm, SLVAL klass, SLID name, sl_vm_section_t* section, sl_vm_exec_ctx_t* parent_ctx)
 {
     SLVAL method = sl_allocate(vm, vm->lib.Method);
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
-    methp->name = sl_expect(vm, name, vm->lib.String);
+    methp->name = name;
     methp->is_c_func = 0;
     if(section->req_registers < section->arg_registers) {
         methp->arity = -section->req_registers - 1;
@@ -155,35 +155,41 @@ sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver)
 }
 
 SLVAL
-sl_id_to_string(sl_vm_t* vm, size_t id)
+sl_id_to_string(sl_vm_t* vm, SLID id)
 {
-    if(id >= vm->intern.id_to_name_size) {
+    if(id.id >= vm->intern.id_to_name_size) {
         return vm->lib.nil;
     }
-    return vm->intern.id_to_name[id];
+    return vm->intern.id_to_name[id.id];
 }
 
-size_t
-sl_intern2(sl_vm_t* vm, SLVAL str)
+static SLID
+sl_intern2_no_check(sl_vm_t* vm, SLVAL str)
 {
-    size_t id;
+    SLID id;
 
     if(st_lookup(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t*)&id)) {
         return id;
     }
 
-    id = vm->intern.id_to_name_size++;
-    st_insert(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t)id);
+    id.id = vm->intern.id_to_name_size++;
+    st_insert(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t)id.id);
     if(vm->intern.id_to_name_size >= vm->intern.id_to_name_cap) {
         vm->intern.id_to_name_cap *= 2;
         vm->intern.id_to_name = sl_realloc(vm->arena, vm->intern.id_to_name, sizeof(SLVAL) * vm->intern.id_to_name_cap);
     }
-    vm->intern.id_to_name[id] = str;
+    vm->intern.id_to_name[id.id] = str;
 
     return id;
 }
 
-size_t
+SLID
+sl_intern2(sl_vm_t* vm, SLVAL str)
+{
+    return sl_intern2_no_check(vm, sl_expect(vm, str, vm->lib.String));
+}
+
+SLID
 sl_intern(sl_vm_t* vm, char* cstr)
 {
     return sl_intern2(vm, sl_make_cstring(vm, cstr));
