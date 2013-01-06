@@ -385,8 +385,8 @@ void
 sl_init_ext_json(sl_vm_t* vm)
 {
     SLVAL JSON = sl_define_class(vm, "JSON", vm->lib.Object);
-    SLVAL JSON_ParseError = sl_define_class3(vm, sl_make_cstring(vm, "ParseError"), vm->lib.SyntaxError, JSON);
-    SLVAL JSON_DumpError = sl_define_class3(vm, sl_make_cstring(vm, "DumpError"), vm->lib.SyntaxError, JSON);
+    SLVAL JSON_ParseError = sl_define_class3(vm, sl_intern(vm, "ParseError"), vm->lib.SyntaxError, JSON);
+    SLVAL JSON_DumpError = sl_define_class3(vm, sl_intern(vm, "DumpError"), vm->lib.SyntaxError, JSON);
     sl_define_singleton_method(vm, JSON, "parse", -2, sl_json_parse);
     sl_define_singleton_method(vm, JSON, "dump", 1, sl_json_dump);
     

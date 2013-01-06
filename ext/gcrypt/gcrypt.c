@@ -7,7 +7,7 @@ static int cGCrypt_Algorithm;
 
 typedef struct {
     sl_object_t base;
-    SLVAL name;
+    SLID name;
     int algo;
 }
 gcrypt_algorithm_t;
@@ -17,7 +17,7 @@ allocate_gcrypt_algorithm(sl_vm_t* vm)
 {
     gcrypt_algorithm_t* algo = sl_alloc(vm->arena, sizeof(gcrypt_algorithm_t));
     algo->algo = 0;
-    algo->name = sl_make_cstring(vm, "(Invalid)");
+    algo->name = sl_intern(vm, "(Invalid)");
     return (sl_object_t*)algo;
 }
 
@@ -46,7 +46,7 @@ make_algorithm_object(sl_vm_t* vm, SLVAL GCrypt, SLVAL Algorithm, char* name, in
 {
     SLVAL obj = sl_allocate(vm, Algorithm);
     gcrypt_algorithm_t* ptr = (gcrypt_algorithm_t*)sl_get_ptr(obj);
-    ptr->name = sl_make_cstring(vm, name);
+    ptr->name = sl_intern(vm, name);
     ptr->algo = algo;
     sl_class_set_const2(vm, GCrypt, ptr->name, obj);
 }
@@ -72,7 +72,7 @@ sl_gcrypt_algorithm_inspect(sl_vm_t* vm, SLVAL self)
 {
     gcrypt_algorithm_t* algo = get_algo(vm, self);
     SLVAL str = sl_make_cstring(vm, "#<GCrypt::Algorithm: ");
-    str = sl_string_concat(vm, str, algo->name);
+    str = sl_string_concat(vm, str, sl_id_to_string(vm, algo->name));
     str = sl_string_concat(vm, str, sl_make_cstring(vm, ">"));
     return str;
 }
@@ -81,7 +81,7 @@ void
 sl_init_ext_gcrypt(sl_vm_t* vm)
 {
     SLVAL GCrypt = sl_define_class(vm, "GCrypt", vm->lib.Object);
-    SLVAL Algorithm = sl_define_class3(vm, sl_make_cstring(vm, "Algorithm"), vm->lib.Object, GCrypt);
+    SLVAL Algorithm = sl_define_class3(vm, sl_intern(vm, "Algorithm"), vm->lib.Object, GCrypt);
     sl_vm_store_put(vm, &cGCrypt, GCrypt);
     sl_vm_store_put(vm, &cGCrypt_Algorithm, Algorithm);
     sl_class_set_allocator(vm, Algorithm, allocate_gcrypt_algorithm);
