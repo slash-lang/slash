@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <slash/class.h>
 #include <slash/method.h>
 #include <slash/object.h>
@@ -179,7 +180,7 @@ SLVAL
 sl_id_to_string(sl_vm_t* vm, SLID id)
 {
     if(id.id >= vm->intern.id_to_name_size) {
-        return vm->lib.nil;
+        abort();
     }
     return vm->intern.id_to_name[id.id];
 }
