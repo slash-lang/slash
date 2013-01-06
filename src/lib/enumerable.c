@@ -6,9 +6,9 @@ enumerable_map(sl_vm_t* vm, SLVAL self, SLVAL f)
     SLVAL array = sl_make_array(vm, 0, NULL);
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL val;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
-        val = sl_send(vm, f, "call", 1, val);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
+        val = sl_send_id(vm, f, vm->id.call, 1, val);
         sl_array_push(vm, array, 1, &val);
     }
     return array;
@@ -20,8 +20,8 @@ enumerable_to_a(sl_vm_t* vm, SLVAL self)
     SLVAL array = sl_make_array(vm, 0, NULL);
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL val;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
         sl_array_push(vm, array, 1, &val);
     }
     return array;
@@ -33,19 +33,19 @@ enumerable_reduce(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL acc, val, f;
     if(argc == 1) {
-        if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
             sl_throw_message2(vm, vm->lib.ArgumentError, "Can't reduce empty array without initializer");
         } else {
-            acc = sl_send(vm, enumerator, "current", 0);
+            acc = sl_send_id(vm, enumerator, vm->id.current, 0);
         }
         f = argv[0];
     } else {
         acc = argv[0];
         f = argv[1];
     }
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
-        acc = sl_send(vm, f, "call", 2, acc, val);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
+        acc = sl_send_id(vm, f, vm->id.call, 2, acc, val);
     }
     return acc;
 }
@@ -60,12 +60,12 @@ sl_enumerable_join(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     } else {
         joiner = sl_make_cstring(vm, "");
     }
-    if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+    if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
         return sl_make_cstring(vm, "");
     }
-    str = sl_to_s(vm, sl_send(vm, enumerator, "current", 0));
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
+    str = sl_to_s(vm, sl_send_id(vm, enumerator, vm->id.current, 0));
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
         val = sl_to_s(vm, val);
         str = sl_string_concat(vm, str, joiner);
         str = sl_string_concat(vm, str, val);
@@ -78,7 +78,7 @@ enumerable_length(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     int i = 0;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
         i++;
     }
     return sl_make_int(vm, i);
@@ -88,7 +88,7 @@ static SLVAL
 enumerable_empty(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+    if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
@@ -100,10 +100,10 @@ enumerable_any(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL val;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
         if(argc > 0) {
-            val = sl_send(vm, argv[0], "call", 1, val);
+            val = sl_send_id(vm, argv[0], vm->id.call, 1, val);
         }
         if(sl_is_truthy(val)) {
             return vm->lib._true;
@@ -117,10 +117,10 @@ enumerable_all(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL val;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
         if(argc > 0) {
-            val = sl_send(vm, argv[0], "call", 1, val);
+            val = sl_send_id(vm, argv[0], vm->id.call, 1, val);
         }
         if(!sl_is_truthy(val)) {
             return vm->lib._false;
@@ -134,9 +134,9 @@ enumerable_find(sl_vm_t* vm, SLVAL self, SLVAL f)
 {
     SLVAL val, truthy;
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
-        truthy = sl_send(vm, f, "call", 1, val);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
+        truthy = sl_send_id(vm, f, vm->id.call, 1, val);
         if(sl_is_truthy(truthy)) {
             return val;
         }
@@ -149,9 +149,9 @@ enumerable_filter(sl_vm_t* vm, SLVAL self, SLVAL f)
 {
     SLVAL val, truthy, ary = sl_make_array(vm, 0, NULL);
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
-        truthy = sl_send(vm, f, "call", 1, val);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
+        truthy = sl_send_id(vm, f, vm->id.call, 1, val);
         if(sl_is_truthy(truthy)) {
             sl_array_push(vm, ary, 1, &val);
         }
@@ -164,9 +164,9 @@ enumerable_reject(sl_vm_t* vm, SLVAL self, SLVAL f)
 {
     SLVAL val, truthy, ary = sl_make_array(vm, 0, NULL);
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        val = sl_send(vm, enumerator, "current", 0);
-        truthy = sl_send(vm, f, "call", 1, val);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        val = sl_send_id(vm, enumerator, vm->id.current, 0);
+        truthy = sl_send_id(vm, f, vm->id.call, 1, val);
         if(!sl_is_truthy(truthy)) {
             sl_array_push(vm, ary, 1, &val);
         }
@@ -187,13 +187,13 @@ enumerable_drop(sl_vm_t* vm, SLVAL self, SLVAL countv)
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     
     for(int count = sl_get_int(countv); count > 0; count--) {
-        if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
             return ary;
         }
     }
     
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        SLVAL elem = sl_send(vm, enumerator, "current", 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        SLVAL elem = sl_send_id(vm, enumerator, vm->id.current, 0);
         sl_array_push(vm, ary, 1, &elem);
     }
     
@@ -207,10 +207,10 @@ enumerable_take(sl_vm_t* vm, SLVAL self, SLVAL countv)
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     
     for(int count = sl_get_int(countv); count > 0; count--) {
-        if(!sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
+        if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
             return ary;
         }
-        SLVAL elem = sl_send(vm, enumerator, "current", 0);
+        SLVAL elem = sl_send_id(vm, enumerator, vm->id.current, 0);
         sl_array_push(vm, ary, 1, &elem);
     }
     
@@ -221,8 +221,8 @@ static SLVAL
 enumerable_first(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    if(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        return sl_send(vm, enumerator, "current", 0);
+    if(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        return sl_send_id(vm, enumerator, vm->id.current, 0);
     } else {
         return vm->lib.nil;
     }
@@ -233,8 +233,8 @@ enumerable_last(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
     SLVAL last = vm->lib.nil;
-    while(sl_is_truthy(sl_send(vm, enumerator, "next", 0))) {
-        last = sl_send(vm, enumerator, "current", 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        last = sl_send_id(vm, enumerator, vm->id.current, 0);
     }
     return last;
 }
