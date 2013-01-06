@@ -37,7 +37,7 @@ resolve_require_path(sl_vm_t* vm, char* path)
 }
 
 SLVAL
-sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
+require(sl_vm_t* vm, SLVAL self, SLVAL file)
 {
     sl_expect(vm, file, vm->lib.String);
     char* file_cstr = sl_to_cstr(vm, file);
@@ -64,6 +64,12 @@ sl_require(sl_vm_t* vm, SLVAL self, SLVAL file)
 }
 
 void
+sl_require(sl_vm_t* vm, char* path)
+{
+    require(vm, vm->lib.Object, sl_make_cstring(vm, path));
+}
+
+void
 sl_require_path_add(sl_vm_t* vm, char* path)
 {
     SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
@@ -79,5 +85,5 @@ sl_init_require(sl_vm_t* vm)
 {
     SLVAL inc[] = { sl_make_cstring(vm, ".") };
     sl_class_set_const(vm, vm->lib.Object, "INC", sl_make_array(vm, sizeof(inc) / sizeof(*inc), inc));
-    sl_define_method(vm, vm->lib.Object, "require", 1, sl_require);
+    sl_define_method(vm, vm->lib.Object, "require", 1, require);
 }
