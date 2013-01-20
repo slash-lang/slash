@@ -58,7 +58,7 @@ allocate_socket(sl_vm_t* vm)
 {
     sl_socket_t* sock = sl_alloc(vm->arena, sizeof(sl_socket_t));
     sock->socket = -1;
-    sl_gc_set_finalizer(vm->arena, sock, (void(*)(void*))free_socket);
+    sl_gc_set_finalizer(sock, (void(*)(void*))free_socket);
     return (sl_object_t*)sock;
 }
 

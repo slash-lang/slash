@@ -150,7 +150,7 @@ void*
 sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 {
     void* ptr = sl_alloc(arena, size);
-    sl_gc_find_alloc(arena, ptr)->scan_pointers = 0;
+    alloc_for_ptr(ptr)->scan_pointers = 0;
     return ptr;
 }
 
@@ -158,15 +158,12 @@ void*
 sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 {
     /* @TODO: more more efficient */
-    sl_gc_alloc_t* old_alloc;
-    void* new_ptr;
-    sl_gc_alloc_t* new_alloc;
     if(ptr == NULL) {
         return sl_alloc(arena, new_size);
     }
-    old_alloc = sl_gc_find_alloc(arena, ptr);
-    new_ptr = sl_alloc(arena, new_size);
-    new_alloc = sl_gc_find_alloc(arena, new_ptr);
+    sl_gc_alloc_t* old_alloc = alloc_for_ptr(ptr);
+    void* new_ptr = sl_alloc(arena, new_size);
+    sl_gc_alloc_t* new_alloc = alloc_for_ptr(new_ptr);
     new_alloc->scan_pointers = old_alloc->scan_pointers;
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
@@ -270,9 +267,9 @@ sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 }
 
 void
-sl_gc_set_finalizer(sl_gc_arena_t* arena, void* ptr, void(*finalizer)(void*))
+sl_gc_set_finalizer(void* ptr, void(*finalizer)(void*))
 {
-    sl_gc_find_alloc(arena, ptr)->finalizer = finalizer;
+    alloc_for_ptr(ptr)->finalizer = finalizer;
 }
 
 void
