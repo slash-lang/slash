@@ -42,7 +42,7 @@ allocate_mysql(sl_vm_t* vm)
 {
     mysql_t* mysql = sl_alloc(vm->arena, sizeof(mysql_t));
     mysql_init(&mysql->mysql);
-    sl_gc_set_finalizer(vm->arena, mysql, (void(*)(void*))free_mysql);
+    sl_gc_set_finalizer(mysql, (void(*)(void*))free_mysql);
     return (sl_object_t*)mysql;
 }
 
@@ -60,7 +60,7 @@ allocate_mysql_stmt(sl_vm_t* vm)
     mysql_stmt_t* stmt = sl_alloc(vm->arena, sizeof(mysql_stmt_t));
     stmt->mysql = NULL;
     stmt->stmt = NULL;
-    sl_gc_set_finalizer(vm->arena, stmt, (void(*)(void*))free_mysql_stmt);
+    sl_gc_set_finalizer(stmt, (void(*)(void*))free_mysql_stmt);
     return (sl_object_t*)stmt;
 }
 

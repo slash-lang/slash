@@ -24,7 +24,7 @@ static sl_object_t*
 allocate_file(sl_vm_t* vm)
 {
     sl_file_t* file = sl_alloc(vm->arena, sizeof(sl_file_t));
-    sl_gc_set_finalizer(vm->arena, file, (void(*)(void*))free_file);
+    sl_gc_set_finalizer(file, (void(*)(void*))free_file);
     return (sl_object_t*)file;
 }
 

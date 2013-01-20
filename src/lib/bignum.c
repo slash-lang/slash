@@ -23,7 +23,7 @@ allocate_bignum(sl_vm_t* vm)
 {
     sl_bignum_t* bn = (sl_bignum_t*)sl_alloc(vm->arena, sizeof(sl_bignum_t));
     bn->base.primitive_type = SL_T_BIGNUM;
-    sl_gc_set_finalizer(vm->arena, bn, (void(*)(void*))free_bignum);
+    sl_gc_set_finalizer(bn, (void(*)(void*))free_bignum);
     mpz_init(bn->mpz);
     return (sl_object_t*)bn;
 }
