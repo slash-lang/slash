@@ -42,7 +42,7 @@ on_error(sl_vm_t* vm, void* state, SLVAL error)
     sl_string_t* str = (sl_string_t*)sl_get_ptr(error_str);
     (void)state;
     fwrite(str->buff, str->buff_len, 1, stderr);
-    puts("\n");
+    fprintf(stderr, "\n\n");
     exit(1);
 }
 
