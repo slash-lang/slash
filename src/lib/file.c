@@ -127,7 +127,7 @@ static SLVAL
 file_class_read(sl_vm_t* vm, SLVAL self, SLVAL filename)
 {
     SLVAL f = sl_new(vm, vm->lib.File, 1, &filename);
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     volatile SLVAL retn;
     SL_ENSURE(frame, {
         retn = file_read(vm, f);

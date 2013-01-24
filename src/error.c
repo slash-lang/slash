@@ -23,6 +23,50 @@ typedef struct sl_error_frame {
 }
 sl_error_frame_t;
 
+static void
+internal_error_add_frame(struct sl_vm* vm, sl_error_t* error, SLVAL method, SLVAL file, SLVAL line)
+{
+    SLVAL frv = sl_allocate(vm, vm->lib.Error_Frame);
+    sl_error_frame_t* frame = (sl_error_frame_t*)sl_get_ptr(frv);
+    frame->method = sl_is_a(vm, method, vm->lib.String) ? method : sl_make_cstring(vm, "");
+    frame->file = sl_is_a(vm, file, vm->lib.String) ? file : vm->lib.nil;
+    frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : vm->lib.nil;
+    
+    if(sl_is_truthy(file) && sl_is_truthy(line)) {
+        SLVAL* prev_frames;
+        size_t prev_frames_count = sl_array_items_no_copy(vm, error->backtrace, &prev_frames);
+        for(size_t i = 0; i < prev_frames_count; i++) {
+            sl_error_frame_t* prev_frame = (sl_error_frame_t*)sl_get_ptr(prev_frames[prev_frames_count - i - 1]);
+            if(sl_is_truthy(prev_frame->file) && sl_is_truthy(prev_frame->line)) {
+                break;
+            }
+            prev_frame->file = frame->file;
+            prev_frame->line = frame->line;
+        }
+    }
+    
+    sl_array_push(vm, error->backtrace, 1, &frv);
+}
+
+static void
+build_backtrace(sl_vm_t* vm, sl_error_t* err)
+{
+    for(sl_vm_frame_t* frame = vm->call_stack; frame; frame = frame->prev) {
+        if(frame->frame_type == SL_VM_FRAME_SLASH) {
+            internal_error_add_frame(vm, err,
+                sl_id_to_string(vm, frame->as.call_frame.method),
+                sl_make_cstring(vm, frame->as.call_frame.filename),
+                sl_make_int(vm, *frame->as.call_frame.line));
+        }
+        if(frame->frame_type == SL_VM_FRAME_C) {
+            internal_error_add_frame(vm, err,
+                sl_id_to_string(vm, frame->as.call_frame.method),
+                vm->lib.nil,
+                vm->lib.nil);
+        }
+    }
+}
+
 static sl_object_t*
 allocate_error(sl_vm_t* vm)
 {
@@ -136,27 +180,7 @@ void
 sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line)
 {
     sl_error_t* e = get_error(vm, error);
-    
-    SLVAL frv = sl_allocate(vm, vm->lib.Error_Frame);
-    sl_error_frame_t* frame = (sl_error_frame_t*)sl_get_ptr(frv);
-    frame->method = sl_is_a(vm, method, vm->lib.String) ? method : sl_make_cstring(vm, "");
-    frame->file = sl_is_a(vm, file, vm->lib.String) ? file : vm->lib.nil;
-    frame->line = sl_is_a(vm, line, vm->lib.Int) ? line : vm->lib.nil;
-    
-    if(sl_is_truthy(file) && sl_is_truthy(line)) {
-        SLVAL* prev_frames;
-        size_t prev_frames_count = sl_array_items_no_copy(vm, e->backtrace, &prev_frames);
-        for(size_t i = 0; i < prev_frames_count; i++) {
-            sl_error_frame_t* prev_frame = (sl_error_frame_t*)sl_get_ptr(prev_frames[prev_frames_count - i - 1]);
-            if(sl_is_truthy(prev_frame->file) && sl_is_truthy(prev_frame->line)) {
-                break;
-            }
-            prev_frame->file = frame->file;
-            prev_frame->line = frame->line;
-        }
-    }
-    
-    sl_array_push(vm, e->backtrace, 1, &frv);
+    internal_error_add_frame(vm, e, method, file, line);
 }
 
 void
@@ -205,21 +229,31 @@ sl_make_error2(sl_vm_t* vm, SLVAL klass, SLVAL message)
     return err;
 }
 
-void
-sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
+static void
+unwind_to_handler_frame(sl_vm_t* vm)
 {
-    if(vm->catch_stack == NULL) {
+    while(vm->call_stack && vm->call_stack->frame_type != SL_VM_FRAME_HANDLER) {
+        vm->call_stack = vm->call_stack->prev;
+    }
+    if(vm->call_stack == NULL) {
         fprintf(stderr, "Attempting to unwind stack with no handler\n");
         abort();
     }
-    vm->catch_stack->value = value;
-    vm->catch_stack->type = type;
-    sl_longjmp(vm->catch_stack->env, 1);
+}
+
+void
+sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
+{
+    unwind_to_handler_frame(vm);
+    vm->call_stack->as.handler_frame.value = value;
+    vm->call_stack->as.handler_frame.unwind_type = type;
+    sl_longjmp(vm->call_stack->as.handler_frame.env, 1);
 }
 
 void
 sl_throw(sl_vm_t* vm, SLVAL error)
 {
+    build_backtrace(vm, get_error(vm, error));
     sl_unwind(vm, error, SL_UNWIND_EXCEPTION);
 }
 
@@ -227,12 +261,6 @@ void
 sl_exit(sl_vm_t* vm, SLVAL value)
 {
     sl_unwind(vm, sl_expect(vm, value, vm->lib.Int), SL_UNWIND_EXIT);
-}
-
-void
-sl_rethrow(struct sl_vm* vm, sl_catch_frame_t* frame)
-{
-    sl_unwind(vm, frame->value, frame->type);
 }
 
 void

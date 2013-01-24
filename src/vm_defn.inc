@@ -320,8 +320,7 @@ INSTRUCTION(SL_OP_DICT, {
 /*  0: RETURN
     1: <reg:value> */
 INSTRUCTION(SL_OP_RETURN, {
-    /* restore previous exception frame: */
-    vm->catch_stack = frame.prev;
+    vm->call_stack = call_frame.prev;
     return NEXT_REG();
 })
 
@@ -379,7 +378,7 @@ INSTRUCTION(SL_OP_END_TRY, {
 /*  0: CATCH
     1: <reg:exception_dest> */
 INSTRUCTION(SL_OP_CATCH, {
-    NEXT_REG() = frame.value;
+    NEXT_REG() = catch_frame.as.handler_frame.value;
 })
 
 /*  0: YADA_YADA */

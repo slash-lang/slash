@@ -53,11 +53,11 @@ int main(int argc, char** argv)
         }
         
     }, err, {
-        if(frame.type == SL_UNWIND_EXCEPTION) {
+        if(frame.as.handler_frame.type == SL_UNWIND_EXCEPTION) {
             fprintf(stderr, "%s\n", sl_to_cstr(vm, err));
             exit(1);
         }
-        if(frame.type == SL_UNWIND_EXIT) {
+        if(frame.as.handler_frame.type == SL_UNWIND_EXIT) {
             int exit_code = sl_get_int(err);
             sl_free_gc_arena(vm->arena);
             exit(exit_code);
