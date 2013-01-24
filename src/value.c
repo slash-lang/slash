@@ -11,10 +11,6 @@
 int
 sl_get_int(SLVAL val)
 {
-    if(sl_get_primitive_type(val) != SL_T_INT) {
-        /* throw type error... @TODO */
-        abort();
-    }
     return val.i >> 1;
 }
 
