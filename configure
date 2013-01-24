@@ -169,7 +169,7 @@ if(compile("-march=native", "int main(){}")) {
     print "ok\n";
     $CFLAGS .= " -march=native";
 } else {
-    printf "failed\n";
+    print "failed\n";
 }
 
 print "Checking for -flto... ";
@@ -178,7 +178,15 @@ if(compile("-flto", "int main(){}")) {
     $CFLAGS .= " -flto";
     $LDFLAGS .= " -flto";
 } else {
-    printf "failed\n";
+    print "failed\n";
+}
+
+print "Checking for __builtin_expect... ";
+if(compile("", "int main(){ if(__builtin_expect(1, 1)) { } }")) {
+    print "ok\n";
+    $CFLAGS .= " -DSL_HAS_BUILTIN_EXPECT";
+} else {
+    print "failed\n";
 }
 
 open my $mf, ">$path/local.mk";

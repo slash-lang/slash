@@ -20,7 +20,7 @@ sl_seed();
 void*
 sl_stack_limit();
 
-#ifdef __GNUC__
+#ifdef SL_HAS_BUILTIN_EXPECT
     #define sl_likely(x) __builtin_expect((x), 1)
     #define sl_unlikely(x) __builtin_expect((x), 0)
 #else
