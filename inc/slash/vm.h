@@ -83,7 +83,7 @@ typedef struct sl_vm {
     int initializing;
     struct sl_vm_lib lib;
     struct sl_vm_ids id;
-    struct sl_catch_frame* catch_stack;
+    struct sl_vm_frame* call_stack;
     void* data;
     st_table_t* store;
     int hash_seed;
@@ -186,6 +186,33 @@ typedef struct sl_vm_exec_ctx {
     struct sl_vm_exec_ctx* parent;
 }
 sl_vm_exec_ctx_t;
+
+typedef enum sl_vm_frame_type {
+    SL_VM_FRAME_SLASH,
+    SL_VM_FRAME_C,
+    SL_VM_FRAME_HANDLER
+}
+sl_vm_frame_type_t;
+
+typedef struct sl_vm_frame {
+    struct sl_vm_frame* prev;
+    sl_vm_frame_type_t frame_type;
+    
+    union {
+        struct {
+            SLID method;
+            /* left undefined if type == SL_VM_FRAME_C: */
+            char* filename;
+            int* line;
+        } call_frame;
+        struct {
+            jmp_buf env;
+            SLVAL value;
+            sl_unwind_type_t unwind_type;
+        } handler_frame;
+    } as;
+}
+sl_vm_frame_t;
 
 #include "eval.h"
 

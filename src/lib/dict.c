@@ -160,7 +160,7 @@ dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
 static SLVAL
 sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
 {
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     SLVAL str;
     sl_dict_t* d = get_dict(vm, dict);
     if(d->inspecting) {

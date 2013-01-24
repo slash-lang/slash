@@ -369,7 +369,7 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
             return vm->lib._false;
         }
     }
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     SLVAL err;
     volatile SLVAL retn;
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
@@ -378,7 +378,7 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
         if(sl_is_a(vm, err, vm->lib.EncodingError)) {
             retn = sl_string_eq(vm, other, self);
         } else {
-            sl_rethrow(vm, &frame);
+            sl_unwind(vm, frame.as.handler_frame.value, frame.as.handler_frame.unwind_type);
         }
     });
     return retn;

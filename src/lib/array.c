@@ -88,7 +88,7 @@ sl_array_init(sl_vm_t* vm, SLVAL array, size_t count, SLVAL* items)
 static SLVAL
 sl_array_to_s(sl_vm_t* vm, SLVAL array)
 {
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
     volatile SLVAL str;

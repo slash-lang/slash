@@ -222,7 +222,7 @@ extern char* sl__error_page_sl;
 void
 sl_render_error_page(sl_vm_t* vm, SLVAL err)
 {
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     sl_response_internal_opts_t* resp = response(vm);
     resp->status = 500;
     SLVAL caught_error;

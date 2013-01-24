@@ -91,7 +91,7 @@ main(int argc, char** argv)
 {
     cli_state_t state;
     FILE* f;
-    sl_catch_frame_t exit_frame;
+    sl_vm_frame_t exit_frame;
     SLVAL err;
     int exit_code;
     sl_static_init();
@@ -119,10 +119,10 @@ main(int argc, char** argv)
     SL_TRY(exit_frame, SL_UNWIND_ALL, {
         run(vm, &state);
     }, err, {
-        if(exit_frame.type == SL_UNWIND_EXCEPTION) {
+        if(exit_frame.as.handler_frame.unwind_type == SL_UNWIND_EXCEPTION) {
             on_error(vm, &state, err);
         }
-        if(exit_frame.type == SL_UNWIND_EXIT) {
+        if(exit_frame.as.handler_frame.unwind_type == SL_UNWIND_EXIT) {
             exit_code = sl_get_int(err);
             sl_free_gc_arena(vm->arena);
             exit(exit_code);

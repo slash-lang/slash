@@ -47,7 +47,8 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
 {
     volatile int line = 0;
     sl_vm_t* vm = ctx->vm;
-    sl_catch_frame_t frame;
+    sl_vm_frame_t call_frame;
+    sl_vm_frame_t catch_frame; /* TODO clean this shit up */
     sl_vm_exception_handler_t* volatile exception_handler = NULL;
     sl_vm_section_t* section = ctx->section;
     
@@ -69,22 +70,28 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, volatile size_t ip)
         
         #include "vm_defn.inc"
     #else
+
+        call_frame.prev = vm->call_stack;
+        call_frame.frame_type = SL_VM_FRAME_SLASH;
+        call_frame.as.call_frame.method = section->name;
+        call_frame.as.call_frame.filename = (char*)section->filename;
+        call_frame.as.call_frame.line = (int*)&line;
+        vm->call_stack = &call_frame;
         
-        frame.value = vm->lib.nil;
+        catch_frame.frame_type = SL_VM_FRAME_HANDLER;
+        catch_frame.as.handler_frame.value = vm->lib.nil;
     reset_exception_handler:
-        frame.prev = vm->catch_stack;
-        vm->catch_stack = &frame;
+        catch_frame.prev = vm->call_stack;
+        vm->call_stack = &catch_frame;
         
-        if(sl_setjmp(frame.env)) {
-            vm->catch_stack = frame.prev;
-            if(frame.type & SL_UNWIND_EXCEPTION) {
-                sl_error_add_frame(vm, frame.value, sl_id_to_string(vm, section->name), sl_make_cstring(vm, (char*)section->filename), sl_make_int(vm, line));
-            }
-            if(exception_handler && (frame.type & SL_UNWIND_EXCEPTION)) {
+        if(sl_setjmp(catch_frame.as.handler_frame.env)) {
+            vm->call_stack = catch_frame.prev;
+            if(exception_handler && (catch_frame.as.handler_frame.unwind_type & SL_UNWIND_EXCEPTION)) {
                 ip = exception_handler->catch_ip;
                 goto reset_exception_handler;
             } else {
-                sl_rethrow(vm, &frame);
+                vm->call_stack = call_frame.prev;
+                sl_unwind(vm, catch_frame.as.handler_frame.value, catch_frame.as.handler_frame.unwind_type);
             }
         }
         while(1) {

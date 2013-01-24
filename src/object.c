@@ -139,7 +139,7 @@ sl_to_s(sl_vm_t* vm, SLVAL obj)
 SLVAL
 sl_to_s_no_throw(sl_vm_t* vm, SLVAL obj)
 {
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     SLVAL ret, err;
     SL_TRY(frame, SL_UNWIND_EXCEPTION, {
         ret = sl_to_s(vm, obj);
@@ -364,23 +364,16 @@ call_c_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* ar
 static SLVAL
 call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
 {
-    sl_catch_frame_t frame;
-    frame.prev = vm->catch_stack;
-    frame.value = vm->lib.nil;
-    vm->catch_stack = &frame;
+    sl_vm_frame_t frame;
+    frame.prev = vm->call_stack;
+    frame.frame_type = SL_VM_FRAME_C;
+    frame.as.call_frame.method = method->name;
+    vm->call_stack = &frame;
     
-    if(!sl_setjmp(frame.env)) {
-        SLVAL retn = call_c_func(vm, recv, method, argc, argv);
-        vm->catch_stack = frame.prev;
-        return retn;
-    } else {
-        vm->catch_stack = frame.prev;
-        if(frame.type & SL_UNWIND_EXCEPTION) {
-            sl_error_add_frame(vm, frame.value, sl_id_to_string(vm, method->name), vm->lib.nil, vm->lib.nil);
-        }
-        sl_rethrow(vm, &frame);
-    }
-    return vm->lib.nil; /* never reached */
+    SLVAL retn = call_c_func(vm, recv, method, argc, argv);
+    
+    vm->call_stack = frame.prev;
+    return retn;
 }
 
 SLVAL
