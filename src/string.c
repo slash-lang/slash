@@ -111,26 +111,6 @@ sl_make_cstring(struct sl_vm* vm, char* cstr)
     return sl_make_string(vm, (uint8_t*)cstr, strlen(cstr));
 }
 
-SLVAL
-sl_make_cstring_placement(sl_vm_t* vm, sl_string_t* placement, char* cstr)
-{
-    placement->base.klass = vm->lib.String;
-    placement->base.primitive_type = SL_T_STRING;
-    placement->base.instance_variables = NULL;
-    placement->base.singleton_methods = NULL;
-    placement->buff = (uint8_t*)cstr;
-    placement->buff_len = strlen(cstr);
-    if(sl_is_valid_utf8(placement->buff, placement->buff_len)) {
-        placement->encoding = "UTF-8";
-        placement->char_len = sl_utf8_strlen(vm, placement->buff, placement->buff_len);
-    } else {
-        placement->encoding = "ISO-8859-1";
-        placement->char_len = placement->buff_len;
-    }
-    placement->hash_set = 0;
-    return sl_make_ptr((sl_object_t*)placement);
-}
-
 sl_string_t*
 sl_cstring(struct sl_vm* vm, char* cstr)
 {
