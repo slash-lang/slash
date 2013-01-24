@@ -46,7 +46,8 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->section->insns_cap = 4;
     cs->section->insns_count = 0;
     cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
-    cs->section->can_stack_alloc_frame = 1;
+    cs->section->can_stack_alloc_frame = true;
+    cs->section->has_try_catch = false;
     cs->section->opt_skip = NULL;
     cs->registers = sl_alloc(vm->arena, cs->section->max_registers);
     for(i = 0; i < init_registers; i++) {
@@ -422,11 +423,13 @@ NODE(sl_node_try_t, try)
     sl_vm_insn_t insn;
     size_t catch_fixup, after_fixup;
     
+    cs->section->has_try_catch = true;
+    
     insn.opcode = SL_OP_TRY;
     emit(cs, insn);
     insn.uint = 0xdeadbeef;
     catch_fixup = emit(cs, insn);
-    
+
     if(cs->next_last_frames) {
         cs->next_last_frames->try_catch_blocks++;
     }

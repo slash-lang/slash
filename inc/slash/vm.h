@@ -1,6 +1,7 @@
 #ifndef SL_VM_H
 #define SL_VM_H
 
+#include <stdbool.h>
 #include "value.h"
 #include "st.h"
 #include "error.h"
@@ -172,8 +173,9 @@ typedef struct sl_vm_section {
     size_t req_registers;
     size_t arg_registers;
     size_t* opt_skip;
-    int can_stack_alloc_frame;
     uint8_t* filename;
+    bool can_stack_alloc_frame;
+    bool has_try_catch;
     SLID name;
 }
 sl_vm_section_t;
