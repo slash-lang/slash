@@ -39,18 +39,24 @@ SLVAL
 sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
-    int b;
-    if(sl_is_a(vm, other, vm->lib.Bignum)) {
-        return sl_bignum_add(vm, sl_make_bignum(vm, a), other);
+
+    if(sl_likely(SL_IS_INT(other))) {
+        int b = sl_get_int(other);
+        if(sl_likely(highest_set_bit(a) < 30 && highest_set_bit(b) < 30)) {
+            return sl_make_int(vm, a + b);
+        } else {
+            return sl_bignum_add(vm, sl_make_bignum(vm, a), sl_make_bignum(vm, b));
+        }
     }
-    if(sl_is_a(vm, other, vm->lib.Float)) {
-        return sl_float_add(vm, sl_make_float(vm, a), other);
-    }
-    b = sl_get_int(sl_expect(vm, other, vm->lib.Int));
-    if(highest_set_bit(a) < 30 && highest_set_bit(b) < 30) {
-        return sl_make_int(vm, a + b);
-    } else {
-        return sl_bignum_add(vm, sl_make_bignum(vm, a), sl_make_bignum(vm, b));
+
+    switch(sl_get_primitive_type(other)) {
+        case SL_T_BIGNUM:
+            return sl_bignum_add(vm, sl_make_bignum(vm, a), other);
+        case SL_T_FLOAT:
+            return sl_float_add(vm, sl_make_float(vm, a), other);
+        default:
+            /* force error */
+            return sl_expect(vm, other, vm->lib.Int);
     }
 }
 
@@ -58,18 +64,24 @@ SLVAL
 sl_int_sub(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
-    int b;
-    if(sl_is_a(vm, other, vm->lib.Bignum)) {
-        return sl_bignum_sub(vm, sl_make_bignum(vm, a), other);
+
+    if(sl_likely(SL_IS_INT(other))) {
+        int b = sl_get_int(other);
+        if(sl_likely(highest_set_bit(a) < 30 && highest_set_bit(b) < 30)) {
+            return sl_make_int(vm, a - b);
+        } else {
+            return sl_bignum_sub(vm, sl_make_bignum(vm, a), sl_make_bignum(vm, b));
+        }
     }
-    if(sl_is_a(vm, other, vm->lib.Float)) {
-        return sl_float_sub(vm, sl_make_float(vm, a), other);
-    }
-    b = sl_get_int(sl_expect(vm, other, vm->lib.Int));
-    if(highest_set_bit(a) < 30 && highest_set_bit(b) < 30) {
-        return sl_make_int(vm, a - b);
-    } else {
-        return sl_bignum_sub(vm, sl_make_bignum(vm, a), sl_make_bignum(vm, b));
+
+    switch(sl_get_primitive_type(other)) {
+        case SL_T_BIGNUM:
+            return sl_bignum_sub(vm, sl_make_bignum(vm, a), other);
+        case SL_T_FLOAT:
+            return sl_float_sub(vm, sl_make_float(vm, a), other);
+        default:
+            /* force error */
+            return sl_expect(vm, other, vm->lib.Int);
     }
 }
 
@@ -257,6 +269,54 @@ sl_int_cmp(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
 }
 
+static SLVAL
+sl_int_lt(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int res;
+    if(sl_likely(SL_IS_INT(other))) {
+        res = sl_get_int(self) < sl_get_int(other);
+    } else {
+        res = sl_cmp(vm, self, other) < 0;
+    }
+    return res ? vm->lib._true : vm->lib._false;
+}
+
+static SLVAL
+sl_int_gt(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int res;
+    if(sl_likely(SL_IS_INT(other))) {
+        res = sl_get_int(self) > sl_get_int(other);
+    } else {
+        res = sl_cmp(vm, self, other) > 0;
+    }
+    return res ? vm->lib._true : vm->lib._false;
+}
+
+static SLVAL
+sl_int_lte(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int res;
+    if(sl_likely(SL_IS_INT(other))) {
+        res = sl_get_int(self) <= sl_get_int(other);
+    } else {
+        res = sl_cmp(vm, self, other) <= 0;
+    }
+    return res ? vm->lib._true : vm->lib._false;
+}
+
+static SLVAL
+sl_int_gte(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    int res;
+    if(sl_likely(SL_IS_INT(other))) {
+        res = sl_get_int(self) >= sl_get_int(other);
+    } else {
+        res = sl_cmp(vm, self, other) >= 0;
+    }
+    return res ? vm->lib._true : vm->lib._false;
+}
+
 void
 sl_init_int(sl_vm_t* vm)
 {
@@ -280,4 +340,8 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, "to_f", 0, sl_int_to_f);
     sl_define_method(vm, vm->lib.Int, "==", 1, sl_int_eq);
     sl_define_method(vm, vm->lib.Int, "<=>", 1, sl_int_cmp);
+    sl_define_method(vm, vm->lib.Int, "<", 1, sl_int_lt);
+    sl_define_method(vm, vm->lib.Int, ">", 1, sl_int_gt);
+    sl_define_method(vm, vm->lib.Int, "<=", 1, sl_int_lte);
+    sl_define_method(vm, vm->lib.Int, ">=", 1, sl_int_gte);
 }
