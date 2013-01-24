@@ -486,7 +486,7 @@ SLVAL
 sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
 {
     sl_method_t* method = sl_lookup_method(vm, recv, id);
-    if(method) {
+    if(sl_likely(method != NULL)) {
         return sl_apply_method(vm, recv, method, argc, argv);
     }
     
