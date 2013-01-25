@@ -58,10 +58,17 @@ apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, size_t argc, SLVAL* a
 }
 
 SLVAL
-sl_lambda_call_with_receiver(sl_vm_t* vm, SLVAL lambda, SLVAL self, size_t argc, SLVAL* argv)
+sl_lambda_call_with_self(sl_vm_t* vm, SLVAL lambda, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_lambda_t* lp = get_lambda(vm, lambda);
     return apply_lambda(vm, lp, self, argc, argv);
+}
+
+static SLVAL
+sl_lambda_call_with_self2(sl_vm_t* vm, SLVAL lambda, size_t argc, SLVAL* argv)
+{
+    sl_lambda_t* lp = get_lambda(vm, lambda);
+    return apply_lambda(vm, lp, argv[0], argc - 1, argv + 1);
 }
 
 SLVAL
@@ -77,4 +84,5 @@ sl_init_lambda(sl_vm_t* vm)
     vm->lib.Lambda = sl_define_class(vm, "Lambda", vm->lib.Object);
     sl_class_set_allocator(vm, vm->lib.Lambda, allocate_lambda);
     sl_define_method(vm, vm->lib.Lambda, "call", -1, sl_lambda_call);
+    sl_define_method(vm, vm->lib.Lambda, "call_with_self", -2, sl_lambda_call_with_self2);
 }
