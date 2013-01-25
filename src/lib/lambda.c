@@ -29,16 +29,12 @@ allocate_lambda(sl_vm_t* vm)
     return sl_alloc(vm->arena, sizeof(sl_lambda_t));
 }
 
-SLVAL
-sl_lambda_call(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+static SLVAL
+apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_lambda_t* lambda = get_lambda(vm, self);
-    SLVAL err;
-    char buff[128];
-    size_t i;
-    sl_vm_exec_ctx_t* subctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
     if(argc < lambda->section->arg_registers) {
-        err = sl_make_cstring(vm, "Too few arguments in lambda call. Expected ");
+        SLVAL err = sl_make_cstring(vm, "Too few arguments in lambda call. Expected ");
+        char buff[128];
         sprintf(buff, "%d", (int)lambda->section->arg_registers);
         err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, ", received "));
@@ -46,18 +42,33 @@ sl_lambda_call(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
         sl_throw(vm, sl_make_error2(vm, vm->lib.ArgumentError, err));
     }
+    sl_vm_exec_ctx_t* subctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
     subctx->vm = vm;
     subctx->section = lambda->section;
     subctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * lambda->section->max_registers);
-    for(i = 0; i < lambda->section->max_registers; i++) {
+    for(size_t i = 0; i < lambda->section->max_registers; i++) {
         subctx->registers[i] = vm->lib.nil;
     }
-    subctx->self = lambda->parent_ctx->self;
+    subctx->self = self;
     subctx->parent = lambda->parent_ctx;
-    for(i = 0; i < lambda->section->arg_registers; i++) {
+    for(size_t i = 0; i < lambda->section->arg_registers; i++) {
         subctx->registers[i + 1] = argv[i];
     }
     return sl_vm_exec(subctx, 0);
+}
+
+SLVAL
+sl_lambda_call_with_receiver(sl_vm_t* vm, SLVAL lambda, SLVAL self, size_t argc, SLVAL* argv)
+{
+    sl_lambda_t* lp = get_lambda(vm, lambda);
+    return apply_lambda(vm, lp, self, argc, argv);
+}
+
+SLVAL
+sl_lambda_call(sl_vm_t* vm, SLVAL lambda, size_t argc, SLVAL* argv)
+{
+    sl_lambda_t* lp = get_lambda(vm, lambda);
+    return apply_lambda(vm, lp, lp->parent_ctx->self, argc, argv);
 }
 
 void
