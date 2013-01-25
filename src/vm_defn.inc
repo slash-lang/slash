@@ -361,7 +361,6 @@ INSTRUCTION(SL_OP_THROW, {
     sl_throw(vm, NEXT_REG());
 })
 
-#ifdef WITH_EXCEPTION_OPCODES
 /*  0: TRY
     1: <uint:catch_ip> */
 INSTRUCTION(SL_OP_TRY, {
@@ -370,28 +369,17 @@ INSTRUCTION(SL_OP_TRY, {
     eh->catch_ip = NEXT_UINT();
     exception_handler = eh;
 })
-#else
-INSTRUCTION(SL_OP_TRY, {})
-#endif
 
-#ifdef WITH_EXCEPTION_OPCODES
 /*  0: END_TRY */
 INSTRUCTION(SL_OP_END_TRY, {
     exception_handler = exception_handler->prev;
 })
-#else
-INSTRUCTION(SL_OP_END_TRY, {})
-#endif
 
-#ifdef WITH_EXCEPTION_OPCODES
 /*  0: CATCH
     1: <reg:exception_dest> */
 INSTRUCTION(SL_OP_CATCH, {
     NEXT_REG() = catch_frame.as.handler_frame.value;
 })
-#else
-INSTRUCTION(SL_OP_CATCH, {})
-#endif
 
 /*  0: YADA_YADA */
 INSTRUCTION(SL_OP_YADA_YADA, {
