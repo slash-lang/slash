@@ -3,6 +3,11 @@
 class LambdaTest extends Test {
     def test_call {
         assert_equal(123, \{ 123 }.call);
+        assert_equal(self, \{ self }.call);
+    }
+
+    def test_call_with_self {
+        assert_equal("foo", \{ self }.call_with_self("foo"));
     }
     
     def test_unicode_syntax {
