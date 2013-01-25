@@ -25,6 +25,7 @@ typedef struct sl_compile_state {
     uint8_t* registers;
     sl_vm_section_t* section;
     next_last_frame_t* next_last_frames;
+    bool emitted_line_trace;
 }
 sl_compile_state_t;
 
@@ -54,6 +55,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
         cs->registers[i] = 1;
     }
     cs->next_last_frames = NULL;
+    cs->emitted_line_trace = false;
 }
 
 static size_t
@@ -135,6 +137,7 @@ emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
     sl_vm_insn_t insn;
     insn.opcode = opcode;
+    cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
     return emit(cs, insn);
 }
 
@@ -1153,15 +1156,25 @@ NODE(sl_node__register_t, _register)
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
 
 static void
-compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
+emit_line_trace(sl_compile_state_t* cs, sl_node_base_t* node)
 {
     sl_vm_insn_t insn;
     if(node->line != cs->last_line && node->line != 0) {
-        cs->last_line = node->line;
-        emit_opcode(cs, SL_OP_LINE_TRACE);
-        insn.uint = node->line;
-        emit(cs, insn);
+        if(cs->emitted_line_trace) {
+            cs->section->insns[cs->section->insns_count - 1].uint = node->line;
+        } else {
+            cs->last_line = node->line;
+            emit_opcode(cs, SL_OP_LINE_TRACE);
+            insn.uint = node->line;
+            emit(cs, insn);
+        }
     }
+}
+
+static void
+compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
+{
+    emit_line_trace(cs, node);
     switch(node->type) {
         COMPILE(sl_node_seq_t,           SEQ,            seq);
         COMPILE(sl_node_raw_t,           RAW,            raw);
@@ -1214,12 +1227,6 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
     init_compile_state(&cs, vm, NULL, 1);
     cs.section->filename = filename;
     cs.section->name = sl_intern(vm, "<main>");
-    
-    emit_opcode(&cs, SL_OP_IMMEDIATE);
-    insn.imm = vm->lib.nil;
-    emit(&cs, insn);
-    insn.uint = 0;
-    emit(&cs, insn);
     
     compile_node(&cs, ast, 0);
     
