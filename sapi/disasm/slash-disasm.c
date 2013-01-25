@@ -37,11 +37,11 @@ int main(int argc, char** argv)
     fclose(f);
     
     SLVAL err;
-    sl_catch_frame_t frame;
+    sl_vm_frame_t frame;
     SL_TRY(frame, SL_UNWIND_ALL, {
         
         size_t token_count;
-        sl_token_t* tokens = sl_lex(vm, (uint8_t*)argv[1], source, size, &token_count, 0);
+        sl_token_t* tokens = sl_lex(vm, (uint8_t*)argv[1], (uint8_t*)source, size, &token_count, 0);
         
         sl_node_base_t* ast = sl_parse(vm, tokens, token_count, (uint8_t*)argv[1]);
         
@@ -53,11 +53,11 @@ int main(int argc, char** argv)
         }
         
     }, err, {
-        if(frame.as.handler_frame.type == SL_UNWIND_EXCEPTION) {
+        if(frame.as.handler_frame.unwind_type == SL_UNWIND_EXCEPTION) {
             fprintf(stderr, "%s\n", sl_to_cstr(vm, err));
             exit(1);
         }
-        if(frame.as.handler_frame.type == SL_UNWIND_EXIT) {
+        if(frame.as.handler_frame.unwind_type == SL_UNWIND_EXIT) {
             int exit_code = sl_get_int(err);
             sl_free_gc_arena(vm->arena);
             exit(exit_code);
