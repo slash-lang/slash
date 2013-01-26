@@ -950,6 +950,9 @@ static sl_node_base_t*
 postfix_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* expr = low_precedence_logical_expression(ps);
+    if(token(ps)->type == SL_TOK_CLOSE_BRACE && peek_token(ps)->line > token(ps)->line) {
+        return expr; // postfix expressions are only valid on the same line
+    }
     while(1) {
         switch(peek_token(ps)->type) {
             case SL_TOK_IF:
