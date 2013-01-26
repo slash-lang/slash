@@ -21,8 +21,14 @@ SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 
 default: $(TARGETS)
 
+fast-test: sapi[cli]
+	@sapi/cli/slash-cli test/test.sl test/*/*.sl
+
 test: sapi[cli]
-	sapi/cli/slash-cli test/test.sl test/*/*.sl
+	@echo "Running tests"
+	@sapi/cli/slash-cli test/test.sl test/*/*.sl
+	@echo "Running tests with --gc-after-test"
+	@sapi/cli/slash-cli test/test.sl --gc-after-test test/*/*.sl
 
 sapi[%]: libslash.a
 	@echo "make sapi/$*"
