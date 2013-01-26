@@ -102,6 +102,7 @@ sl_init()
     sl_class_t* String;
     sl_gc_arena_t* arena = sl_make_gc_arena();
     
+    sl_gc_disable(arena);
     vm = sl_alloc(arena, sizeof(sl_vm_t));
     vm->arena = arena;
     vm->cwd = ".";
@@ -151,6 +152,7 @@ sl_init()
     vm->state_constant = 1;
     vm->state_method = 1;
 
+    sl_gc_enable(arena);
     return vm;
 }
 
