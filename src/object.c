@@ -297,7 +297,7 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
 SLVAL
 sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, ...)
 {
-    SLVAL* argv = alloca(argc * sizeof(SLVAL));
+    SLVAL argv[argc];
     va_list va;
     size_t i;
     va_start(va, argc);
