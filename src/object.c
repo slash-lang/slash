@@ -210,10 +210,8 @@ sl_define_singleton_method3(sl_vm_t* vm, SLVAL object, SLID name, SLVAL method)
     if(sl_is_a(vm, object, vm->lib.Int)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Can't define singleton method on Int object");
     }
-    if(!sl_get_ptr(object)->singleton_methods) {
-        sl_get_ptr(object)->singleton_methods = st_init_table(vm->arena, &sl_id_hash_type);
-    }
-    st_insert(sl_get_ptr(object)->singleton_methods, (st_data_t)name.id, (st_data_t)sl_get_ptr(method));
+    SLVAL singleton_class = sl_singleton_class(vm, object);
+    sl_define_method3(vm, singleton_class, name, method);
 }
 
 int

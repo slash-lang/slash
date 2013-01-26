@@ -257,15 +257,29 @@ sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
 }
 
 SLVAL
-sl_make_class(sl_vm_t* vm, SLVAL super)
+sl_make_class(sl_vm_t* vm, SLVAL vsuper)
 {
     SLVAL vklass = sl_allocate(vm, vm->lib.Class);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
-    klass->allocator = get_class(vm, super)->allocator;
+
+    SLVAL vsing = sl_allocate(vm, vm->lib.Class);
+    sl_class_t* sing = (sl_class_t*)sl_get_ptr(vsing);
+
+    sl_class_t* super = (sl_class_t*)sl_get_ptr(vsuper);
+
+    sing->allocator = NULL;
+    sing->name.id = 0;
+    sing->super = super->base.klass;
+    sing->in = vm->lib.nil;
+    sing->singleton = true;
+
+    klass->base.klass = vsing;
+    klass->allocator = super->allocator;
     klass->name.id = 0;
-    klass->super = super;
+    klass->super = vsuper;
     klass->in = vm->lib.nil;
     klass->singleton = false;
+
     return vklass;
 }
 
@@ -405,10 +419,10 @@ sl_class_of(sl_vm_t* vm, SLVAL obj)
         return vm->lib.Int;
     } else {
         SLVAL klass = sl_get_ptr(obj)->klass;
-        sl_class_t* pklass = (sl_class_t*)sl_get_ptr(pklass);
+        sl_class_t* pklass = (sl_class_t*)sl_get_ptr(klass);
         while(pklass->singleton) {
             klass = pklass->super;
-            pklass = (sl_class_t*)sl_get_ptr(pklass);
+            pklass = (sl_class_t*)sl_get_ptr(klass);
         }
         return klass;
     }
