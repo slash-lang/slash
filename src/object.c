@@ -577,3 +577,16 @@ sl_object_methods(sl_vm_t* vm, SLVAL self)
     SLVAL ary = sl_class_instance_methods(vm, sl_class_of(vm, self));
     return object_methods_rest(vm, self, ary);
 }
+
+SLVAL
+sl_singleton_class(sl_vm_t* vm, SLVAL object)
+{
+    sl_object_t* ptr = sl_get_ptr(object);
+    sl_class_t* klass = (sl_class_t*)sl_get_ptr(ptr->klass);
+    if(klass->singleton) {
+        return ptr->klass;
+    }
+    SLVAL singleton_class = sl_make_class(vm, ptr->klass);
+    ((sl_class_t*)sl_get_ptr(singleton_class))->singleton = true;
+    return ptr->klass = singleton_class;
+}
