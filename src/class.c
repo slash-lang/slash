@@ -245,16 +245,26 @@ sl_define_class2(sl_vm_t* vm, SLID name, SLVAL super)
 SLVAL
 sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
 {
-    SLVAL vklass = sl_allocate(vm, vm->lib.Class);
+    SLVAL vklass = sl_make_class(vm, super);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
-    klass->super = sl_expect(vm, super, vm->lib.Class);
     klass->name = name;
     klass->in = sl_expect(vm, in, vm->lib.Class);
-    klass->allocator = get_class(vm, super)->allocator;
     if(!vm->initializing) {
         st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
             (st_data_t)name.id, (st_data_t)klass);
     }
+    return vklass;
+}
+
+SLVAL
+sl_make_class(sl_vm_t* vm, SLVAL super)
+{
+    SLVAL vklass = sl_allocate(vm, vm->lib.Class);
+    sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
+    klass->allocator = get_class(vm, super)->allocator;
+    klass->name.id = 0;
+    klass->super = super;
+    klass->in = vm->lib.nil;
     return vklass;
 }
 
