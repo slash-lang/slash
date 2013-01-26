@@ -11,6 +11,12 @@ class ClassTest extends Test {
     
     class Bar extends Foo {
     }
+
+    class Baz {
+        A = 1;
+        B = 2;
+        C = 3;
+    }
         
     def test_to_s {
         assert_equal("ClassTest::Foo", Foo.to_s);
@@ -70,5 +76,21 @@ class ClassTest extends Test {
     
     def test_class {
         assert_equal(Class, Foo.class);
+    }
+
+    def test_constants {
+        assert_equal(["A", "B", "C"], Baz.constants);
+        assert_equal([], Bar.constants);
+    }
+
+    def test_set_constant {
+        refute(Foo.constants.includes("TestSetConstant"), "expected Foo not to have TestSetConstant");
+        Foo.set_constant("TestSetConstant", 123);
+        assert_equal(123, Foo::TestSetConstant);
+    }
+
+    def test_set_constant_throws_on_bad_constant_name {
+        assert_throws(NameError, \{ Foo.set_constant("", nil) });
+        assert_throws(NameError, \{ Foo.set_constant("aBC", nil) });
     }
 }.register;
