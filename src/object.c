@@ -479,26 +479,20 @@ sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 static SLVAL
 sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
-    /*
     SLID mid = sl_intern2(vm, method_name);
+    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
     SLVAL method;
-    sl_expect(vm, method_name, vm->lib.String);
-    if(sl_get_primitive_type(self) != SL_T_INT) {
-        sl_object_t* obj = sl_get_ptr(self);
-        if(obj->singleton_methods && st_lookup(obj->singleton_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
+    sl_class_t* klassp;
+
+    do {
+        klassp = (sl_class_t*)sl_get_ptr(klass);
+        if(st_lookup(klassp->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
             return method;
         }
-    }
-    sl_class_t* klass = (sl_class_t*)sl_get_ptr(sl_class_of(vm, self));
-    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
-        return sl_method_bind(vm, method, self);
-    }
+        klass = klassp->super;
+    } while(klassp->singleton);
+
     return vm->lib.nil;
-    */
-    // TODO reimplement
-    return self;
-    (void)method_name;
-    (void)vm;
 }
 
 struct collect_methods_iter_state {
@@ -514,24 +508,6 @@ collect_methods_iter(SLID id, SLVAL method, struct collect_methods_iter_state* s
     sl_array_push(state->vm, state->ary, 1, &name);
     return ST_CONTINUE;
 }
-
-/*
-static SLVAL
-object_methods_rest(sl_vm_t* vm, SLVAL self, SLVAL starting_array)
-{
-    sl_object_t* obj = sl_get_ptr(self);
-    if(sl_get_primitive_type(self) != SL_T_INT && obj->singleton_methods) {
-        SLVAL singletons = sl_make_array(vm, 0, NULL);
-        struct singleton_methods_iter_state state;
-        state.vm = vm;
-        state.ary = singletons;
-        st_foreach(obj->singleton_methods, singleton_methods_iter, (st_data_t)&state);
-        return sl_array_concat(vm, singletons, starting_array);
-    } else {
-        return starting_array;
-    }
-}
-*/
 
 static SLVAL
 sl_object_own_methods(sl_vm_t* vm, SLVAL self)
@@ -555,13 +531,19 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self)
 static SLVAL
 sl_object_methods(sl_vm_t* vm, SLVAL self)
 {
-    /*
-    SLVAL ary = sl_class_instance_methods(vm, sl_class_of(vm, self));
-    return object_methods_rest(vm, self, ary);
-    */
-    // TODO reimplement
-    (void)vm;
-    return self;
+    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
+
+    struct collect_methods_iter_state state;
+    state.vm = vm;
+    state.ary = sl_make_array(vm, 0, NULL);
+
+    while(sl_get_primitive_type(klass) == SL_T_CLASS) {
+        sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+        st_foreach(klassp->instance_methods, collect_methods_iter, (st_data_t)&state);
+        klass = klassp->super;
+    }
+
+    return state.ary;
 }
 
 SLVAL
