@@ -123,8 +123,8 @@ sub check_prog {
 }
 
 if(!defined $ENV{CC}) {
-    warning "CC environment variable not set, falling back to 'cc'...";
-    $ENV{CC} = "cc";
+    warning "CC environment variable not set, falling back to 'gcc'...";
+    $ENV{CC} = "gcc";
 }
 check_prog "$ENV{CC} --version";
 
