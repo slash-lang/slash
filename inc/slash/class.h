@@ -10,6 +10,9 @@ void
 sl_init_class(sl_vm_t* vm);
 
 SLVAL
+sl_make_class(sl_vm_t* vm, SLVAL super);
+
+SLVAL
 sl_define_class(sl_vm_t* vm, char* name, SLVAL super);
 
 SLVAL
