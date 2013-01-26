@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 #define POINTER_ALIGN_BYTES (4)
-#define ALLOCS_PER_GC_RUN (100000)
+#define ALLOCS_PER_GC_RUN (10000)
 #define ALLOC_BUCKET_COUNT (65536)
 
 typedef struct sl_gc_alloc {
@@ -45,6 +45,13 @@ free_alloc(sl_gc_alloc_t* alloc)
     }
     free(alloc);
 }
+
+typedef struct sl_gc_root {
+    struct sl_gc_root* next;
+    void* addr;
+    size_t size;
+}
+sl_gc_root_t;
 
 struct sl_gc_arena {
     sl_gc_alloc_t** table;
@@ -89,6 +96,7 @@ void
 sl_free_gc_arena(sl_gc_arena_t* arena)
 {
     size_t i;
+
     sl_gc_alloc_t *alloc, *next;
     for(i = 0; i < arena->table_count; i++) {
         alloc = arena->table[i];
@@ -99,6 +107,7 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
         }
     }
     free(arena->table);
+
     free(arena);
 }
 
@@ -173,11 +182,29 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 }
 
 static void
+sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc);
+
+static void
+sl_gc_mark_region(sl_gc_arena_t* arena, void* ptr, size_t size)
+{
+    intptr_t addr = (intptr_t)ptr;
+    intptr_t max = addr + size;
+    for(; addr + (intptr_t)sizeof(void*) <= max; addr += POINTER_ALIGN_BYTES) {
+        intptr_t ptr = *(intptr_t*)addr;
+        if(ptr & (POINTER_ALIGN_BYTES - 1)) {
+            /* if the pointer is not aligned, ignore it */
+            continue;
+        }
+        sl_gc_alloc_t* alloc = sl_gc_find_alloc(arena, (void*)ptr);
+        if(alloc) {
+            sl_gc_mark_allocation(arena, alloc);
+        }
+    }
+}
+
+static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    intptr_t addr = (intptr_t)ptr_for_alloc(alloc);
-    intptr_t max = addr + alloc->size;
-    intptr_t ptr;
     if(alloc->mark_flag == arena->mark_flag) {
         return;
     }
@@ -185,17 +212,7 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
     if(!alloc->scan_pointers) {
         return;
     }
-    for(; addr + (intptr_t)sizeof(void*) <= max; addr += POINTER_ALIGN_BYTES) {
-        ptr = *(intptr_t*)addr;
-        if(ptr & (POINTER_ALIGN_BYTES - 1)) {
-            /* if the pointer is not aligned, ignore it */
-            continue;
-        }
-        alloc = sl_gc_find_alloc(arena, (void*)ptr);
-        if(alloc) {
-            sl_gc_mark_allocation(arena, alloc);
-        }
-    }
+    sl_gc_mark_region(arena, ptr_for_alloc(alloc), alloc->size);
 }
 
 static void
@@ -252,10 +269,11 @@ sl_gc_run(sl_gc_arena_t* arena)
     }
     
     jmp_buf regs;
-    sl_setjmp(regs); /* dump registers to stack */
+    setjmp(regs);
     
     arena->allocs_since_gc = 0;
     arena->mark_flag = !arena->mark_flag;
+    sl_gc_mark_region(arena, &regs, sizeof(regs));
     sl_gc_mark_stack(arena);
     sl_gc_sweep(arena);
 }
