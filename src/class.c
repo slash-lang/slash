@@ -148,6 +148,65 @@ sl_class_instance_methods(sl_vm_t* vm, SLVAL klass)
     return ary;
 }
 
+struct class_constants_state {
+    sl_vm_t* vm;
+    SLVAL ary;
+};
+
+static int
+class_constants_iter(SLID id, SLVAL value, struct class_constants_state* state)
+{
+    SLVAL name = sl_id_to_string(state->vm, id);
+    sl_array_push(state->vm, state->ary, 1, &name);
+    return ST_CONTINUE;
+    (void)value;
+}
+
+static SLVAL
+class_constants(sl_vm_t* vm, SLVAL klass)
+{
+    sl_class_t* class = get_class(vm, klass);
+    struct class_constants_state state;
+    state.vm = vm;
+    state.ary = sl_make_array(vm, 0, NULL);
+    st_foreach(class->constants, class_constants_iter, (st_data_t)&state);
+    return state.ary;
+}
+
+static void
+validate_constant_name(sl_vm_t* vm, SLVAL name)
+{
+    sl_string_t* str = (sl_string_t*)sl_get_ptr(sl_expect(vm, name, vm->lib.String));
+    if(str->buff_len == 0 || str->buff[0] < 'A' || str->buff[0] > 'Z') {
+        sl_throw_message2(vm, vm->lib.NameError, "Constant names must begin with a capital letter");
+    }
+}
+
+static SLVAL
+class_get_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
+{
+    validate_constant_name(vm, name);
+    return sl_class_get_const2(vm, klass, sl_intern2(vm, name));
+}
+
+static SLVAL
+class_set_constant(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL value)
+{
+    validate_constant_name(vm, name);
+    sl_class_set_const2(vm, klass, sl_intern2(vm, name), value);
+    return klass;
+}
+
+static SLVAL
+class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
+{
+    validate_constant_name(vm, name);
+    sl_class_t* class = get_class(vm, klass);
+    SLID id = sl_intern2(vm, name);
+    st_delete(class->constants, (st_data_t*)&id.id, NULL);
+    return klass;
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -165,6 +224,10 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "own_instance_method", 1, sl_class_own_instance_method);
     sl_define_method(vm, vm->lib.Class, "own_instance_methods", 0, sl_class_own_instance_methods);
     sl_define_method(vm, vm->lib.Class, "instance_methods", 0, sl_class_instance_methods);
+    sl_define_method(vm, vm->lib.Class, "constants", 0, class_constants);
+    sl_define_method(vm, vm->lib.Class, "get_constant", 1, class_get_constant);
+    sl_define_method(vm, vm->lib.Class, "set_constant", 2, class_set_constant);
+    sl_define_method(vm, vm->lib.Class, "remove_constant", 1, class_remove_constant);
 }
 
 SLVAL
