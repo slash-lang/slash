@@ -191,21 +191,6 @@ if(compile("", "int main(){ if(__builtin_expect(1, 1)) { } }")) {
     print "failed\n";
 }
 
-print "Checking for computed goto... ";
-if(compile("", "int main(){ void* addr = &&label; goto *addr; label: exit(0); }")) {
-    print "ok\n";
-    $CFLAGS .= " -DSL_HAS_COMPUTED_GOTO";
-    print "Checking for -Wno-gnu... ";
-    if(compile("-Wno-gnu", "int main() {}")) {
-        print "ok\n";
-        $CFLAGS .= " -Wno-gnu";
-    } else {
-        print "failed\n";
-    }
-} else {
-    print "failed\n";
-}
-
 open my $mf, ">$path/local.mk";
 
 print $mf "CC=$ENV{CC}\n";
