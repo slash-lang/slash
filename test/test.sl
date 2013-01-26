@@ -15,6 +15,9 @@ class Test {
     
     def self.passes             { @@passes ||= 0; }
     def self.passes=(val)       { @@passes = val; }
+
+    def self.gc_after_test      { @@gc_after_test }
+    def self.gc_after_test=(b)  { @@gc_after_test = b; }
     
     def assert(what, message = "Assertion failed") {
         Test.assertions++;
@@ -63,7 +66,7 @@ class Test {
                 obj.send(method);
                 print(".");
                 Test.passes++;
-                GC.run;
+                GC.run if Test.gc_after_test;
             } catch e {
                 Test.failures++;
                 print("F");
@@ -75,6 +78,11 @@ class Test {
     def self.register {
         CASES.push(self);
     }
+}
+
+if ARGV.first == "--gc-after-test" {
+    Test.gc_after_test = true;
+    ARGV.shift;
 }
 
 for file in ARGV {
