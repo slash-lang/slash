@@ -234,25 +234,7 @@ sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv)
 int
 sl_responds_to2(sl_vm_t* vm, SLVAL object, SLID id)
 {
-    sl_object_t* recvp = sl_get_ptr(object);
-    SLVAL klass = sl_class_of(vm, object);
-    sl_class_t* klassp = NULL;
-    
-    if(sl_get_primitive_type(object) != SL_T_INT && recvp->singleton_methods) {
-        if(st_lookup(recvp->singleton_methods, (st_data_t)id.id, NULL)) {
-            return 1;
-        }
-    }
-    
-    klassp = (sl_class_t*)sl_get_ptr(klass);
-    while(klassp->base.primitive_type != SL_T_NIL) {
-        if(st_lookup(klassp->instance_methods, (st_data_t)id.id, NULL)) {
-            return 1;
-        }
-        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
-    }
-    
-    return 0;
+    return sl_lookup_method(vm, object, id) != NULL;
 }
 
 SLVAL
@@ -439,31 +421,11 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
 sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
 {
-    sl_method_t* method;
-    sl_object_t* recvp = sl_get_ptr(recv);
-    SLVAL klass = sl_class_of(vm, recv);
-    sl_class_t* klassp;
-    
-    if(sl_get_primitive_type(recv) != SL_T_INT && recvp->singleton_methods) {
-        if(st_lookup(recvp->singleton_methods, (st_data_t)id.id, (st_data_t*)&method)) {
-            return method;
-        }
-    }
-    
-    if(sl_get_primitive_type(recv) != SL_T_INT && recvp->primitive_type == SL_T_CLASS) {
-        klassp = (sl_class_t*)recvp;
-        while(klassp->base.primitive_type != SL_T_NIL) {
-            if(klassp->base.singleton_methods) {
-                if(st_lookup(klassp->base.singleton_methods, (st_data_t)id.id, (st_data_t*)&method)) {
-                    return method;
-                }
-            }
-            klassp = (sl_class_t*)sl_get_ptr(klassp->super);
-        }
-    }
-    
-    klassp = (sl_class_t*)sl_get_ptr(klass);
+    SLVAL klass = SL_IS_INT(recv) ? vm->lib.Int : sl_get_ptr(recv)->klass;   
+    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+
     while(klassp->base.primitive_type != SL_T_NIL) {
+        sl_method_t* method;
         if(st_lookup(klassp->instance_methods, (st_data_t)id.id, (st_data_t*)&method)) {
             return method;
         }
@@ -517,6 +479,7 @@ sl_object_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 static SLVAL
 sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
+    /*
     SLID mid = sl_intern2(vm, method_name);
     SLVAL method;
     sl_expect(vm, method_name, vm->lib.String);
@@ -531,21 +494,28 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
         return sl_method_bind(vm, method, self);
     }
     return vm->lib.nil;
+    */
+    // TODO reimplement
+    return self;
+    (void)method_name;
+    (void)vm;
 }
 
-struct singleton_methods_iter_state {
+struct collect_methods_iter_state {
     sl_vm_t* vm;
     SLVAL ary;
 };
 
 static int
-singleton_methods_iter(SLVAL name, SLVAL method, struct singleton_methods_iter_state* state)
+collect_methods_iter(SLID id, SLVAL method, struct collect_methods_iter_state* state)
 {
     (void)method;
+    SLVAL name = sl_id_to_string(state->vm, id);
     sl_array_push(state->vm, state->ary, 1, &name);
     return ST_CONTINUE;
 }
 
+/*
 static SLVAL
 object_methods_rest(sl_vm_t* vm, SLVAL self, SLVAL starting_array)
 {
@@ -561,19 +531,37 @@ object_methods_rest(sl_vm_t* vm, SLVAL self, SLVAL starting_array)
         return starting_array;
     }
 }
+*/
 
 static SLVAL
 sl_object_own_methods(sl_vm_t* vm, SLVAL self)
 {
-    SLVAL ary = sl_class_own_instance_methods(vm, sl_class_of(vm, self));
-    return object_methods_rest(vm, self, ary);
+    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
+    sl_class_t* klassp;
+
+    struct collect_methods_iter_state state;
+    state.vm = vm;
+    state.ary = sl_make_array(vm, 0, NULL);
+
+    do {
+        klassp = (sl_class_t*)sl_get_ptr(klass);
+        st_foreach(klassp->instance_methods, collect_methods_iter, (st_data_t)&state);
+        klass = klassp->super;
+    } while(klassp->singleton);
+
+    return state.ary;
 }
 
 static SLVAL
 sl_object_methods(sl_vm_t* vm, SLVAL self)
 {
+    /*
     SLVAL ary = sl_class_instance_methods(vm, sl_class_of(vm, self));
     return object_methods_rest(vm, self, ary);
+    */
+    // TODO reimplement
+    (void)vm;
+    return self;
 }
 
 SLVAL

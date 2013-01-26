@@ -43,7 +43,6 @@ sl_init_nil(sl_vm_t* vm)
     nil->klass = vm->lib.Nil;
     nil->primitive_type = SL_T_NIL;
     nil->instance_variables = NULL;
-    nil->singleton_methods = NULL;
     
     sl_define_method(vm, vm->lib.Nil, "to_s", 0, nil_to_s);
     sl_define_method(vm, vm->lib.Nil, "inspect", 0, nil_inspect);

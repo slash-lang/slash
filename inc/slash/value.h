@@ -44,7 +44,6 @@ typedef struct sl_object {
     SLVAL klass;
     sl_primitive_type_t primitive_type;
     st_table_t* instance_variables;
-    st_table_t* singleton_methods;
 }
 sl_object_t;
 
