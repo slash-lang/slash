@@ -89,8 +89,17 @@ sl_class_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
     if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
-        return method;
-    } else if(sl_get_primitive_type(klass->super) == SL_T_CLASS) {
+        if(sl_get_primitive_type(method) == SL_T_CACHED_METHOD_ENTRY) {
+            sl_cached_method_entry_t* cme = (void*)sl_get_ptr(method);
+            // TODO - improve cache invalidation. this is too coarse
+            if(cme->state == vm->state_method) {
+                return sl_make_ptr((sl_object_t*)cme->method);
+            }
+        } else {
+            return method;
+        }
+    }
+    if(sl_get_primitive_type(klass->super) == SL_T_CLASS) {
         return sl_class_instance_method(vm, klass->super, method_name);
     }
     return vm->lib.nil;
@@ -104,10 +113,11 @@ sl_class_own_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
     if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
-        return method;
-    } else {
-        return vm->lib.nil;
+        if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
+            return method;
+        }
     }
+    return vm->lib.nil;
 }
 
 struct own_instance_methods_iter_state {
@@ -118,9 +128,10 @@ struct own_instance_methods_iter_state {
 static int
 own_instance_methods_iter(SLID name, SLVAL method, struct own_instance_methods_iter_state* state)
 {
-    (void)method;
-    SLVAL namev = sl_id_to_string(state->vm, name);
-    sl_array_push(state->vm, state->ary, 1, &namev);
+    if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
+        SLVAL namev = sl_id_to_string(state->vm, name);
+        sl_array_push(state->vm, state->ary, 1, &namev);
+    }
     return ST_CONTINUE;
 }
 

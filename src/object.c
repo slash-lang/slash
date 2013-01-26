@@ -418,21 +418,41 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
     return vm->lib.nil;
 }
 
+static sl_method_t*
+lookup_method_rec(sl_vm_t* vm, SLVAL klass, SLID id)
+{
+    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+    if(klassp->base.primitive_type == SL_T_NIL) {
+        return NULL;
+    }
+
+    sl_method_t* method;
+    if(st_lookup(klassp->instance_methods, (st_data_t)id.id, (st_data_t*)&method)) {
+        if(method->base.primitive_type == SL_T_CACHED_METHOD_ENTRY) {
+            sl_cached_method_entry_t* cme = (void*)method;
+            // TODO - improve cache invalidation. this is too coarse
+            if(cme->state == vm->state_method) {
+                return cme->method;
+            }
+        } else {
+            return method;
+        }
+    }
+
+    method = lookup_method_rec(vm, klassp->super, id);
+    sl_cached_method_entry_t* cme = sl_alloc(vm->arena, sizeof(*cme));
+    cme->primitive_type = SL_T_CACHED_METHOD_ENTRY;
+    cme->state = vm->state_method;
+    cme->method = method;
+    st_insert(klassp->instance_methods, (st_data_t)id.id, (st_data_t)cme);
+    return method;
+}
+
 sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
 {
-    SLVAL klass = SL_IS_INT(recv) ? vm->lib.Int : sl_get_ptr(recv)->klass;   
-    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
-
-    while(klassp->base.primitive_type != SL_T_NIL) {
-        sl_method_t* method;
-        if(st_lookup(klassp->instance_methods, (st_data_t)id.id, (st_data_t*)&method)) {
-            return method;
-        }
-        klassp = (sl_class_t*)sl_get_ptr(klassp->super);
-    }
-    
-    return NULL;
+    SLVAL klass = SL_IS_INT(recv) ? vm->lib.Int : sl_get_ptr(recv)->klass;
+    return lookup_method_rec(vm, klass, id);
 }
 
 SLVAL
@@ -503,9 +523,10 @@ struct collect_methods_iter_state {
 static int
 collect_methods_iter(SLID id, SLVAL method, struct collect_methods_iter_state* state)
 {
-    (void)method;
-    SLVAL name = sl_id_to_string(state->vm, id);
-    sl_array_push(state->vm, state->ary, 1, &name);
+    if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
+        SLVAL name = sl_id_to_string(state->vm, id);
+        sl_array_push(state->vm, state->ary, 1, &name);
+    }
     return ST_CONTINUE;
 }
 

@@ -34,6 +34,7 @@ typedef enum sl_primitive_type {
     SL_T_FLOAT,
     SL_T_BIGNUM,
     SL_T_METHOD,
+    SL_T_CACHED_METHOD_ENTRY,
     SL_T_BOUND_METHOD,
     SL_T_ARRAY,
     SL_T_DICT
@@ -41,8 +42,8 @@ typedef enum sl_primitive_type {
 sl_primitive_type_t;
 
 typedef struct sl_object {
-    SLVAL klass;
     sl_primitive_type_t primitive_type;
+    SLVAL klass;
     st_table_t* instance_variables;
 }
 sl_object_t;
@@ -89,6 +90,19 @@ typedef struct sl_method {
     } as;
 }
 sl_method_t;
+
+typedef struct sl_cached_method_entry {
+    /*
+    be very careful with this struct.
+    for the sake of memory efficiency, this doesn't have a full object header,
+    so when pulling methods out of method tables, we need to do a primitive_type
+    check first and follow the method pointer if it's a SL_T_CACHED_METHOD_ENTRY
+    */
+    sl_primitive_type_t primitive_type;
+    uint32_t state;
+    sl_method_t* method;
+}
+sl_cached_method_entry_t;
 
 typedef struct sl_bound_method {
     sl_method_t method;
