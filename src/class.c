@@ -404,7 +404,13 @@ sl_class_of(sl_vm_t* vm, SLVAL obj)
     if(sl_get_primitive_type(obj) == SL_T_INT) {
         return vm->lib.Int;
     } else {
-        return sl_get_ptr(obj)->klass;
+        SLVAL klass = sl_get_ptr(obj)->klass;
+        sl_class_t* pklass = (sl_class_t*)sl_get_ptr(pklass);
+        while(pklass->singleton) {
+            klass = pklass->super;
+            pklass = (sl_class_t*)sl_get_ptr(pklass);
+        }
+        return klass;
     }
 }
 
