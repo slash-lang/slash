@@ -12,7 +12,7 @@ class TestObject extends Test {
     }
 
     def test_own_methods {
-        assert_equal(["foo", "bar"], Foo.new.own_methods());
+        assert_equal(["bar", "foo"], Foo.new.own_methods().sort);
     }
 
     def test_hash {
