@@ -166,4 +166,10 @@ class EnumerableTest extends Test {
         assert_equal(4, LengthOfExactlyFourEnumerable.new.last);
         assert_equal(nil, UselessEnumerable.new.last);
     }
+
+    def test_includes {
+        assert(LengthOfExactlyFourEnumerable.new.includes(3));
+        refute(LengthOfExactlyFourEnumerable.new.includes(5));
+        assert(InfiniteEnumerable.new.includes(true));
+    }
 }.register;

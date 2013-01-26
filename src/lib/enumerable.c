@@ -239,6 +239,19 @@ enumerable_last(sl_vm_t* vm, SLVAL self)
     return last;
 }
 
+static SLVAL
+enumerable_includes(sl_vm_t* vm, SLVAL self, SLVAL needle)
+{
+    SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        SLVAL current = sl_send_id(vm, enumerator, vm->id.current, 0);
+        if(sl_eq(vm, needle, current)) {
+            return vm->lib._true;
+        }
+    }
+    return vm->lib._false;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -260,4 +273,5 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "take", 1, enumerable_take);
     sl_define_method(vm, vm->lib.Enumerable, "first", 0, enumerable_first);
     sl_define_method(vm, vm->lib.Enumerable, "last", 0, enumerable_last);
+    sl_define_method(vm, vm->lib.Enumerable, "includes", 1, enumerable_includes);
 }

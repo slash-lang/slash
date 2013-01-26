@@ -20,6 +20,10 @@ class Test {
         Test.assertions++;
         throw Failure.new(message) unless what;
     }
+
+    def refute(what, message = "Refutation failed") {
+        assert(!what, message);
+    }
     
     def flunk {
         assert(false, "flunked");
