@@ -265,6 +265,7 @@ sl_make_class(sl_vm_t* vm, SLVAL super)
     klass->name.id = 0;
     klass->super = super;
     klass->in = vm->lib.nil;
+    klass->singleton = false;
     return vklass;
 }
 
