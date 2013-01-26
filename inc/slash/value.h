@@ -1,6 +1,7 @@
 #ifndef SL_VALUE_H
 #define SL_VALUE_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
@@ -56,6 +57,7 @@ typedef struct sl_class {
     st_table_t* class_variables;
     st_table_t* instance_methods;
     sl_object_t*(*allocator)(struct sl_vm*);
+    bool singleton;
 }
 sl_class_t;
 
