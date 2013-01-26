@@ -175,26 +175,22 @@ INSTRUCTION(SL_OP_SEND, {
     SLVAL* argv = &NEXT_REG();
     size_t argc = NEXT_UINT();
     sl_vm_inline_cache_t* ic = NEXT_IC();
-    if(sl_unlikely(sl_get_primitive_type(receiver) != SL_T_INT && sl_get_ptr(receiver)->singleton_methods)) {
-        NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+    sl_method_t* method;
+    SLVAL recv_klass = sl_class_of(vm, receiver);
+    if(sl_likely(ic->state == vm->state_method && ic->klass.i == recv_klass.i)) {
+        method = (sl_method_t*)sl_get_ptr(ic->value);
     } else {
-        sl_method_t* method;
-        SLVAL recv_klass = sl_class_of(vm, receiver);
-        if(sl_likely(ic->state == vm->state_method && ic->klass.i == recv_klass.i)) {
-            method = (sl_method_t*)sl_get_ptr(ic->value);
-        } else {
-            method = sl_lookup_method(vm, receiver, id);
-            if(sl_likely(method != NULL)) {
-                ic->state = vm->state_method;
-                ic->klass = recv_klass;
-                ic->value = sl_make_ptr((sl_object_t*)method);
-            }
-        }
+        method = sl_lookup_method(vm, receiver, id);
         if(sl_likely(method != NULL)) {
-            NEXT_REG() = sl_apply_method(vm, receiver, method, argc, argv);
-        } else {
-            NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+            ic->state = vm->state_method;
+            ic->klass = recv_klass;
+            ic->value = sl_make_ptr((sl_object_t*)method);
         }
+    }
+    if(sl_likely(method != NULL)) {
+        NEXT_REG() = sl_apply_method(vm, receiver, method, argc, argv);
+    } else {
+        NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
     }
 })
 

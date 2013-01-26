@@ -268,16 +268,12 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
     sl_class_t* super = (sl_class_t*)sl_get_ptr(vsuper);
 
     sing->allocator = NULL;
-    sing->name.id = 0;
     sing->super = super->base.klass;
-    sing->in = vm->lib.nil;
     sing->singleton = true;
 
     klass->base.klass = vsing;
     klass->allocator = super->allocator;
-    klass->name.id = 0;
     klass->super = vsuper;
-    klass->in = vm->lib.nil;
     klass->singleton = false;
 
     return vklass;
