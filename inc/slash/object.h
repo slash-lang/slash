@@ -72,4 +72,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv);
 sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id);
 
+SLVAL
+sl_singleton_class(sl_vm_t* vm, SLVAL object);
+
 #endif
