@@ -79,7 +79,7 @@ class ClassTest extends Test {
     }
 
     def test_constants {
-        assert_equal(["A", "B", "C"], Baz.constants);
+        assert_equal(["A", "B", "C"], Baz.constants.sort);
         assert_equal([], Bar.constants);
     }
 
