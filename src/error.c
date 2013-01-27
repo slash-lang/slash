@@ -183,6 +183,14 @@ sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVA
     internal_error_add_frame(vm, e, method, file, line);
 }
 
+static SLVAL
+f_backtrace(sl_vm_t* vm)
+{
+    sl_error_t* err = get_error(vm, sl_allocate(vm, vm->lib.Error));
+    build_backtrace(vm, err);
+    return err->backtrace;
+}
+
 void
 sl_init_error(sl_vm_t* vm)
 {
@@ -200,6 +208,8 @@ sl_init_error(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Error_Frame, "file", 0, sl_error_frame_file);
     sl_define_method(vm, vm->lib.Error_Frame, "line", 0, sl_error_frame_line);
     sl_define_method(vm, vm->lib.Error_Frame, "to_s", 0, sl_error_frame_to_s);
+
+    sl_define_method(vm, vm->lib.Object, "backtrace", 0, f_backtrace);
     
     #define ERROR(klass) vm->lib.klass = sl_define_class(vm, #klass, vm->lib.Error)
     ERROR(ArgumentError);

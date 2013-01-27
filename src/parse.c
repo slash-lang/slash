@@ -700,6 +700,20 @@ power_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+use_expression(sl_parse_state_t* ps)
+{
+    expect_token(ps, SL_TOK_USE);
+    sl_node_base_t* node = call_expression(ps);
+    if(node->type != SL_NODE_CONST) {
+        error(ps, sl_make_cstring(ps->vm, "Expected constant reference in use expression"), token(ps));
+    }
+    for(sl_node_base_t* i = node; i && i->type == SL_NODE_CONST; i = ((sl_node_const_t*)i)->obj) {
+        i->type = SL_NODE_USE;
+    }
+    return node;
+}
+
+static sl_node_base_t*
 unary_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t* expr;
@@ -737,6 +751,8 @@ unary_expression(sl_parse_state_t* ps)
         case SL_TOK_THROW:
             next_token(ps);
             return sl_make_unary_node(ps, low_precedence_logical_expression(ps), SL_NODE_THROW);
+        case SL_TOK_USE:
+            return use_expression(ps);
         default:
             return power_expression(ps);
     }

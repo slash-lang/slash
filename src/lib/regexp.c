@@ -351,6 +351,7 @@ sl_init_regexp(sl_vm_t* vm)
     
     sl_class_set_const(vm, vm->lib.Regexp, "CASELESS", sl_make_int(vm, PCRE_CASELESS));
     sl_class_set_const(vm, vm->lib.Regexp, "EXTENDED", sl_make_int(vm, PCRE_EXTENDED));
+    sl_class_set_const(vm, vm->lib.Regexp, "PCRE_VERSION", sl_make_cstring(vm, pcre_version()));
     
     sl_define_method(vm, vm->lib.Regexp_Match, "regexp", 0, sl_regexp_match_regexp);
     sl_define_method(vm, vm->lib.Regexp_Match, "[]", 1, sl_regexp_match_index);

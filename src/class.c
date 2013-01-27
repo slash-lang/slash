@@ -231,6 +231,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "super", 0, sl_class_super);
     sl_define_method(vm, vm->lib.Class, "inspect", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "new", -1, sl_new);
+    sl_define_method(vm, vm->lib.Class, "file_path", 0, sl_class_file_path);
     sl_define_method(vm, vm->lib.Class, "instance_method", 1, sl_class_instance_method);
     sl_define_method(vm, vm->lib.Class, "own_instance_method", 1, sl_class_own_instance_method);
     sl_define_method(vm, vm->lib.Class, "own_instance_methods", 0, sl_class_own_instance_methods);
@@ -443,4 +444,81 @@ sl_new(sl_vm_t* vm, SLVAL klass, size_t argc, SLVAL* argv)
         sl_send2(vm, obj, vm->id.init, argc, argv);
     }
     return obj;
+}
+
+bool
+sl_class_has_full_path(sl_vm_t* vm, SLVAL klass)
+{
+    if(sl_get_ptr(klass) == sl_get_ptr(vm->lib.Object)) {
+        return true;
+    }
+    if(sl_get_primitive_type(klass) != SL_T_CLASS) {
+        return false;
+    }
+    sl_class_t* klassp = get_class(vm, klass);
+    if(!klassp->name.id) {
+        return false;
+    }
+    return sl_class_has_full_path(vm, klassp->in);
+}
+
+SLVAL
+sl_camel_case_to_underscore(sl_vm_t* vm, SLVAL strv)
+{
+    sl_string_t* str = sl_get_string(vm, strv);
+    size_t len = str->buff_len;
+    bool saw_capital_letter = true;
+    for(size_t i = 0; i < str->buff_len; i++) {
+        uint8_t c = str->buff[i];
+        if(c >= 'A' && c <= 'Z') {
+            if(!saw_capital_letter) {
+                len++;
+                saw_capital_letter = true;
+            }
+        } else {
+            saw_capital_letter = false;
+        }
+    }
+    uint8_t* file_path = sl_alloc_buffer(vm->arena, len + 1);
+    size_t j = 0;
+    saw_capital_letter = true;
+    for(size_t i = 0; i < str->buff_len; i++) {
+        uint8_t c = str->buff[i];
+        if(c >= 'A' && c <= 'Z') {
+            if(!saw_capital_letter) {
+                file_path[j++] = '_';
+                saw_capital_letter = true;
+            }
+            file_path[j++] = c + ('a' - 'A');
+        } else {
+            saw_capital_letter = false;
+            file_path[j++] = c;
+        }
+    }
+    return sl_make_string(vm, file_path, j);
+}
+
+static SLVAL
+class_file_path_rec(sl_vm_t* vm, SLVAL klass)
+{
+    sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
+    SLVAL seg = sl_camel_case_to_underscore(vm, sl_id_to_string(vm, klassp->name));
+    if(sl_get_ptr(klassp->in) == sl_get_ptr(vm->lib.Object)) {
+        return seg;
+    }
+    SLVAL path = class_file_path_rec(vm, klassp->in);
+    path = sl_string_concat(vm, path, sl_make_cstring(vm, "/"));
+    return sl_string_concat(vm, path, seg);
+}
+
+SLVAL
+sl_class_file_path(sl_vm_t* vm, SLVAL klass)
+{
+    if(!sl_class_has_full_path(vm, klass)) {
+        return vm->lib.nil;
+    }
+    if(sl_get_ptr(klass) == sl_get_ptr(vm->lib.Object)) {
+        return sl_make_cstring(vm, "Object");
+    }
+    return class_file_path_rec(vm, klass);
 }

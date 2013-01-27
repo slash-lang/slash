@@ -60,6 +60,8 @@ class FloatTest extends Test {
     def test_to_s_and_inspect {
         assert_equal("5.5", 5.5.to_s);
         assert_equal("5.5", 5.5.inspect);
+        assert_equal("5.0", 5.0.inspect);
+        assert_equal("0.0", 0.0.inspect);
     }
     
     def test_to_i {
@@ -90,6 +92,24 @@ class FloatTest extends Test {
         assert_equal(1, 100.500001 <=> 100.500000);
         assert_equal(1, Infinity <=> 9999999999999999999999999999999999999999);
         assert_equal(-1, 0.5555 <=> 9999999999999999999999999999999999999999)
+    }
+
+    def test_round {
+        assert_equal(4, 4.4.round);
+        assert_equal(5, 4.5.round);
+        assert_equal(100000000000000000000, 99999999999999999999.5.round);
+    }
+
+    def test_floor {
+        assert_equal(4, 4.4.floor);
+        assert_equal(4, 4.5.floor);
+        assert_equal(5, 5.0.floor);
+    }
+
+    def test_ceil {
+        assert_equal(5, 4.4.ceil);
+        assert_equal(5, 4.5.ceil);
+        assert_equal(5, 5.0.ceil);
     }
     
     def test_class {

@@ -34,7 +34,21 @@ int
 sl_file_exists(sl_vm_t* vm, char* path)
 {
     DWORD dwAttrib = GetFileAttributes(sl_realpath(vm, path));
-    return (dwAttrib != INVALID_FILE_ATTRIBUTES && !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+    return dwAttrib != INVALID_FILE_ATTRIBUTES;
+}
+
+sl_file_type_t
+sl_file_type(struct sl_vm* vm, char* path
+{
+    DWORD attrib = GetFileAttributes(sl_realpath(vm, path));
+    if(attrib == INVALID_FILE_ATTRIBUTES) {
+        return SL_FT_NO_EXIST;
+    }
+    if(attrib & FILE_ATTRIBUTE_DIRECTORY) {
+        return SL_FT_DIR;
+    } else {
+        return SL_FT_FILE;
+    }
 }
 
 int

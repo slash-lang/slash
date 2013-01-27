@@ -106,7 +106,7 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 }
 
 SLVAL
-sl_make_cstring(struct sl_vm* vm, char* cstr)
+sl_make_cstring(struct sl_vm* vm, const char* cstr)
 {
     return sl_make_string(vm, (uint8_t*)cstr, strlen(cstr));
 }

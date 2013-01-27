@@ -28,7 +28,7 @@ resolve_require_path(sl_vm_t* vm, char* path)
                 continue;
             }
             
-            if(sl_file_exists(vm, (char*)spath->buff)) {
+            if(sl_file_type(vm, (char*)spath->buff) == SL_FT_FILE) {
                 return spath;
             }
         }

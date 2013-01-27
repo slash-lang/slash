@@ -1143,6 +1143,23 @@ NODE(sl_node_base_t, yada_yada)
     (void)node;
 }
 
+NODE(sl_node_const_t, use)
+{
+    sl_vm_insn_t insn;
+    if(node->obj) {
+        compile_node(cs, node->obj, dest);
+        emit_opcode(cs, SL_OP_USE);
+        insn.uint = dest;
+        emit(cs, insn);
+    } else {
+        emit_opcode(cs, SL_OP_USE_TOP_LEVEL);
+    }
+    insn.id = node->id;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+}
+
 NODE(sl_node__register_t, _register)
 {
     sl_vm_insn_t insn;
@@ -1214,6 +1231,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_base_t,          LAST,           last);
         COMPILE(sl_node_unary_t,         THROW,          throw);
         COMPILE(sl_node_base_t,          YADA_YADA,      yada_yada);
+        COMPILE(sl_node_const_t,         USE,            use);
         COMPILE(sl_node__register_t,     _REGISTER,      _register);
     }
     sl_throw_message(cs->vm, "Unknown node type in compile_node");

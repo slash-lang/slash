@@ -66,4 +66,13 @@ sl_class_of(sl_vm_t* vm, SLVAL obj);
 SLVAL
 sl_new(sl_vm_t* vm, SLVAL klass, size_t argc, SLVAL* argv);
 
+SLVAL
+sl_camel_case_to_underscore(sl_vm_t* vm, SLVAL str);
+
+bool
+sl_class_has_full_path(sl_vm_t* vm, SLVAL klass);
+
+SLVAL
+sl_class_file_path(sl_vm_t* vm, SLVAL klass);
+
 #endif

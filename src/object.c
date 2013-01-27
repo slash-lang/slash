@@ -507,7 +507,9 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     do {
         klassp = (sl_class_t*)sl_get_ptr(klass);
         if(st_lookup(klassp->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
-            return method;
+            if(sl_get_ptr(method)->primitive_type != SL_T_CACHED_METHOD_ENTRY) {
+                return method;
+            }
         }
         klass = klassp->super;
     } while(klassp->singleton);
