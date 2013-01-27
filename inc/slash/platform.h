@@ -21,7 +21,7 @@ void*
 sl_stack_limit();
 
 char**
-sl_environ();
+sl_environ(struct sl_vm* vm);
 
 #ifdef SL_HAS_BUILTIN_EXPECT
     #define sl_likely(x) __builtin_expect((x), 1)

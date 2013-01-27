@@ -70,8 +70,9 @@ int sl_seed()
 
 #ifndef __APPLE__
 char**
-sl_environ()
+sl_environ(struct sl_vm* vm)
 {
     return environ;
+    (void)vm;
 }
 #endif
