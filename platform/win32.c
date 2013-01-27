@@ -38,7 +38,7 @@ sl_file_exists(sl_vm_t* vm, char* path)
 }
 
 sl_file_type_t
-sl_file_type(struct sl_vm* vm, char* path
+sl_file_type(struct sl_vm* vm, char* path)
 {
     DWORD attrib = GetFileAttributes(sl_realpath(vm, path));
     if(attrib == INVALID_FILE_ATTRIBUTES) {
