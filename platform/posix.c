@@ -72,7 +72,7 @@ int sl_seed()
 char**
 sl_environ(struct sl_vm* vm)
 {
-    return environ;
+    return __environ;
     (void)vm;
 }
 #endif
