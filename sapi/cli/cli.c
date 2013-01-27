@@ -4,20 +4,6 @@
 #include <stdio.h>
 #include "readline.h"
 
-#ifdef SL_HAS_UNISTD
-    #include <unistd.h>
-#endif
-
-#ifdef __WIN32
-    #include <Windows.h>
-    #include <io.h>
-#endif
-
-#ifdef __APPLE__
-    char*** _NSGetEnviron();
-    #define environ (*(_NSGetEnviron()))
-#endif
-
 static bool
 opt_interactive;
 
@@ -30,6 +16,8 @@ opt_source_file_name;
 static void
 setup_vm_request(sl_vm_t* vm)
 {
+    char** orig_env = sl_environ();
+
     sl_request_opts_t req;
     req.method          = "";
     req.uri             = "";
@@ -42,14 +30,14 @@ setup_vm_request(sl_vm_t* vm)
     req.post_length     = 0;
 
     req.env_count = 0;
-    for(char** env = environ; *env; env++) {
+    for(char** env = orig_env; *env; env++) {
         req.env_count++;
     }
 
     sl_request_key_value_t env[req.env_count];
     for(size_t i = 0; i < req.env_count; i++) {
-        char* e = sl_alloc(vm->arena, strlen(environ[i]) + 1);
-        strcpy(e, environ[i]);
+        char* e = sl_alloc(vm->arena, strlen(orig_env[i]) + 1);
+        strcpy(e, orig_env[i]);
         char* v = strchr(e, '=');
         if(!v) {
             continue;
@@ -224,18 +212,6 @@ int
 main(int argc, char** argv)
 {
     sl_vm_t* vm = setup_vm(&argc);
-
-    #ifdef SL_HAS_UNISTD
-        if(isatty(0)) {
-            opt_interactive = true;
-        }
-    #else
-        #ifdef __WIN32
-            if(_isatty(_fileno(stdin))) {
-                opt_interactive = true;
-            }
-        #endif
-    #endif
 
     process_arguments(vm, argc, argv);
 
