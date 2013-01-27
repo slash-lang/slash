@@ -1,3 +1,5 @@
+include ../../local.mk
+
 .PHONY: clean install uninstall
 
 APR=apr-1
@@ -9,7 +11,7 @@ mod_slash.so: .libs/mod_slash.so
 	cp $< $@
 
 .libs/mod_slash.so: mod_slash.c ../../libslash.a
-	$(APXS) -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $< "-Wl,$(LDFLAGS)"
+	CC=$(CC) $(APXS) -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $< "-Wl,$(LDFLAGS)"
 
 clean:
 	rm -f *.o *.so *.$(SO_EXT)
