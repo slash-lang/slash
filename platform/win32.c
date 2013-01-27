@@ -118,8 +118,8 @@ sl_environ(sl_vm_t* vm)
     size_t i = 0;
     for(char* eptr = envzz; *eptr; eptr += strlen(eptr) + 1) {
         enva[i] = sl_alloc_buffer(vm->arena, strlen(eptr) + 1);
-	strcpy(enva[i], eptr);
-	i++;
+        strcpy(enva[i], eptr);
+        i++;
     }
     enva[i] = NULL;
     FreeEnvironmentStrings(envzz);
