@@ -1,9 +1,12 @@
 #include <slash.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
 #include "readline.h"
+
+#ifdef SL_HAS_UNISTD
+    #include <unistd.h>
+#endif
 
 #ifdef __APPLE__
     char*** _NSGetEnviron();
@@ -216,6 +219,13 @@ int
 main(int argc, char** argv)
 {
     sl_vm_t* vm = setup_vm(&argc);
+
+    #ifdef SL_HAS_UNISTD
+        if(isatty(0)) {
+            opt_interactive = true;
+        }
+    #endif
+
     process_arguments(vm, argc, argv);
 
     sl_vm_frame_t frame;

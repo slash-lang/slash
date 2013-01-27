@@ -191,6 +191,14 @@ if(compile("", "int main(){ if(__builtin_expect(1, 1)) { } }")) {
     print "failed\n";
 }
 
+print "Checking for unistd.h... ";
+if(compile("", "#include <unistd.h>\nint main(){}")) {
+    print "ok\n";
+    $CFLAGS .= " -DSL_HAS_UNISTD";
+} else {
+    print "failed\n";
+}
+
 open my $mf, ">$path/local.mk";
 
 print $mf "CC=$ENV{CC}\n";
