@@ -2,6 +2,7 @@
 #define _BSD_SOURCE
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <time.h>
@@ -66,3 +67,11 @@ int sl_seed()
     gettimeofday(&a, NULL);
     return (int)(a.tv_usec ^ a.tv_sec);
 }
+
+#ifndef __APPLE__
+char**
+sl_environ()
+{
+    return environ;
+}
+#endif
