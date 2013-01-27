@@ -234,16 +234,4 @@ main(int argc, char** argv)
             handle_exception_and_exit(vm, exception);
         }
     });
-
-    /*
-    printf("Slash REPL\n");
-    while(1) {
-        char* input = cli_readline(">> ");
-        if(input == NULL || strcmp(input, "exit") == 0) {
-            exit(0);
-        }
-        printf("length = %zd\n", strlen(input));
-        free(input);
-    }
-    */
 }
