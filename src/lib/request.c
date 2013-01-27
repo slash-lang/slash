@@ -164,6 +164,9 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
     }
     req->params = sl_dict_merge(vm, req->get, req->post);
     sl_vm_store_put(vm, &Request_opts, sl_make_ptr((sl_object_t*)req));
+
+    // convenience constants
+    sl_class_set_const(vm, vm->lib.Object, "ENV", req->env);
 }
 
 static SLVAL
@@ -271,7 +274,4 @@ sl_init_request(sl_vm_t* vm)
     sl_define_singleton_method(vm, Request, "[]", 1, request_index);
     
     sl_class_set_const(vm, vm->lib.Object, "Request", Request);
-
-    // convenience constants
-    sl_class_set_const(vm, vm->lib.Object, "ENV", request_env(vm));
 }
