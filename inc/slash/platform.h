@@ -8,8 +8,18 @@ struct sl_vm;
 char*
 sl_realpath(struct sl_vm* vm, char* path);
 
+typedef enum sl_file_type {
+    SL_FT_NO_EXIST,
+    SL_FT_FILE,
+    SL_FT_DIR
+}
+sl_file_type_t;
+
 int
 sl_file_exists(struct sl_vm* vm, char* path);
+
+sl_file_type_t
+sl_file_type(struct sl_vm* vm, char* path);
 
 int
 sl_abs_file_exists(char* path);

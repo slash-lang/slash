@@ -39,6 +39,20 @@ sl_file_exists(sl_vm_t* vm, char* path)
     return !stat(sl_realpath(vm, path), &s);
 }
 
+sl_file_type_t
+sl_file_type(struct sl_vm* vm, char* path)
+{
+    struct stat s;
+    if(stat(sl_realpath(vm, path), &s)) {
+        return SL_FT_NO_EXIST;
+    }
+    if(S_ISDIR(s.st_mode)) {
+        return SL_FT_DIR;
+    } else {
+        return SL_FT_FILE;
+    }
+}
+
 int sl_abs_file_exists(char* path)
 {
     struct stat s;
