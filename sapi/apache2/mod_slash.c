@@ -126,7 +126,7 @@ run_slash_script(request_rec* r, void* stack_top)
 {
     sl_vm_t* vm;
     slash_context_t ctx;
-    sl_catch_frame_t exit_frame, exception_frame;
+    sl_vm_frame_t exit_frame, exception_frame;
     char* last_slash;
     SLVAL error;
     sl_static_init();
