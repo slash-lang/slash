@@ -15,3 +15,11 @@ sl_stack_limit()
     size_t size = pthread_get_stacksize_np(self);
     return (void*)((size_t)addr - size + 65536);
 }
+
+char*** _NSGetEnviron();
+
+char**
+sl_environ()
+{
+    return *_NSGetEnviron();
+}
