@@ -19,7 +19,8 @@ sl_stack_limit()
 char*** _NSGetEnviron();
 
 char**
-sl_environ()
+sl_environ(struct sl_vm* vm)
 {
     return *_NSGetEnviron();
+    (void)vm;
 }
