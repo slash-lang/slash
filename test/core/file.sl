@@ -1,9 +1,12 @@
 <%
 
 class FileTest extends Test {
+    def temp_filename {
+        (ENV["TMP"] || "/tmp") + "/slash-test-" + rand().to_s;
+    }
+
     def test_open_read_write {
-        tmp = ENV["TMP"] || "/tmp";
-        filename = tmp + "/slash-test-" + rand().to_s;
+        filename = temp_filename();
         
         f = File.new(filename, "w");
         f.write("hello world");
@@ -15,7 +18,7 @@ class FileTest extends Test {
     }
     
     def test_closed {
-        f = File.new("test.sl", "r");
+        f = File.new(temp_filename(), "w");
         assert_equal(false, f.closed);
         f.close;
         assert_equal(true, f.closed);
