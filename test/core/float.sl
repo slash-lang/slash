@@ -91,6 +91,12 @@ class FloatTest extends Test {
         assert_equal(1, Infinity <=> 9999999999999999999999999999999999999999);
         assert_equal(-1, 0.5555 <=> 9999999999999999999999999999999999999999)
     }
+
+    def test_round {
+        assert_equal(4, 4.4.round);
+        assert_equal(5, 4.5.round);
+        assert_equal(100000000000000000000, 99999999999999999999.5.round);
+    }
     
     def test_class {
         assert_is_a(Float, 123.0);

@@ -81,6 +81,17 @@ sl_float_to_f(sl_vm_t* vm, SLVAL self)
     return self;
 }
 
+static SLVAL
+sl_float_round(sl_vm_t* vm, SLVAL self)
+{
+    double d = round(sl_get_float(vm, self));
+    if(d < SL_MIN_INT || d > SL_MAX_INT) {
+        return sl_make_bignum_f(vm, d);
+    } else {
+        return sl_make_int(vm, (int)d);
+    }
+}
+
 void
 sl_init_float(sl_vm_t* vm)
 {
@@ -93,6 +104,7 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "succ", 0, sl_float_succ);
     sl_define_method(vm, vm->lib.Float, "pred", 0, sl_float_pred);
     sl_define_method(vm, vm->lib.Float, "negate", 0, sl_float_negate);
+    sl_define_method(vm, vm->lib.Float, "round", 0, sl_float_round);
     sl_define_method(vm, vm->lib.Float, "+", 1, sl_float_add);
     sl_define_method(vm, vm->lib.Float, "-", 1, sl_float_sub);
     sl_define_method(vm, vm->lib.Float, "*", 1, sl_float_mul);
