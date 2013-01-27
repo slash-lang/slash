@@ -99,6 +99,18 @@ class FloatTest extends Test {
         assert_equal(5, 4.5.round);
         assert_equal(100000000000000000000, 99999999999999999999.5.round);
     }
+
+    def test_floor {
+        assert_equal(4, 4.4.floor);
+        assert_equal(4, 4.5.floor);
+        assert_equal(5, 5.0.floor);
+    }
+
+    def test_ceil {
+        assert_equal(5, 4.4.ceil);
+        assert_equal(5, 4.5.ceil);
+        assert_equal(5, 5.0.ceil);
+    }
     
     def test_class {
         assert_is_a(Float, 123.0);
