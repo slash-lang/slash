@@ -5,7 +5,7 @@ $symbol_name =~ s/[^a-zA-Z_]/_/g;
 print "char* sl__$symbol_name = ";
 open FH, $filename;
 while(<FH>) {
-    chomp;
+    s/\r?\n$//g;
     s/\\/\\\\/g;
     s/"/\\"/g;
     print "\"";
