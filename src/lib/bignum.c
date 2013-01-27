@@ -97,6 +97,7 @@ sl_init_bignum(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Bignum, "to_s", 0, sl_bignum_to_s);
     sl_define_method(vm, vm->lib.Bignum, "inspect", 0, sl_bignum_to_s);
     sl_define_method(vm, vm->lib.Bignum, "to_i", 0, sl_bignum_to_i);
+    sl_define_method(vm, vm->lib.Bignum, "round", 0, sl_bignum_to_i);
     sl_define_method(vm, vm->lib.Bignum, "to_f", 0, sl_bignum_to_f);
     sl_define_method(vm, vm->lib.Bignum, "succ", 0, sl_bignum_succ);
     sl_define_method(vm, vm->lib.Bignum, "pred", 0, sl_bignum_pred);

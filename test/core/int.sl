@@ -90,6 +90,10 @@ class IntTest extends Test {
         assert_equal(100, 100.to_i);
         assert_is_a(Int, 100.to_i);
     }
+
+    def test_round {
+        assert_equal(100, 100.round);
+    }
     
     def test_to_f {
         assert_equal(100.0, 100.to_f);
