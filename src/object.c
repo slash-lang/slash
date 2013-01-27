@@ -22,7 +22,7 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->instance_methods = st_init_table(vm->arena, &sl_id_hash_type);
     klass->base.klass = vm->lib.Class;
     klass->base.primitive_type = SL_T_CLASS;
-    klass->base.instance_variables = st_init_table(vm->arena, &sl_string_hash_type);
+    klass->base.instance_variables = st_init_table(vm->arena, &sl_id_hash_type);
 }
 
 static SLVAL
