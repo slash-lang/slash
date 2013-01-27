@@ -8,6 +8,11 @@
     #include <unistd.h>
 #endif
 
+#ifdef __WIN32
+    #include <Windows.h>
+    #include <io.h>
+#endif
+
 #ifdef __APPLE__
     char*** _NSGetEnviron();
     #define environ (*(_NSGetEnviron()))
@@ -224,6 +229,12 @@ main(int argc, char** argv)
         if(isatty(0)) {
             opt_interactive = true;
         }
+    #else
+        #ifdef __WIN32
+            if(_isatty(_fileno(stdin))) {
+                opt_interactive = true;
+            }
+        #endif
     #endif
 
     process_arguments(vm, argc, argv);
