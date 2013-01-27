@@ -89,36 +89,53 @@ parse_query_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* query_string)
 }
 
 static void
-parse_cookie_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* cookies)
+parse_cookie_key_value(sl_vm_t* vm, SLVAL dict, uint8_t* kv, size_t len)
 {
-    uint8_t *key = NULL, *value = NULL;
-    size_t key_len = 0, value_len = 0;
-    size_t i;
-    for(i = 0; i <= len; i++) {
-        if(i == len || cookies[i] == ';') {
-            if(key_len) {
-                sl_dict_set(vm, dict,
-                    sl_string_url_decode(vm, sl_make_string(vm, key, key_len)),
-                    sl_string_url_decode(vm, sl_make_string(vm, value, value_len)));
-            }
-            key_len = 0;
-            value_len = 0;
-            key = NULL;
-            value = NULL;
+    uint8_t* equals = memchr(kv, '=', len);
+    if(!equals) {
+        return;
+    }
+    uint8_t* key_ptr = kv;
+    size_t key_len = (intptr_t)equals - (intptr_t)kv;
+    uint8_t* value_ptr = equals + 1;
+    size_t value_len = len - key_len - 1;
+
+    SLVAL key = sl_make_string(vm, key_ptr, key_len);
+    SLVAL value = sl_make_string(vm, value_ptr, value_len);
+    key = sl_string_url_decode(vm, key);
+    value = sl_string_url_decode(vm, value);
+    sl_dict_set(vm, dict, key, value);
+}
+
+static void
+parse_cookie_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* str)
+{
+    size_t i = 0;
+    while(true) {
+        if(!str[i]) {
+            return;
         }
-        if(cookies[i] != ' ' && !key) {
-            key = cookies + i;
-            key_len++;
-            continue;
+        uint8_t* semi = memchr(str + i, ';', len - i);
+        uint8_t* comma = memchr(str + i, ',', len - i);
+        if(!semi && !comma) {
+            parse_cookie_key_value(vm, dict, str + i, len - i);
+            return;
         }
-        if(cookies[i] == '=' && !value) {
-            value = cookies + i + 1;
-            continue;
-        }
-        if(!value) {
-            key_len++;
+        uint8_t* separator;
+        if(!semi) {
+            separator = comma;
+        } else if(!comma) {
+            separator = semi;
+        } else if(semi < comma) {
+            separator = semi;
         } else {
-            value_len++;
+            separator = comma;
+        }
+        size_t part_length = (intptr_t)separator - ((intptr_t)str + i);
+        parse_cookie_key_value(vm, dict, str + i, part_length);
+        i += part_length + 1;
+        while(str[i] == ' ' || str[i] == '\n' || str[i] == '\r' || str[i] == '\t') {
+            i++;
         }
     }
 }
