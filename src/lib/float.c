@@ -92,6 +92,18 @@ sl_float_round(sl_vm_t* vm, SLVAL self)
     }
 }
 
+static SLVAL
+sl_float_floor(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_float(vm, floor(sl_get_float(vm, self)));
+}
+
+static SLVAL
+sl_float_ceil(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_float(vm, ceil(sl_get_float(vm, self)));
+}
+
 void
 sl_init_float(sl_vm_t* vm)
 {
@@ -105,6 +117,8 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "pred", 0, sl_float_pred);
     sl_define_method(vm, vm->lib.Float, "negate", 0, sl_float_negate);
     sl_define_method(vm, vm->lib.Float, "round", 0, sl_float_round);
+    sl_define_method(vm, vm->lib.Float, "floor", 0, sl_float_floor);
+    sl_define_method(vm, vm->lib.Float, "ceil", 0, sl_float_ceil);
     sl_define_method(vm, vm->lib.Float, "+", 1, sl_float_add);
     sl_define_method(vm, vm->lib.Float, "-", 1, sl_float_sub);
     sl_define_method(vm, vm->lib.Float, "*", 1, sl_float_mul);
