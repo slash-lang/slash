@@ -16,7 +16,7 @@ opt_source_file_name;
 static void
 setup_vm_request(sl_vm_t* vm)
 {
-    char** orig_env = sl_environ();
+    char** orig_env = sl_environ(vm);
 
     sl_request_opts_t req;
     req.method          = "";
