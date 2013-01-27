@@ -398,3 +398,37 @@ INSTRUCTION(SL_OP_BIND_METHOD, {
         sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, msg));
     }
 })
+
+/*  0: USE
+    1: <reg:klass>
+    2: <id:const_name>
+    3: <reg:dest> */
+INSTRUCTION(SL_OP_USE, {
+    SLVAL klass = NEXT_REG();
+    SLID id = NEXT_ID();
+    if(sl_unlikely(sl_get_primitive_type(klass) != SL_T_CLASS)) {
+        klass = sl_class_of(vm, klass);
+    }
+    if(sl_unlikely(!sl_class_has_const2(vm, klass, id))) {
+        if(!sl_class_has_full_path(vm, klass)) {
+            sl_throw_message2(vm, vm->lib.NameError, "Unnamed classes cannot be used in use expressions");
+        }
+        SLVAL require_path = sl_class_file_path(vm, klass);
+        require_path = sl_string_concat(vm, require_path, sl_make_cstring(vm, "/"));
+        require_path = sl_string_concat(vm, require_path, sl_camel_case_to_underscore(vm, sl_id_to_string(vm, id)));
+        sl_require(vm, sl_to_cstr(vm, require_path));
+    }
+    NEXT_REG() = sl_class_get_const2(vm, klass, id);
+})
+
+/*  0: USE_TOP_LEVEL
+    1: <id:const_name>
+    2: <reg:dest> */
+INSTRUCTION(SL_OP_USE_TOP_LEVEL, {
+    SLID id = NEXT_ID();
+    if(sl_unlikely(!sl_class_has_const2(vm, vm->lib.Object, id))) {
+        SLVAL require_path = sl_camel_case_to_underscore(vm, sl_id_to_string(vm, id));
+        sl_require(vm, sl_to_cstr(vm, require_path));
+    }
+    NEXT_REG() = sl_class_get_const2(vm, vm->lib.Object, id);
+})
