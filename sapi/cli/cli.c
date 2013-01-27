@@ -4,6 +4,14 @@
 #include <stdio.h>
 #include "readline.h"
 
+#ifdef SL_HAS_UNISTD
+    #include <unistd.h>
+#endif
+
+#ifdef __WIN32
+    #include <io.h>
+#endif
+
 static bool
 opt_interactive;
 
@@ -212,6 +220,22 @@ int
 main(int argc, char** argv)
 {
     sl_vm_t* vm = setup_vm(&argc);
+
+    if(argc == 1) {
+        // if we have no command line args and we're running in a TTY,
+        // enable interactive mode by default
+        #ifdef SL_HAS_UNISTD
+            if(isatty(0)) {
+                opt_interactive = true;
+            }
+        #else
+            #ifdef __WIN32
+                if(_isatty(_fileno(stdin))) {
+                    opt_interactive = true;
+                }
+            #endif
+        #endif
+    }
 
     process_arguments(vm, argc, argv);
 
