@@ -13,7 +13,7 @@ SLVAL
 sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding);
 
 SLVAL
-sl_make_cstring(struct sl_vm* vm, char* cstr);
+sl_make_cstring(struct sl_vm* vm, const char* cstr);
 
 sl_string_t*
 sl_cstring(struct sl_vm* vm, char* cstr);

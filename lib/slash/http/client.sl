@@ -1,7 +1,6 @@
 <%
 
 use URI;
-use HTTP::Client;
 
 class HTTP {
     class Client {
