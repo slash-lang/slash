@@ -271,4 +271,7 @@ sl_init_request(sl_vm_t* vm)
     sl_define_singleton_method(vm, Request, "[]", 1, request_index);
     
     sl_class_set_const(vm, vm->lib.Object, "Request", Request);
+
+    // convenience constants
+    sl_class_set_const(vm, vm->lib.Object, "ENV", request_env(vm));
 }
