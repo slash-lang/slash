@@ -90,3 +90,24 @@ sl_stack_limit()
     }
     return (void*)((size_t)mem.AllocationBase + 65536);
 }
+
+char**
+sl_environ(sl_vm_t* vm)
+{
+    // TODO - use W variant and convert from UTF-16 to UTF-8
+    char* envzz = GetEnvironmentStrings();
+    size_t env_count = 0;
+    for(char* eptr = envzz; *eptr; eptr += strlen(eptr) + 1) {
+        env_count++;
+    }
+    char** enva = sl_alloc(vm->arena, sizeof(char*) * (env_count + 1));
+    size_t i = 0;
+    for(char* eptr = envzz; *eptr; eptr += strlen(eptr) + 1) {
+        enva[i] = sl_alloc_buffer(vm->arena, strlen(eptr) + 1);
+	strcpy(enva[i], eptr);
+	i++;
+    }
+    enva[i] = NULL;
+    FreeEnvironmentStrings(envzz);
+    return enva;
+}
