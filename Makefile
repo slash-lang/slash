@@ -26,9 +26,9 @@ fast-test: sapi[cli]
 
 test: sapi[cli]
 	@echo "Running tests"
-	@sapi/cli/slash-cli test/test.sl test/*/*.sl
+	@sapi/cli/slash-cli -I ./lib/slash test/test.sl test/*/*.sl
 	@echo "Running tests with --gc-after-test"
-	@sapi/cli/slash-cli test/test.sl --gc-after-test test/*/*.sl
+	@sapi/cli/slash-cli -I ./lib/slash test/test.sl --gc-after-test test/*/*.sl
 
 sapi[%]: libslash.a
 	@echo "make sapi/$*"
