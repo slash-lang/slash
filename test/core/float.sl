@@ -60,6 +60,8 @@ class FloatTest extends Test {
     def test_to_s_and_inspect {
         assert_equal("5.5", 5.5.to_s);
         assert_equal("5.5", 5.5.inspect);
+        assert_equal("5.0", 5.0.inspect);
+        assert_equal("0.0", 0.0.inspect);
     }
     
     def test_to_i {

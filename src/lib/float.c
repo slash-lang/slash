@@ -55,7 +55,7 @@ sl_float_to_s(sl_vm_t* vm, SLVAL self)
     char buff[1024];
     sprintf(buff, "%f", d);
     for(size_t i = strlen(buff) - 1; i > 0; i--) {
-        if(buff[i] != '0') {
+        if(buff[i] != '0' || (i > 0 && buff[i - 1] == '.')) {
             break;
         }
         buff[i] = 0;
