@@ -147,6 +147,10 @@ int main() {
 }
 C
 
+if($^O eq 'msys') {
+    $CFLAGS .= ' -DPCRE_STATIC';
+}
+
 check_lib "pcre", <<C;
 #include <pcre.h>
 
