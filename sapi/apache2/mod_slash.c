@@ -147,7 +147,7 @@ run_slash_script(request_rec* r, void* stack_top)
             setup_request_object(vm, r);
             setup_response_object(vm);
             ap_set_content_type(r, "text/html; charset=utf-8");
-            sl_do_file(vm, (uint8_t*)r->canonical_filename);
+            sl_do_file(vm, r->canonical_filename);
         }, error, {
             sl_response_clear(vm);
             sl_render_error_page(vm, error);
