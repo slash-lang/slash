@@ -13,4 +13,7 @@ sl_lambda_call_with_self(sl_vm_t* vm, SLVAL lambda, SLVAL self, size_t argc, SLV
 SLVAL
 sl_lambda_call(sl_vm_t* vm, SLVAL lambda, size_t argc, SLVAL* argv);
 
+SLVAL
+sl_lambda_to_method(sl_vm_t* vm, SLVAL lambda);
+
 #endif

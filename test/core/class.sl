@@ -99,4 +99,15 @@ class ClassTest extends Test {
         refute(Test.singleton);
         assert(Object.singleton_class.singleton);
     }
+
+    def test_define_method {
+        obj = Object.new;
+        klass = obj.singleton_class;
+
+        assert_throws(NoMethodError, \{ obj.some_method(9) });
+        method = klass.define_method("some_method", \x . x * x);
+        assert_is_a(Method, method);
+        assert_equal(klass.instance_method("some_method"), method);
+        assert_equal(81, obj.some_method(9));
+    }
 }.register;

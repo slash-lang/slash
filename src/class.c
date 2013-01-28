@@ -8,6 +8,7 @@
 #include <slash/object.h>
 #include <slash/mem.h>
 #include <slash/lib/array.h>
+#include <slash/lib/lambda.h>
 
 static sl_object_t*
 allocate_class(sl_vm_t* vm)
@@ -228,6 +229,14 @@ class_singleton(sl_vm_t* vm, SLVAL klass)
     }
 }
 
+static SLVAL
+class_define_method(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL lambda)
+{
+    SLVAL method = sl_lambda_to_method(vm, lambda);
+    sl_define_method3(vm, klass, sl_intern2(vm, name), method);
+    return method;
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -246,6 +255,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "own_instance_method", 1, sl_class_own_instance_method);
     sl_define_method(vm, vm->lib.Class, "own_instance_methods", 0, sl_class_own_instance_methods);
     sl_define_method(vm, vm->lib.Class, "instance_methods", 0, sl_class_instance_methods);
+    sl_define_method(vm, vm->lib.Class, "define_method", 2, class_define_method);
     sl_define_method(vm, vm->lib.Class, "constants", 0, class_constants);
     sl_define_method(vm, vm->lib.Class, "get_constant", 1, class_get_constant);
     sl_define_method(vm, vm->lib.Class, "set_constant", 2, class_set_constant);

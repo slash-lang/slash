@@ -78,6 +78,14 @@ sl_lambda_call(sl_vm_t* vm, SLVAL lambda, size_t argc, SLVAL* argv)
     return apply_lambda(vm, lp, lp->parent_ctx->self, argc, argv);
 }
 
+SLVAL
+sl_lambda_to_method(sl_vm_t* vm, SLVAL lambda)
+{
+    sl_lambda_t* lp = get_lambda(vm, lambda);
+    SLID name = sl_intern(vm, "<lambda>");
+    return sl_make_method(vm, vm->lib.Object, name, lp->section, lp->parent_ctx);
+}
+
 void
 sl_init_lambda(sl_vm_t* vm)
 {
