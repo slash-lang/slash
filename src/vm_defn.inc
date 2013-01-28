@@ -176,7 +176,7 @@ INSTRUCTION(SL_OP_SEND, {
     size_t argc = NEXT_UINT();
     sl_vm_inline_cache_t* ic = NEXT_IC();
     sl_method_t* method;
-    SLVAL recv_klass = sl_class_of(vm, receiver);
+    SLVAL recv_klass = sl_real_class_of(vm, receiver);
     if(sl_likely(ic->state == vm->state_method && ic->klass.i == recv_klass.i)) {
         method = (sl_method_t*)sl_get_ptr(ic->value);
     } else {
