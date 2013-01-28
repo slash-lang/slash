@@ -144,7 +144,8 @@ typedef enum sl_vm_opcode {
     SL_OP_YADA_YADA,
     SL_OP_BIND_METHOD,
     SL_OP_USE,
-    SL_OP_USE_TOP_LEVEL
+    SL_OP_USE_TOP_LEVEL,
+    SL_OP_BUILD_STRING
 }
 sl_vm_opcode_t;
 

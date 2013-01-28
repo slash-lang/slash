@@ -335,6 +335,23 @@ NODE(sl_node_immediate_t, immediate)
     emit_immediate(cs, node->value, dest);
 }
 
+NODE(sl_node_interp_string_t, interp_string)
+{
+    size_t base_reg = reg_alloc_block(cs, node->components_count);
+    for(size_t i = 0; i < node->components_count; i++) {
+        compile_node(cs, node->components[i], base_reg + i);
+    }
+    sl_vm_insn_t insn;
+    emit_opcode(cs, SL_OP_BUILD_STRING);
+    insn.uint = base_reg;
+    emit(cs, insn);
+    insn.uint = node->components_count;
+    emit(cs, insn);
+    insn.uint = dest;
+    emit(cs, insn);
+    reg_free_block(cs, base_reg, node->components_count);
+}
+
 NODE(sl_node_base_t, self)
 {
     sl_vm_insn_t insn;
@@ -1201,6 +1218,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_var_t,           IVAR,           ivar);
         COMPILE(sl_node_var_t,           CVAR,           cvar);
         COMPILE(sl_node_immediate_t,     IMMEDIATE,      immediate);
+        COMPILE(sl_node_interp_string_t, INTERP_STRING,  interp_string);
         COMPILE(sl_node_base_t,          SELF,           self);
         COMPILE(sl_node_class_t,         CLASS,          class);
         COMPILE(sl_node_def_t,           DEF,            def);

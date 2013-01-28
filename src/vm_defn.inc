@@ -432,3 +432,13 @@ INSTRUCTION(SL_OP_USE_TOP_LEVEL, {
     }
     NEXT_REG() = sl_class_get_const2(vm, vm->lib.Object, id);
 })
+
+/*  0: BUILD_STRING
+    1: <reg:base_reg>
+    2: <uint:reg_count>
+    3: <reg:dest> */
+INSTRUCTION(SL_OP_BUILD_STRING, {
+    SLVAL* base = &NEXT_REG();
+    size_t count = NEXT_UINT();
+    NEXT_REG() = vm_helper_build_string(vm, base, count);
+})

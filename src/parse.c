@@ -506,6 +506,37 @@ regexp_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+static_string_expression(sl_parse_state_t* ps)
+{
+    sl_token_t* tok = expect_token(ps, SL_TOK_STRING);
+    return sl_make_immediate_node(ps, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+}
+
+static sl_node_base_t*
+string_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t* node = static_string_expression(ps);
+    if(peek_token(ps)->type != SL_TOK_STRING_BEGIN_INTERPOLATION) {
+        return node;
+    }
+    size_t comp_count = 1;
+    size_t comp_cap = 4;
+    sl_node_base_t** components = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * comp_cap);
+    components[0] = node;
+    while(peek_token(ps)->type == SL_TOK_STRING_BEGIN_INTERPOLATION) {
+        if(comp_count + 2 >= comp_cap) {
+            comp_cap *= 2;
+            components = sl_realloc(ps->vm->arena, components, sizeof(sl_node_base_t*) * comp_cap);
+        }
+        next_token(ps);
+        components[comp_count++] = expression(ps);
+        expect_token(ps, SL_TOK_STRING_END_INTERPOLATION);
+        components[comp_count++] = static_string_expression(ps);
+    }
+    return sl_make_interp_string_node(ps, components, comp_count);
+}
+
+static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
@@ -517,8 +548,7 @@ primary_expression(sl_parse_state_t* ps)
         case SL_TOK_FLOAT:
             return sl_make_immediate_node(ps, sl_make_float(ps->vm, next_token(ps)->as.dbl));
         case SL_TOK_STRING:
-            tok = next_token(ps);
-            return sl_make_immediate_node(ps, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+            return string_expression(ps);
         case SL_TOK_REGEXP:
             return regexp_expression(ps);
         case SL_TOK_CONSTANT:

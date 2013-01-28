@@ -18,6 +18,8 @@
             yyextra->tokens[yyextra->len].line = yyextra->line; \
             yyextra->len++; \
         } while(0)
+
+    #define STACK_EXISTS (((struct yyguts_t*)yyscanner)->yy_start_stack)
 %}
 
 %x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG NKW_ID REGEXP REGEXP_R
@@ -54,6 +56,7 @@ HEX [0-9a-fA-F]
 <STRING>"\""        { BEGIN(SLASH); }
 <STRING>\n          { sl_lex_append_byte_to_string(yyextra, yytext[0]); yyextra->line++; }
 <STRING>.           { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
+<STRING>"#{"        { ADD_TOKEN(sl_make_token(SL_TOK_STRING_BEGIN_INTERPOLATION));    yy_push_state(SLASH, yyscanner); }
 
 <STRE>"n"           { sl_lex_append_byte_to_string(yyextra, '\n');                    BEGIN(STRING); }
 <STRE>"t"           { sl_lex_append_byte_to_string(yyextra, '\t');                    BEGIN(STRING); }
@@ -128,7 +131,14 @@ HEX [0-9a-fA-F]
 <SLASH>"["          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_BRACKET)); }
 <SLASH>"]"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACKET)); }
 <SLASH>"{"          { ADD_TOKEN(sl_make_token(SL_TOK_OPEN_BRACE)); }
-<SLASH>"}"          { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE)); }
+<SLASH>"}"          { if(STACK_EXISTS && yy_top_state(yyscanner) == STRING) {
+                          ADD_TOKEN(sl_make_token(SL_TOK_STRING_END_INTERPOLATION));
+                          ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_STRING, "", 0));
+                          yy_pop_state(yyscanner);
+                      } else {
+                          ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_BRACE));
+                      }
+                    }
 <SLASH>";"          { ADD_TOKEN(sl_make_token(SL_TOK_SEMICOLON)); }
 
 <SLASH>"<<="        { ADD_TOKEN(sl_make_token(SL_TOK_ASSIGN_SHIFT_LEFT)); }

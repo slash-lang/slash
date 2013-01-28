@@ -72,6 +72,9 @@ sl_node_base_t*
 sl_make_immediate_node(sl_parse_state_t* ps, SLVAL val);
 
 sl_node_base_t*
+sl_make_interp_string_node(sl_parse_state_t* ps, sl_node_base_t** components, size_t components_count);
+
+sl_node_base_t*
 sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv);
 
 sl_node_base_t*

@@ -11,6 +11,7 @@
 #include <slash/lib/range.h>
 #include <slash/lib/lambda.h>
 #include <stdio.h>
+#include <string.h>
 
 static SLVAL
 vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section);
@@ -20,6 +21,9 @@ vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, sl_vm_section_t* secti
 
 static SLVAL
 vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl_vm_section_t* section);
+
+static SLVAL
+vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
 #define NEXT() (ctx->section->insns[ip++])
 
@@ -142,4 +146,24 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl
     method = sl_make_method(ctx->vm, klass, name, section, ctx);
     sl_define_singleton_method3(ctx->vm, on, name, method);
     return method;
+}
+
+static SLVAL
+vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count)
+{
+    for(size_t i = 0; i < count; i++) {
+        vals[i] = sl_to_s(vm, vals[i]);
+    }
+    size_t len = 0;
+    for(size_t i = 0; i < count; i++) {
+        len += ((sl_string_t*)sl_get_ptr(vals[i]))->buff_len;
+    }
+    uint8_t* buff = sl_alloc_buffer(vm->arena, len + 1);
+    size_t j = 0;
+    for(size_t i = 0; i < count; i++) {
+        sl_string_t* str = (void*)sl_get_ptr(vals[i]);
+        memcpy(buff + j, str->buff, str->buff_len);
+        j += str->buff_len;
+    }
+    return sl_make_string_no_copy(vm, buff, len);
 }
