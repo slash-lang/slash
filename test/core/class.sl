@@ -110,4 +110,12 @@ class ClassTest extends Test {
         assert_equal(klass.instance_method("some_method"), method);
         assert_equal(81, obj.some_method(9));
     }
+
+    def test_has_instance {
+        assert(String.has_instance("foo"));
+        assert(Number.has_instance(123));
+
+        o = Object.new;
+        assert(o.singleton_class.has_instance(o));
+    }
 }.register;

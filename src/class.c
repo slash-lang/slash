@@ -237,6 +237,16 @@ class_define_method(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL lambda)
     return method;
 }
 
+static SLVAL
+class_has_instance(sl_vm_t* vm, SLVAL klass, SLVAL object)
+{
+    if(sl_is_a(vm, object, klass)) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -261,6 +271,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "set_constant", 2, class_set_constant);
     sl_define_method(vm, vm->lib.Class, "remove_constant", 1, class_remove_constant);
     sl_define_method(vm, vm->lib.Class, "singleton", 0, class_singleton);
+    sl_define_method(vm, vm->lib.Class, "has_instance", 1, class_has_instance);
 }
 
 SLVAL
