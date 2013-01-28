@@ -11,7 +11,7 @@ mod_slash.so: .libs/mod_slash.so
 	cp $< $@
 
 .libs/mod_slash.so: mod_slash.c ../../libslash.a
-	CC=$(CC) $(APXS) -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $< "-Wl,$(LDFLAGS)"
+	$(APXS) -S "CC=$(CC)" -n mod_slash "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" -c $< "-Wl,$(LDFLAGS)"
 
 clean:
 	rm -f *.o *.so *.$(SO_EXT)
