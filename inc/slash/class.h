@@ -64,6 +64,9 @@ SLVAL
 sl_class_of(sl_vm_t* vm, SLVAL obj);
 
 SLVAL
+sl_real_class_of(sl_vm_t* vm, SLVAL obj);
+
+SLVAL
 sl_new(sl_vm_t* vm, SLVAL klass, size_t argc, SLVAL* argv);
 
 SLVAL

@@ -218,6 +218,16 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
     return klass;
 }
 
+static SLVAL
+class_singleton(sl_vm_t* vm, SLVAL klass)
+{
+    if(get_class(vm, klass)->singleton) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -240,6 +250,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "get_constant", 1, class_get_constant);
     sl_define_method(vm, vm->lib.Class, "set_constant", 2, class_set_constant);
     sl_define_method(vm, vm->lib.Class, "remove_constant", 1, class_remove_constant);
+    sl_define_method(vm, vm->lib.Class, "singleton", 0, class_singleton);
 }
 
 SLVAL
@@ -408,7 +419,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL val)
 int
 sl_is_a(sl_vm_t* vm, SLVAL obj, SLVAL klass)
 {
-    SLVAL vk = sl_class_of(vm, obj);
+    SLVAL vk = sl_real_class_of(vm, obj);
     while(1) {
         if(vk.i == klass.i) {
             return 1;
@@ -417,6 +428,16 @@ sl_is_a(sl_vm_t* vm, SLVAL obj, SLVAL klass)
             return 0;
         }
         vk = ((sl_class_t*)sl_get_ptr(vk))->super;
+    }
+}
+
+SLVAL
+sl_real_class_of(sl_vm_t* vm, SLVAL obj)
+{
+    if(sl_get_primitive_type(obj) == SL_T_INT) {
+        return vm->lib.Int;
+    } else {
+        return sl_get_ptr(obj)->klass;
     }
 }
 
