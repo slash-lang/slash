@@ -130,7 +130,7 @@ run_slash_script(request_rec* r, void* stack_top)
     char* last_slash;
     SLVAL error;
     sl_static_init();
-    vm = sl_init();
+    vm = sl_init("apache2");
     sl_gc_set_stack_top(vm->arena, stack_top);
     vm->cwd = sl_alloc_buffer(vm->arena, strlen(r->canonical_filename) + 10);
     strcpy(vm->cwd, r->canonical_filename);

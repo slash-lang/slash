@@ -13,7 +13,7 @@ void disassemble(sl_vm_t* vm, sl_vm_section_t* section);
 int main(int argc, char** argv)
 {
     sl_static_init();
-    sl_vm_t* vm = sl_init();
+    sl_vm_t* vm = sl_init("disasm");
     
     if(argc < 1) {
         fprintf(stderr, "Usage: slash-dis <source file>\n");
