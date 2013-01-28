@@ -86,7 +86,7 @@ struct st_hash_type
 sl_string_hash_type = { str_cmp, str_hash };
 
 SLVAL
-sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
+sl_make_string_no_copy(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 {
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
@@ -97,12 +97,18 @@ sl_make_string(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
         str->encoding = "CP1252";
         str->char_len = buff_len;
     }
-    str->buff = sl_alloc_buffer(vm->arena, buff_len + 1);
-    memcpy(str->buff, buff, buff_len);
-    str->buff[buff_len] = 0;
+    str->buff = buff;
     str->buff_len = buff_len;
     str->hash_set = 0;
     return vstr;
+}
+
+SLVAL
+sl_make_string(struct sl_vm* vm, uint8_t* buff, size_t buff_len)
+{
+    uint8_t* our_buff = sl_alloc_buffer(vm->arena, buff_len + 1);
+    memcpy(our_buff, buff, buff_len);
+    return sl_make_string_no_copy(vm, our_buff, buff_len);
 }
 
 SLVAL

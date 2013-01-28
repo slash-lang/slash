@@ -12,6 +12,7 @@ typedef enum sl_node_type {
     SL_NODE_IVAR,
     SL_NODE_CVAR,
     SL_NODE_IMMEDIATE,
+    SL_NODE_INTERP_STRING,
     SL_NODE_SELF,
     SL_NODE_CLASS,
     SL_NODE_DEF,
@@ -89,6 +90,13 @@ typedef struct sl_node_immediate {
     SLVAL value;
 }
 sl_node_immediate_t;
+
+typedef struct sl_node_interp_string {
+    sl_node_base_t base;
+    size_t components_count;
+    sl_node_base_t** components;
+}
+sl_node_interp_string_t;
 
 typedef struct sl_node_class {
     sl_node_base_t base;
