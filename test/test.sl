@@ -33,15 +33,15 @@ class Test {
     }
     
     def assert_equal(expect, what) {
-        assert(expect == what, "Expected " + expect.inspect + ", got " + what.inspect);
+        assert(expect == what, "Expected #{expect.inspect}, got #{what.inspect}");
     }
     
     def assert_unequal(expect, what) {
-        assert(expect != what, "Expected value to not equal " + expect.inspect);
+        assert(expect != what, "Expected value to not equal #{expect.inspect}");
     }
     
     def assert_is_a(klass, what) {
-        assert(what.is_a(klass), "Expected " + what.inspect + " to be a " + klass.name);
+        assert(what.is_a(klass), "Expected #{what.inspect} to be a #{klass}");
     }
     
     def assert_throws(klass, fn) {
@@ -70,7 +70,7 @@ class Test {
             } catch e {
                 Test.failures++;
                 print("F");
-                FAILURES.push([name() + " " + md[1], e]);
+                FAILURES.push(["#{name()} #{md[1]}", e]);
             }
         }
     }
@@ -96,13 +96,13 @@ for test in Test::CASES {
 print("\n\n");
 
 for test_name, failure in Test::FAILURES {
-    print(failure.name, " in ", test_name, " - ", failure.message, "\n");
+    print("#{failure.name} in #{test_name} - #{failure.message}\n");
     for frame in failure.backtrace {
         next if frame.file == "test/test.sl";
-        print("    ", frame, "\n");
+        print("    #{frame}\n");
     }
     print("\n");
 }
 
-print("Tests finished. ", Test.passes, " passes, ", Test.failures, " failures, ", Test.assertions, " assertions.\n");
+print("Tests finished. #{Test.passes} passes, #{Test.failures} failures, #{Test.assertions} assertions.\n");
 exit(1) if Test::FAILURES.any;
