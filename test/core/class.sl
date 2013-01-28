@@ -93,4 +93,10 @@ class ClassTest extends Test {
         assert_throws(NameError, \{ Foo.set_constant("", nil) });
         assert_throws(NameError, \{ Foo.set_constant("aBC", nil) });
     }
+
+    def test_singleton {
+        refute(Object.singleton);
+        refute(Test.singleton);
+        assert(Object.singleton_class.singleton);
+    }
 }.register;

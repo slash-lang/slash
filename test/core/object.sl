@@ -49,6 +49,16 @@ class TestObject extends Test {
         assert_equal(Class, Class.class);
     }
 
+    def test_singleton_class {
+        o = Object.new;
+        assert_is_a(Class, o.singleton_class);
+        assert_equal(o.singleton_class, o.singleton_class);
+        assert(o.singleton_class.singleton);
+        assert_is_a(o.singleton_class, o);
+
+        assert_throws(TypeError, \{ 123.singleton_class });
+    }
+
     def test_method {
         assert_is_a(Method, method("test_method"));
         assert_equal(nil, method("what what what"));

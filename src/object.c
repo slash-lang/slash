@@ -65,6 +65,7 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "send", -2, sl_object_send);
     sl_define_method(vm, vm->lib.Object, "responds_to", 1, sl_responds_to_slval);
     sl_define_method(vm, vm->lib.Object, "class", 0, sl_class_of);
+    sl_define_method(vm, vm->lib.Object, "singleton_class", 0, sl_singleton_class);
     sl_define_method(vm, vm->lib.Object, "is_a", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "is_an", 1, sl_object_is_a);
     sl_define_method(vm, vm->lib.Object, "hash", 0, sl_object_hash);
@@ -572,6 +573,9 @@ sl_object_methods(sl_vm_t* vm, SLVAL self)
 SLVAL
 sl_singleton_class(sl_vm_t* vm, SLVAL object)
 {
+    if(sl_get_primitive_type(object) == SL_T_INT) {
+        sl_throw_message2(vm, vm->lib.TypeError, "can't get singleton class for Int");
+    }
     sl_object_t* ptr = sl_get_ptr(object);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(ptr->klass);
     if(klass->singleton) {
