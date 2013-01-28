@@ -224,7 +224,7 @@ my %platforms = (
 if($platforms{$^O}) {
     $platforms{$^O}->();
 } else {
-    error "Unknown system $^O. Please file an issue at https://github.com/haileysome/slash/issues.";
+    error "Unknown system $^O. Please file an issue at https://github.com/slash-lang/slash/issues.";
 }
 
 my ($ext_decls, $ext_inits, $ext_static_inits);
