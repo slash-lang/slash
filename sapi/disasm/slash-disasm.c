@@ -5,17 +5,15 @@
 
 #define MAX_SECTIONS 1024
 
-sl_vm_t* vm;
-
 size_t section_i, section_j;
 sl_vm_section_t* section_queue[MAX_SECTIONS];
 
-void disassemble(sl_vm_section_t* section);
+void disassemble(sl_vm_t* vm, sl_vm_section_t* section);
 
 int main(int argc, char** argv)
 {
     sl_static_init();
-    vm = sl_init();
+    sl_vm_t* vm = sl_init();
     
     if(argc < 1) {
         fprintf(stderr, "Usage: slash-dis <source file>\n");
@@ -47,9 +45,9 @@ int main(int argc, char** argv)
         
         sl_vm_section_t* section = sl_compile(vm, ast, (uint8_t*)argv[1]);
 
-        disassemble(section);
+        disassemble(vm, section);
         while(section_j < section_i) {
-            disassemble(section_queue[++section_j]);
+            disassemble(vm, section_queue[++section_j]);
         }
         
     }, err, {
@@ -65,7 +63,7 @@ int main(int argc, char** argv)
     });
 }
 
-void disassemble(sl_vm_section_t* section)
+void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 {
     size_t ip = 0;
     
