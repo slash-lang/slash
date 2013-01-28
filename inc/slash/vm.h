@@ -223,7 +223,7 @@ void
 sl_static_init();
 
 sl_vm_t*
-sl_init();
+sl_init(const char* sapi_name);
 
 SLVAL
 sl_vm_store_get(sl_vm_t* vm, void* key);

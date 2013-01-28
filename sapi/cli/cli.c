@@ -80,7 +80,7 @@ static sl_vm_t*
 setup_vm(void* stack_top)
 {
     sl_static_init();
-    sl_vm_t* vm = sl_init();
+    sl_vm_t* vm = sl_init("cli");
     sl_gc_set_stack_top(vm->arena, stack_top);
     setup_vm_request(vm);
     setup_vm_response(vm);

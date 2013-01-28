@@ -94,7 +94,7 @@ static void
 sl_init_id(sl_vm_t* vm);
 
 sl_vm_t*
-sl_init()
+sl_init(const char* sapi_name)
 {
     sl_vm_t* vm;
     sl_class_t* Object;
@@ -151,6 +151,8 @@ sl_init()
     
     vm->state_constant = 1;
     vm->state_method = 1;
+
+    sl_class_set_const(vm, vm->lib.Object, "SAPI", sl_make_cstring(vm, sapi_name));
 
     sl_gc_enable(arena);
     return vm;
