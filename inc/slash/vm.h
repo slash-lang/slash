@@ -62,6 +62,8 @@ struct sl_vm_lib {
     SLVAL Int;
     SLVAL Float;
     SLVAL Bignum;
+
+    SLVAL Buffer;
     
     SLVAL Enumerable;
     SLVAL Array;

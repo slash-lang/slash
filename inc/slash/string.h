@@ -6,14 +6,14 @@
 extern struct st_hash_type
 sl_string_hash_type;
 
+char*
+sl_iconv(sl_vm_t* vm, char* input_string, size_t input_length, char* from_encoding, char* to_encoding, size_t* output_length);
+
 SLVAL
 sl_make_string(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
 
 SLVAL
 sl_make_string_no_copy(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
-
-SLVAL
-sl_make_string_enc(sl_vm_t* vm, char* buff, size_t buff_len, char* encoding);
 
 SLVAL
 sl_make_cstring(struct sl_vm* vm, const char* cstr);
