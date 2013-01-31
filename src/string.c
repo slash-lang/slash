@@ -13,6 +13,7 @@
 #include <slash/lib/array.h>
 #include <slash/lib/number.h>
 #include <slash/lib/regexp.h>
+#include <slash/lib/buffer.h>
 #include <slash/lib/enumerable.h>
 
 static int
@@ -82,21 +83,60 @@ str_cmp(sl_string_t* a, sl_string_t* b)
     return 0;
 }
 
+char*
+sl_iconv(sl_vm_t* vm, char* input_string, size_t input_length, char* from_encoding, char* to_encoding, size_t* output_length)
+{
+    iconv_t cd = iconv_open(to_encoding, from_encoding);
+    if(cd == (iconv_t)(-1)) {
+        sl_throw_message2(vm, vm->lib.EncodingError, "Unknown encoding");
+    }
+    char* in_buff = input_string;
+    size_t in_bytes_left = input_length;
+    size_t out_bytes_left = in_bytes_left * 4 + 15;
+    size_t out_cap = out_bytes_left;
+    char* out_buff = sl_alloc_buffer(vm->arena, out_cap);
+    char* retn_out_buff = out_buff;
+    while(1) {
+        size_t ret = iconv(cd, &in_buff, &in_bytes_left, &out_buff, &out_bytes_left);
+        if(ret != (size_t)(-1)) {
+            break;
+        }
+        if(errno == E2BIG) {
+            out_bytes_left = input_length;
+            out_cap += input_length;
+            out_buff = sl_realloc(vm->arena, out_buff, out_cap);
+            continue;
+        }
+        if(errno == EILSEQ || errno == EINVAL) {
+            iconv_close(cd);
+            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid encoding in source buffer");
+        }
+        break;
+    }
+    iconv_close(cd);
+    *output_length = out_cap - out_bytes_left;
+    return retn_out_buff;
+}
+
 struct st_hash_type
 sl_string_hash_type = { str_cmp, str_hash };
+
+static void
+ensure_utf8(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
+{
+    if(!sl_is_valid_utf8(buff, buff_len)) {
+        sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8");
+    }
+}
 
 SLVAL
 sl_make_string_no_copy(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
 {
+    ensure_utf8(vm, buff, buff_len);
+
     SLVAL vstr = sl_allocate(vm, vm->lib.String);
     sl_string_t* str = (sl_string_t*)sl_get_ptr(vstr);
-    if(sl_is_valid_utf8(buff, buff_len)) {
-        str->encoding = "UTF-8";
-        str->char_len = sl_utf8_strlen(vm, buff, buff_len);
-    } else {
-        str->encoding = "CP1252";
-        str->char_len = buff_len;
-    }
+    str->char_len = sl_utf8_strlen(vm, buff, buff_len);
     str->buff = buff;
     str->buff_len = buff_len;
     str->hash_set = 0;
@@ -128,7 +168,6 @@ allocate_string(sl_vm_t* vm)
 {
     sl_object_t* obj = (sl_object_t*)sl_alloc(vm->arena, sizeof(sl_string_t));
     obj->primitive_type = SL_T_STRING;
-    ((sl_string_t*)obj)->encoding = "UTF-8";
     return obj;
 }
 
@@ -150,9 +189,6 @@ sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     sl_string_t* a = sl_get_string(vm, self);
     sl_string_t* b = sl_get_string(vm, other);
-    if(strcmp(a->encoding, b->encoding) != 0) {
-        return sl_string_concat(vm, self, sl_string_encode(vm, other, a->encoding));
-    }
     uint8_t* buff = (uint8_t*)sl_alloc_buffer(vm->arena, a->buff_len + b->buff_len);
     memcpy(buff, a->buff, a->buff_len);
     memcpy(buff + a->buff_len, b->buff, b->buff_len);
@@ -368,26 +404,11 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     sl_string_t* a = sl_get_string(vm, self);
     sl_string_t* b = sl_get_string(vm, other);
-    if(a->encoding == b->encoding) {
-        if(str_cmp((sl_string_t*)sl_get_ptr(self), (sl_string_t*)sl_get_ptr(other)) == 0) {
-            return vm->lib._true;
-        } else {
-            return vm->lib._false;
-        }
+    if(str_cmp(a, b) == 0) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
     }
-    sl_vm_frame_t frame;
-    SLVAL err;
-    volatile SLVAL retn;
-    SL_TRY(frame, SL_UNWIND_EXCEPTION, {
-        retn = sl_string_eq(vm, self, sl_string_encode(vm, other, a->encoding));
-    }, err, {
-        if(sl_is_a(vm, err, vm->lib.EncodingError)) {
-            retn = sl_string_eq(vm, other, self);
-        } else {
-            sl_unwind(vm, frame.as.handler_frame.value, frame.as.handler_frame.unwind_type);
-        }
-    });
-    return retn;
 }
 
 SLVAL
@@ -400,17 +421,11 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
     uint8_t* haystack_buff = haystack->buff;
     size_t haystack_len = haystack->buff_len;
     size_t i = 0;
-    int utf8 = strcmp(haystack->encoding, "UTF-8") == 0;
     while(haystack_len >= needle->buff_len) {
         if(memcmp(haystack_buff, needle->buff, needle->buff_len) == 0) {
             return sl_make_int(vm, i);
         }
-        if(utf8) {
-            sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
-        } else {
-            haystack_buff++;
-            haystack_len--;
-        }
+        sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
         i++;
     }
     
@@ -429,20 +444,16 @@ sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
         return vm->lib.nil;
     }
     uint8_t* buff_ptr = str->buff;
-    if(strcmp(str->encoding, "UTF-8") == 0) {
-        size_t len = str->buff_len;
-        while(idx) {
-            sl_utf8_each_char(vm, &buff_ptr, &len);
-            idx--;
-        }
-        size_t slice_len = 1;
-        while(slice_len < len && (buff_ptr[slice_len] & 0xc0) == 0x80) {
-            slice_len++;
-        }
-        return sl_make_string(vm, buff_ptr, slice_len);
-    } else {
-        return sl_make_string(vm, &buff_ptr[idx], 1);
+    size_t len = str->buff_len;
+    while(idx) {
+        sl_utf8_each_char(vm, &buff_ptr, &len);
+        idx--;
     }
+    size_t slice_len = 1;
+    while(slice_len < len && (buff_ptr[slice_len] & 0xc0) == 0x80) {
+        slice_len++;
+    }
+    return sl_make_string(vm, buff_ptr, slice_len);
 }
 
 SLVAL
@@ -458,18 +469,11 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
     size_t buff_len;
     uint32_t c;
     if(needle->buff_len == 0) {
-        if(strcmp(haystack->encoding, "UTF-8") == 0) {
-            while(haystack_len) {
-                c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
-                buff_len = sl_utf32_char_to_utf8(vm, c, buff);
-                piece = sl_make_string(vm, buff, buff_len);
-                sl_array_push(vm, ret, 1, &piece);
-            }
-        } else {
-            for(size_t i = 0; i < haystack_len; i++) {
-                piece = sl_make_string(vm, &buff[i], 1);
-                sl_array_push(vm, ret, 1, &piece);
-            }
+        while(haystack_len) {
+            c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
+            buff_len = sl_utf32_char_to_utf8(vm, c, buff);
+            piece = sl_make_string(vm, buff, buff_len);
+            sl_array_push(vm, ret, 1, &piece);
         }
         return ret;
     } else {
@@ -496,38 +500,9 @@ SLVAL
 sl_string_encode(sl_vm_t* vm, SLVAL self, char* encoding)
 {
     sl_string_t* str = sl_get_string(vm, self);
-    char* buff = (char*)str->buff;
-    size_t buff_len = str->buff_len;
-    size_t in_bytes_left = buff_len, out_bytes_left = buff_len * 4 + 15, cap = out_bytes_left;
-    char *inbuff = buff, *outbuf = sl_alloc_buffer(vm->arena, out_bytes_left), *retn_outbuf = outbuf;
-    size_t ret;
-    if(strcmp(encoding, "ISO-8859-1") && strcmp(encoding, "UTF-8")) {
-        char* err_buff = sl_alloc_buffer(vm->arena, 32 + strlen(encoding));
-        sprintf(err_buff, "Unknown encoding: '%s'", encoding);
-        sl_throw_message2(vm, vm->lib.EncodingError, err_buff);
-    }
-    iconv_t cd = iconv_open(encoding, str->encoding);
-    while(1) {
-        ret = iconv(cd, &inbuff, &in_bytes_left, &outbuf, &out_bytes_left);
-        
-        if(ret != (size_t)-1) {
-            break;
-        }
-        if(errno == E2BIG) {
-            out_bytes_left = buff_len;
-            cap += buff_len;
-            outbuf = sl_realloc(vm->arena, outbuf, cap);
-            continue;
-        }
-        
-        if(errno == EILSEQ || errno == EINVAL) {
-            iconv_close(cd);
-            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid source string");
-        }
-        break;
-    }
-    iconv_close(cd);
-    return sl_make_string(vm, (uint8_t*)retn_outbuf, cap - out_bytes_left);
+    size_t out_len;
+    char* out_buff = sl_iconv(vm, (char*)str->buff, str->buff_len, "UTF-8", encoding, &out_len);
+    return sl_make_buffer(vm, out_buff, out_len);
 }
 
 SLVAL
@@ -671,23 +646,15 @@ sl_string_upper(sl_vm_t* vm, SLVAL selfv)
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
     
-    if(strcmp(retn->encoding, "UTF-8") == 0) {
-        size_t len = self->buff_len;
-        uint8_t* buff = self->buff;
-        size_t out_offset = 0;
-        uint32_t upper_c;
-        
-        while(len) {
-            uint32_t c = sl_utf8_each_char(vm, &buff, &len);
-            upper_c = sl_unicode_toupper(c);
-            out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
-        }
-    } else {
-        for(size_t i = 0; i < retn->buff_len; i++) {
-            if(retn->buff[i] >= 'a' && retn->buff[i] <= 'z') {
-                retn->buff[i] -= 'a' - 'A';
-            }
-        }
+    size_t len = self->buff_len;
+    uint8_t* buff = self->buff;
+    size_t out_offset = 0;
+    uint32_t upper_c;
+    
+    while(len) {
+        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+        upper_c = sl_unicode_toupper(c);
+        out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
     }
     
     return sl_make_ptr((sl_object_t*)retn);
@@ -701,23 +668,15 @@ sl_string_lower(sl_vm_t* vm, SLVAL selfv)
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
     
-    if(strcmp(retn->encoding, "UTF-8") == 0) {
-        size_t len = self->buff_len;
-        uint8_t* buff = self->buff;
-        size_t out_offset = 0;
-        uint32_t lower_c;
-        
-        while(len) {
-            uint32_t c = sl_utf8_each_char(vm, &buff, &len);
-            lower_c = sl_unicode_tolower(c);
-            out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
-        }
-    } else {
-        for(size_t i = 0; i < retn->buff_len; i++) {
-            if(retn->buff[i] >= 'A' && retn->buff[i] <= 'Z') {
-                retn->buff[i] += 'a' - 'A';
-            }
-        }
+    size_t len = self->buff_len;
+    uint8_t* buff = self->buff;
+    size_t out_offset = 0;
+    uint32_t lower_c;
+    
+    while(len) {
+        uint32_t c = sl_utf8_each_char(vm, &buff, &len);
+        lower_c = sl_unicode_tolower(c);
+        out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
     }
     
     return sl_make_ptr((sl_object_t*)retn);
