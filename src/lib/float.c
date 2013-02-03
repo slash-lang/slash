@@ -52,6 +52,17 @@ SLVAL
 sl_float_to_s(sl_vm_t* vm, SLVAL self)
 {
     double d = sl_get_float(vm, self);
+
+    if(isnan(d)) {
+        return sl_make_cstring(vm, "NaN");
+    } else if(!isfinite(d)) {
+        if(d > 0) {
+            return sl_make_cstring(vm, "Infinity");
+        } else {
+            return sl_make_cstring(vm, "-Infinity");
+        }
+    }
+
     char buff[1024];
     sprintf(buff, "%f", d);
     for(size_t i = strlen(buff) - 1; i > 0; i--) {
@@ -104,6 +115,24 @@ sl_float_ceil(sl_vm_t* vm, SLVAL self)
     return sl_make_float(vm, ceil(sl_get_float(vm, self)));
 }
 
+static SLVAL
+sl_float_nan(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_bool(vm, isnan(sl_get_float(vm, self)));
+}
+
+static SLVAL
+sl_float_finite(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_bool(vm, isfinite(sl_get_float(vm, self)));
+}
+
+static SLVAL
+sl_float_infinite(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_bool(vm, !isfinite(sl_get_float(vm, self)));
+}
+
 void
 sl_init_float(sl_vm_t* vm)
 {
@@ -127,8 +156,12 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "**", 1, sl_float_pow);
     sl_define_method(vm, vm->lib.Float, "==", 1, sl_float_eq);
     sl_define_method(vm, vm->lib.Float, "<=>", 1, sl_float_cmp);
+    sl_define_method(vm, vm->lib.Float, "nan", 0, sl_float_nan);
+    sl_define_method(vm, vm->lib.Float, "finite", 0, sl_float_finite);
+    sl_define_method(vm, vm->lib.Float, "infinite", 0, sl_float_infinite);
     
     sl_class_set_const(vm, vm->lib.Object, "Infinity", sl_make_float(vm, 1.0/0.0));
+    sl_class_set_const(vm, vm->lib.Object, "NaN", sl_make_float(vm, 0.0/0.0));
 }
 
 SLVAL
