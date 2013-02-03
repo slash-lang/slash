@@ -138,6 +138,9 @@ sl_is_truthy(SLVAL val);
 SLVAL
 sl_make_bool(struct sl_vm* vm, bool b);
 
+SLVAL
+sl_to_bool(struct sl_vm* vm, SLVAL val);
+
 int
 sl_hash(struct sl_vm* vm, SLVAL val);
 
