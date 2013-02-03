@@ -410,11 +410,7 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     sl_string_t* a = sl_get_string(vm, self);
     sl_string_t* b = sl_get_string(vm, other);
-    if(str_cmp(a, b) == 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, str_cmp(a, b) == 0);
 }
 
 SLVAL

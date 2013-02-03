@@ -222,11 +222,7 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
 static SLVAL
 class_singleton(sl_vm_t* vm, SLVAL klass)
 {
-    if(get_class(vm, klass)->singleton) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, get_class(vm, klass)->singleton);
 }
 
 static SLVAL
@@ -240,11 +236,7 @@ class_define_method(sl_vm_t* vm, SLVAL klass, SLVAL name, SLVAL lambda)
 static SLVAL
 class_has_instance(sl_vm_t* vm, SLVAL klass, SLVAL object)
 {
-    if(sl_is_a(vm, object, klass)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_is_a(vm, object, klass));
 }
 
 void

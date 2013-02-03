@@ -193,11 +193,7 @@ time_eq(sl_vm_t* vm, SLVAL selfv, SLVAL otherv)
 {
     sl_time_t* self = get_time(vm, selfv);
     sl_time_t* other = get_time(vm, otherv);
-    if(self->tm == other->tm) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, self->tm == other->tm);
 }
 
 void

@@ -243,11 +243,7 @@ sl_int_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     if(!sl_is_a(vm, other, vm->lib.Int)) {
         return vm->lib._false;
     }
-    if(sl_get_int(self) == sl_get_int(other)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_get_int(self) == sl_get_int(other));
 }
 
 static SLVAL
