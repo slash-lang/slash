@@ -320,20 +320,12 @@ sl_bignum_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_bignum_eq(vm, self, sl_make_bignum(vm, sl_get_int(other)));
     }
     if(sl_is_a(vm, other, vm->lib.Float)) {
-        if(mpz_cmp_d(get_bignum(vm, self)->mpz, sl_get_float(vm, other)) == 0) {
-            return vm->lib._true;
-        } else {
-            return vm->lib._false;
-        }
+        return sl_make_bool(vm, mpz_cmp_d(get_bignum(vm, self)->mpz, sl_get_float(vm, other)) == 0);
     }
     if(!sl_is_a(vm, other, vm->lib.Bignum)) {
         return vm->lib._false;
     }
-    if(mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz) == 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, mpz_cmp(get_bignum(vm, self)->mpz, get_bignum(vm, other)->mpz) == 0);
 }
 
 SLVAL

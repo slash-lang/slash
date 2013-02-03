@@ -11,41 +11,25 @@ sl_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 static SLVAL
 comparable_lt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_cmp(vm, self, other) < 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_cmp(vm, self, other) < 0);
 }
 
 static SLVAL
 comparable_lte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_cmp(vm, self, other) <= 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_cmp(vm, self, other) <= 0);
 }
 
 static SLVAL
 comparable_gt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_cmp(vm, self, other) > 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_cmp(vm, self, other) > 0);
 }
 
 static SLVAL
 comparable_gte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_cmp(vm, self, other) >= 0) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_cmp(vm, self, other) >= 0);
 }
 
 void

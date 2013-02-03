@@ -93,21 +93,14 @@ sl_eq(sl_vm_t* vm, SLVAL a, SLVAL b)
 static SLVAL
 sl_object_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_get_ptr(self) == sl_get_ptr(other)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_get_ptr(self) == sl_get_ptr(other));
 }
 
 static SLVAL
 sl_object_ne(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    if(sl_is_truthy(sl_send_id(vm, self, vm->id.op_eq, 1, other))) {
-        return vm->lib._false;
-    } else {
-        return vm->lib._true;
-    }
+    SLVAL value = sl_send_id(vm, self, vm->id.op_eq, 1, other);
+    return sl_make_bool(vm, !sl_is_truthy(value));
 }
 
 static SLVAL
@@ -119,11 +112,7 @@ sl_object_hash(sl_vm_t* vm, SLVAL self)
 static SLVAL
 sl_object_is_a(sl_vm_t* vm, SLVAL self, SLVAL klass)
 {
-    if(sl_is_a(vm, self, klass)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_is_a(vm, self, klass));
 }
 
 SLVAL
@@ -224,12 +213,7 @@ sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
 static SLVAL
 sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv)
 {
-    SLID id = sl_intern2(vm, idv);
-    if(sl_responds_to2(vm, object, id)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_responds_to2(vm, object, sl_intern2(vm, idv)));
 }
 
 int

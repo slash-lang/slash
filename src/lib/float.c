@@ -266,11 +266,7 @@ sl_float_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     if(!sl_is_a(vm, other, vm->lib.Float)) {
         return vm->lib._false;
     }
-    if(sl_get_float(vm, self) == sl_get_float(vm, other)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_get_float(vm, self) == sl_get_float(vm, other));
 }
 
 SLVAL

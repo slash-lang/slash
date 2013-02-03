@@ -202,11 +202,7 @@ response_status_set(sl_vm_t* vm, SLVAL self, SLVAL status)
 static SLVAL
 response_descriptive_error_pages(sl_vm_t* vm)
 {
-    if(response(vm)->descriptive_error_pages) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, response(vm)->descriptive_error_pages);
 }
 
 static SLVAL

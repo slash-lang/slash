@@ -88,11 +88,7 @@ static SLVAL
 enumerable_empty(sl_vm_t* vm, SLVAL self)
 {
     SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_not(vm, sl_send_id(vm, enumerator, vm->id.next, 0));
 }
 
 static SLVAL

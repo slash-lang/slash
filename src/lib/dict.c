@@ -114,11 +114,7 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
     sl_dict_key_t* pk = &k;
     k.vm = vm;
     k.key = key;
-    if(st_delete(get_dict(vm, dict)->st, (st_data_t*)&pk, NULL)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, st_delete(get_dict(vm, dict)->st, (st_data_t*)&pk, NULL));
 }
 
 static int
@@ -276,11 +272,7 @@ static SLVAL
 sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
     sl_dict_key_t k = { .vm = vm, .key = key };
-    if(st_lookup(get_dict(vm, dict)->st, (st_data_t)&k, NULL)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, st_lookup(get_dict(vm, dict)->st, (st_data_t)&k, NULL));
 }
 
 struct dict_eq_iter_state {

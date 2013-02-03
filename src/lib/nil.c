@@ -27,11 +27,7 @@ static SLVAL
 nil_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     (void)self;
-    if(sl_is_a(vm, other, vm->lib.Nil)) {
-        return vm->lib._true;
-    } else {
-        return vm->lib._false;
-    }
+    return sl_make_bool(vm, sl_is_a(vm, other, vm->lib.Nil));
 }
 
 void
