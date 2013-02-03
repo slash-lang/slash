@@ -109,6 +109,12 @@ sl_to_bool(sl_vm_t* vm, SLVAL val)
     return sl_make_bool(vm, sl_is_truthy(val));
 }
 
+SLVAL
+sl_not(struct sl_vm* vm, SLVAL val)
+{
+    return sl_make_bool(vm, !sl_is_truthy(val));
+}
+
 int
 sl_hash(sl_vm_t* vm, SLVAL val)
 {

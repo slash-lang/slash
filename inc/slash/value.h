@@ -139,6 +139,9 @@ SLVAL
 sl_make_bool(struct sl_vm* vm, bool b);
 
 SLVAL
+sl_not(struct sl_vm* vm, SLVAL val);
+
+SLVAL
 sl_to_bool(struct sl_vm* vm, SLVAL val);
 
 int
