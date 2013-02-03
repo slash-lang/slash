@@ -24,6 +24,7 @@ class StringTest extends Test {
         assert_equal("\x00\x00\x00\x00\x00\x00", "\x00" * 6);
         assert_equal("†††", "†" * 3);
         assert_throws(TypeError, \{ "x" * 10000000000000000 });
+        assert_throws(ArgumentError, \{ "x" * -1 });
     }
     
     def test_to_s {

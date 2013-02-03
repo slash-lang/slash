@@ -200,7 +200,13 @@ sl_string_times(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     sl_string_t* str = sl_get_string(vm, self);
     long mul = sl_get_int(sl_expect(vm, other, vm->lib.Int));
-    if(mul && (size_t)LONG_MAX / mul < str->buff_len) {
+    if(mul == 0) {
+        return sl_make_cstring(vm, "");
+    }
+    if(mul < 0) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier must be positive");   
+    }
+    if(mul > 0 && (size_t)LONG_MAX / mul < str->buff_len) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier is too big");
     }
     sl_string_t* new_str = sl_get_string(vm, sl_make_string(vm, NULL, 0));
