@@ -93,6 +93,16 @@ sl_is_truthy(SLVAL val)
     }
 }
 
+SLVAL
+sl_make_bool(struct sl_vm* vm, bool b)
+{
+    if(b) {
+        return vm->lib._true;
+    } else {
+        return vm->lib._false;
+    }
+}
+
 int
 sl_hash(sl_vm_t* vm, SLVAL val)
 {
