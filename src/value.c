@@ -94,13 +94,19 @@ sl_is_truthy(SLVAL val)
 }
 
 SLVAL
-sl_make_bool(struct sl_vm* vm, bool b)
+sl_make_bool(sl_vm_t* vm, bool b)
 {
     if(b) {
         return vm->lib._true;
     } else {
         return vm->lib._false;
     }
+}
+
+SLVAL
+sl_to_bool(sl_vm_t* vm, SLVAL val)
+{
+    return sl_make_bool(vm, sl_is_truthy(val));
 }
 
 int
