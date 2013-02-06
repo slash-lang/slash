@@ -248,6 +248,17 @@ enumerable_includes(sl_vm_t* vm, SLVAL self, SLVAL needle)
     return vm->lib._false;
 }
 
+static SLVAL
+enumerable_each(sl_vm_t* vm, SLVAL self, SLVAL func)
+{
+    SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
+    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
+        SLVAL current = sl_send_id(vm, enumerator, vm->id.current, 0);
+        sl_send_id(vm, func, vm->id.call, 1, current);
+    }
+    return self;
+}
+
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -270,4 +281,5 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "first", 0, enumerable_first);
     sl_define_method(vm, vm->lib.Enumerable, "last", 0, enumerable_last);
     sl_define_method(vm, vm->lib.Enumerable, "includes", 1, enumerable_includes);
+    sl_define_method(vm, vm->lib.Enumerable, "each", 1, enumerable_each);
 }
