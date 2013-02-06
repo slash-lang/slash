@@ -172,4 +172,11 @@ class EnumerableTest extends Test {
         refute(LengthOfExactlyFourEnumerable.new.includes(5));
         assert(InfiniteEnumerable.new.includes(true));
     }
+
+    def test_each {
+        UselessEnumerable.new.each(\_ { flunk() });
+        ary = [];
+        LengthOfExactlyFourEnumerable.new.each(\x { ary.push(x) });
+        assert_equal([1,2,3,4], ary);
+    }
 }.register;
