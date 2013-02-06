@@ -27,7 +27,7 @@
 /* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
 NKW [^a-zA-Z_0-9]?
 SYM [a-zA-Z0-9_]+
-IDT [a-zA-Z0-9_]*
+IDT [a-zA-Z0-9_']*
 ID  [a-z_]{IDT}
 HEX [0-9a-fA-F]
 
