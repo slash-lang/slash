@@ -63,4 +63,25 @@ class TestObject extends Test {
         assert_is_a(Method, method("test_method"));
         assert_equal(nil, method("what what what"));
     }
+
+    def test_get_instance_variable {
+        o = Object.new;
+        assert_equal(nil, o.get_instance_variable('foo));
+        def o.x {
+            @foo = 123;
+        }
+        o.x;
+        assert_equal(123, o.get_instance_variable('foo));
+    }
+
+    def test_get_instance_variable {
+        o = Object.new;
+        def o.x {
+            @foo;
+        }
+        o.set_instance_variable('foo, 123);
+        assert_equal(123, o.x);
+        o.set_instance_variable('foo, 456);
+        assert_equal(456, o.x);
+    }
 }.register;

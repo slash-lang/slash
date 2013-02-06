@@ -55,6 +55,12 @@ sl_object_methods(sl_vm_t* vm, SLVAL self);
 static SLVAL
 sl_responds_to_slval(sl_vm_t* vm, SLVAL object, SLVAL idv);
 
+static SLVAL
+sl_object_get_instance_variable(sl_vm_t* vm, SLVAL object, SLVAL idv);
+
+static SLVAL
+sl_object_set_instance_variable(sl_vm_t* vm, SLVAL object, SLVAL idv, SLVAL value);
+
 void
 sl_init_object(sl_vm_t* vm)
 {
@@ -73,6 +79,8 @@ sl_init_object(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Object, "own_method", 1, sl_object_own_method);
     sl_define_method(vm, vm->lib.Object, "own_methods", 0, sl_object_own_methods);
     sl_define_method(vm, vm->lib.Object, "methods", 0, sl_object_methods);
+    sl_define_method(vm, vm->lib.Object, "get_instance_variable", 1, sl_object_get_instance_variable);
+    sl_define_method(vm, vm->lib.Object, "set_instance_variable", 2, sl_object_set_instance_variable);
     sl_define_method(vm, vm->lib.Object, "==", 1, sl_object_eq);
     sl_define_method(vm, vm->lib.Object, "!=", 1, sl_object_ne);
 }
@@ -277,6 +285,19 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
     }
     p = (sl_class_t*)sl_get_ptr(object);
     st_insert(p->class_variables, (st_data_t)id.id, (st_data_t)sl_get_ptr(val));
+}
+
+static SLVAL
+sl_object_get_instance_variable(sl_vm_t* vm, SLVAL object, SLVAL idv)
+{
+    return sl_get_ivar(vm, object, sl_intern2(vm, idv));
+}
+
+static SLVAL
+sl_object_set_instance_variable(sl_vm_t* vm, SLVAL object, SLVAL idv, SLVAL value)
+{
+    sl_set_ivar(vm, object, sl_intern2(vm, idv), value);
+    return object;
 }
 
 SLVAL
