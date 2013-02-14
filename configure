@@ -6,7 +6,7 @@ use File::Spec::Functions qw(rel2abs);
 use File::Basename;
 use Getopt::Long;
 
-my @exts = qw(mysql json base64 gcrypt inflect);
+my @exts = qw(base64 curl gcrypt inflect json markdown mysql socket);
 my @sapis = qw(cli);
 
 our @lib_dirs;
