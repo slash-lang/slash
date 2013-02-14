@@ -13,6 +13,7 @@
 #include "slash/string.h"
 #include "slash/platform.h"
 #include "slash/lib/array.h"
+#include "slash/lib/buffer.h"
 #include "slash/lib/dict.h"
 #include "slash/lib/bignum.h"
 #include "slash/lib/float.h"
