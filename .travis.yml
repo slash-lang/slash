@@ -1,6 +1,6 @@
 language: c
 before_script:
-  - sudo apt-get install libgmp-dev libmysqlclient-dev libgcrypt-dev
+  - sudo apt-get install libgmp-dev libmysqlclient-dev libgcrypt-dev libmarkdown2-dev
 script: ./configure --prefix=`pwd` --no-ext=json ; make ; sapi/cli/slash-cli test/test.sl test/*/*.sl
 notifications:
   irc:
