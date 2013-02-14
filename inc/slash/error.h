@@ -34,10 +34,10 @@ void
 sl_exit(struct sl_vm* vm, SLVAL value);
 
 void
-sl_throw_message(struct sl_vm* vm, char* cstr);
+sl_throw_message(struct sl_vm* vm, const char* cstr);
 
 void
-sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr);
+sl_throw_message2(struct sl_vm* vm, SLVAL klass, const char* cstr);
 
 #define SL_TRY(frame, catch_unwinds, try_block, e, catch_block) do { \
         frame.prev = vm->call_stack; \

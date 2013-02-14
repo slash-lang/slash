@@ -274,13 +274,13 @@ sl_exit(sl_vm_t* vm, SLVAL value)
 }
 
 void
-sl_throw_message(struct sl_vm* vm, char* cstr)
+sl_throw_message(struct sl_vm* vm, const char* cstr)
 {
     sl_throw(vm, sl_make_error(vm, sl_make_cstring(vm, cstr)));
 }
 
 void
-sl_throw_message2(struct sl_vm* vm, SLVAL klass, char* cstr)
+sl_throw_message2(struct sl_vm* vm, SLVAL klass, const char* cstr)
 {
     sl_throw(vm, sl_make_error2(vm, klass, sl_make_cstring(vm, cstr)));
 }
