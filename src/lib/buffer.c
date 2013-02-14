@@ -203,6 +203,17 @@ buffer_decode(sl_vm_t* vm, SLVAL self, SLVAL from_encoding)
     return sl_make_string_no_copy(vm, (uint8_t*)out_buff, out_len);
 }
 
+sl_frozen_buffer_t*
+sl_buffer_get_frozen_copy(sl_vm_t* vm, SLVAL buffer)
+{
+    sl_buffer_t* buff = get_buffer(vm, buffer);
+    sl_frozen_buffer_t* copy = sl_alloc(vm->arena, sizeof(sl_frozen_buffer_t));
+    copy->data = sl_alloc_buffer(vm->arena, buff->len);
+    memcpy(copy->data, buff->buffer, buff->len);
+    copy->len = buff->len;
+    return copy;
+}
+
 void
 sl_init_buffer(sl_vm_t* vm)
 {
