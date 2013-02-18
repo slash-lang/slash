@@ -110,8 +110,7 @@ sl_init(const char* sapi_name)
     vm->cwd = ".";
     vm->initializing = 1;
     vm->store = st_init_numtable(vm->arena);
-    sl_rand_init_mt(vm);
-    vm->hash_seed = sl_rand(vm);
+    vm->hash_seed = rand();
     vm->stack_limit = sl_stack_limit();
     vm->required = st_init_table(vm->arena, &sl_string_hash_type);
     vm->call_stack = NULL;
