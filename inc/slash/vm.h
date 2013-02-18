@@ -82,6 +82,11 @@ struct sl_vm_lib {
     SLVAL Time;
 };
 
+typedef enum {
+    SL_INIT_RAND
+}
+sl_vm_init_flag_t;
+
 typedef struct sl_vm {
     int initializing;
     struct sl_vm_lib lib;
@@ -96,6 +101,7 @@ typedef struct sl_vm {
     st_table_t* required;
     uint32_t state_constant;
     uint32_t state_method;
+    sl_vm_init_flag_t inited;
     struct {
         st_table_t* name_to_id;
         SLVAL* id_to_name;

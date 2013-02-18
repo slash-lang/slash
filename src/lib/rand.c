@@ -25,12 +25,15 @@ generate_numbers(sl_mt_state_t* state)
 int
 sl_rand(sl_vm_t* vm)
 {
-    int y;
+    if(!(vm->inited & SL_INIT_RAND)) {
+        sl_rand_init_mt(vm);
+        vm->inited |= SL_INIT_RAND;
+    }
     sl_mt_state_t* state = (sl_mt_state_t*)sl_get_ptr(sl_vm_store_get(vm, &mt));
     if(state->index == 0) {
         generate_numbers(state);
     }
-    y = state->mt[state->index];
+    int y = state->mt[state->index];
     state->index = (state->index + 1) % 624;
     y ^= y >> 11;
     y ^= (y << 7) & 2636928640;
