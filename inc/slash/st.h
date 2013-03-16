@@ -44,7 +44,7 @@ struct sl_st_table_entry
 
 #define sl_st_is_member(table,key) sl_st_lookup(table,key,(sl_st_data_t *)0)
 
-enum sl_st_retval {ST_CONTINUE, ST_STOP, ST_DELETE, ST_CHECK};
+enum sl_st_retval {SL_ST_CONTINUE, SL_ST_STOP, SL_ST_DELETE, SL_ST_CHECK};
 
 #ifndef _
 # define _(args) args
@@ -68,10 +68,10 @@ int sl_st_delete_safe _((sl_st_table_t *, sl_st_data_t *, sl_st_data_t *, sl_st_
 int sl_st_insert _((sl_st_table_t *, sl_st_data_t, sl_st_data_t));
 int sl_st_lookup _((sl_st_table_t *, sl_st_data_t, sl_st_data_t *));
 int sl_st_foreach _((sl_st_table_t *, int (*)(ANYARGS), sl_st_data_t));
-void st_add_direct _((sl_st_table_t *, sl_st_data_t, sl_st_data_t));
-void st_free_table _((sl_st_table_t *));
-void st_cleanup_safe _((sl_st_table_t *, sl_st_data_t));
-sl_st_table_t *st_copy _((sl_st_table_t *));
+void sl_st_add_direct _((sl_st_table_t *, sl_st_data_t, sl_st_data_t));
+void sl_st_free_table _((sl_st_table_t *));
+void sl_st_cleanup_safe _((sl_st_table_t *, sl_st_data_t));
+sl_st_table_t *sl_st_copy _((sl_st_table_t *));
 
 #define SL_ST_NUMCMP	((int (*)()) 0)
 #define SL_ST_NUMHASH	((int (*)()) -2)

@@ -535,7 +535,7 @@ collect_methods_iter(SLID id, SLVAL method, struct collect_methods_iter_state* s
         SLVAL name = sl_id_to_string(state->vm, id);
         sl_array_push(state->vm, state->ary, 1, &name);
     }
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 static SLVAL

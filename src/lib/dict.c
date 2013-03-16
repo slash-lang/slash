@@ -121,7 +121,7 @@ static int
 sl_dict_merge_iter(sl_dict_key_t* key, SLVAL value, SLVAL dict)
 {
     sl_dict_set(key->vm, dict, key->key, value);
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 SLVAL
@@ -150,7 +150,7 @@ dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
     *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, key->key));
     *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, " => "));
     *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, value));
-    return ST_CHECK;
+    return SL_ST_CHECK;
 }
 
 static SLVAL
@@ -185,7 +185,7 @@ dict_enumerator_init_iter(sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t
     (void)record;
     e->keys[e->at] = key->key;
     e->at++;
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 static SLVAL
@@ -245,7 +245,7 @@ sl_dict_keys_iter(sl_dict_key_t* key, SLVAL value, struct dict_keys_state* state
 {
     (void)value;
     state->keys[state->at++] = key->key;
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 SLVAL*
@@ -287,13 +287,13 @@ dict_eq_iter(sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
     SLVAL other_value;
     if(!sl_st_lookup(state->other->st, (sl_st_data_t)key, (sl_st_data_t*)&other_value)) {
         state->success = 0;
-        return ST_STOP;
+        return SL_ST_STOP;
     }
     if(!sl_eq(state->vm, value, other_value)) {
         state->success = 0;
-        return ST_STOP;
+        return SL_ST_STOP;
     }
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 static SLVAL
