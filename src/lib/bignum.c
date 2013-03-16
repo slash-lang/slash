@@ -92,7 +92,7 @@ sl_bignum_negate(sl_vm_t* vm, SLVAL val)
 void
 sl_init_bignum(sl_vm_t* vm)
 {
-    vm->lib.Bignum = sl_define_class(vm, "Bignum", vm->lib.Comparable);
+    vm->lib.Bignum = sl_define_class(vm, "Bignum", vm->lib.Number);
     sl_class_set_allocator(vm, vm->lib.Bignum, allocate_bignum);
     sl_define_method(vm, vm->lib.Bignum, "to_s", 0, sl_bignum_to_s);
     sl_define_method(vm, vm->lib.Bignum, "inspect", 0, sl_bignum_to_s);

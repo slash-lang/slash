@@ -136,7 +136,7 @@ sl_float_infinite(sl_vm_t* vm, SLVAL self)
 void
 sl_init_float(sl_vm_t* vm)
 {
-    vm->lib.Float = sl_define_class(vm, "Float", vm->lib.Comparable);
+    vm->lib.Float = sl_define_class(vm, "Float", vm->lib.Number);
     sl_class_set_allocator(vm, vm->lib.Float, allocate_float);
     sl_define_method(vm, vm->lib.Float, "to_s", 0, sl_float_to_s);
     sl_define_method(vm, vm->lib.Float, "inspect", 0, sl_float_to_s);
