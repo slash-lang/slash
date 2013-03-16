@@ -25,6 +25,9 @@ void
 sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line);
 
 void
+sl_error_set_message(struct sl_vm* vm, SLVAL error, SLVAL message);
+
+void
 sl_unwind(struct sl_vm* vm, SLVAL value, sl_unwind_type_t type);
 
 void
