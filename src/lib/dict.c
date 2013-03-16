@@ -5,7 +5,7 @@
 typedef struct {
     sl_object_t base;
     int inspecting;
-    st_table_t* st;
+    sl_st_table_t* st;
 }
 sl_dict_t;
 
@@ -41,7 +41,7 @@ dict_key_hash(sl_dict_key_t* a)
     return sl_hash(a->vm, a->key);
 }
 
-static struct st_hash_type
+static struct sl_st_hash_type
 dict_hash_type = { dict_key_cmp, dict_key_hash };
 
 static sl_object_t*
@@ -49,7 +49,7 @@ allocate_dict(sl_vm_t* vm)
 {
     sl_dict_t* dict = sl_alloc(vm->arena, sizeof(sl_dict_t));
     dict->base.primitive_type = SL_T_DICT;
-    dict->st = st_init_table(vm->arena, &dict_hash_type);
+    dict->st = sl_st_init_table(vm->arena, &dict_hash_type);
     return (sl_object_t*)dict;
 }
 
@@ -85,7 +85,7 @@ sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
     sl_dict_key_t k;
     k.vm = vm;
     k.key = key;
-    if(st_lookup(get_dict(vm, dict)->st, (st_data_t)&k, (st_data_t*)&val)) {
+    if(sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)&k, (sl_st_data_t*)&val)) {
         return val;
     }
     return vm->lib.nil;
@@ -97,7 +97,7 @@ sl_dict_set(sl_vm_t* vm, SLVAL dict, SLVAL key, SLVAL val)
     sl_dict_key_t* k = sl_alloc(vm->arena, sizeof(sl_dict_key_t));
     k->vm = vm;
     k->key = key;
-    st_insert(get_dict(vm, dict)->st, (st_data_t)k, (st_data_t)sl_get_ptr(val));
+    sl_st_insert(get_dict(vm, dict)->st, (sl_st_data_t)k, (sl_st_data_t)sl_get_ptr(val));
     return val;
 }
 
@@ -114,7 +114,7 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
     sl_dict_key_t* pk = &k;
     k.vm = vm;
     k.key = key;
-    return sl_make_bool(vm, st_delete(get_dict(vm, dict)->st, (st_data_t*)&pk, NULL));
+    return sl_make_bool(vm, sl_st_delete(get_dict(vm, dict)->st, (sl_st_data_t*)&pk, NULL));
 }
 
 static int
@@ -130,8 +130,8 @@ sl_dict_merge(sl_vm_t* vm, SLVAL dict, SLVAL other)
     sl_dict_t* a = get_dict(vm, dict);
     sl_dict_t* b = get_dict(vm, other);
     SLVAL new_dict = sl_new(vm, vm->lib.Dict, 0, NULL);
-    st_foreach(a->st, sl_dict_merge_iter, (st_data_t)sl_get_ptr(new_dict));
-    st_foreach(b->st, sl_dict_merge_iter, (st_data_t)sl_get_ptr(new_dict));
+    sl_st_foreach(a->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
+    sl_st_foreach(b->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
     return new_dict;
 }
 
@@ -165,7 +165,7 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
     SL_ENSURE(frame, {
         d->inspecting = 1;
         str = sl_make_cstring(vm, "{ ");
-        st_foreach(d->st, dict_to_s_iter, (st_data_t)&str);
+        sl_st_foreach(d->st, dict_to_s_iter, (sl_st_data_t)&str);
         str = sl_string_concat(vm, str, sl_make_cstring(vm, " }"));
     }, {
         d->inspecting = 0;
@@ -196,7 +196,7 @@ sl_dict_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL dict)
     e->dict = dict;
     e->count = d->st->num_entries;
     e->keys = sl_alloc(vm->arena, sizeof(SLVAL) * e->count);
-    st_foreach(d->st, dict_enumerator_init_iter, (st_data_t)e);
+    sl_st_foreach(d->st, dict_enumerator_init_iter, (sl_st_data_t)e);
     e->at = 0;
     return self;
 }
@@ -255,7 +255,7 @@ sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
     struct dict_keys_state state;
     state.keys = sl_alloc(vm->arena, sizeof(SLVAL) * d->st->num_entries);
     state.at = 0;
-    st_foreach(d->st, sl_dict_keys_iter, (st_data_t)&state);
+    sl_st_foreach(d->st, sl_dict_keys_iter, (sl_st_data_t)&state);
     *count = state.at;
     return state.keys;
 }
@@ -272,7 +272,7 @@ static SLVAL
 sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
     sl_dict_key_t k = { .vm = vm, .key = key };
-    return sl_make_bool(vm, st_lookup(get_dict(vm, dict)->st, (st_data_t)&k, NULL));
+    return sl_make_bool(vm, sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)&k, NULL));
 }
 
 struct dict_eq_iter_state {
@@ -285,7 +285,7 @@ static int
 dict_eq_iter(sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
 {
     SLVAL other_value;
-    if(!st_lookup(state->other->st, (st_data_t)key, (st_data_t*)&other_value)) {
+    if(!sl_st_lookup(state->other->st, (sl_st_data_t)key, (sl_st_data_t*)&other_value)) {
         state->success = 0;
         return ST_STOP;
     }
@@ -311,7 +311,7 @@ sl_dict_eq(sl_vm_t* vm, SLVAL dict, SLVAL other)
     if(d->st->num_entries != o->st->num_entries) {
         return vm->lib._false;
     }
-    st_foreach(d->st, dict_eq_iter, (st_data_t)&state);
+    sl_st_foreach(d->st, dict_eq_iter, (sl_st_data_t)&state);
     return state.success ? vm->lib._true : vm->lib._false;
 }
 

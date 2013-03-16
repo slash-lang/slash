@@ -118,7 +118,7 @@ sl_iconv(sl_vm_t* vm, char* input_string, size_t input_length, char* from_encodi
     return retn_out_buff;
 }
 
-struct st_hash_type
+struct sl_st_hash_type
 sl_string_hash_type = { str_cmp, str_hash };
 
 static void
@@ -687,8 +687,8 @@ sl_string_lower(sl_vm_t* vm, SLVAL selfv)
 void
 sl_init_string(sl_vm_t* vm)
 {
-    st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
-        (st_data_t)sl_intern(vm, "String").id, (st_data_t)vm->lib.String.i);
+    sl_st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
+        (sl_st_data_t)sl_intern(vm, "String").id, (sl_st_data_t)vm->lib.String.i);
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
     sl_define_method(vm, vm->lib.String, "concat", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);

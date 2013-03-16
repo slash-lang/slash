@@ -15,9 +15,9 @@ allocate_class(sl_vm_t* vm)
 {
     sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
-    klass->constants = st_init_table(vm->arena, &sl_id_hash_type);
-    klass->class_variables = st_init_table(vm->arena, &sl_id_hash_type);
-    klass->instance_methods = st_init_table(vm->arena, &sl_id_hash_type);
+    klass->constants = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    klass->class_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    klass->instance_methods = sl_st_init_table(vm->arena, &sl_id_hash_type);
     klass->super = vm->lib.Object;
     klass->name.id = 0;
     klass->in = vm->lib.Object;
@@ -39,13 +39,13 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->name.id = 0;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
-    obj->constants = st_init_table(vm->arena, &sl_id_hash_type);
-    obj->class_variables = st_init_table(vm->arena, &sl_id_hash_type);
-    obj->instance_methods = st_init_table(vm->arena, &sl_id_hash_type);
+    obj->constants = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    obj->class_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    obj->instance_methods = sl_st_init_table(vm->arena, &sl_id_hash_type);
     obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
     obj->base.primitive_type = SL_T_CLASS;
-    obj->base.instance_variables = st_init_table(vm->arena, &sl_id_hash_type);
+    obj->base.instance_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
 }
 
 static SLVAL
@@ -89,7 +89,7 @@ sl_class_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     SLVAL method;
     SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
-    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
+    if(sl_st_lookup(klass->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
         if(sl_get_primitive_type(method) == SL_T_CACHED_METHOD_ENTRY) {
             sl_cached_method_entry_t* cme = (void*)sl_get_ptr(method);
             // TODO - improve cache invalidation. this is too coarse
@@ -113,7 +113,7 @@ sl_class_own_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     SLVAL method;
     SLID mid = sl_intern2(vm, method_name);
     method_name = sl_to_s(vm, method_name);
-    if(st_lookup(klass->instance_methods, (st_data_t)mid.id, (st_data_t*)&method)) {
+    if(sl_st_lookup(klass->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
         if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
             return method;
         }
@@ -144,7 +144,7 @@ sl_class_own_instance_methods(sl_vm_t* vm, SLVAL klass)
     struct own_instance_methods_iter_state state;
     state.vm = vm;
     state.ary = ary;
-    st_foreach(class->instance_methods, own_instance_methods_iter, (st_data_t)&state);
+    sl_st_foreach(class->instance_methods, own_instance_methods_iter, (sl_st_data_t)&state);
     return ary;
 }
 
@@ -181,7 +181,7 @@ class_constants(sl_vm_t* vm, SLVAL klass)
     struct class_constants_state state;
     state.vm = vm;
     state.ary = sl_make_array(vm, 0, NULL);
-    st_foreach(class->constants, class_constants_iter, (st_data_t)&state);
+    sl_st_foreach(class->constants, class_constants_iter, (sl_st_data_t)&state);
     return state.ary;
 }
 
@@ -215,7 +215,7 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
     validate_constant_name(vm, name);
     sl_class_t* class = get_class(vm, klass);
     SLID id = sl_intern2(vm, name);
-    st_delete(class->constants, (st_data_t*)&id.id, NULL);
+    sl_st_delete(class->constants, (sl_st_data_t*)&id.id, NULL);
     return klass;
 }
 
@@ -244,7 +244,7 @@ sl_init_class(sl_vm_t* vm)
 {
     sl_class_t* objectp = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     SLID cid = sl_intern(vm, "Class");
-    st_insert(objectp->constants, (st_data_t)cid.id, (st_data_t)sl_get_ptr(vm->lib.Class));
+    sl_st_insert(objectp->constants, (sl_st_data_t)cid.id, (sl_st_data_t)sl_get_ptr(vm->lib.Class));
 
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
@@ -286,8 +286,8 @@ sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
     klass->name = name;
     klass->in = sl_expect(vm, in, vm->lib.Class);
     if(!vm->initializing) {
-        st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
-            (st_data_t)name.id, (st_data_t)klass);
+        sl_st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
+            (sl_st_data_t)name.id, (sl_st_data_t)klass);
     }
     return vklass;
 }
@@ -338,7 +338,7 @@ void
 sl_define_method3(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL method)
 {
     sl_expect(vm, method, vm->lib.Method);
-    st_insert(get_class(vm, klass)->instance_methods, (st_data_t)name.id, (st_data_t)sl_get_ptr(method));
+    sl_st_insert(get_class(vm, klass)->instance_methods, (sl_st_data_t)name.id, (sl_st_data_t)sl_get_ptr(method));
     vm->state_method++;
 }
 
@@ -356,7 +356,7 @@ sl_class_has_own_const(sl_vm_t* vm, SLVAL klass, SLID name)
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    return st_lookup(klassp->constants, (st_data_t)name.id, NULL);
+    return sl_st_lookup(klassp->constants, (sl_st_data_t)name.id, NULL);
 }
 
 int
@@ -367,7 +367,7 @@ sl_class_has_const2(sl_vm_t* vm, SLVAL klass, SLID name)
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    if(st_lookup(klassp->constants, (st_data_t)name.id, NULL)) {
+    if(sl_st_lookup(klassp->constants, (sl_st_data_t)name.id, NULL)) {
         return 1;
     }
     if(sl_get_primitive_type(klassp->super) == SL_T_CLASS) {
@@ -391,7 +391,7 @@ sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLID name)
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
-    if(st_lookup(klassp->constants, (st_data_t)name.id, (st_data_t*)&val)) {
+    if(sl_st_lookup(klassp->constants, (sl_st_data_t)name.id, (sl_st_data_t*)&val)) {
         return val;
     }
     if(sl_get_primitive_type(klassp->super) == SL_T_CLASS && sl_class_has_const2(vm, klassp->super, name)) {
@@ -426,7 +426,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL val)
     }
     klassp = get_class(vm, klass);
     sl_expect(vm, klass, vm->lib.Class);
-    st_insert(klassp->constants, (st_data_t)name.id, (st_data_t)sl_get_ptr(val));
+    sl_st_insert(klassp->constants, (sl_st_data_t)name.id, (sl_st_data_t)sl_get_ptr(val));
 }
 
 int

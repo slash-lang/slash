@@ -44,7 +44,7 @@ sl_primitive_type_t;
 typedef struct sl_object {
     sl_primitive_type_t primitive_type;
     SLVAL klass;
-    st_table_t* instance_variables;
+    sl_st_table_t* instance_variables;
 }
 sl_object_t;
 
@@ -53,9 +53,9 @@ typedef struct sl_class {
     SLID name;
     SLVAL super;
     SLVAL in;
-    st_table_t* constants;
-    st_table_t* class_variables;
-    st_table_t* instance_methods;
+    sl_st_table_t* constants;
+    sl_st_table_t* class_variables;
+    sl_st_table_t* instance_methods;
     sl_object_t*(*allocator)(struct sl_vm*);
     bool singleton;
 }

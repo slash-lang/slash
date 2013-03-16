@@ -6,7 +6,7 @@
 #include "ast.h"
 #include "eval.h"
 
-extern struct st_hash_type
+extern struct sl_st_hash_type
 sl_id_hash_type;
 
 void

@@ -93,17 +93,17 @@ typedef struct sl_vm {
     struct sl_vm_ids id;
     struct sl_vm_frame* call_stack;
     void* data;
-    st_table_t* store;
+    sl_st_table_t* store;
     int hash_seed;
     void* stack_limit;
     char* cwd;
     sl_gc_arena_t* arena;
-    st_table_t* required;
+    sl_st_table_t* required;
     uint32_t state_constant;
     uint32_t state_method;
     sl_vm_init_flag_t inited;
     struct {
-        st_table_t* name_to_id;
+        sl_st_table_t* name_to_id;
         SLVAL* id_to_name;
         size_t id_to_name_cap;
         size_t id_to_name_size;

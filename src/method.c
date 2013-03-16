@@ -23,7 +23,7 @@ id_cmp(SLID a, SLID b)
     }
 }
 
-struct st_hash_type
+struct sl_st_hash_type
 sl_id_hash_type = { id_cmp, id_hash };
 
 static sl_object_t*
@@ -191,12 +191,12 @@ sl_intern2_no_check(sl_vm_t* vm, SLVAL str)
 {
     SLID id;
 
-    if(st_lookup(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t*)&id)) {
+    if(sl_st_lookup(vm->intern.name_to_id, (sl_st_data_t)sl_get_ptr(str), (sl_st_data_t*)&id)) {
         return id;
     }
 
     id.id = vm->intern.id_to_name_size++;
-    st_insert(vm->intern.name_to_id, (st_data_t)sl_get_ptr(str), (st_data_t)id.id);
+    sl_st_insert(vm->intern.name_to_id, (sl_st_data_t)sl_get_ptr(str), (sl_st_data_t)id.id);
     if(vm->intern.id_to_name_size >= vm->intern.id_to_name_cap) {
         vm->intern.id_to_name_cap *= 2;
         vm->intern.id_to_name = sl_realloc(vm->arena, vm->intern.id_to_name, sizeof(SLVAL) * vm->intern.id_to_name_cap);
