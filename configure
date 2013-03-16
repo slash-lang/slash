@@ -91,10 +91,10 @@ sub compile {
 };
 
 sub check_lib {
-    my ($lib, $src) = @_;
+    my ($lib, $src, %opts) = @_;
     print "Checking for lib$lib... ";
     if(compile "-l$lib", $src) {
-        $LDFLAGS .= " -l$lib";
+        $LDFLAGS .= " -l$lib" unless $opts{skip_ldflag};
         print "ok\n";
     } else {
         # some libraries (eg. iconv) are rolled into libc on some systems. see if we can compile without the -liconv switch
