@@ -36,7 +36,7 @@ resolve_require_path(sl_vm_t* vm, char* path)
     return NULL;
 }
 
-SLVAL
+static SLVAL
 require(sl_vm_t* vm, SLVAL self, SLVAL file)
 {
     sl_expect(vm, file, vm->lib.String);
