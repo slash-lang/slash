@@ -19,7 +19,7 @@ next_last_frame_t;
 
 typedef struct sl_compile_state {
     sl_vm_t* vm;
-    st_table_t* vars;
+    sl_st_table_t* vars;
     struct sl_compile_state* parent;
     int last_line;
     uint8_t* registers;
@@ -34,7 +34,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
 {
     size_t i;
     cs->vm = vm;
-    cs->vars = st_init_table(vm->arena, &sl_string_hash_type);
+    cs->vars = sl_st_init_table(vm->arena, &sl_string_hash_type);
     cs->parent = parent;
     cs->last_line = 0;
     cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
@@ -283,7 +283,7 @@ NODE(sl_node_var_t, var)
     SLVAL err;
     frame = 0;
     while(xcs) {
-        if(st_lookup(xcs->vars, (st_data_t)node->name, (st_data_t*)&index)) {
+        if(sl_st_lookup(xcs->vars, (sl_st_data_t)node->name, (sl_st_data_t*)&index)) {
             if(frame == 0) {
                 emit_opcode(cs, SL_OP_MOV);
             } else {
@@ -368,10 +368,10 @@ NODE(sl_node_def_t, def)
     size_t i, on_reg;
     init_compile_state(&sub_cs, cs->vm, cs, node->req_arg_count + node->opt_arg_count + 1);
     for(i = 0; i < node->req_arg_count; i++) {
-        st_insert(sub_cs.vars, (st_data_t)node->req_args[i], (st_data_t)(i + 1));
+        sl_st_insert(sub_cs.vars, (sl_st_data_t)node->req_args[i], (sl_st_data_t)(i + 1));
     }
     for(i = 0; i < node->opt_arg_count; i++) {
-        st_insert(sub_cs.vars, (st_data_t)node->opt_args[i].name, (st_data_t)(node->req_arg_count + i + 1));
+        sl_st_insert(sub_cs.vars, (sl_st_data_t)node->opt_args[i].name, (sl_st_data_t)(node->req_arg_count + i + 1));
     }
     sub_cs.section->name = node->name;
     sub_cs.section->req_registers = node->req_arg_count;
@@ -414,7 +414,7 @@ NODE(sl_node_lambda_t, lambda)
     size_t i;
     init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
     for(i = 0; i < node->arg_count; i++) {
-        st_insert(sub_cs.vars, (st_data_t)node->args[i], (st_data_t)(i + 1));
+        sl_st_insert(sub_cs.vars, (sl_st_data_t)node->args[i], (sl_st_data_t)(i + 1));
     }
     sub_cs.section->req_registers = node->arg_count;
     sub_cs.section->arg_registers = node->arg_count;
@@ -783,14 +783,14 @@ NODE(sl_node_assign_var_t, assign_var)
     /* create variable before compiling rval so that constructs such as: f = f; work */
     xcs = cs;
     while(xcs) {
-        if(st_lookup(xcs->vars, (st_data_t)node->lval->name, NULL)) {
+        if(sl_st_lookup(xcs->vars, (sl_st_data_t)node->lval->name, NULL)) {
             break;
         }
         xcs = xcs->parent;
     }
     if(!xcs) { /* variable does not exist yet */
         index = reg_alloc(cs);
-        st_insert(cs->vars, (st_data_t)node->lval->name, (st_data_t)index);
+        sl_st_insert(cs->vars, (sl_st_data_t)node->lval->name, (sl_st_data_t)index);
     }
     
     compile_node(cs, node->rval, dest);
@@ -798,7 +798,7 @@ NODE(sl_node_assign_var_t, assign_var)
     frame = 0;
     xcs = cs;
     while(xcs) {
-        if(st_lookup(xcs->vars, (st_data_t)node->lval->name, (st_data_t*)&index)) {
+        if(sl_st_lookup(xcs->vars, (sl_st_data_t)node->lval->name, (sl_st_data_t*)&index)) {
             if(frame == 0) {
                 emit_opcode(cs, SL_OP_MOV);
                 insn.uint = dest;

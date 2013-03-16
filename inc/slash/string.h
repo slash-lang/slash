@@ -3,7 +3,7 @@
 
 #include "vm.h"
 
-extern struct st_hash_type
+extern struct sl_st_hash_type
 sl_string_hash_type;
 
 char*

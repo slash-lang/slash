@@ -22,7 +22,7 @@
  */
 static int numcmp(long, long);
 static int numhash(long);
-static struct st_hash_type type_numhash =
+static struct sl_st_hash_type type_numhash =
 {
     numcmp,
     numhash,
@@ -30,13 +30,13 @@ static struct st_hash_type type_numhash =
 
 /* extern int strcmp(const char *, const char *); */
 static int strhash(const char *);
-static struct st_hash_type type_strhash =
+static struct sl_st_hash_type type_strhash =
 {
     strcmp,
     strhash,
 };
 
-static void rehash(st_table_t *);
+static void rehash(sl_st_table_t *);
 
 /* slash modification: use boehm gc's allocation functions rather than libc's */
 #define alloc(type) (type*)sl_alloc(tbl->arena, sizeof(type))
@@ -130,13 +130,13 @@ stat_col()
 }
 #endif
 
-st_table_t*
-st_init_table_with_size(arena, type, size)
+sl_st_table_t*
+sl_st_init_table_with_size(arena, type, size)
 sl_gc_arena_t* arena;
-struct st_hash_type *type;
+struct sl_st_hash_type *type;
 int size;
 {
-    st_table_t *tbl;
+    sl_st_table_t *tbl;
 
     #ifdef HASH_LOG
     if (init_st == 0) {
@@ -147,57 +147,57 @@ int size;
 
     size = new_size(size);                        /* round up to prime number */
 
-    tbl = sl_alloc(arena, sizeof(st_table_t));
+    tbl = sl_alloc(arena, sizeof(sl_st_table_t));
     tbl->arena = arena;
     tbl->type = type;
     tbl->num_entries = 0;
     tbl->num_bins = size;
-    tbl->bins = (st_table_entry **)Calloc(size, sizeof(st_table_entry*));
+    tbl->bins = (sl_st_table_entry **)Calloc(size, sizeof(sl_st_table_entry*));
 
     return tbl;
 }
 
-st_table_t*
-st_init_table(arena, type)
+sl_st_table_t*
+sl_st_init_table(arena, type)
 sl_gc_arena_t* arena;
-struct st_hash_type *type;
+struct sl_st_hash_type *type;
 {
-    return st_init_table_with_size(arena, type, 0);
+    return sl_st_init_table_with_size(arena, type, 0);
 }
 
-st_table_t*
-st_init_numtable(sl_gc_arena_t* arena)
+sl_st_table_t*
+sl_st_init_numtable(sl_gc_arena_t* arena)
 {
-    return st_init_table(arena, &type_numhash);
+    return sl_st_init_table(arena, &type_numhash);
 }
 
-st_table_t*
-st_init_numtable_with_size(arena, size)
-sl_gc_arena_t* arena;
-int size;
-{
-    return st_init_table_with_size(arena, &type_numhash, size);
-}
-
-st_table_t*
-st_init_strtable(sl_gc_arena_t* arena)
-{
-    return st_init_table(arena, &type_strhash);
-}
-
-st_table_t*
-st_init_strtable_with_size(arena, size)
+sl_st_table_t*
+sl_st_init_numtable_with_size(arena, size)
 sl_gc_arena_t* arena;
 int size;
 {
-    return st_init_table_with_size(arena, &type_strhash, size);
+    return sl_st_init_table_with_size(arena, &type_numhash, size);
+}
+
+sl_st_table_t*
+sl_st_init_strtable(sl_gc_arena_t* arena)
+{
+    return sl_st_init_table(arena, &type_strhash);
+}
+
+sl_st_table_t*
+sl_st_init_strtable_with_size(arena, size)
+sl_gc_arena_t* arena;
+int size;
+{
+    return sl_st_init_table_with_size(arena, &type_strhash, size);
 }
 
 void
-st_free_table(table)
-st_table_t *table;
+sl_st_free_table(table)
+sl_st_table_t *table;
 {
-    register st_table_entry *ptr, *next;
+    register sl_st_table_entry *ptr, *next;
     int i;
 
     for(i = 0; i < table->num_bins; i++) {
@@ -241,13 +241,13 @@ st_table_t *table;
     } while (0)
 
         int
-        st_lookup(table, key, value)
-        st_table_t *table;
-register st_data_t key;
-st_data_t *value;
+        sl_st_lookup(table, key, value)
+        sl_st_table_t *table;
+register sl_st_data_t key;
+sl_st_data_t *value;
 {
     unsigned int hash_val, bin_pos;
-    register st_table_entry *ptr;
+    register sl_st_table_entry *ptr;
 
     hash_val = do_hash(key, table);
     FIND_ENTRY(table, ptr, hash_val, bin_pos);
@@ -264,13 +264,13 @@ st_data_t *value;
 #define ADD_DIRECT(table, key, value, hash_val, bin_pos)\
     do \
     { \
-        st_table_entry *entry;\
+        sl_st_table_entry *entry;\
         if (table->num_entries/(table->num_bins) > ST_DEFAULT_MAX_DENSITY) \
         { \
             rehash(table);\
             bin_pos = hash_val % table->num_bins;\
         }\
-    entry = alloc(st_table_entry);\
+    entry = alloc(sl_st_table_entry);\
     entry->hash = hash_val;\
     entry->key = key;\
     entry->record = value;\
@@ -280,13 +280,13 @@ st_data_t *value;
 } while (0)
 
 int
-st_insert(tbl, key, value)
-register st_table_t *tbl;
-register st_data_t key;
-st_data_t value;
+sl_st_insert(tbl, key, value)
+register sl_st_table_t *tbl;
+register sl_st_data_t key;
+sl_st_data_t value;
 {
     unsigned int hash_val, bin_pos;
-    register st_table_entry *ptr;
+    register sl_st_table_entry *ptr;
 
     hash_val = do_hash(key, tbl);
     FIND_ENTRY(tbl, ptr, hash_val, bin_pos);
@@ -302,10 +302,10 @@ st_data_t value;
 }
 
 void
-st_add_direct(tbl, key, value)
-st_table_t *tbl;
-st_data_t key;
-st_data_t value;
+sl_st_add_direct(tbl, key, value)
+sl_st_table_t *tbl;
+sl_st_data_t key;
+sl_st_data_t value;
 {
     unsigned int hash_val, bin_pos;
 
@@ -316,14 +316,14 @@ st_data_t value;
 
 static void
 rehash(tbl)
-register st_table_t *tbl;
+register sl_st_table_t *tbl;
 {
-    register st_table_entry *ptr, *next, **new_bins;
+    register sl_st_table_entry *ptr, *next, **new_bins;
     int i, old_num_bins = tbl->num_bins, new_num_bins;
     unsigned int hash_val;
 
     new_num_bins = new_size(old_num_bins+1);
-    new_bins = (st_table_entry**)Calloc(new_num_bins, sizeof(st_table_entry*));
+    new_bins = (sl_st_table_entry**)Calloc(new_num_bins, sizeof(sl_st_table_entry*));
 
     for(i = 0; i < old_num_bins; i++) {
         ptr = tbl->bins[i];
@@ -341,26 +341,26 @@ register st_table_t *tbl;
     tbl->bins = new_bins;
 }
 
-st_table_t*
-st_copy(old_table)
-st_table_t *old_table;
+sl_st_table_t*
+sl_st_copy(old_table)
+sl_st_table_t *old_table;
 {
-    st_table_t *new_table;
-    st_table_entry *ptr, *entry;
+    sl_st_table_t *new_table;
+    sl_st_table_entry *ptr, *entry;
     int i, num_bins = old_table->num_bins;
     
     /*  this is only for alloc()'s expectation that there is a tbl local.
         it requires a tbl local to exist so it can locate the arena to use */
-    st_table_t* tbl = old_table;
+    sl_st_table_t* tbl = old_table;
 
-    new_table = alloc(st_table_t);
+    new_table = alloc(sl_st_table_t);
     if (new_table == 0) {
         return 0;
     }
 
     *new_table = *old_table;
-    new_table->bins = (st_table_entry**)
-    Calloc((unsigned)num_bins, sizeof(st_table_entry*));
+    new_table->bins = (sl_st_table_entry**)
+    Calloc((unsigned)num_bins, sizeof(sl_st_table_entry*));
 
     if (new_table->bins == 0) {
         /* slash modification: remove free() calls because we're using a gc */
@@ -372,7 +372,7 @@ st_table_t *old_table;
         new_table->bins[i] = 0;
         ptr = old_table->bins[i];
         while (ptr != 0) {
-            entry = alloc(st_table_entry);
+            entry = alloc(sl_st_table_entry);
             if (entry == 0) {
                 /* slash modification: remove free() calls because we're using a gc */
                 /*
@@ -391,14 +391,14 @@ st_table_t *old_table;
 }
 
 int
-st_delete(table, key, value)
-register st_table_t *table;
-register st_data_t *key;
-st_data_t *value;
+sl_st_delete(table, key, value)
+register sl_st_table_t *table;
+register sl_st_data_t *key;
+sl_st_data_t *value;
 {
     unsigned int hash_val;
-    st_table_entry *tmp;
-    register st_table_entry *ptr;
+    sl_st_table_entry *tmp;
+    register sl_st_table_entry *ptr;
 
     hash_val = do_hash_bin(*key, table);
     ptr = table->bins[hash_val];
@@ -438,14 +438,14 @@ st_data_t *value;
 }
 
 int
-st_delete_safe(table, key, value, never)
-register st_table_t *table;
-register st_data_t *key;
-st_data_t *value;
-st_data_t never;
+sl_st_delete_safe(table, key, value, never)
+register sl_st_table_t *table;
+register sl_st_data_t *key;
+sl_st_data_t *value;
+sl_st_data_t never;
 {
     unsigned int hash_val;
-    register st_table_entry *ptr;
+    register sl_st_table_entry *ptr;
 
     hash_val = do_hash_bin(*key, table);
     ptr = table->bins[hash_val];
@@ -470,7 +470,7 @@ st_data_t never;
 
 static int
 delete_never(key, value, never)
-st_data_t key, value, never;
+sl_st_data_t key, value, never;
 {
     (void)key;
     if (value == never) return ST_DELETE;
@@ -478,24 +478,24 @@ st_data_t key, value, never;
 }
 
 void
-st_cleanup_safe(table, never)
-st_table_t *table;
-st_data_t never;
+sl_st_cleanup_safe(table, never)
+sl_st_table_t *table;
+sl_st_data_t never;
 {
     int num_entries = table->num_entries;
 
-    st_foreach(table, delete_never, never);
+    sl_st_foreach(table, delete_never, never);
     table->num_entries = num_entries;
 }
 
 int
-st_foreach(table, func, arg)
-st_table_t *table;
+sl_st_foreach(table, func, arg)
+sl_st_table_t *table;
 int (*func)();
-st_data_t arg;
+sl_st_data_t arg;
 {
-    st_table_entry *ptr, *last, *tmp;
-    enum st_retval retval;
+    sl_st_table_entry *ptr, *last, *tmp;
+    enum sl_st_retval retval;
     int i;
 
     for(i = 0; i < table->num_bins; i++) {

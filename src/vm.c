@@ -109,13 +109,13 @@ sl_init(const char* sapi_name)
     vm->arena = arena;
     vm->cwd = ".";
     vm->initializing = 1;
-    vm->store = st_init_numtable(vm->arena);
+    vm->store = sl_st_init_numtable(vm->arena);
     vm->hash_seed = rand();
     vm->stack_limit = sl_stack_limit();
-    vm->required = st_init_table(vm->arena, &sl_string_hash_type);
+    vm->required = sl_st_init_table(vm->arena, &sl_string_hash_type);
     vm->call_stack = NULL;
 
-    vm->intern.name_to_id = st_init_table(vm->arena, &sl_string_hash_type);
+    vm->intern.name_to_id = sl_st_init_table(vm->arena, &sl_string_hash_type);
     vm->intern.id_to_name_cap = 32;
     vm->intern.id_to_name_size = 0;
     vm->intern.id_to_name = sl_alloc(vm->arena, sizeof(SLVAL) * vm->intern.id_to_name_cap);
@@ -163,14 +163,14 @@ SLVAL
 sl_vm_store_get(sl_vm_t* vm, void* key)
 {
     SLVAL val = vm->lib.nil;
-    st_lookup(vm->store, (st_data_t)key, (st_data_t*)&val);
+    sl_st_lookup(vm->store, (sl_st_data_t)key, (sl_st_data_t*)&val);
     return val;
 }
 
 void
 sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val)
 {
-    st_insert(vm->store, (st_data_t)key, (st_data_t)sl_get_ptr(val));
+    sl_st_insert(vm->store, (sl_st_data_t)key, (sl_st_data_t)sl_get_ptr(val));
 }
 
 static void

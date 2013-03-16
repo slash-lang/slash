@@ -45,12 +45,12 @@ require(sl_vm_t* vm, SLVAL self, SLVAL file)
     
     if(resolved) {
         SLVAL retn;
-        if(st_lookup(vm->required, (st_data_t)resolved, (st_data_t*)&retn)) {
+        if(sl_st_lookup(vm->required, (sl_st_data_t)resolved, (sl_st_data_t*)&retn)) {
             return retn;
         }
-        st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(vm->lib.nil));
+        sl_st_insert(vm->required, (sl_st_data_t)resolved, (sl_st_data_t)sl_get_ptr(vm->lib.nil));
         retn = sl_do_file(vm, sl_to_cstr(vm, sl_make_ptr((sl_object_t*)resolved)));
-        st_insert(vm->required, (st_data_t)resolved, (st_data_t)sl_get_ptr(retn));
+        sl_st_insert(vm->required, (sl_st_data_t)resolved, (sl_st_data_t)sl_get_ptr(retn));
         return retn;
     }
     
