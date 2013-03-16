@@ -177,10 +177,16 @@ sl_error_frame_to_s(sl_vm_t* vm, SLVAL self)
 }
 
 void
-sl_error_add_frame(struct sl_vm* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line)
+sl_error_add_frame(sl_vm_t* vm, SLVAL error, SLVAL method, SLVAL file, SLVAL line)
 {
     sl_error_t* e = get_error(vm, error);
     internal_error_add_frame(vm, e, method, file, line);
+}
+
+void
+sl_error_set_message(sl_vm_t* vm, SLVAL error, SLVAL message)
+{
+    get_error(vm, error)->message = message;
 }
 
 static SLVAL
