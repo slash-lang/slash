@@ -133,7 +133,7 @@ own_instance_methods_iter(SLID name, SLVAL method, struct own_instance_methods_i
         SLVAL namev = sl_id_to_string(state->vm, name);
         sl_array_push(state->vm, state->ary, 1, &namev);
     }
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
 }
 
 SLVAL
@@ -170,7 +170,7 @@ class_constants_iter(SLID id, SLVAL value, struct class_constants_state* state)
 {
     SLVAL name = sl_id_to_string(state->vm, id);
     sl_array_push(state->vm, state->ary, 1, &name);
-    return ST_CONTINUE;
+    return SL_ST_CONTINUE;
     (void)value;
 }
 

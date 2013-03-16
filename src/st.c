@@ -473,8 +473,8 @@ delete_never(key, value, never)
 sl_st_data_t key, value, never;
 {
     (void)key;
-    if (value == never) return ST_DELETE;
-    return ST_CONTINUE;
+    if (value == never) return SL_ST_DELETE;
+    return SL_ST_CONTINUE;
 }
 
 void
@@ -503,7 +503,7 @@ sl_st_data_t arg;
         for(ptr = table->bins[i]; ptr != 0;) {
             retval = (*func)(ptr->key, ptr->record, arg);
             switch (retval) {
-                case ST_CHECK:                    /* check if hash is modified during iteration */
+                case SL_ST_CHECK:                    /* check if hash is modified during iteration */
                     tmp = 0;
                     if (i < table->num_bins) {
                         for (tmp = table->bins[i]; tmp; tmp=tmp->next) {
@@ -515,13 +515,13 @@ sl_st_data_t arg;
                         return 1;
                     }
                     /* fall through */
-                case ST_CONTINUE:
+                case SL_ST_CONTINUE:
                     last = ptr;
                     ptr = ptr->next;
                     break;
-                case ST_STOP:
+                case SL_ST_STOP:
                     return 0;
-                case ST_DELETE:
+                case SL_ST_DELETE:
                     tmp = ptr;
                     if (last == 0) {
                         table->bins[i] = ptr->next;
