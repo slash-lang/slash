@@ -3,6 +3,7 @@
 #include <ruby/version.h>
 #include <ruby/encoding.h>
 #include <pthread.h>
+#include <signal.h>
 
 static pthread_mutex_t
 sl_ruby_lock;
@@ -259,11 +260,40 @@ sl_init_ext_ruby(sl_vm_t* vm)
 
 void Init_enc();
 
+#define SIGNAL_COUNT_ASSUMPTION 32
+
+static sig_t
+saved_signals[SIGNAL_COUNT_ASSUMPTION];
+
+static void
+save_signals()
+{
+    for(int i = 0; i < SIGNAL_COUNT_ASSUMPTION; i++) {
+        saved_signals[i] = signal(i, SIG_DFL);
+    }
+}
+
+static void
+restore_signals()
+{
+    for(int i = 0; i < SIGNAL_COUNT_ASSUMPTION; i++) {
+        if(saved_signals[i] != SIG_ERR) {
+            signal(i, saved_signals[i]);
+        }
+    }
+}
+
 void
 sl_static_init_ext_ruby()
 {
     pthread_mutex_init(&sl_ruby_lock, NULL);
+
+    // ruby likes to clobber signal handlers on init, but that doesn't work
+    // well when we embed it. we'll take the old signal handlers, save them,
+    // call ruby_init, then restore the old signal handlers
+    save_signals();
     ruby_init();
+    restore_signals();
     ruby_init_loadpath();
     Init_enc();
     sl_ruby_utf8_enc = rb_enc_find("UTF-8");
