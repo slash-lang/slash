@@ -1,4 +1,5 @@
 #include <slash/lib/range.h>
+#include <slash/dispatch.h>
 #include <slash/object.h>
 #include <slash/class.h>
 #include <slash/string.h>

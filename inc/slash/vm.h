@@ -157,21 +157,32 @@ typedef enum sl_vm_opcode {
 }
 sl_vm_opcode_t;
 
-typedef struct sl_vm_inline_cache {
+typedef struct sl_vm_inline_method_cache {
+    uint32_t state;
+    SLVAL klass;
+    sl_method_t* method;
+    SLID id;
+    size_t argc;
+    SLVAL(*call)(struct sl_vm*,struct sl_vm_inline_method_cache*,SLVAL,SLVAL*);
+}
+sl_vm_inline_method_cache_t;
+
+typedef struct sl_vm_inline_constant_cache {
     uint32_t state;
     SLVAL klass;
     SLVAL value;
 }
-sl_vm_inline_cache_t;
+sl_vm_inline_constant_cache_t;
 
 typedef union sl_vm_insn {
-    sl_vm_opcode_t          opcode;
-    size_t                  uint;
-    struct sl_vm_section*   section;
-    SLVAL                   imm;
-    SLID                    id;
-    sl_string_t*            str;
-    sl_vm_inline_cache_t*   ic;
+    sl_vm_opcode_t                  opcode;
+    size_t                          uint;
+    struct sl_vm_section*           section;
+    SLVAL                           imm;
+    SLID                            id;
+    sl_string_t*                    str;
+    sl_vm_inline_method_cache_t*    imc;
+    sl_vm_inline_constant_cache_t*  icc;
 }
 sl_vm_insn_t;
 
