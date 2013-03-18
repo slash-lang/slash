@@ -70,21 +70,21 @@ INSTRUCTION(SL_OP_GET_CVAR, {
 })
 
 /*  0: GET_CONST
-    1: <ic:inline_cache>
+    1: <icc:inline_cache>
     2: <id:const_name>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_GET_CONST, {
-    sl_vm_inline_cache_t* ic = NEXT_IC();
+    sl_vm_inline_constant_cache_t* icc = NEXT_ICC();
     SLID const_name = NEXT_ID();
-    if(sl_likely(ic->state == vm->state_constant)) {
-        NEXT_REG() = ic->value;
+    if(sl_likely(icc->state == vm->state_constant)) {
+        NEXT_REG() = icc->value;
     } else {
         sl_vm_exec_ctx_t* lookup_ctx = ctx;
         while(lookup_ctx) {
             if(sl_class_has_const2(vm, lookup_ctx->self, const_name)) {
-                ic->state = vm->state_constant;
-                ic->value = sl_class_get_const2(vm, lookup_ctx->self, const_name);
-                NEXT_REG() = ic->value;
+                icc->state = vm->state_constant;
+                icc->value = sl_class_get_const2(vm, lookup_ctx->self, const_name);
+                NEXT_REG() = icc->value;
                 break;
             }
             lookup_ctx = lookup_ctx->parent;
@@ -164,33 +164,18 @@ INSTRUCTION(SL_OP_IMMEDIATE, {
 
 /*  0: SEND
     1: <reg:object>
-    2: <id:name>
+    2: <ic:inline_cache>
     3: <reg:first_arg> // arguments must be in a contiguous register region
-    4: <uint:arg_count>
-    5: <ic:inline_cache>
-    6: <reg:dest> */
+    4: <reg:dest> */
 INSTRUCTION(SL_OP_SEND, {
     SLVAL receiver = NEXT_REG();
-    SLID id = NEXT_ID();
+    sl_vm_inline_method_cache_t* imc = NEXT_IMC();
     SLVAL* argv = &NEXT_REG();
-    size_t argc = NEXT_UINT();
-    sl_vm_inline_cache_t* ic = NEXT_IC();
-    sl_method_t* method;
-    SLVAL recv_klass = sl_real_class_of(vm, receiver);
-    if(sl_likely(ic->state == vm->state_method && ic->klass.i == recv_klass.i)) {
-        method = (sl_method_t*)sl_get_ptr(ic->value);
+
+    if(sl_likely(imc->state == vm->state_method && imc->klass.i == sl_real_class_of(vm, receiver).i)) {
+        NEXT_REG() = imc->call(vm, imc, receiver, argv);
     } else {
-        method = sl_lookup_method(vm, receiver, id);
-        if(sl_likely(method != NULL)) {
-            ic->state = vm->state_method;
-            ic->klass = recv_klass;
-            ic->value = sl_make_ptr((sl_object_t*)method);
-        }
-    }
-    if(sl_likely(method != NULL)) {
-        NEXT_REG() = sl_apply_method(vm, receiver, method, argc, argv);
-    } else {
-        NEXT_REG() = sl_send2(vm, receiver, id, argc, argv);
+        NEXT_REG() = sl_imc_setup_call(vm, imc, receiver, argv);
     }
 })
 

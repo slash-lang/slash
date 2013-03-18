@@ -155,17 +155,18 @@ emit_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
 static void
 emit_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
 {
+    sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
+    imc->argc = arg_size;
+    imc->id = id;
+    imc->call = NULL;
+
     sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_SEND);
     insn.uint = recv;
     emit(cs, insn);
-    insn.id = id;
+    insn.imc = imc;
     emit(cs, insn);
     insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = arg_size;
-    emit(cs, insn);
-    insn.ic = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_cache_t));
     emit(cs, insn);
     insn.uint = return_reg;
     emit(cs, insn);
@@ -717,7 +718,7 @@ NODE(sl_node_const_t, const)
         emit(cs, insn);
     } else {
         emit_opcode(cs, SL_OP_GET_CONST);
-        insn.ic = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_cache_t));
+        insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
         emit(cs, insn);
         insn.id = node->id;
         emit(cs, insn);

@@ -11,6 +11,7 @@
 #include "slash/compile.h"
 #include "slash/class.h"
 #include "slash/string.h"
+#include "slash/dispatch.h"
 #include "slash/platform.h"
 #include "slash/lib/array.h"
 #include "slash/lib/buffer.h"

@@ -4,16 +4,16 @@ CFLAGS+=-std=c99 -I $(BASE_PATH)/inc
 WARNING_CFLAGS=-Wall -Wextra -pedantic
 LDFLAGS+=-L$(BASE_PATH) -lslash
 
-OBJS+=src/class.o src/error.o src/method.o src/object.o src/st.o src/string.o \
-	src/value.o src/vm.o src/lib/int.o src/lib/number.o src/lib/float.o \
-	src/lib/bignum.o src/utf8.o src/lex.o src/lex_helper.o src/lib/nil.o \
-	src/lib/true.o src/lib/false.o src/eval.o src/parse.o src/parse_helper.o \
-	src/eval.o src/lib/array.o src/lib/comparable.o src/lib/require.o \
-	src/lib/lambda.o src/lib/enumerable.o src/lib/file.o src/init_exts.o \
-	src/lib/rand.o src/lib/dict.o src/lib/request.o src/lib/response.o \
-	src/lib/error_page.o src/lib/system.o src/lib/regexp.o src/gc.o \
-	src/lib/range.o src/vm_exec.o src/compile.o src/lib/time.o src/unicode.o \
-	src/lib/gc.o src/lib/buffer.o
+OBJS+=src/class.o src/error.o src/method.o src/object.o src/dispatch.o \
+	src/st.o src/string.o src/value.o src/vm.o src/lib/int.o src/lib/number.o \
+	src/lib/float.o src/lib/bignum.o src/utf8.o src/lex.o src/lex_helper.o \
+	src/lib/nil.o src/lib/true.o src/lib/false.o src/eval.o src/parse.o \
+	src/parse_helper.o src/eval.o src/lib/array.o src/lib/comparable.o \
+	src/lib/require.o src/lib/lambda.o src/lib/enumerable.o src/lib/file.o \
+	src/init_exts.o src/lib/rand.o src/lib/dict.o src/lib/request.o \
+	src/lib/response.o src/lib/error_page.o src/lib/system.o src/lib/regexp.o \
+	src/gc.o src/lib/range.o src/vm_exec.o src/compile.o src/lib/time.o \
+	src/unicode.o src/lib/gc.o src/lib/buffer.o
 
 SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 

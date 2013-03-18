@@ -4,6 +4,7 @@
 #include <slash/method.h>
 #include <slash/object.h>
 #include <slash/string.h>
+#include <slash/dispatch.h>
 
 static int
 id_hash(SLID id)
