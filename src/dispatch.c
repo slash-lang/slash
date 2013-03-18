@@ -55,29 +55,28 @@ call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLV
 }
 
 SLVAL
-sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL* argv)
+sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv)
 {
     char errstr[1024];
     sl_vm_exec_ctx_t stack_ctx;
     sl_vm_exec_ctx_t* ctx;
-    size_t i;
     SLVAL arg;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
         sl_throw(vm, vm->lib.StackOverflowError_instance);
     }
     if(method->arity < 0) {
-        if(sl_unlikely((size_t)(-method->arity - 1) > argc)) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", (-method->arity - 1), (unsigned long)argc);
+        if(sl_unlikely(-method->arity - 1 > argc)) {
+            sprintf(errstr, "Too few arguments. Expected %d, received %d.", (-method->arity - 1), argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     } else {
-        if(sl_unlikely((size_t)method->arity > argc)) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %lu.", method->arity, (unsigned long)argc);
+        if(sl_unlikely(method->arity > argc)) {
+            sprintf(errstr, "Too few arguments. Expected %d, received %d.", method->arity, argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
-        if(sl_unlikely((size_t)method->arity < argc)) {
-            sprintf(errstr, "Too many arguments. Expected %d, received %lu.", method->arity, (unsigned long)argc);
+        if(sl_unlikely(method->arity < argc)) {
+            sprintf(errstr, "Too many arguments. Expected %d, received %d.", method->arity, argc);
             sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
         }
     }
@@ -100,7 +99,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
         ctx->self = recv;
         ctx->parent = method->as.sl.parent_ctx;
         
-        for(i = 0; i < ctx->section->arg_registers; i++) {
+        for(int i = 0; i < ctx->section->arg_registers; i++) {
             ctx->registers[i + 1] = argv[i];
         }
         
@@ -117,13 +116,12 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLVAL
 }
 
 SLVAL
-sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
+sl_send(sl_vm_t* vm, SLVAL recv, char* id, int argc, ...)
 {
     SLVAL* argv = alloca(argc * sizeof(SLVAL));
     va_list va;
-    size_t i;
     va_start(va, argc);
-    for(i = 0; i < argc; i++) {
+    for(int i = 0; i < argc; i++) {
         argv[i] = va_arg(va, SLVAL);
     }
     va_end(va);
@@ -131,13 +129,12 @@ sl_send(sl_vm_t* vm, SLVAL recv, char* id, size_t argc, ...)
 }
 
 SLVAL
-sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, ...)
+sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, int argc, ...)
 {
     SLVAL argv[argc];
     va_list va;
-    size_t i;
     va_start(va, argc);
-    for(i = 0; i < argc; i++) {
+    for(int i = 0; i < argc; i++) {
         argv[i] = va_arg(va, SLVAL);
     }
     va_end(va);
@@ -145,7 +142,7 @@ sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, ...)
 }
 
 static SLVAL
-sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
+sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
 {
     /* look for method_missing method */
     SLVAL argv2[argc + 1];
@@ -168,7 +165,7 @@ sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
 }
 
 SLVAL
-sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, size_t argc, SLVAL* argv)
+sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
 {
     sl_method_t* method = sl_lookup_method(vm, recv, id);
     if(sl_likely(method != NULL)) {
@@ -217,6 +214,60 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
     return lookup_method_rec(vm, klass, id);
 }
 
+#define C_FRAME_BEGIN \
+    if(sl_unlikely((void*)&vm < vm->stack_limit)) {         \
+        /* we're about to blow the stack */                 \
+        sl_throw(vm, vm->lib.StackOverflowError_instance);  \
+    }                                                       \
+    sl_vm_frame_t frame;                                    \
+    frame.prev = vm->call_stack;                            \
+    frame.frame_type = SL_VM_FRAME_C;                       \
+    frame.as.call_frame.method = imc->id;                   \
+    vm->call_stack = &frame;
+
+#define C_FRAME_END \
+    vm->call_stack = frame.prev
+
+static SLVAL
+dispatch_c_call_variadic(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv)
+{
+    C_FRAME_BEGIN;
+    SLVAL ret = imc->method->as.c.func(vm, recv, imc->argc, argv);
+    C_FRAME_END;
+    return ret;
+}
+
+#define C_FUNC_FIXED_ARG_DISPATCHER(name, args) \
+    static SLVAL \
+    name(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv) \
+    { \
+        C_FRAME_BEGIN; \
+        SLVAL ret = imc->method->as.c.func args; \
+        C_FRAME_END; \
+        return ret; \
+        (void)argv; \
+    }
+
+C_FUNC_FIXED_ARG_DISPATCHER(dispatch_c_call_0, (vm, recv))
+C_FUNC_FIXED_ARG_DISPATCHER(dispatch_c_call_1, (vm, recv, argv[0]))
+C_FUNC_FIXED_ARG_DISPATCHER(dispatch_c_call_2, (vm, recv, argv[0], argv[1]))
+C_FUNC_FIXED_ARG_DISPATCHER(dispatch_c_call_3, (vm, recv, argv[0], argv[1], argv[2]))
+C_FUNC_FIXED_ARG_DISPATCHER(dispatch_c_call_4, (vm, recv, argv[0], argv[1], argv[2], argv[3]))
+
+static SLVAL
+dispatch_slash_call_stack_regs(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv)
+{
+    SLVAL regs[imc->method->as.sl.section->max_registers];
+    sl_vm_exec_ctx_t ctx;
+    ctx.vm = vm;
+    ctx.section = imc->method->as.sl.section;
+    ctx.registers = regs;
+    ctx.self = recv;
+    ctx.parent = imc->method->as.sl.parent_ctx;
+    memcpy(ctx.registers + 1, argv, sizeof(SLVAL) * ctx.section->arg_registers);
+    return sl_vm_exec(&ctx, 0);
+}
+
 static SLVAL
 sl_imc_cached_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv)
 {
@@ -232,8 +283,36 @@ sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLV
         imc->state = vm->state_method;
         imc->klass = klass;
         imc->method = method;
-        imc->call = sl_imc_cached_call;
-        return sl_imc_cached_call(vm, imc, recv, argv);
+        if(method->is_c_func) {
+            if(method->arity < 0) {
+                if(sl_likely(-imc->argc - 1 <= method->arity)) {
+                    imc->call = dispatch_c_call_variadic;
+                } else {
+                    imc->call = sl_imc_cached_call; // cop out
+                }
+            } else {
+                if(sl_likely(imc->argc == method->arity)) {
+                    switch(method->arity) {
+                        case 0: imc->call = dispatch_c_call_0; break;
+                        case 1: imc->call = dispatch_c_call_1; break;
+                        case 2: imc->call = dispatch_c_call_2; break;
+                        case 3: imc->call = dispatch_c_call_3; break;
+                        case 4: imc->call = dispatch_c_call_4; break;
+                        default:
+                            sl_throw_message(vm, "Too many arguments for C function");
+                    }
+                } else {
+                    imc->call = sl_imc_cached_call; // cop out
+                }
+            }
+        } else {
+            if(method->arity >= 0 && imc->argc >= method->arity && method->as.sl.section->can_stack_alloc_frame && !method->as.sl.section->opt_skip) {
+                imc->call = dispatch_slash_call_stack_regs;
+            } else {
+                imc->call = sl_imc_cached_call; // cop out
+            }
+        }
+        return imc->call(vm, imc, recv, argv);
     } else {
         return sl_send_missing(vm, recv, imc->id, imc->argc, argv);
     }

@@ -162,7 +162,7 @@ typedef struct sl_vm_inline_method_cache {
     SLVAL klass;
     sl_method_t* method;
     SLID id;
-    size_t argc;
+    int argc;
     SLVAL(*call)(struct sl_vm*,struct sl_vm_inline_method_cache*,SLVAL,SLVAL*);
 }
 sl_vm_inline_method_cache_t;
@@ -190,9 +190,9 @@ typedef struct sl_vm_section {
     size_t insns_count;
     size_t insns_cap;
     sl_vm_insn_t* insns;
-    size_t max_registers;
-    size_t req_registers;
-    size_t arg_registers;
+    int max_registers;
+    int req_registers;
+    int arg_registers;
     size_t* opt_skip;
     uint8_t* filename;
     bool can_stack_alloc_frame;
