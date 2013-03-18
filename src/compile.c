@@ -61,8 +61,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
 static size_t
 reg_alloc(sl_compile_state_t* cs)
 {
-    size_t i;
-    for(i = 0; i < cs->section->max_registers; i++) {
+    for(int i = 0; i < cs->section->max_registers; i++) {
         if(!cs->registers[i]) {
             cs->registers[i] = 1;
             return i;
@@ -75,32 +74,31 @@ reg_alloc(sl_compile_state_t* cs)
 }
 
 static size_t
-reg_alloc_block(sl_compile_state_t* cs, size_t count)
+reg_alloc_block(sl_compile_state_t* cs, int count)
 {
     if(count == 0) {
         return 0;
     }
     
-    size_t i, j;
-    for(i = 0; i + count < cs->section->max_registers + 1; i++) {
+    for(int i = 0; i + count < cs->section->max_registers + 1; i++) {
         if(cs->registers[i]) {
             continue_outer: continue;
         }
-        for(j = 0; j < count; j++) {
+        for(int j = 0; j < count; j++) {
             if(cs->registers[i + j]) {
                 i += j;
                 goto continue_outer;
             }
         }
-        for(j = 0; j < count; j++) {
+        for(int j = 0; j < count; j++) {
             cs->registers[i + j] = 1;
         }
         return i;
     }
     cs->section->max_registers += count;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
-    i = cs->section->max_registers - count;
-    for(j = 0; j < count; j++) {
+    int i = cs->section->max_registers - count;
+    for(int j = 0; j < count; j++) {
         cs->registers[i + j] = 1;
     }
     return i;

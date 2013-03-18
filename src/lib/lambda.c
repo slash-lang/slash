@@ -30,15 +30,15 @@ allocate_lambda(sl_vm_t* vm)
 }
 
 static SLVAL
-apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, size_t argc, SLVAL* argv)
+apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, int argc, SLVAL* argv)
 {
     if(argc < lambda->section->arg_registers) {
         SLVAL err = sl_make_cstring(vm, "Too few arguments in lambda call. Expected ");
         char buff[128];
-        sprintf(buff, "%d", (int)lambda->section->arg_registers);
+        sprintf(buff, "%d", lambda->section->arg_registers);
         err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
         err = sl_string_concat(vm, err, sl_make_cstring(vm, ", received "));
-        sprintf(buff, "%d", (int)argc);
+        sprintf(buff, "%d", argc);
         err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
         sl_throw(vm, sl_make_error2(vm, vm->lib.ArgumentError, err));
     }
@@ -46,12 +46,12 @@ apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, size_t argc, SLVAL* a
     subctx->vm = vm;
     subctx->section = lambda->section;
     subctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * lambda->section->max_registers);
-    for(size_t i = 0; i < lambda->section->max_registers; i++) {
+    for(int i = 0; i < lambda->section->max_registers; i++) {
         subctx->registers[i] = vm->lib.nil;
     }
     subctx->self = self;
     subctx->parent = lambda->parent_ctx;
-    for(size_t i = 0; i < lambda->section->arg_registers; i++) {
+    for(int i = 0; i < lambda->section->arg_registers; i++) {
         subctx->registers[i + 1] = argv[i];
     }
     return sl_vm_exec(subctx, 0);
