@@ -10,7 +10,7 @@ typedef struct {
     sl_object_t base;
     SLVAL left;
     SLVAL right;
-    int exclusive;
+    bool exclusive;
 }
 sl_range_t;
 
@@ -153,6 +153,24 @@ sl_make_range_exclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper)
     return rangev;
 }
 
+SLVAL
+sl_range_lower(sl_vm_t* vm, SLVAL range)
+{
+    return get_range(vm, range)->left;
+}
+
+SLVAL
+sl_range_upper(sl_vm_t* vm, SLVAL range)
+{
+    return get_range(vm, range)->right;
+}
+
+bool
+sl_range_is_exclusive(sl_vm_t* vm, SLVAL range)
+{
+    return get_range(vm, range)->exclusive;
+}
+
 void
 sl_init_range(sl_vm_t* vm)
 {
@@ -160,6 +178,8 @@ sl_init_range(sl_vm_t* vm)
     sl_class_set_allocator(vm, vm->lib.Range, allocate_range);
     sl_define_method(vm, vm->lib.Range, "init", -3, range_init);
     sl_define_method(vm, vm->lib.Range, "enumerate", 0, range_enumerate);
+    sl_define_method(vm, vm->lib.Range, "lower", 0, sl_range_lower);
+    sl_define_method(vm, vm->lib.Range, "upper", 0, sl_range_upper);
     
     vm->lib.Range_Enumerator = sl_define_class3(vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Range);
     sl_class_set_allocator(vm, vm->lib.Range_Enumerator, allocate_range_enumerator);

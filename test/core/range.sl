@@ -17,6 +17,16 @@ class RangeTest extends Test {
         assert_equal([1,2,3,4], Range.new(1, 4).to_a);
         assert_equal([1,2,3], Range.new(1, 4, true).to_a);
     }
+
+    def test_lower {
+        assert_equal(1, (1..2).lower);
+        assert_equal(true, (true..false).lower);
+    }
+
+    def test_upper {
+        assert_equal(2, (1..2).upper);
+        assert_equal(false, (true..false).upper);
+    }
     
     def test_enumerate {
         enumerator = (0...0).enumerate;
