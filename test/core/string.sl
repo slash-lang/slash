@@ -98,6 +98,17 @@ class StringTest extends Test {
         assert_equal(nil, "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"[100]);
         assert_equal(nil, "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"[-100]);
     }
+
+    def test_range_index {
+        assert_equal("h", "hello"[0..0]);
+        assert_equal("", "hello"[0...0]);
+
+        assert_equal("ell", "hello"[1..-2]);
+        assert_equal("el", "hello"[1...-2]);
+
+        assert_equal("ll", "hello"[-3..-2]);
+        assert_equal("l", "hello"[-3...-2]);
+    }
     
     def test_split {
         assert_equal(["a", "b", "c"], "abc".split(""));

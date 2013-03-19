@@ -15,6 +15,7 @@
 #include <slash/lib/regexp.h>
 #include <slash/lib/buffer.h>
 #include <slash/lib/enumerable.h>
+#include <slash/lib/range.h>
 
 static int
 str_hash(sl_string_t* str)
@@ -440,10 +441,57 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
     return vm->lib.nil;
 }
 
+static SLVAL
+string_range_index(sl_vm_t* vm, SLVAL self, SLVAL range)
+{
+    sl_string_t* str = sl_get_string(vm, self);
+    SLVAL lowerv = sl_range_lower(vm, range);
+    SLVAL upperv = sl_range_upper(vm, range);
+    if(!sl_is_a(vm, lowerv, vm->lib.Int) || !sl_is_a(vm, upperv, vm->lib.Int)) {
+        sl_throw_message2(vm, vm->lib.TypeError, "Expected range of integers");
+    }
+    long lower = sl_get_int(lowerv), upper = sl_get_int(upperv);
+    if(lower < 0) {
+        lower += str->char_len;
+    }
+    if(lower < 0 || (size_t)lower >= str->char_len) {
+        return sl_make_cstring(vm, "");
+    }
+    if(upper < 0) {
+        upper += str->char_len;
+    }
+    if(upper < 0) {
+        return sl_make_cstring(vm, "");
+    }
+    if(sl_range_is_exclusive(vm, range)) {
+        upper--;
+    }
+    if(upper < lower) {
+        return sl_make_cstring(vm, "");
+    }
+    uint8_t* begin_ptr = str->buff;
+    uint8_t* end_ptr;
+    size_t len = str->buff_len;
+    long idx = 0;
+    while(idx < lower && len) {
+        idx++;
+        sl_utf8_each_char(vm, &begin_ptr, &len);
+    }
+    end_ptr = begin_ptr;
+    while(lower <= upper) {
+        lower++;
+        sl_utf8_each_char(vm, &end_ptr, &len);
+    }
+    return sl_make_string(vm, begin_ptr, (size_t)end_ptr - (size_t)begin_ptr);
+}
+
 SLVAL
 sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 {
     sl_string_t* str = sl_get_string(vm, self);
+    if(sl_is_a(vm, index, vm->lib.Range)) {
+        return string_range_index(vm, self, index);
+    }
     long idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
     if(idx < 0) {
         idx += str->char_len;
