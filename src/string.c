@@ -184,6 +184,12 @@ sl_string_length(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, sl_get_string(vm, self)->char_len);
 }
 
+static SLVAL
+sl_string_byte_length(sl_vm_t* vm, SLVAL self)
+{
+    return sl_make_int(vm, sl_get_string(vm, self)->buff_len);
+}
+
 SLVAL
 sl_string_concat(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
@@ -459,8 +465,9 @@ sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 }
 
 SLVAL
-sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
+sl_string_split(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
+    SLVAL substr = argv[0];
     sl_string_t* haystack = sl_get_string(vm, self);
     sl_string_t* needle = sl_get_string(vm, substr);
     SLVAL ret = sl_make_array(vm, 0, NULL), piece;
@@ -470,8 +477,22 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
     uint8_t buff[12];
     size_t buff_len;
     uint32_t c;
+    long limit = 0;
+    if(argc > 1) {
+        limit = sl_get_int(sl_expect(vm, argv[1], vm->lib.Int));
+        if(limit < 0) {
+            limit = 0;
+        }
+    }
+    long length = 0;
     if(needle->buff_len == 0) {
         while(haystack_len) {
+            length++;
+            if(limit && length == limit) {
+                SLVAL rest = sl_make_string(vm, haystack_buff, haystack_len);
+                sl_array_push(vm, ret, 1, &rest);
+                break;
+            }
             c = sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
             buff_len = sl_utf32_char_to_utf8(vm, c, buff);
             piece = sl_make_string(vm, buff, buff_len);
@@ -479,12 +500,21 @@ sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL substr)
         }
         return ret;
     } else {
+        if(limit == 1) {
+            return sl_make_array(vm, 1, &self);
+        }
         while(haystack_len >= needle->buff_len) {
             if(memcmp(haystack_buff, needle->buff, needle->buff_len) == 0) {
                 piece = sl_make_string(vm, start_ptr, haystack_buff - start_ptr);
                 sl_array_push(vm, ret, 1, &piece);
                 haystack_buff += needle->buff_len;
                 haystack_len -= needle->buff_len;
+                length++;
+                if(limit && length + 1 == limit) {
+                    SLVAL rest = sl_make_string(vm, haystack_buff, haystack_len);
+                    sl_array_push(vm, ret, 1, &rest);
+                    return ret;
+                }
                 start_ptr = haystack_buff;
                 continue;
             }
@@ -614,7 +644,7 @@ static SLVAL
 sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
 {
     if(sl_is_a(vm, search, vm->lib.String)) {
-        return sl_enumerable_join(vm, sl_string_split(vm, self, search), 1, &replace);
+        return sl_enumerable_join(vm, sl_string_split(vm, self, 1, &search), 1, &replace);
     }
     
     sl_expect(vm, search, vm->lib.Regexp);
@@ -690,6 +720,7 @@ sl_init_string(sl_vm_t* vm)
     sl_st_insert(((sl_class_t*)sl_get_ptr(vm->lib.Object))->constants,
         (sl_st_data_t)sl_intern(vm, "String").id, (sl_st_data_t)vm->lib.String.i);
     sl_define_method(vm, vm->lib.String, "length", 0, sl_string_length);
+    sl_define_method(vm, vm->lib.String, "byte_length", 0, sl_string_byte_length);
     sl_define_method(vm, vm->lib.String, "concat", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "+", 1, sl_string_concat);
     sl_define_method(vm, vm->lib.String, "*", 1, sl_string_times);
@@ -701,7 +732,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
     sl_define_method(vm, vm->lib.String, "index", 1, sl_string_index);
     sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_char_at_index);
-    sl_define_method(vm, vm->lib.String, "split", 1, sl_string_split);
+    sl_define_method(vm, vm->lib.String, "split", -2, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);

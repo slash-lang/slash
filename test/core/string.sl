@@ -106,6 +106,16 @@ class StringTest extends Test {
         assert_equal(["", "bar"], "foobar".split("foo"));
         assert_equal(["", ""], "foobar".split("foobar"));
     }
+
+    def test_split_with_limit {
+        assert_equal(["abc"], "abc".split("", 1));
+        assert_equal(["a", "bc"], "abc".split("", 2));
+        assert_equal(["a", "b", "c"], "abc".split("", 3));
+
+        assert_equal(["foo bar baz"], "foo bar baz".split(" ", 1));
+        assert_equal(["foo", "bar baz"], "foo bar baz".split(" ", 2));
+        assert_equal(["foo", "bar", "baz"], "foo bar baz".split(" ", 3));
+    }
     
     def test_spaceship {
         assert_equal(0, "a" <=> "a");

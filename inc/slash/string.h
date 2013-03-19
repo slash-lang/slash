@@ -46,7 +46,7 @@ SLVAL
 sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr);
 
 SLVAL
-sl_string_split(sl_vm_t* vm, SLVAL self, SLVAL delim);
+sl_string_split(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
 
 SLVAL
 sl_string_format(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
