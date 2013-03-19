@@ -45,4 +45,7 @@ sl_array_items_no_copy(sl_vm_t* vm, SLVAL array, SLVAL** items);
 SLVAL
 sl_array_concat(sl_vm_t* vm, SLVAL array, SLVAL other);
 
+SLVAL
+sl_array_join(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* joiner);
+
 #endif

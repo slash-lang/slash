@@ -198,6 +198,39 @@ sl_array_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     return vm->lib._true;
 }
 
+SLVAL
+sl_array_join(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+{
+    sl_string_t* joiner;
+    if(argc) {
+        joiner = sl_get_string(vm, argv[0]);
+    } else {
+        joiner = sl_cstring(vm, "");
+    }
+    sl_array_t* ary = get_array(vm, self);
+    size_t length = 0;
+    SLVAL* elements = sl_alloc(vm->arena, sizeof(SLVAL) * ary->count);
+    for(size_t i = 0; i < ary->count; i++) {
+        if(i > 0) {
+            length += joiner->buff_len;
+        }
+        elements[i] = sl_to_s(vm, ary->items[i]);
+        length += ((sl_string_t*)sl_get_ptr(elements[i]))->buff_len;
+    }
+    uint8_t* buff = sl_alloc_buffer(vm->arena, length + 1);
+    size_t index = 0;
+    for(size_t i = 0; i < ary->count; i++) {
+        if(i > 0) {
+            memcpy(buff + index, joiner->buff, joiner->buff_len);
+            index += joiner->buff_len;
+        }
+        sl_string_t* elstr = (sl_string_t*)sl_get_ptr(elements[i]);
+        memcpy(buff + index, elstr->buff, elstr->buff_len);
+        index += elstr->buff_len;
+    }
+    return sl_make_string_no_copy(vm, buff, length);
+}
+
 void
 sl_init_array(sl_vm_t* vm)
 {
@@ -220,6 +253,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "concat", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "+", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "==", 1, sl_array_eq);
+    sl_define_method(vm, vm->lib.Array, "join", -1, sl_array_join);
     
     vm->lib.Array_Enumerator = sl_define_class3(
         vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Array);
