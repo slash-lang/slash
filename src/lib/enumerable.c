@@ -53,24 +53,7 @@ enumerable_reduce(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 SLVAL
 sl_enumerable_join(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    SLVAL joiner, val, str;
-    if(argc) {
-        joiner = sl_to_s(vm, argv[0]);
-    } else {
-        joiner = sl_make_cstring(vm, "");
-    }
-    if(!sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
-        return sl_make_cstring(vm, "");
-    }
-    str = sl_to_s(vm, sl_send_id(vm, enumerator, vm->id.current, 0));
-    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
-        val = sl_send_id(vm, enumerator, vm->id.current, 0);
-        val = sl_to_s(vm, val);
-        str = sl_string_concat(vm, str, joiner);
-        str = sl_string_concat(vm, str, val);
-    }
-    return str;
+    return sl_array_join(vm, enumerable_to_a(vm, self), argc, argv);
 }
 
 static SLVAL
