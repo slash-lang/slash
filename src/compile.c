@@ -365,12 +365,20 @@ NODE(sl_node_def_t, def)
     sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i, on_reg;
-    init_compile_state(&sub_cs, cs->vm, cs, node->req_arg_count + node->opt_arg_count + 1);
+    size_t init_regs = 1 + node->req_arg_count + node->opt_arg_count;
+    if(node->rest_arg) {
+        init_regs++;
+    }
+    init_compile_state(&sub_cs, cs->vm, cs, init_regs);
     for(i = 0; i < node->req_arg_count; i++) {
         sl_st_insert(sub_cs.vars, (sl_st_data_t)node->req_args[i], (sl_st_data_t)(i + 1));
     }
     for(i = 0; i < node->opt_arg_count; i++) {
         sl_st_insert(sub_cs.vars, (sl_st_data_t)node->opt_args[i].name, (sl_st_data_t)(node->req_arg_count + i + 1));
+    }
+    if(node->rest_arg) {
+        sl_st_insert(sub_cs.vars, (sl_st_data_t)node->rest_arg, (sl_st_data_t)(node->req_arg_count + node->opt_arg_count + 1));
+        sub_cs.section->has_extra_rest_arg = 1;
     }
     sub_cs.section->name = node->name;
     sub_cs.section->req_registers = node->req_arg_count;

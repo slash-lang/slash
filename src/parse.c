@@ -287,6 +287,7 @@ def_expression(sl_parse_state_t* ps)
     size_t opt_arg_count = 0, opt_arg_cap = 2;
     sl_node_opt_arg_t* opt_args = sl_alloc(ps->vm->arena, sizeof(sl_node_opt_arg_t) * opt_arg_cap);
     sl_parse_scope_t scope;
+    sl_string_t* rest_arg = NULL;
     expect_token(ps, SL_TOK_DEF);
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
@@ -326,7 +327,12 @@ def_expression(sl_parse_state_t* ps)
             if(peek_token(ps)->type == SL_TOK_EQUALS) {
                 at_opt_args = 1;
             }
-            if(at_opt_args) {
+            if(peek_token(ps)->type == SL_TOK_RANGE_EX) {
+                rest_arg = (sl_string_t*)sl_get_ptr(
+                    sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+                expect_token(ps, SL_TOK_RANGE_EX);
+                break;
+            } else if(at_opt_args) {
                 expect_token(ps, SL_TOK_EQUALS);
                 if(opt_arg_count >= opt_arg_cap) {
                     opt_arg_cap *= 2;
@@ -355,7 +361,7 @@ def_expression(sl_parse_state_t* ps)
     body = body_expression(ps);
     ps->scope = scope.prev;
     ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
-    return sl_make_def_node(ps, name, on, req_arg_count, req_args, opt_arg_count, opt_args, body);
+    return sl_make_def_node(ps, name, on, req_arg_count, req_args, opt_arg_count, opt_args, body, rest_arg);
 }
 
 static sl_node_base_t*
