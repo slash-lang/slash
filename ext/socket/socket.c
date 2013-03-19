@@ -152,6 +152,12 @@ sl_tcp_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
         return buffered;
     }
     int bytes = sl_get_int(sl_expect(vm, bytesv, vm->lib.Int));
+    if(bytes <= 0) {
+        tcp_socket_error(vm, "Invalid byte length", "");
+    }
+    if(bytes >= 65536) {
+        bytes = 65535;
+    }
     void* buffer = sl_alloc_buffer(vm->arena, bytes + 1);
     long read = recv(sock->socket, buffer, bytes, 0);
     if(read == -1) {
