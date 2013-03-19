@@ -147,8 +147,10 @@ sl_make_method(sl_vm_t* vm, SLVAL klass, SLID name, sl_vm_section_t* section, sl
     methp->is_c_func = 0;
     if(section->req_registers < section->arg_registers) {
         methp->arity = -section->req_registers - 1;
+    } else if(section->has_extra_rest_arg) {
+        methp->arity = -(int)section->req_registers - 1;
     } else {
-        methp->arity = (int)section->arg_registers;
+        methp->arity = (int)section->req_registers;
     }
     methp->klass = sl_expect(vm, klass, vm->lib.Class);
     methp->as.sl.section = section;

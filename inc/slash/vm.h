@@ -193,6 +193,7 @@ typedef struct sl_vm_section {
     int max_registers;
     int req_registers;
     int arg_registers;
+    int has_extra_rest_arg;
     size_t* opt_skip;
     uint8_t* filename;
     bool can_stack_alloc_frame;

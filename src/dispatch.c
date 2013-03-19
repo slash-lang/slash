@@ -7,6 +7,7 @@
 #include <slash/method.h>
 #include <slash/string.h>
 #include <slash/object.h>
+#include <slash/lib/array.h>
 
 int
 sl_responds_to(sl_vm_t* vm, SLVAL object, char* id)
@@ -54,12 +55,49 @@ call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLV
     return retn;
 }
 
+static SLVAL
+call_sl_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv)
+{
+    sl_vm_exec_ctx_t stack_ctx;
+    sl_vm_exec_ctx_t* ctx;
+    if(sl_likely(method->as.sl.section->can_stack_alloc_frame)) {
+        ctx = &stack_ctx;
+        memset(ctx, 0, sizeof(*ctx));
+    } else {
+        ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
+    }
+    ctx->vm = vm;
+    ctx->section = method->as.sl.section;
+    if(method->as.sl.section->can_stack_alloc_frame) {
+        ctx->registers = alloca(sizeof(SLVAL) * ctx->section->max_registers);
+    } else {
+        ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
+    }
+    ctx->self = recv;
+    ctx->parent = method->as.sl.parent_ctx;
+    
+    memcpy(ctx->registers + 1, argv, sizeof(SLVAL) * ctx->section->arg_registers);
+
+    if(ctx->section->has_extra_rest_arg && argc > ctx->section->arg_registers) {
+        size_t extra_len = argc - ctx->section->arg_registers;
+        ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, extra_len, argv + ctx->section->arg_registers);
+    } else {
+        ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, 0, NULL);
+    }
+    if(argc > ctx->section->arg_registers) {
+        argc = ctx->section->arg_registers;
+    }
+    if(ctx->section->opt_skip) {
+        return sl_vm_exec(ctx, ctx->section->opt_skip[argc - ctx->section->req_registers]);
+    } else {
+        return sl_vm_exec(ctx, 0);
+    }
+}
+
 SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv)
 {
     char errstr[1024];
-    sl_vm_exec_ctx_t stack_ctx;
-    sl_vm_exec_ctx_t* ctx;
     SLVAL arg;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
@@ -83,36 +121,8 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* a
     if(method->is_c_func) {
         return call_c_func_guard(vm, recv, method, argc, argv);
     } else {
-        if(sl_likely(method->as.sl.section->can_stack_alloc_frame)) {
-            ctx = &stack_ctx;
-            memset(ctx, 0, sizeof(*ctx));
-        } else {
-            ctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
-        }
-        ctx->vm = vm;
-        ctx->section = method->as.sl.section;
-        if(method->as.sl.section->can_stack_alloc_frame) {
-            ctx->registers = alloca(sizeof(SLVAL) * ctx->section->max_registers);
-        } else {
-            ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
-        }
-        ctx->self = recv;
-        ctx->parent = method->as.sl.parent_ctx;
-        
-        for(int i = 0; i < ctx->section->arg_registers; i++) {
-            ctx->registers[i + 1] = argv[i];
-        }
-        
-        if(argc > ctx->section->arg_registers) {
-            argc = ctx->section->arg_registers;
-        }
-        if(ctx->section->opt_skip) {
-            return sl_vm_exec(ctx, ctx->section->opt_skip[argc - ctx->section->req_registers]);
-        } else {
-            return sl_vm_exec(ctx, 0);
-        }
+        return call_sl_func(vm, recv, method, argc, argv);
     }
-    return vm->lib.nil;
 }
 
 SLVAL

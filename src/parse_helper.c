@@ -234,7 +234,7 @@ sl_make_class_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* extends, sl_
 }
 
 sl_node_base_t*
-sl_make_def_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body)
+sl_make_def_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body, sl_string_t* rest_arg)
 {
     MAKE_NODE(SL_NODE_DEF, sl_node_def_t, {
         node->name = name;
@@ -244,6 +244,7 @@ sl_make_def_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* on, size_t req
         node->opt_args = opt_args;
         node->opt_arg_count = opt_arg_count;
         node->body = body;
+        node->rest_arg = rest_arg;
     });
 }
 
