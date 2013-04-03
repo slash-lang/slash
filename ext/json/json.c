@@ -203,7 +203,7 @@ sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yaj
 static SLVAL
 sl_json_parse(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_string_t* str = sl_get_string(vm, self);
+    sl_string_t* str = sl_get_string(vm, argv[0]);
     json_parse_t json;
     yajl_alloc_funcs alloc_funcs = {
         sl_yajl_alloc,
