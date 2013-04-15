@@ -262,7 +262,7 @@ void Init_enc();
 
 #define SIGNAL_COUNT_ASSUMPTION 32
 
-static sig_t
+static int
 saved_signals[SIGNAL_COUNT_ASSUMPTION];
 
 static void
