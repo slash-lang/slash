@@ -120,4 +120,11 @@ class IntTest extends Test {
     def test_class {
         assert_is_a(Int, 123);
     }
+
+    def test_char {
+        assert_equal("{", 123.char);
+        assert_equal("†", 8224.char);
+        assert_throws(EncodingError, \{ -123.char });
+        assert_throws(EncodingError, \{ 1114112.char });
+    }
 }.register;

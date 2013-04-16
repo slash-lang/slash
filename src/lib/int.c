@@ -4,6 +4,7 @@
 #include <slash/lib/bignum.h>
 #include <slash/lib/float.h>
 #include <slash/string.h>
+#include <slash/utf8.h>
 
 static int
 highest_set_bit(intptr_t t)
@@ -313,6 +314,18 @@ sl_int_gte(sl_vm_t* vm, SLVAL self, SLVAL other)
     return res ? vm->lib._true : vm->lib._false;
 }
 
+static SLVAL
+sl_int_char(sl_vm_t* vm, SLVAL self)
+{
+    long n = sl_get_int(self);
+    if(n < 0 || n > 0x10FFFF) {
+        sl_throw_message2(vm, vm->lib.EncodingError, "not a valid unicode codepoint");
+    }
+    uint8_t buff[8];
+    size_t buff_len = sl_utf32_char_to_utf8(vm, n, buff);
+    return sl_make_string(vm, buff, buff_len);
+}
+
 void
 sl_init_int(sl_vm_t* vm)
 {
@@ -341,4 +354,5 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, ">", 1, sl_int_gt);
     sl_define_method(vm, vm->lib.Int, "<=", 1, sl_int_lte);
     sl_define_method(vm, vm->lib.Int, ">=", 1, sl_int_gte);
+    sl_define_method(vm, vm->lib.Int, "char", 0, sl_int_char);
 }
