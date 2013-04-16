@@ -93,22 +93,26 @@ class Parser {
 
     def _parse_char(char) {
         if char == ">" {
-            @stack.last.push(AST::Next.new);
+            _add(AST::Next.new);
         } elsif char == "<" {
-            @stack.last.push(AST::Prev.new);
+            _add(AST::Prev.new);
         } elsif char == "+" {
-            @stack.last.push(AST::Inc.new);
+            _add(AST::Inc.new);
         } elsif char == "-" {
-            @stack.last.push(AST::Dec.new);
+            _add(AST::Dec.new);
         } elsif char == "." {
-            @stack.last.push(AST::Output.new);
+            _add(AST::Output.new);
         } elsif char == "," {
-            @stack.last.push(AST::Input.new);
+            _add(AST::Input.new);
         } elsif char == "[" {
             _open_loop();
         } elsif char == "]" {
             _close_loop();
         }
+    }
+
+    def _add(node) {
+        @stack.last.push(node);
     }
 
     def _open_loop {
@@ -121,7 +125,7 @@ class Parser {
         }
 
         nodes = @stack.pop;
-        @stack.last.push(AST::Loop.new(AST::Sequence.new(nodes)));
+        _add(AST::Loop.new(AST::Sequence.new(nodes)));
     }
 }
 
