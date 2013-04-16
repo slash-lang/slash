@@ -191,6 +191,7 @@ HEX [0-9a-fA-F]
 <SLASH>"..."        { ADD_TOKEN(sl_make_token(SL_TOK_RANGE_EX)); }
 <SLASH>".."         { ADD_TOKEN(sl_make_token(SL_TOK_RANGE)); }
 <SLASH>"."/{ID}     { ADD_TOKEN(sl_make_token(SL_TOK_DOT));                                         BEGIN(NKW_ID); }
+<SLASH>":"/{ID}     { ADD_TOKEN(sl_make_token(SL_TOK_COLON));                                       BEGIN(NKW_ID); }
 <NKW_ID>{ID}        { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng));  BEGIN(SLASH); }
 <SLASH>"."          { ADD_TOKEN(sl_make_token(SL_TOK_DOT)); }
 <SLASH>"::"         { ADD_TOKEN(sl_make_token(SL_TOK_PAAMAYIM_NEKUDOTAYIM)); }
