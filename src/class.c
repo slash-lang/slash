@@ -216,6 +216,7 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
     sl_class_t* class = get_class(vm, klass);
     SLID id = sl_intern2(vm, name);
     sl_st_delete(class->constants, (sl_st_data_t*)&id.id, NULL);
+    vm->state_constant++;
     return klass;
 }
 
@@ -427,6 +428,7 @@ sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL val)
     klassp = get_class(vm, klass);
     sl_expect(vm, klass, vm->lib.Class);
     sl_st_insert(klassp->constants, (sl_st_data_t)name.id, (sl_st_data_t)sl_get_ptr(val));
+    vm->state_constant++;
 }
 
 int
