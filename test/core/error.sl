@@ -49,4 +49,9 @@ class TestError extends Test {
             throw TypeError.new;
         });
     }
+
+    def test_throw {
+        class X extends Error {}
+        assert_throws(X, X.new:throw);
+    }
 }.register;
