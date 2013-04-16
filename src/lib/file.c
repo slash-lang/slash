@@ -134,6 +134,17 @@ file_class_read(sl_vm_t* vm, SLVAL self, SLVAL filename)
     (void)self; /* unused */
 }
 
+static SLVAL
+file_class_exists(sl_vm_t* vm, SLVAL self, SLVAL filename)
+{
+    sl_string_t* str = sl_get_string(vm, filename);
+    if(memchr(str->buff, 0, str->buff_len)) {
+        return vm->lib._false;
+    }
+    return sl_make_bool(vm, sl_file_exists(vm, (char*)str->buff));
+    (void)self;
+}
+
 void
 sl_init_file(sl_vm_t* vm)
 {
@@ -149,4 +160,5 @@ sl_init_file(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.File, "closed", 0, file_closed);
     /* class convenience methods: */
     sl_define_singleton_method(vm, vm->lib.File, "read", 1, file_class_read);
+    sl_define_singleton_method(vm, vm->lib.File, "exists", 1, file_class_exists);
 }
