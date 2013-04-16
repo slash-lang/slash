@@ -11,6 +11,9 @@ typedef enum sl_token_type {
     SL_TOK_OPEN_RAW_ECHO_TAG,
     SL_TOK_CLOSE_TAG,
     SL_TOK_RAW,
+
+    SL_TOK_SPECIAL_FILE,
+    SL_TOK_SPECIAL_LINE,
     
     SL_TOK_WHITESPACE,
     SL_TOK_CONSTANT,

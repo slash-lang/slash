@@ -121,6 +121,9 @@ HEX [0-9a-fA-F]
 <SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 <SLASH>"λ"              { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 
+<SLASH>"__FILE__"   { ADD_TOKEN(sl_make_token(SL_TOK_SPECIAL_FILE)); }
+<SLASH>"__LINE__"   { ADD_TOKEN(sl_make_token(SL_TOK_SPECIAL_LINE)); }
+
 <SLASH>[A-Z]{IDT}?  { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_CONSTANT, yytext, yyleng)); }
 <SLASH>{ID}         { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IDENTIFIER, yytext, yyleng)); }
 <SLASH>"@"{ID}      { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_IVAR, yytext + 1, yyleng - 1)); }
