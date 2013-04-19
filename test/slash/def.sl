@@ -32,4 +32,4 @@ class DefTest extends Test {
         assert_is_a(SyntaxError, e);
         assert_equal("not a chance", e.message);
     }
-}.register;
+}

@@ -175,4 +175,4 @@ class ArrayTest extends Test {
         assert_equal([1,2,3,4].hash, [1,2,3,4].hash);
         assert_unequal([5,6,7,8].hash, [1,2,3,4].hash);
     }
-}.register;
+}

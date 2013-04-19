@@ -29,4 +29,4 @@ class LambdaTest extends Test {
         assert_is_a(Lambda, \{ });
         assert_is_a(Lambda, lambda { });
     }
-}.register;
+}

@@ -33,4 +33,4 @@ class ForTest extends Test {
         }
         assert(pass);
     }
-}.register;
+}

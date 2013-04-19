@@ -95,4 +95,4 @@ class CompoundAssignmentTest extends Test {
         
         assert_equal(10, counter.val[0]);
     }
-}.register;
+}

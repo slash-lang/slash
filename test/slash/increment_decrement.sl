@@ -60,4 +60,4 @@ class IncrementDecrementTest extends Test {
         
         assert_equal(4, a.count);
     }
-}.register;
+}

@@ -23,4 +23,4 @@ class FileTest extends Test {
         f.close;
         assert_equal(true, f.closed);
     }
-}.register;
+}

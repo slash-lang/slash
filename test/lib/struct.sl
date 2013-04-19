@@ -52,4 +52,4 @@ class StructTest extends Test {
         assert_equal("Charlie", charlie.name);
         assert_equal(18, charlie.age);
     }
-}.register;
+}

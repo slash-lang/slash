@@ -84,4 +84,4 @@ class TestObject extends Test {
         o.set_instance_variable('foo, 456);
         assert_equal(456, o.x);
     }
-}.register;
+}

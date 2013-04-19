@@ -68,4 +68,4 @@ class MethodTest extends Test {
     def test_cannot_bind_uninitialized_method {
         assert_throws(TypeError, \{ Method.new.bind(nil); });
     }
-}.register;
+}

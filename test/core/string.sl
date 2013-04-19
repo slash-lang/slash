@@ -164,4 +164,4 @@ class StringTest extends Test {
         assert_equal("ABCDEF", "AbCdEf".upper);
         assert_equal("ÅÉÎØÜ", "åéîøü".upper);
     }
-}.register;
+}

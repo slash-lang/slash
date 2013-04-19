@@ -127,4 +127,4 @@ class IntTest extends Test {
         assert_throws(EncodingError, \{ -123.char });
         assert_throws(EncodingError, \{ 1114112.char });
     }
-}.register;
+}

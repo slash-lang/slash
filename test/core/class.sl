@@ -118,4 +118,4 @@ class ClassTest extends Test {
         o = Object.new;
         assert(o.singleton_class.has_instance(o));
     }
-}.register;
+}

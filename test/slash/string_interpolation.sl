@@ -24,4 +24,4 @@ class StringInterpolationTest extends Test {
     def test_multiple_interpolations_without_spacing {
         assert_equal("foobar", "#{'foo}#{'bar}");
     }
-}.register;
+}
