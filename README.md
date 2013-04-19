@@ -30,6 +30,14 @@ If Slash *still* fails to configure, you may use the `--verbose` switch to log a
 
 `make install` will install Slash under `/usr/local` by default. This install prefix can be changed with the `--prefix=<path>` option.
 
+#### OS X
+
+If you have [Homebrew](http://mxcl.github.io/homebrew/) installed you can install the dependencies by running:
+
+    brew install gmp pcre libgcrypt yajl discount
+
+
+
 ### Windows
 
 A vanilla Slash can be built on Windows using mingw-gcc. In the future, binaries for `slash-cli` and common SAPIs will be distributed.
