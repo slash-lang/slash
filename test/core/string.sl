@@ -136,13 +136,6 @@ class StringTest extends Test {
         assert_equal(1, "b" <=> "");
     }
     
-    def test_format {
-        assert_equal("hello world", "hello %s" % "world");
-        assert_equal("hello world", "hello %s" % ["world"]);
-        assert_equal("hello world!", "hello %s%s" % ["world", "!"]);
-        assert_equal("hello world%s", "hello %s%s" % ["world"]);
-    }
-    
     def test_replace_string_string {
         assert_equal("A::B::C", "A,B,C".replace(",", "::"));
     }
