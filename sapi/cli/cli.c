@@ -115,7 +115,7 @@ process_arguments(sl_vm_t* vm, int argc, char** argv)
                 fprintf(stderr, "Expected <path> after -I\n");
                 shutdown_vm(vm, 1);
             }
-            sl_require_path_add(vm, argv[++i]);
+            sl_require_path_prepend(vm, argv[++i]);
             continue;
         }
         if(strcmp(argv[i], "-i") == 0) {
