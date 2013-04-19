@@ -107,6 +107,18 @@ bound_method_unbind(sl_vm_t* vm, SLVAL bmethod)
     return sl_make_ptr((sl_object_t*)methp);
 }
 
+static SLVAL
+method_inspect(sl_vm_t* vm, SLVAL method)
+{
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    if(!methp->initialized) {
+        return sl_object_inspect(vm, method);
+    }
+
+    return sl_make_formatted_string(vm, "#<Method: %V#%I(%d)>",
+        methp->klass, methp->name, methp->arity);
+}
+
 void
 sl_init_method(sl_vm_t* vm)
 {
@@ -117,6 +129,7 @@ sl_init_method(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Method, "name", 0, sl_method_name);
     sl_define_method(vm, vm->lib.Method, "on", 0, sl_method_on);
     sl_define_method(vm, vm->lib.Method, "arity", 0, sl_method_arity);
+    sl_define_method(vm, vm->lib.Method, "inspect", 0, method_inspect);
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
     sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);
