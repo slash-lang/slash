@@ -8,6 +8,9 @@ void
 sl_require(sl_vm_t* vm, char* path);
 
 void
+sl_require_path_prepend(sl_vm_t* vm, char* path);
+
+void
 sl_require_path_add(sl_vm_t* vm, char* path);
 
 #endif

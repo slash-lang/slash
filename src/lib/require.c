@@ -70,6 +70,17 @@ sl_require(sl_vm_t* vm, char* path)
 }
 
 void
+sl_require_path_prepend(sl_vm_t* vm, char* path)
+{
+    SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
+    if(!sl_is_a(vm, include_dirs, vm->lib.Array)) {
+        return;
+    }
+    SLVAL pathv = sl_make_cstring(vm, path);
+    sl_array_unshift(vm, include_dirs, 1, &pathv);
+}
+
+void
 sl_require_path_add(sl_vm_t* vm, char* path)
 {
     SLVAL include_dirs = sl_class_get_const(vm, vm->lib.Object, "INC");
