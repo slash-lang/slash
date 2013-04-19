@@ -134,8 +134,6 @@ sl_init(const char* sapi_name)
     Class->name = sl_intern(vm, "Class");
     String->name = sl_intern(vm, "String");
     
-    vm->initializing = 0;
-    
     sl_init_id(vm);
 
     sl_init_method(vm);
@@ -145,6 +143,8 @@ sl_init(const char* sapi_name)
     sl_init_error(vm);
     
     sl_init_libs(vm);
+    
+    vm->initializing = 0;
 
     String->super = vm->lib.Comparable;
     
@@ -196,4 +196,5 @@ sl_init_id(sl_vm_t* vm)
     ID(next);
     ID(succ);
     ID(to_s);
+    ID(subclassed);
 }

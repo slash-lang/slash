@@ -26,6 +26,7 @@ struct sl_vm_ids {
     SLID next;
     SLID succ;
     SLID to_s;
+    SLID subclassed;
 };
 
 struct sl_vm_lib {
