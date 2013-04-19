@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <ctype.h>
 #include <slash/string.h>
 #include <slash/value.h>
@@ -746,4 +747,62 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "replace", 2, sl_string_replace);
     sl_define_method(vm, vm->lib.String, "upper", 0, sl_string_upper);
     sl_define_method(vm, vm->lib.String, "lower", 0, sl_string_lower);
+}
+
+// somewhat similar to sprintf
+//
+// Valid formats:
+//
+//   %V - Slash value, converted to string first with #to_s
+//   %I - Slash ID
+//   %s - C string
+//   %d - integer
+//   %% - literal '%' sign
+SLVAL
+sl_make_formatted_string(struct sl_vm* vm, char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+
+    SLVAL strings = sl_make_array(vm, 0, NULL);
+    char *current_ptr = format, *next_ptr;
+    while((next_ptr = strchr(current_ptr, '%'))) {
+        if(next_ptr != current_ptr) {
+            SLVAL literal = sl_make_string(vm, (uint8_t*)current_ptr, (size_t)(next_ptr - current_ptr));
+            sl_array_push(vm, strings, 1, &literal);
+        }
+        SLVAL element = vm->lib.nil;
+        switch(next_ptr[1]) {
+            case 'V': {
+                element = va_arg(va, SLVAL);
+                break;
+            }
+            case 'I': {
+                element = sl_id_to_string(vm, va_arg(va, SLID));
+                break;
+            }
+            case 's': {
+                element = sl_make_cstring(vm, va_arg(va, char*));
+                break;
+            }
+            case 'd': {
+                char buff[32];
+                sprintf(buff, "%d", va_arg(va, int));
+                element = sl_make_cstring(vm, buff);
+                break;
+            }
+            default: {
+                element = sl_make_string(vm, (uint8_t*)(next_ptr + 1), 1);
+                break;
+            }
+        }
+        sl_array_push(vm, strings, 1, &element);
+        current_ptr = next_ptr + 2;
+    }
+    if(current_ptr[0]) {
+        SLVAL element = sl_make_cstring(vm, current_ptr);
+        sl_array_push(vm, strings, 1, &element);
+    }
+
+    return sl_array_join(vm, strings, 0, NULL);
 }

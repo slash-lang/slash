@@ -13,6 +13,9 @@ SLVAL
 sl_make_string(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
 
 SLVAL
+sl_make_formatted_string(struct sl_vm* vm, char* format, ...);
+
+SLVAL
 sl_make_string_no_copy(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
 
 SLVAL
