@@ -68,4 +68,14 @@ class MethodTest extends Test {
     def test_cannot_bind_uninitialized_method {
         assert_throws(TypeError, \{ Method.new.bind(nil); });
     }
+
+    def test_inspect {
+        assert_equal("#<Method: MethodTest#test_inspect(0)>", self:test_inspect.inspect);
+    }
+
+    def test_inspect_uninitialized_method {
+        meth = Method.new;
+        obj_inspect = Object.instance_method('inspect).bind(meth).call;
+        assert_equal(obj_inspect, meth.inspect);
+    }
 }
