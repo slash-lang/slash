@@ -647,48 +647,6 @@ sl_pre_init_string(sl_vm_t* vm)
 }
 
 static SLVAL
-sl_string_mod(sl_vm_t* vm, SLVAL self, SLVAL arg)
-{
-    SLVAL* argv;
-    size_t argc;
-    if(sl_is_a(vm, arg, vm->lib.Array)) {
-        argc = sl_array_items(vm, arg, &argv);
-        return sl_string_format(vm, self, argc, argv);
-    } else {
-        return sl_string_format(vm, self, 1, &arg);
-    }
-}
-
-SLVAL
-sl_string_format(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
-{
-    sl_string_t* str = sl_get_string(vm, self);
-    uint8_t* buff_ptr = str->buff;
-    size_t buff_len = str->buff_len;
-    uint8_t* end_of_buffer = buff_ptr + buff_len;
-    uint8_t* next_percent = buff_ptr;
-    uint8_t* prev = buff_ptr;
-    SLVAL buff = sl_make_cstring(vm, "");
-    while(argc && prev + 1 < end_of_buffer && (next_percent = memchr(prev, '%', (size_t)(end_of_buffer - next_percent))) != NULL) {
-        buff = sl_string_concat(vm, buff, sl_make_string(vm, prev, (size_t)(next_percent - prev)));
-        switch(next_percent[1]) {
-            case 's': {
-                buff = sl_string_concat(vm, buff, sl_to_s(vm, *argv));
-                argc--;
-                argv++;
-                break;
-            }
-            default:
-                buff = sl_string_concat(vm, buff, sl_make_string(vm, next_percent, 2));
-                break;
-        }
-        prev = next_percent + 2;
-    }
-    buff = sl_string_concat(vm, buff, sl_make_string(vm, prev, (size_t)(end_of_buffer - prev)));
-    return buff;
-}
-
-static SLVAL
 sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
 {
     if(sl_is_a(vm, search, vm->lib.String)) {
@@ -784,8 +742,6 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
-    sl_define_method(vm, vm->lib.String, "%", 1, sl_string_mod);
-    sl_define_method(vm, vm->lib.String, "format", -1, sl_string_format);
     sl_define_method(vm, vm->lib.String, "encode", 1, sl_string_encode2);
     sl_define_method(vm, vm->lib.String, "replace", 2, sl_string_replace);
     sl_define_method(vm, vm->lib.String, "upper", 0, sl_string_upper);
