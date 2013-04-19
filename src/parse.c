@@ -1103,6 +1103,10 @@ statement(sl_parse_state_t* ps)
         case SL_TOK_WHILE:
         case SL_TOK_UNTIL:
             return while_expression(ps);
+        case SL_TOK_DEF:
+            return def_expression(ps);
+        case SL_TOK_CLASS:
+            return class_expression(ps);
         default:
             node = expression(ps);
             if(peek_token(ps)->type != SL_TOK_CLOSE_TAG
