@@ -113,4 +113,4 @@ class BignumTest extends Test {
     def test_xor {
         assert_equal(1000000000000000000000000000000000000001, 1000000000000000000000000000000000000002 ^ 3);
     }
-}.register;
+}

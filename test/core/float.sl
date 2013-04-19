@@ -115,4 +115,4 @@ class FloatTest extends Test {
     def test_class {
         assert_is_a(Float, 123.0);
     }
-}.register;
+}

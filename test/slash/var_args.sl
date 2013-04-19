@@ -42,4 +42,4 @@ class VarArgsTest extends Test {
         assert_equal([9, 8, []], fixed_optional_and_var_arg(9, 8));
         assert_equal([9, 8, [7]], fixed_optional_and_var_arg(9, 8, 7));
     }
-}.register;
+}

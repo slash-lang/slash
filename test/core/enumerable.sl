@@ -179,4 +179,4 @@ class EnumerableTest extends Test {
         LengthOfExactlyFourEnumerable.new.each(\x { ary.push(x) });
         assert_equal([1,2,3,4], ary);
     }
-}.register;
+}

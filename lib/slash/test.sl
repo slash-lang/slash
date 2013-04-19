@@ -75,8 +75,8 @@ class Test {
         }
     }
     
-    def self.register {
-        CASES.push(self);
+    def self.subclassed(klass) {
+        CASES.push(klass);
     }
 
     def self.run_suite {

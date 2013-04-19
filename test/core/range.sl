@@ -64,4 +64,4 @@ class RangeTest extends Test {
     def test_uniterable_range {
         assert_throws(TypeError, \{ (nil..nil).to_a });
     }
-}.register;
+}

@@ -8,4 +8,4 @@ class SpecialConstantsTest extends Test {
     def test_file {
         assert(%r{test/slash/special_constants\.sl}.match(__FILE__));
     }
-}.register;
+}

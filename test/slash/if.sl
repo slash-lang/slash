@@ -56,4 +56,4 @@ class IfTest extends Test {
         assert(pass);
         flunk() unless true;
     }
-}.register;
+}

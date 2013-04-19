@@ -80,4 +80,4 @@ class CVarTest extends Test {
         assert_equal(123, A.x);
         assert_equal(456, B.x);
     }
-}.register;
+}

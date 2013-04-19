@@ -23,4 +23,4 @@ class TrueTest extends Test {
     def test_class {
         assert_equal(True, true.class);
     }
-}.register;
+}

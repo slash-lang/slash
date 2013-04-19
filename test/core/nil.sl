@@ -23,4 +23,4 @@ class NilTest extends Test {
     def test_class {
         assert_equal(Nil, nil.class);
     }
-}.register;
+}

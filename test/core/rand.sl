@@ -5,4 +5,4 @@ class RandTest extends Test {
         assert(rand() > 0, "rand() > 0");
         assert(rand() < 1, "rand() < 0");
     }
-}.register;
+}

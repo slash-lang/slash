@@ -22,4 +22,4 @@ class WhileTest extends Test {
             pass = true;
         }
     }
-}.register;
+}

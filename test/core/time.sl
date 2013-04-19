@@ -40,4 +40,4 @@ class TimeTest extends Test {
         padding = "." * 1024;
         assert_equal(padding + "Saturday" + padding, Time.new(2000, 1, 1, 0, 0, 0).strftime(padding + "%A" + padding));
     }
-}.register;
+}

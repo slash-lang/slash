@@ -23,4 +23,4 @@ class FalseTest extends Test {
     def test_class {
         assert_equal(False, false.class);
     }
-}.register;
+}

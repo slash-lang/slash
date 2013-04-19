@@ -38,4 +38,4 @@ class TestComparable extends Test {
         assert_equal(true, Always::Greater >= 0);
         assert_equal(true, Always::Equal >= 0);
     }
-}.register;
+}

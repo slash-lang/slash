@@ -34,4 +34,4 @@ class EvalTest extends Test {
         }
         assert_equal("some file.txt", frame.file);
     }
-}.register;
+}

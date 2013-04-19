@@ -115,4 +115,4 @@ class DictTest extends Test {
         d = { a => a };
         assert_throws(TypeError, \{ d[b] });
     }
-}.register;
+}

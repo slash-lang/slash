@@ -45,4 +45,4 @@ class IVarTest extends Test {
         assert_equal(123, a.get_x_a);
         assert_equal(456, b.get_x_a);
     }
-}.register;
+}

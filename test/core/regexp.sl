@@ -131,4 +131,4 @@ class RegexpTest extends Test {
         assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}ix.options);
         assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}xi.options);
     }
-}.register;
+}

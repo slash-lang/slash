@@ -62,4 +62,4 @@ class SetTest extends Test {
         assert_equal(Set.new([1, 2]), Set.new([2, 1]));
         assert_equal(Set.new([1, 2, 3, 4]), Set.new([2, 1, 3, 3, 4, 3]));
     }
-}.register;
+}
