@@ -22,7 +22,7 @@ SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 default: $(TARGETS)
 
 fast-test: sapi[cli]
-	@sapi/cli/slash-cli test/test.sl test/*/*.sl
+	@sapi/cli/slash-cli -I ./lib/slash test/test.sl test/*/*.sl
 
 test: sapi[cli]
 	@echo "Running tests"
