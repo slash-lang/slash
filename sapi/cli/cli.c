@@ -247,9 +247,10 @@ main(int argc, char** argv)
         } else {
             run_script(vm);
         }
+        shutdown_vm(vm, 0);
     }, exception, {
         if(frame.as.handler_frame.unwind_type == SL_UNWIND_EXIT) {
-            shutdown_vm(vm, 0);
+            shutdown_vm(vm, sl_get_int(exception));
         }
         if(frame.as.handler_frame.unwind_type == SL_UNWIND_EXCEPTION) {
             handle_exception_and_exit(vm, exception);
