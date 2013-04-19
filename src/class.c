@@ -240,6 +240,12 @@ class_has_instance(sl_vm_t* vm, SLVAL klass, SLVAL object)
     return sl_make_bool(vm, sl_is_a(vm, object, klass));
 }
 
+static SLVAL
+class_subclassed(sl_vm_t* vm)
+{
+    return vm->lib.nil;
+}
+
 void
 sl_init_class(sl_vm_t* vm)
 {
@@ -265,6 +271,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "remove_constant", 1, class_remove_constant);
     sl_define_method(vm, vm->lib.Class, "singleton", 0, class_singleton);
     sl_define_method(vm, vm->lib.Class, "has_instance", 1, class_has_instance);
+    sl_define_method(vm, vm->lib.Class, "subclassed", 1, class_subclassed);
 }
 
 SLVAL
@@ -286,10 +293,8 @@ sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
     klass->name = name;
     klass->in = sl_expect(vm, in, vm->lib.Class);
-    if(!vm->initializing) {
-        sl_st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
-            (sl_st_data_t)name.id, (sl_st_data_t)klass);
-    }
+    sl_st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
+        (sl_st_data_t)name.id, (sl_st_data_t)klass);
     return vklass;
 }
 
@@ -312,6 +317,10 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
     klass->allocator = super->allocator;
     klass->super = vsuper;
     klass->singleton = false;
+
+    if(!vm->initializing) {
+        sl_send_id(vm, vsuper, vm->id.subclassed, 1, vklass);
+    }
 
     return vklass;
 }
