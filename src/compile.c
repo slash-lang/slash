@@ -129,16 +129,16 @@ insn_at_ip(sl_compile_state_t* cs, size_t ip)
 }
 
 static size_t
-emit(sl_compile_state_t* cs, sl_vm_insn_t insn)
+emit(sl_compile_state_t* cs, void* buff, size_t size)
 {
-    if(cs->section->insns_byte_count + sizeof(void*) >= cs->section->insns_byte_cap) {
+    if(cs->section->insns_byte_count + size >= cs->section->insns_byte_cap) {
         cs->section->insns_byte_cap *= 2;
         cs->section->insns_bytes = sl_realloc(cs->vm->arena, cs->section->insns_bytes, cs->section->insns_byte_cap);
     }
-    size_t ip = cs->section->insns_byte_count;
-    *insn_at_ip(cs, cs->section->insns_byte_count) = insn;
-    cs->section->insns_byte_count += sizeof(sl_vm_insn_t);
-    return ip;
+    size_t old_ip = cs->section->insns_byte_count;
+    memcpy(cs->section->insns_bytes + cs->section->insns_byte_count, buff, size);
+    cs->section->insns_byte_count += size;
+    return old_ip;
 }
 
 static void
@@ -154,18 +154,14 @@ gc_list_add(sl_compile_state_t* cs, sl_vm_insn_t insn)
 static size_t
 emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
-    sl_vm_insn_t insn;
-    insn.opcode = opcode;
     cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
-    return emit(cs, insn);
+    return emit(cs, &opcode, sizeof(opcode));
 }
 
 static size_t
 emit_reg(sl_compile_state_t* cs, size_t reg)
 {
-    sl_vm_insn_t insn;
-    insn.reg = reg;
-    return emit(cs, insn);
+    return emit(cs, &reg, sizeof(reg));
 }
 
 static size_t
@@ -174,23 +170,19 @@ emit_immediate(sl_compile_state_t* cs, SLVAL value)
     sl_vm_insn_t insn;
     insn.imm = value;
     gc_list_add(cs, insn);
-    return emit(cs, insn);
+    return emit(cs, &value, sizeof(value));
 }
 
 static size_t
-emit_uint(sl_compile_state_t* cs, size_t uint)
+emit_uint(sl_compile_state_t* cs, size_t u)
 {
-    sl_vm_insn_t insn;
-    insn.uint = uint;
-    return emit(cs, insn);
+    return emit(cs, &u, sizeof(u));
 }
 
 static size_t
 emit_id(sl_compile_state_t* cs, SLID id)
 {
-    sl_vm_insn_t insn;
-    insn.id = id;
-    return emit(cs, insn);
+    return emit(cs, &id, sizeof(id));
 }
 
 static size_t
@@ -199,7 +191,7 @@ emit_section(sl_compile_state_t* cs, sl_vm_section_t* section)
     sl_vm_insn_t insn;
     insn.section = section;
     gc_list_add(cs, insn);
-    return emit(cs, insn);
+    return emit(cs, &section, sizeof(section));
 }
 
 static size_t
@@ -213,7 +205,7 @@ emit_imc(sl_compile_state_t* cs, size_t arg_size, SLID id)
     sl_vm_insn_t insn;
     insn.imc = imc;
     gc_list_add(cs, insn);
-    return emit(cs, insn);
+    return emit(cs, &imc, sizeof(imc));
 }
 
 static size_t
@@ -222,7 +214,7 @@ emit_icc(sl_compile_state_t* cs)
     sl_vm_insn_t insn;
     insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
     gc_list_add(cs, insn);
-    return emit(cs, insn);
+    return emit(cs, &insn.icc, sizeof(insn.icc));
 }
 
 static void
