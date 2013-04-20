@@ -1,17 +1,19 @@
 def gen_operand_reader(operand_type)
   case operand_type
-  when "imm", "str"
+  when "imm"
     %{printf(" ( %s )", sl_to_cstr(vm, sl_inspect(vm, NEXT_IMM())));}
   when "id"
     %{printf(" :%s", sl_to_cstr(vm, sl_id_to_string(vm, NEXT_ID())));}
-  when "ic"
-    %{(void)NEXT_UINT(); printf(" <ic>");}
+  when "imc"
+    %{(void)NEXT_IMC(); printf(" <imc>");}
+  when "icc"
+    %{(void)NEXT_ICC(); printf(" <icc>");}
   when "reg"
-    %{printf(" ~%zu", NEXT_UINT());}
+    %{printf(" r%zu", NEXT_REG_IDX());}
   when "uint"
     %{printf(" %zu", NEXT_UINT());}
   when "section"
-    %{section_queue[++section_i] = NEXT_PTR();  printf(" <section %s (%p)>", sl_to_cstr(vm, sl_id_to_string(vm, section_queue[section_i]->name)), section_queue[section_i]);}
+    %{section_queue[++section_i] = NEXT_SECTION();  printf(" <section %s (%p)>", sl_to_cstr(vm, sl_id_to_string(vm, section_queue[section_i]->name)), section_queue[section_i]);}
   else
     raise "Unknown operand type: #{operand_type}"
   end

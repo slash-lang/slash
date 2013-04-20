@@ -66,18 +66,24 @@ int main(int argc, char** argv)
 void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 {
     size_t ip = 0;
-    
-    #define NEXT() (section->insns[ip++])
 
-    #define NEXT_IMM() (NEXT().imm)
-    #define NEXT_UINT() (NEXT().uint)
-    #define NEXT_PTR() ((void*)NEXT().uint)
-    #define NEXT_ID() (NEXT().id)
+    #define NEXT(type) (*(type*)&section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
+
+    #define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
+    #define NEXT_IMM()      (NEXT(SLVAL))
+    #define NEXT_UINT()     (NEXT(size_t))
+    #define NEXT_IMC()      (NEXT(sl_vm_inline_method_cache_t*))
+    #define NEXT_ICC()      (NEXT(sl_vm_inline_constant_cache_t*))
+    #define NEXT_ID()       (NEXT(SLID))
+    #define NEXT_REG_IDX()  (NEXT(size_t))
+    #define NEXT_SECTION()  (NEXT(sl_vm_section_t*))
+
+    #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
     
     printf("%s (%p):\n", sl_to_cstr(vm, sl_id_to_string(vm, section->name)), section);
     
-    while(ip < section->insns_count) {
-        switch(NEXT().opcode) {
+    while(ip < section->insns_byte_count) {
+        switch(NEXT_OPCODE()) {
             #include "dis.inc"
         }
     }
