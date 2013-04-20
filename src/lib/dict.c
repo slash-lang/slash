@@ -10,12 +10,6 @@ typedef struct {
 sl_dict_t;
 
 typedef struct {
-    sl_vm_t* vm;
-    SLVAL key;
-}
-sl_dict_key_t;
-
-typedef struct {
     sl_object_t base;
     SLVAL dict;
     SLVAL* keys;
@@ -25,9 +19,9 @@ typedef struct {
 sl_dict_enumerator_t;
 
 static int
-dict_key_cmp(sl_vm_t* vm, sl_dict_key_t* a, sl_dict_key_t* b)
+dict_key_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 {
-    SLVAL cmp = sl_send_id(vm, a->key, vm->id.op_cmp, 1, b->key);
+    SLVAL cmp = sl_send_id(vm, a, vm->id.op_cmp, 1, b);
     if(sl_get_primitive_type(cmp) != SL_T_INT) {
         sl_throw_message2(vm, vm->lib.TypeError, "Expected <=> to return Int in Dict key");
     }
@@ -35,9 +29,9 @@ dict_key_cmp(sl_vm_t* vm, sl_dict_key_t* a, sl_dict_key_t* b)
 }
 
 static int
-dict_key_hash(sl_vm_t* vm, sl_dict_key_t* a)
+dict_key_hash(sl_vm_t* vm, SLVAL a)
 {
-    return sl_hash(vm, a->key);
+    return sl_hash(vm, a);
 }
 
 static struct sl_st_hash_type
@@ -81,10 +75,7 @@ SLVAL
 sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
     SLVAL val;
-    sl_dict_key_t k;
-    k.vm = vm;
-    k.key = key;
-    if(sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)&k, (sl_st_data_t*)&val)) {
+    if(sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t*)&val)) {
         return val;
     }
     return vm->lib.nil;
@@ -93,10 +84,7 @@ sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
 SLVAL
 sl_dict_set(sl_vm_t* vm, SLVAL dict, SLVAL key, SLVAL val)
 {
-    sl_dict_key_t* k = sl_alloc(vm->arena, sizeof(sl_dict_key_t));
-    k->vm = vm;
-    k->key = key;
-    sl_st_insert(get_dict(vm, dict)->st, (sl_st_data_t)k, (sl_st_data_t)sl_get_ptr(val));
+    sl_st_insert(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t)sl_get_ptr(val));
     return val;
 }
 
@@ -109,17 +97,13 @@ sl_dict_length(sl_vm_t* vm, SLVAL dict)
 SLVAL
 sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
-    sl_dict_key_t k;
-    sl_dict_key_t* pk = &k;
-    k.vm = vm;
-    k.key = key;
-    return sl_make_bool(vm, sl_st_delete(get_dict(vm, dict)->st, (sl_st_data_t*)&pk, NULL));
+    return sl_make_bool(vm, sl_st_delete(get_dict(vm, dict)->st, (sl_st_data_t*)&key, NULL));
 }
 
 static int
-sl_dict_merge_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, SLVAL dict)
+sl_dict_merge_iter(sl_vm_t* vm, SLVAL key, SLVAL value, SLVAL dict)
 {
-    sl_dict_set(vm, dict, key->key, value);
+    sl_dict_set(vm, dict, key, value);
     return SL_ST_CONTINUE;
 }
 
@@ -141,12 +125,12 @@ sl_dict_enumerate(sl_vm_t* vm, SLVAL dict)
 }
 
 static int
-dict_to_s_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, SLVAL* str)
+dict_to_s_iter(sl_vm_t* vm, SLVAL key, SLVAL value, SLVAL* str)
 {
     if(sl_get_int(sl_string_length(vm, *str)) > 2) {
         *str = sl_string_concat(vm, *str, sl_make_cstring(vm, ", "));
     }
-    *str = sl_make_formatted_string(vm, "%V%X => %X", *str, key->key, value);
+    *str = sl_make_formatted_string(vm, "%V%X => %X", *str, key, value);
     return SL_ST_CHECK;
 }
 
@@ -177,11 +161,11 @@ allocate_dict_enumerator(sl_vm_t* vm)
 }
 
 static int
-dict_enumerator_init_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
+dict_enumerator_init_iter(sl_vm_t* vm, SLVAL key, SLVAL record, sl_dict_enumerator_t* e)
 {
     (void)record;
     (void)vm;
-    e->keys[e->at] = key->key;
+    e->keys[e->at] = key;
     e->at++;
     return SL_ST_CONTINUE;
 }
@@ -239,11 +223,11 @@ struct dict_keys_state {
 };
 
 static int
-sl_dict_keys_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, struct dict_keys_state* state)
+sl_dict_keys_iter(sl_vm_t* vm, SLVAL key, SLVAL value, struct dict_keys_state* state)
 {
     (void)value;
     (void)vm;
-    state->keys[state->at++] = key->key;
+    state->keys[state->at++] = key;
     return SL_ST_CONTINUE;
 }
 
@@ -270,8 +254,7 @@ sl_dict_keys2(sl_vm_t* vm, SLVAL dict)
 static SLVAL
 sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
-    sl_dict_key_t k = { .vm = vm, .key = key };
-    return sl_make_bool(vm, sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)&k, NULL));
+    return sl_make_bool(vm, sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), NULL));
 }
 
 struct dict_eq_iter_state {
@@ -280,10 +263,10 @@ struct dict_eq_iter_state {
 };
 
 static int
-dict_eq_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
+dict_eq_iter(sl_vm_t* vm, SLVAL key, SLVAL value, struct dict_eq_iter_state* state)
 {
     SLVAL other_value;
-    if(!sl_st_lookup(state->other->st, (sl_st_data_t)key, (sl_st_data_t*)&other_value)) {
+    if(!sl_st_lookup(state->other->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t*)&other_value)) {
         state->success = 0;
         return SL_ST_STOP;
     }
