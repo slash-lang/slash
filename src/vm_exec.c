@@ -25,17 +25,18 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
-#define NEXT() (ctx->section->insns[ip++])
+#define NEXT(type) (*(sl_vm_insn_t*)&ctx->section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
 
-#define NEXT_IMM() (NEXT().imm)
-#define NEXT_UINT() (NEXT().uint)
-#define NEXT_PTR() ((void*)NEXT().uint)
-#define NEXT_IMC() (NEXT().imc)
-#define NEXT_ICC() (NEXT().icc)
-#define NEXT_ID() (NEXT().id)
-#define NEXT_REG() (ctx->registers[NEXT().reg])
-#define NEXT_STR() (NEXT().str)
-#define NEXT_SECTION() (NEXT().section)
+#define NEXT_OPCODE()   (NEXT(sl_vm_insn_t).opcode)
+#define NEXT_IMM()      (NEXT(sl_vm_insn_t).imm)
+#define NEXT_UINT()     (NEXT(sl_vm_insn_t).uint)
+#define NEXT_IMC()      (NEXT(sl_vm_insn_t).imc)
+#define NEXT_ICC()      (NEXT(sl_vm_insn_t).icc)
+#define NEXT_ID()       (NEXT(sl_vm_insn_t).id)
+#define NEXT_REG_IDX()  (NEXT(sl_vm_insn_t).reg)
+#define NEXT_SECTION()  (NEXT(sl_vm_insn_t).section)
+
+#define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
 
 #define V_TRUE (vm->lib._true)
 #define V_FALSE (vm->lib._false)
@@ -84,7 +85,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     }
 
     while(1) {
-        switch(NEXT().opcode) {
+        switch(NEXT_OPCODE()) {
             #undef INSTRUCTION
             #define INSTRUCTION(opcode, code) \
                 case opcode: { \
@@ -93,7 +94,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
             #include "vm_defn.inc"
             
             default:
-                sl_throw_message(vm, "BUG: Unknown opcode in VM"); /* never reached */
+                sl_throw_message(vm, "BUG: Unknown opcode in VM"); /* should never be reached */
         }
     }
 }
