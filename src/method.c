@@ -7,13 +7,14 @@
 #include <slash/dispatch.h>
 
 static int
-id_hash(SLID id)
+id_hash(sl_vm_t* vm, SLID id)
 {
     return (int)id.id;
+    (void)vm;
 }
 
 static int
-id_cmp(SLID a, SLID b)
+id_cmp(sl_vm_t* vm, SLID a, SLID b)
 {
     if(a.id > b.id) {
         return 1;
@@ -22,6 +23,7 @@ id_cmp(SLID a, SLID b)
     } else {
         return 0;
     }
+    (void)vm;
 }
 
 struct sl_st_hash_type

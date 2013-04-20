@@ -41,9 +41,9 @@ static void rehash(sl_st_table_t *);
 #define alloc(type) (type*)sl_alloc(tbl->vm->arena, sizeof(type))
 #define Calloc(n,s) (char*)sl_alloc(tbl->vm->arena, (n) * (s))
 
-#define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((x),(y)) == 0)
+#define EQUAL(table,x,y) ((x)==(y) || (*table->type->compare)((table)->vm,(x),(y)) == 0)
 
-#define do_hash(key,table) (unsigned int)(*(table)->type->hash)((key))
+#define do_hash(key,table) (unsigned int)(*(table)->type->hash)((table)->vm, (key))
 #define do_hash_bin(key,table) (do_hash(key, table)%(table)->num_bins)
 
 /*
