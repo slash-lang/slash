@@ -605,7 +605,7 @@ NODE(sl_node_while_t, while)
     
     /* place the right address in the last fixups */
     while(nl.last_fixups) {
-        insn_at_ip(cs, nl.next_fixups->fixup)->uint = cs->section->insns_byte_count;
+        insn_at_ip(cs, nl.last_fixups->fixup)->uint = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
     
