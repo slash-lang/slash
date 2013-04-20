@@ -188,18 +188,24 @@ typedef union sl_vm_insn {
 sl_vm_insn_t;
 
 typedef struct sl_vm_section {
-    size_t insns_count;
-    size_t insns_cap;
-    sl_vm_insn_t* insns;
+    size_t insns_byte_count;
+    size_t insns_byte_cap;
+    char* insns_bytes;
+
     int max_registers;
     int req_registers;
     int arg_registers;
     int has_extra_rest_arg;
+    
     size_t* opt_skip;
     uint8_t* filename;
     bool can_stack_alloc_frame;
     bool has_try_catch;
     SLID name;
+
+    size_t gc_list_count;
+    size_t gc_list_cap;
+    sl_vm_insn_t* gc_list;
 }
 sl_vm_section_t;
 
