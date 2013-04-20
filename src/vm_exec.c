@@ -25,16 +25,16 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
-#define NEXT(type) (*(sl_vm_insn_t*)&ctx->section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
+#define NEXT(type) (*(type*)&ctx->section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
 
-#define NEXT_OPCODE()   (NEXT(sl_vm_insn_t).opcode)
-#define NEXT_IMM()      (NEXT(sl_vm_insn_t).imm)
-#define NEXT_UINT()     (NEXT(sl_vm_insn_t).uint)
-#define NEXT_IMC()      (NEXT(sl_vm_insn_t).imc)
-#define NEXT_ICC()      (NEXT(sl_vm_insn_t).icc)
-#define NEXT_ID()       (NEXT(sl_vm_insn_t).id)
-#define NEXT_REG_IDX()  (NEXT(sl_vm_insn_t).reg)
-#define NEXT_SECTION()  (NEXT(sl_vm_insn_t).section)
+#define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
+#define NEXT_IMM()      (NEXT(SLVAL))
+#define NEXT_UINT()     (NEXT(size_t))
+#define NEXT_IMC()      (NEXT(sl_vm_inline_method_cache_t*))
+#define NEXT_ICC()      (NEXT(sl_vm_inline_constant_cache_t*))
+#define NEXT_ID()       (NEXT(SLID))
+#define NEXT_REG_IDX()  (NEXT(size_t))
+#define NEXT_SECTION()  (NEXT(sl_vm_section_t*))
 
 #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
 
