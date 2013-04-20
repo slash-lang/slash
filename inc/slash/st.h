@@ -15,12 +15,11 @@ struct sl_st_hash_type {
 };
 
 struct sl_st_table {
-    struct sl_st_hash_type *type;
-    int num_bins;
-    int num_entries;
-    struct sl_st_table_entry **bins;
-    
     struct sl_vm* vm;
+    struct sl_st_hash_type *type;
+    int num_entries;
+    int num_bins;
+    struct sl_st_table_entry **bins;
 };
 
 typedef struct sl_st_table_entry sl_st_table_entry;
