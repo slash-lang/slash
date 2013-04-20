@@ -182,7 +182,6 @@ typedef union sl_vm_insn {
     struct sl_vm_section*           section;
     SLVAL                           imm;
     SLID                            id;
-    sl_string_t*                    str;
     sl_vm_inline_method_cache_t*    imc;
     sl_vm_inline_constant_cache_t*  icc;
 }
