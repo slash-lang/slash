@@ -171,8 +171,8 @@ emit_id(sl_compile_state_t* cs, SLID id)
     return emit(cs, insn);
 }
 
-static void
-op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
+static size_t
+emit_imc(sl_compile_state_t* cs, size_t arg_size, SLID id)
 {
     sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
     imc->argc = arg_size;
@@ -180,10 +180,16 @@ op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t ar
     imc->call = NULL;
 
     sl_vm_insn_t insn;
+    insn.imc = imc;
+    return emit(cs, insn);
+}
+
+static void
+op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
+{
     emit_opcode(cs, SL_OP_SEND);
     emit_reg(cs, recv);
-    insn.imc = imc;
-    emit(cs, insn);
+    emit_imc(cs, arg_size, id);
     emit_reg(cs, arg_base);
     emit_reg(cs, return_reg);
 }
