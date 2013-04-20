@@ -21,8 +21,19 @@
  * allocated initially
  *
  */
-static int numcmp(long, long);
-static int numhash(long);
+
+static int
+numcmp(sl_st_data_t x, sl_st_data_t y)
+{
+    return x != y;
+}
+
+static int
+numhash(sl_st_data_t n)
+{
+    return n;
+}
+
 static struct sl_st_hash_type type_numhash =
 {
     numcmp,
@@ -108,7 +119,7 @@ sl_st_init_table_with_size(sl_vm_t* vm, struct sl_st_hash_type* type, int size)
     tbl->type = type;
     tbl->num_entries = 0;
     tbl->num_bins = size;
-    tbl->bins = (sl_st_table_entry **)Calloc(size, sizeof(sl_st_table_entry*));
+    tbl->bins = NULL;
 
     return tbl;
 }
@@ -153,6 +164,10 @@ sl_st_lookup(sl_st_table_t* table, sl_st_data_t key, sl_st_data_t* value)
     unsigned int hash_val, bin_pos;
     register sl_st_table_entry *ptr;
 
+    if(table->bins == NULL) {
+        return 0;
+    }
+
     hash_val = do_hash(key, table);
     FIND_ENTRY(table, ptr, hash_val, bin_pos);
 
@@ -189,6 +204,10 @@ sl_st_insert(sl_st_table_t* tbl, sl_st_data_t key, sl_st_data_t value)
     unsigned int hash_val, bin_pos;
     sl_st_table_entry *ptr;
 
+    if(tbl->bins == NULL) {
+        tbl->bins = (sl_st_table_entry **)Calloc(tbl->num_bins, sizeof(sl_st_table_entry*));
+    }
+
     hash_val = do_hash(key, tbl);
     FIND_ENTRY(tbl, ptr, hash_val, bin_pos);
 
@@ -207,6 +226,10 @@ sl_st_add_direct(sl_st_table_t* tbl, sl_st_data_t key, sl_st_data_t value)
 {
     unsigned int hash_val, bin_pos;
 
+    if(tbl->bins == NULL) {
+        tbl->bins = (sl_st_table_entry **)Calloc(tbl->num_bins, sizeof(sl_st_table_entry*));
+    }
+
     hash_val = do_hash(key, tbl);
     bin_pos = hash_val % tbl->num_bins;
     ADD_DIRECT(tbl, key, value, hash_val, bin_pos);
@@ -218,6 +241,10 @@ rehash(sl_st_table_t* tbl)
     register sl_st_table_entry *ptr, *next, **new_bins;
     int i, old_num_bins = tbl->num_bins, new_num_bins;
     unsigned int hash_val;
+
+    if(tbl->bins == NULL) {
+        return;
+    }
 
     new_num_bins = new_size(old_num_bins+1);
     new_bins = (sl_st_table_entry**)Calloc(new_num_bins, sizeof(sl_st_table_entry*));
@@ -253,6 +280,11 @@ sl_st_copy(sl_st_table_t* old_table)
     }
 
     *new_table = *old_table;
+
+    if(old_table->bins == NULL) {
+        return new_table;
+    }
+
     new_table->bins = (sl_st_table_entry**)
     Calloc((unsigned)num_bins, sizeof(sl_st_table_entry*));
 
@@ -283,6 +315,10 @@ sl_st_delete(sl_st_table_t* table, sl_st_data_t* key, sl_st_data_t* value)
     unsigned int hash_val;
     sl_st_table_entry *tmp;
     register sl_st_table_entry *ptr;
+
+    if(table->bins == NULL) {
+        return 0;
+    }
 
     hash_val = do_hash_bin(*key, table);
     ptr = table->bins[hash_val];
@@ -319,6 +355,10 @@ sl_st_delete_safe(sl_st_table_t* table, sl_st_data_t* key, sl_st_data_t* value, 
 {
     unsigned int hash_val;
     register sl_st_table_entry *ptr;
+
+    if(table->bins == NULL) {
+        return 0;
+    }
 
     hash_val = do_hash_bin(*key, table);
     ptr = table->bins[hash_val];
@@ -366,6 +406,10 @@ sl_st_foreach(sl_st_table_t* table, int (*func)(), sl_st_data_t arg)
     enum sl_st_retval retval;
     int i;
 
+    if(table->bins == NULL) {
+        return 0;
+    }
+
     for(i = 0; i < table->num_bins; i++) {
         last = 0;
         for(ptr = table->bins[i]; ptr != 0;) {
@@ -403,16 +447,4 @@ sl_st_foreach(sl_st_table_t* table, int (*func)(), sl_st_data_t arg)
         }
     }
     return 0;
-}
-
-static int
-numcmp(st_data_t x, st_data_t y)
-{
-    return x != y;
-}
-
-static int
-numhash(st_data_t n)
-{
-    return n;
 }
