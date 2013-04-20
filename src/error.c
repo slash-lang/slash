@@ -291,3 +291,13 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, const char* cstr)
 {
     sl_throw(vm, sl_make_error2(vm, klass, sl_make_cstring(vm, cstr)));
 }
+
+void
+sl_error(struct sl_vm* vm, SLVAL klass, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    SLVAL str = sl_make_formatted_string(vm, format, va);
+    va_end(va);
+    sl_throw(vm, sl_make_error2(vm, klass, str));
+}
