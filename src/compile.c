@@ -172,6 +172,14 @@ emit_id(sl_compile_state_t* cs, SLID id)
 }
 
 static size_t
+emit_section(sl_compile_state_t* cs, sl_vm_section_t* section)
+{
+    sl_vm_insn_t insn;
+    insn.section = section;
+    return emit(cs, insn);
+}
+
+static size_t
 emit_imc(sl_compile_state_t* cs, size_t arg_size, SLID id)
 {
     sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
@@ -380,7 +388,6 @@ NODE(sl_node_base_t, self)
 
 NODE(sl_node_def_t, def)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i, on_reg;
     size_t init_regs = 1 + node->req_arg_count + node->opt_arg_count;
@@ -423,14 +430,12 @@ NODE(sl_node_def_t, def)
         emit_opcode(cs, SL_OP_DEFINE);
     }
     emit_id(cs, node->name);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
+    emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
 }
 
 NODE(sl_node_lambda_t, lambda)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i;
     init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
@@ -445,8 +450,7 @@ NODE(sl_node_lambda_t, lambda)
     emit_reg(&sub_cs, 0);
     
     emit_opcode(cs, SL_OP_LAMBDA);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
+    emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
 }
 
@@ -489,7 +493,6 @@ NODE(sl_node_try_t, try)
 
 NODE(sl_node_class_t, class)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     
     if(node->extends) {
@@ -508,8 +511,7 @@ NODE(sl_node_class_t, class)
     emit_opcode(cs, SL_OP_CLASS);
     emit_id(cs, node->name);
     emit_reg(cs, dest);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
+    emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
 }
 
