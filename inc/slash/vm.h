@@ -75,6 +75,7 @@ struct sl_vm_lib {
     SLVAL Range_Enumerator;
     
     SLVAL File;
+    SLVAL File_NotFound;
     
     SLVAL Method;
     SLVAL BoundMethod;

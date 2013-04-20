@@ -168,11 +168,7 @@ sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
     
     /* nope */
     
-    SLVAL error = sl_make_cstring(vm, "Undefined method '");
-    error = sl_string_concat(vm, error, sl_id_to_string(vm, id));
-    error = sl_string_concat(vm, error, sl_make_cstring(vm, "' on "));
-    error = sl_string_concat(vm, error, sl_object_inspect(vm, recv));
-    sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, error));
+    sl_error(vm, vm->lib.NoMethodError, "Undefined method %QI on %X", id, recv);
     return vm->lib.nil; /* shutup gcc */
 }
 

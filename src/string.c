@@ -782,6 +782,7 @@ sl_make_formatted_string_va(struct sl_vm* vm, const char* format, va_list va)
                     quote = sl_make_cstring(vm, "\"");
                 }
                 sl_array_push(vm, strings, 1, &quote);
+                next_ptr++;
                 quoted = true;
                 goto again;
             }
@@ -789,17 +790,32 @@ sl_make_formatted_string_va(struct sl_vm* vm, const char* format, va_list va)
                 element = va_arg(va, SLVAL);
                 break;
             }
+            case 'X': {
+                element = va_arg(va, SLVAL);
+                element = sl_inspect(vm, element);
+                break;
+            }
             case 'I': {
-                element = sl_id_to_string(vm, va_arg(va, SLID));
+                SLID id = va_arg(va, SLID);
+                element = sl_id_to_string(vm, id);
                 break;
             }
             case 's': {
-                element = sl_make_cstring(vm, va_arg(va, char*));
+                char* cstr = va_arg(va, char*);
+                element = sl_make_cstring(vm, cstr);
                 break;
             }
             case 'd': {
                 char buff[32];
-                sprintf(buff, "%d", va_arg(va, int));
+                int num = va_arg(va, int);
+                sprintf(buff, "%d", num);
+                element = sl_make_cstring(vm, buff);
+                break;
+            }
+            case 'p': {
+                char buff[32];
+                void* ptr = va_arg(va, void*);
+                sprintf(buff, "%p", ptr);
                 element = sl_make_cstring(vm, buff);
                 break;
             }

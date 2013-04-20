@@ -147,9 +147,7 @@ dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
     if(sl_get_int(sl_string_length(key->vm, *str)) > 2) {
         *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, ", "));
     }
-    *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, key->key));
-    *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, " => "));
-    *str = sl_string_concat(key->vm, *str, sl_inspect(key->vm, value));
+    *str = sl_make_formatted_string(key->vm, "%V%X => %X", *str, key->key, value);
     return SL_ST_CHECK;
 }
 

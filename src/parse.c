@@ -52,9 +52,7 @@ unexpected(sl_parse_state_t* ps, sl_token_t* tok)
 {
     SLVAL err;
     if(tok->type != SL_TOK_END) {
-        err = sl_make_cstring(ps->vm, "Unexpected '");
-        err = sl_string_concat(ps->vm, err, tok->str);
-        err = sl_string_concat(ps->vm, err, sl_make_cstring(ps->vm, "'"));
+        err = sl_make_formatted_string(ps->vm, "Unexpected %QV", tok->str);
     } else {
         err = sl_make_cstring(ps->vm, "Unexpected end of file");
     }

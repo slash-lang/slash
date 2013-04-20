@@ -300,9 +300,7 @@ NODE(sl_node_var_t, var)
         xcs = xcs->parent;
         frame++;
     }
-    err = sl_make_cstring(cs->vm, "Undefined variable '");
-    err = sl_string_concat(cs->vm, err, sl_make_ptr((sl_object_t*)node->name));
-    err = sl_string_concat(cs->vm, err, sl_make_cstring(cs->vm, "' "));
+    err = sl_make_formatted_string(cs->vm, "Undefined variable %QV", node->name);
     err = sl_make_error2(cs->vm, cs->vm->lib.NameError, err);
     sl_error_add_frame(cs->vm, err, sl_make_cstring(cs->vm, "<compiler>"), sl_make_cstring(cs->vm, (char*)cs->section->filename), sl_make_int(cs->vm, node->base.line));
     sl_throw(cs->vm, err);
