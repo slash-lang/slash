@@ -15,12 +15,11 @@ struct sl_st_hash_type {
 };
 
 struct sl_st_table {
-    struct sl_st_hash_type *type;
-    int num_bins;
-    int num_entries;
-    struct sl_st_table_entry **bins;
-    
     struct sl_vm* vm;
+    struct sl_st_hash_type *type;
+    int num_entries;
+    int num_bins;
+    struct sl_st_table_entry **bins;
 };
 
 typedef struct sl_st_table_entry sl_st_table_entry;
@@ -54,12 +53,6 @@ sl_st_init_numtable(struct sl_vm* vm);
 sl_st_table_t*
 sl_st_init_numtable_with_size(struct sl_vm* vm, int);
 
-sl_st_table_t*
-sl_st_init_strtable(struct sl_vm* vm);
-
-sl_st_table_t*
-sl_st_init_strtable_with_size(struct sl_vm* vm, int);
-
 int
 sl_st_delete(sl_st_table_t *, sl_st_data_t *, sl_st_data_t *);
 
@@ -83,14 +76,5 @@ sl_st_cleanup_safe(sl_st_table_t *, sl_st_data_t);
 
 sl_st_table_t*
 sl_st_copy(sl_st_table_t *);
-
-#define SL_ST_NUMCMP	((int (*)()) 0)
-#define SL_ST_NUMHASH	((int (*)()) -2)
-
-#define sl_st_numcmp	SL_ST_NUMCMP
-#define sl_st_numhash	SL_ST_NUMHASH
-
-int
-sl_st_strhash();
 
 #endif

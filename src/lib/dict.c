@@ -15,6 +15,7 @@ typedef struct {
     SLVAL* keys;
     size_t count;
     size_t at;
+    int initialized;
 }
 sl_dict_enumerator_t;
 
@@ -37,12 +38,20 @@ dict_key_hash(sl_vm_t* vm, SLVAL a)
 static struct sl_st_hash_type
 dict_hash_type = { dict_key_cmp, dict_key_hash };
 
+static void
+init_dict_if_needed(sl_vm_t* vm, sl_dict_t* dict)
+{
+    if(!dict->st) {
+        dict->st = sl_st_init_table(vm, &dict_hash_type);
+    }
+}
+
 static sl_object_t*
 allocate_dict(sl_vm_t* vm)
 {
     sl_dict_t* dict = sl_alloc(vm->arena, sizeof(sl_dict_t));
     dict->base.primitive_type = SL_T_DICT;
-    dict->st = sl_st_init_table(vm, &dict_hash_type);
+    dict->st = NULL;
     return (sl_object_t*)dict;
 }
 
@@ -75,7 +84,8 @@ SLVAL
 sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
     SLVAL val;
-    if(sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t*)&val)) {
+    sl_dict_t* d = get_dict(vm, dict);
+    if(d->st && sl_st_lookup(d->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t*)&val)) {
         return val;
     }
     return vm->lib.nil;
@@ -84,20 +94,32 @@ sl_dict_get(sl_vm_t* vm, SLVAL dict, SLVAL key)
 SLVAL
 sl_dict_set(sl_vm_t* vm, SLVAL dict, SLVAL key, SLVAL val)
 {
-    sl_st_insert(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t)sl_get_ptr(val));
+    sl_dict_t* d = get_dict(vm, dict);
+    init_dict_if_needed(vm, d);
+    sl_st_insert(d->st, (sl_st_data_t)sl_get_ptr(key), (sl_st_data_t)sl_get_ptr(val));
     return val;
 }
 
 SLVAL
 sl_dict_length(sl_vm_t* vm, SLVAL dict)
 {
-    return sl_make_int(vm, get_dict(vm, dict)->st->num_entries);
+    sl_dict_t* d = get_dict(vm, dict);
+    if(d->st) {
+        return sl_make_int(vm, d->st->num_entries);
+    } else {
+        return sl_make_int(vm, 0);
+    }
 }
 
 SLVAL
 sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
-    return sl_make_bool(vm, sl_st_delete(get_dict(vm, dict)->st, (sl_st_data_t*)&key, NULL));
+    sl_dict_t* d = get_dict(vm, dict);
+    if(d->st) {
+        return sl_make_bool(vm, sl_st_delete(d->st, (sl_st_data_t*)&key, NULL));
+    } else {
+        return vm->lib._false;
+    }
 }
 
 static int
@@ -113,8 +135,12 @@ sl_dict_merge(sl_vm_t* vm, SLVAL dict, SLVAL other)
     sl_dict_t* a = get_dict(vm, dict);
     sl_dict_t* b = get_dict(vm, other);
     SLVAL new_dict = sl_new(vm, vm->lib.Dict, 0, NULL);
-    sl_st_foreach(a->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
-    sl_st_foreach(b->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
+    if(a->st) {
+        sl_st_foreach(a->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
+    }
+    if(b->st) {
+        sl_st_foreach(b->st, sl_dict_merge_iter, (sl_st_data_t)sl_get_ptr(new_dict));
+    }
     return new_dict;
 }
 
@@ -146,7 +172,9 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
     SL_ENSURE(frame, {
         d->inspecting = 1;
         str = sl_make_cstring(vm, "{ ");
-        sl_st_foreach(d->st, dict_to_s_iter, (sl_st_data_t)&str);
+        if(d->st) {
+            sl_st_foreach(d->st, dict_to_s_iter, (sl_st_data_t)&str);
+        }
         str = sl_string_concat(vm, str, sl_make_cstring(vm, " }"));
     }, {
         d->inspecting = 0;
@@ -176,10 +204,16 @@ sl_dict_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL dict)
     sl_dict_t* d = get_dict(vm, dict);
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     e->dict = dict;
-    e->count = d->st->num_entries;
-    e->keys = sl_alloc(vm->arena, sizeof(SLVAL) * e->count);
-    sl_st_foreach(d->st, dict_enumerator_init_iter, (sl_st_data_t)e);
+    if(d->st) {
+        e->count = d->st->num_entries;
+        e->keys = sl_alloc(vm->arena, sizeof(SLVAL) * e->count);
+        sl_st_foreach(d->st, dict_enumerator_init_iter, (sl_st_data_t)e);
+    } else {
+        e->count = 0;
+        e->keys = NULL;
+    }
     e->at = 0;
+    e->initialized = 1;
     return self;
 }
 
@@ -187,7 +221,7 @@ static SLVAL
 sl_dict_enumerator_next(sl_vm_t* vm, SLVAL self)
 {
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
-    if(!e->keys) {
+    if(!e->initialized) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at > e->count) {
@@ -206,7 +240,7 @@ sl_dict_enumerator_current(sl_vm_t* vm, SLVAL self)
 {
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     SLVAL kv[2];
-    if(!e->keys) {
+    if(!e->initialized) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at == 0 || e->at > e->count) {
@@ -236,6 +270,10 @@ sl_dict_keys(sl_vm_t* vm, SLVAL dict, size_t* count)
 {
     sl_dict_t* d = get_dict(vm, dict);
     struct dict_keys_state state;
+    if(d->st == NULL) {
+        *count = 0;
+        return NULL;
+    }
     state.keys = sl_alloc(vm->arena, sizeof(SLVAL) * d->st->num_entries);
     state.at = 0;
     sl_st_foreach(d->st, sl_dict_keys_iter, (sl_st_data_t)&state);
@@ -254,7 +292,12 @@ sl_dict_keys2(sl_vm_t* vm, SLVAL dict)
 static SLVAL
 sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
 {
-    return sl_make_bool(vm, sl_st_lookup(get_dict(vm, dict)->st, (sl_st_data_t)sl_get_ptr(key), NULL));
+    sl_dict_t* d = get_dict(vm, dict);
+    if(d->st) {
+        return sl_make_bool(vm, sl_st_lookup(d->st, (sl_st_data_t)sl_get_ptr(key), NULL));
+    } else {
+        return vm->lib._false;
+    }
 }
 
 struct dict_eq_iter_state {
@@ -285,6 +328,15 @@ sl_dict_eq(sl_vm_t* vm, SLVAL dict, SLVAL other)
     }
     sl_dict_t* d = get_dict(vm, dict);
     sl_dict_t* o = get_dict(vm, other);
+    if(!d->st && !o->st) {
+        return vm->lib._true;
+    }
+    if(!d->st) {
+        return sl_make_bool(vm, o->st->num_entries == 0);
+    }
+    if(!o->st) {
+        return sl_make_bool(vm, d->st->num_entries == 0);
+    }
     struct dict_eq_iter_state state;
     state.other = o;
     state.success = 1;
