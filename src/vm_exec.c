@@ -33,7 +33,7 @@ vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 #define NEXT_IMC() (NEXT().imc)
 #define NEXT_ICC() (NEXT().icc)
 #define NEXT_ID() (NEXT().id)
-#define NEXT_REG() (ctx->registers[NEXT_UINT()])
+#define NEXT_REG() (ctx->registers[NEXT().reg])
 #define NEXT_STR() (NEXT().str)
 #define NEXT_SECTION() (NEXT().section)
 
