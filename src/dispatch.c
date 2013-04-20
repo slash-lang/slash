@@ -78,11 +78,13 @@ call_sl_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv
     
     memcpy(ctx->registers + 1, argv, sizeof(SLVAL) * ctx->section->arg_registers);
 
-    if(ctx->section->has_extra_rest_arg && argc > ctx->section->arg_registers) {
-        size_t extra_len = argc - ctx->section->arg_registers;
-        ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, extra_len, argv + ctx->section->arg_registers);
-    } else {
-        ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, 0, NULL);
+    if(ctx->section->has_extra_rest_arg) {
+        if(argc > ctx->section->arg_registers) {
+            size_t extra_len = argc - ctx->section->arg_registers;
+            ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, extra_len, argv + ctx->section->arg_registers);
+        } else {
+            ctx->registers[ctx->section->arg_registers + 1] = sl_make_array(vm, 0, NULL);
+        }
     }
     if(argc > ctx->section->arg_registers) {
         argc = ctx->section->arg_registers;
