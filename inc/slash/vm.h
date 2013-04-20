@@ -177,6 +177,7 @@ sl_vm_inline_constant_cache_t;
 
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
+    size_t                          reg;
     size_t                          uint;
     struct sl_vm_section*           section;
     SLVAL                           imm;
