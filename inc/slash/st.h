@@ -5,7 +5,6 @@
 
 #define SL_ST_INCLUDED
 
-#include "mem.h"
 typedef unsigned long sl_st_data_t;
 
 typedef struct sl_st_table sl_st_table_t;
@@ -16,11 +15,12 @@ struct sl_st_hash_type {
 };
 
 struct sl_st_table {
-    sl_gc_arena_t* arena;
     struct sl_st_hash_type *type;
     int num_bins;
     int num_entries;
     struct sl_st_table_entry **bins;
+    
+    struct sl_vm* vm;
 };
 
 typedef struct sl_st_table_entry sl_st_table_entry;
@@ -43,22 +43,22 @@ enum sl_st_retval {
 };
 
 sl_st_table_t*
-sl_st_init_table(sl_gc_arena_t* arena, struct sl_st_hash_type *);
+sl_st_init_table(struct sl_vm* vm, struct sl_st_hash_type *);
 
 sl_st_table_t*
-sl_st_init_table_with_size(sl_gc_arena_t* arena, struct sl_st_hash_type *, int);
+sl_st_init_table_with_size(struct sl_vm* vm, struct sl_st_hash_type *, int);
 
 sl_st_table_t*
-sl_st_init_numtable(sl_gc_arena_t* arena);
+sl_st_init_numtable(struct sl_vm* vm);
 
 sl_st_table_t*
-sl_st_init_numtable_with_size(sl_gc_arena_t* arena, int);
+sl_st_init_numtable_with_size(struct sl_vm* vm, int);
 
 sl_st_table_t*
-sl_st_init_strtable(sl_gc_arena_t* arena);
+sl_st_init_strtable(struct sl_vm* vm);
 
 sl_st_table_t*
-sl_st_init_strtable_with_size(sl_gc_arena_t* arena, int);
+sl_st_init_strtable_with_size(struct sl_vm* vm, int);
 
 int
 sl_st_delete(sl_st_table_t *, sl_st_data_t *, sl_st_data_t *);
@@ -73,13 +73,10 @@ int
 sl_st_lookup(sl_st_table_t *, sl_st_data_t, sl_st_data_t *);
 
 int
-sl_st_foreach(sl_st_table_t *, int (*)(ANYARGS), sl_st_data_t);
+sl_st_foreach(sl_st_table_t *, int (*)(), sl_st_data_t);
 
 void
 sl_st_add_direct(sl_st_table_t *, sl_st_data_t, sl_st_data_t);
-
-void
-sl_st_free_table(sl_st_table_t *);
 
 void
 sl_st_cleanup_safe(sl_st_table_t *, sl_st_data_t);
