@@ -758,21 +758,33 @@ sl_init_string(sl_vm_t* vm)
 //   %s - C string
 //   %d - integer
 //   %% - literal '%' sign
+//
+// You may add the 'Q' modifier to a format specifier to quote it in double
+// quotes. For example "%QV" would quote the value when interpolating it into
+// the string
 SLVAL
-sl_make_formatted_string(struct sl_vm* vm, char* format, ...)
+sl_make_formatted_string_va(struct sl_vm* vm, const char* format, va_list va)
 {
-    va_list va;
-    va_start(va, format);
-
     SLVAL strings = sl_make_array(vm, 0, NULL);
-    char *current_ptr = format, *next_ptr;
+    const char *current_ptr = format, *next_ptr;
+    SLVAL quote = vm->lib.nil;
     while((next_ptr = strchr(current_ptr, '%'))) {
         if(next_ptr != current_ptr) {
             SLVAL literal = sl_make_string(vm, (uint8_t*)current_ptr, (size_t)(next_ptr - current_ptr));
             sl_array_push(vm, strings, 1, &literal);
         }
         SLVAL element = vm->lib.nil;
+        bool quoted = false;
+    again:
         switch(next_ptr[1]) {
+            case 'Q': {
+                if(sl_get_primitive_type(quote) == SL_T_NIL) {
+                    quote = sl_make_cstring(vm, "\"");
+                }
+                sl_array_push(vm, strings, 1, &quote);
+                quoted = true;
+                goto again;
+            }
             case 'V': {
                 element = va_arg(va, SLVAL);
                 break;
@@ -791,12 +803,21 @@ sl_make_formatted_string(struct sl_vm* vm, char* format, ...)
                 element = sl_make_cstring(vm, buff);
                 break;
             }
+            case 0: {
+                return vm->lib.nil;
+            }
             default: {
                 element = sl_make_string(vm, (uint8_t*)(next_ptr + 1), 1);
                 break;
             }
         }
         sl_array_push(vm, strings, 1, &element);
+
+        if(quoted) {
+            sl_array_push(vm, strings, 1, &quote);
+            quoted = false;
+        }
+
         current_ptr = next_ptr + 2;
     }
     if(current_ptr[0]) {
@@ -805,4 +826,14 @@ sl_make_formatted_string(struct sl_vm* vm, char* format, ...)
     }
 
     return sl_array_join(vm, strings, 0, NULL);
+}
+
+SLVAL
+sl_make_formatted_string(struct sl_vm* vm, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    SLVAL retn = sl_make_formatted_string_va(vm, format, va);
+    va_end(va);
+    return retn;
 }
