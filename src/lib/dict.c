@@ -25,9 +25,8 @@ typedef struct {
 sl_dict_enumerator_t;
 
 static int
-dict_key_cmp(sl_dict_key_t* a, sl_dict_key_t* b)
+dict_key_cmp(sl_vm_t* vm, sl_dict_key_t* a, sl_dict_key_t* b)
 {
-    sl_vm_t* vm = a->vm;
     SLVAL cmp = sl_send_id(vm, a->key, vm->id.op_cmp, 1, b->key);
     if(sl_get_primitive_type(cmp) != SL_T_INT) {
         sl_throw_message2(vm, vm->lib.TypeError, "Expected <=> to return Int in Dict key");
@@ -36,9 +35,9 @@ dict_key_cmp(sl_dict_key_t* a, sl_dict_key_t* b)
 }
 
 static int
-dict_key_hash(sl_dict_key_t* a)
+dict_key_hash(sl_vm_t* vm, sl_dict_key_t* a)
 {
-    return sl_hash(a->vm, a->key);
+    return sl_hash(vm, a->key);
 }
 
 static struct sl_st_hash_type

@@ -19,7 +19,7 @@
 #include <slash/lib/range.h>
 
 static int
-str_hash(sl_string_t* str)
+str_hash(sl_vm_t* vm, sl_string_t* str)
 {
     uint32_t m;
     uint32_t r;
@@ -63,10 +63,11 @@ str_hash(sl_string_t* str)
     
     str->hash_set = 1;
     return str->hash = hash;
+    (void)vm;
 }
 
 static int
-str_cmp(sl_string_t* a, sl_string_t* b)
+str_cmp(sl_vm_t* vm, sl_string_t* a, sl_string_t* b)
 {
     for(size_t i = 0;; i++) {
         if(i == a->buff_len && i == b->buff_len) {
@@ -83,6 +84,7 @@ str_cmp(sl_string_t* a, sl_string_t* b)
         }
     }
     return 0;
+    (void)vm;
 }
 
 char*
@@ -418,7 +420,7 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
     }
     sl_string_t* a = sl_get_string(vm, self);
     sl_string_t* b = sl_get_string(vm, other);
-    return sl_make_bool(vm, str_cmp(a, b) == 0);
+    return sl_make_bool(vm, str_cmp(vm, a, b) == 0);
 }
 
 SLVAL
@@ -630,13 +632,13 @@ sl_string_index_for_byte_offset(sl_vm_t* vm, SLVAL strv, int byte_offset)
 static SLVAL
 sl_string_spaceship(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
-    return sl_make_int(vm, str_cmp(sl_get_string(vm, self), sl_get_string(vm, other)));
+    return sl_make_int(vm, str_cmp(vm, sl_get_string(vm, self), sl_get_string(vm, other)));
 }
 
 static SLVAL
 sl_string_hash(sl_vm_t* vm, SLVAL self)
 {
-    return sl_make_int(vm, str_hash(sl_get_string(vm, self)));
+    return sl_make_int(vm, str_hash(vm, sl_get_string(vm, self)));
 }
 
 void
