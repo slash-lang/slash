@@ -33,14 +33,7 @@ static SLVAL
 apply_lambda(sl_vm_t* vm, sl_lambda_t* lambda, SLVAL self, int argc, SLVAL* argv)
 {
     if(argc < lambda->section->arg_registers) {
-        SLVAL err = sl_make_cstring(vm, "Too few arguments in lambda call. Expected ");
-        char buff[128];
-        sprintf(buff, "%d", lambda->section->arg_registers);
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, ", received "));
-        sprintf(buff, "%d", argc);
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, buff));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.ArgumentError, err));
+        sl_error(vm, vm->lib.ArgumentError, "Too few arguments in lambda call. Expected %d, received %d", (int)lambda->section->arg_registers, argc);
     }
     sl_vm_exec_ctx_t* subctx = sl_alloc(vm->arena, sizeof(sl_vm_exec_ctx_t));
     subctx->vm = vm;

@@ -38,9 +38,8 @@ static SLVAL
 file_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     sl_file_t* file = get_file(vm, self);
-    sl_string_t* str = (sl_string_t*)sl_get_ptr(argv[0]);
+    sl_string_t* str = sl_get_string(vm, argv[0]);
     char *m, *f, mode[8];
-    SLVAL err;
     strcpy(mode, "r");
     if(argc > 1) {
         m = sl_to_cstr(vm, argv[1]);
@@ -53,19 +52,13 @@ file_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     strcat(mode, "b");
     if(strchr(mode, 'r') && memchr(str->buff, 0, str->buff_len)) {
         /* filename contains a null byte */
-        err = sl_make_cstring(vm, "No such file: ");
-        err = sl_string_concat(vm, err, argv[0]);
-        sl_throw(vm, sl_make_error2(vm, sl_class_get_const(vm, vm->lib.File, "NotFound"), err));
+        sl_error(vm, vm->lib.File_NotFound, "No such file: %V", argv[0]);
     }
     f = sl_to_cstr(vm, argv[0]);
     f = sl_realpath(vm, f);
     file->file = fopen(f, mode);
     if(!file->file) {
-        err = sl_make_cstring(vm, "Couldn't open ");
-        err = sl_string_concat(vm, err, argv[0]);
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
-        sl_throw(vm, sl_make_error2(vm, sl_class_get_const(vm, vm->lib.File, "NotFound"), err));
+        sl_error(vm, vm->lib.File_NotFound, "Couldn't open: %V - %s", argv[0], strerror(errno));
     }
     return self;
 }
@@ -149,7 +142,7 @@ void
 sl_init_file(sl_vm_t* vm)
 {
     vm->lib.File = sl_define_class(vm, "File", vm->lib.Object);
-    sl_define_class3(vm, sl_intern(vm, "NotFound"), vm->lib.Error, vm->lib.File);
+    vm->lib.File_NotFound = sl_define_class3(vm, sl_intern(vm, "NotFound"), vm->lib.Error, vm->lib.File);
     SLVAL File_InvalidOperation = sl_define_class3(vm, sl_intern(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
     sl_vm_store_put(vm, &cFile_InvalidOperation, File_InvalidOperation);
     sl_class_set_allocator(vm, vm->lib.File, allocate_file);

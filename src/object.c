@@ -179,13 +179,8 @@ sl_object_to_s(sl_vm_t* vm, SLVAL self)
 SLVAL
 sl_object_inspect(sl_vm_t* vm, SLVAL self)
 {
-    char buff[128];
     SLVAL klass = sl_class_of(vm, self);
-    SLVAL str = sl_make_cstring(vm, "#<");
-    str = sl_string_concat(vm, str, sl_to_s(vm, klass));
-    sprintf(buff, ":%p>", (void*)sl_get_ptr(self));
-    str = sl_string_concat(vm, str, sl_make_cstring(vm, buff));
-    return str;
+    return sl_make_formatted_string(vm, "#<%V:%p>", klass, sl_get_ptr(self));
 }
 
 void

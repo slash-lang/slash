@@ -273,7 +273,6 @@ json_dump(json_dump_t* state, SLVAL object)
 {
     sl_string_t* str;
     size_t i, len;
-    SLVAL err;
     SLVAL* keys;
     switch(sl_get_primitive_type(object)) {
         case SL_T_NIL:
@@ -352,10 +351,8 @@ json_dump(json_dump_t* state, SLVAL object)
             break;
         default:
             if(!sl_responds_to(state->vm, object, "to_json")) {
-                err = sl_make_cstring(state->vm, "Can't convert type ");
-                err = sl_string_concat(state->vm, err, sl_to_s(state->vm, sl_class_of(state->vm, object)));
-                err = sl_string_concat(state->vm, err, sl_make_cstring(state->vm, " to JSON. You can implement #to_json to fix this."));
-                sl_throw(state->vm, sl_make_error2(state->vm, sl_vm_store_get(state->vm, &cJSON_DumpError), err));
+                SLVAL DumpError = sl_vm_store_get(state->vm, &cJSON_DumpError);
+                sl_error(state->vm, DumpError, "Can't convert type %V to JSON. You can implement #to_json to fix this.", sl_class_of(state->vm, object));
             }
             str = (sl_string_t*)sl_get_ptr(sl_to_s(state->vm, sl_send(state->vm, object, "to_json", 0, NULL)));
             JSON_DUMP_NEED_BYTES(str->buff_len);

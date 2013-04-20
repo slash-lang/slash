@@ -21,14 +21,9 @@ sl_do_file(sl_vm_t* vm, char* filename)
     FILE* f = fopen(filename, "rb");
     uint8_t* src;
     size_t file_size;
-    SLVAL err;
     
     if(!f) {
-        err = sl_make_cstring(vm, "Could not load file: ");
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, filename));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
+        sl_error(vm, vm->lib.Error, "Could not load %Qs - %s", filename, strerror(errno));
     }
     fseek(f, 0, SEEK_END);
     file_size = ftell(f);
@@ -36,11 +31,7 @@ sl_do_file(sl_vm_t* vm, char* filename)
     src = sl_alloc(vm->arena, file_size);
     if(file_size && !fread(src, file_size, 1, f)) {
         fclose(f);
-        err = sl_make_cstring(vm, "Could not load file: ");
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, filename));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, " - "));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, strerror(errno)));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.Error, err));
+        sl_error(vm, vm->lib.Error, "Could not load %Qs - %s", filename, strerror(errno));
     }
     fclose(f);
     

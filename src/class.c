@@ -54,13 +54,9 @@ sl_class_to_s(sl_vm_t* vm, SLVAL self)
     sl_class_t* klass = get_class(vm, self);
     sl_class_t* object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     if(klass == object || sl_get_ptr(klass->in) == (sl_object_t*)object) {
-        return sl_id_to_string(vm, get_class(vm, self)->name);
+        return sl_id_to_string(vm, klass->name);
     } else {
-        return sl_string_concat(vm,
-            sl_class_to_s(vm, klass->in),
-            sl_string_concat(vm,
-                sl_make_cstring(vm, "::"),
-                sl_id_to_string(vm, klass->name)));
+        return sl_make_formatted_string(vm, "%V::%I", sl_class_to_s(vm, klass->in), klass->name);
     }
 }
 
@@ -396,22 +392,18 @@ SLVAL
 sl_class_get_const2(sl_vm_t* vm, SLVAL klass, SLID name)
 {
     sl_class_t* klassp;
-    SLVAL val, err;
     if(!sl_is_a(vm, klass, vm->lib.Class)) {
         klass = sl_class_of(vm, klass);
     }
     klassp = get_class(vm, klass);
+    SLVAL val;
     if(sl_st_lookup(klassp->constants, (sl_st_data_t)name.id, (sl_st_data_t*)&val)) {
         return val;
     }
     if(sl_get_primitive_type(klassp->super) == SL_T_CLASS && sl_class_has_const2(vm, klassp->super, name)) {
         return sl_class_get_const2(vm, klassp->super, name);
     }
-    err = sl_make_cstring(vm, "Undefined constant '");
-    err = sl_string_concat(vm, err, sl_id_to_string(vm, name));
-    err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
-    err = sl_string_concat(vm, err, sl_inspect(vm, klass));
-    sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
+    sl_error(vm, vm->lib.NameError, "Undefined constant %QI in %V", name, klass);
     return vm->lib.nil; /* never reached */
 }
 
@@ -425,14 +417,8 @@ void
 sl_class_set_const2(sl_vm_t* vm, SLVAL klass, SLID name, SLVAL val)
 {
     sl_class_t* klassp;
-    SLVAL err;
     if(sl_class_has_own_const(vm, klass, name)) {
-        err = sl_make_cstring(vm, "Constant '");
-        err = sl_string_concat(vm, err, sl_id_to_string(vm, name));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, "' in "));
-        err = sl_string_concat(vm, err, sl_inspect(vm, klass));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, " already defined"));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.NameError, err));
+        sl_error(vm, vm->lib.NameError, "Constant %QI in %V already defined", name, klass);
     }
     klassp = get_class(vm, klass);
     sl_expect(vm, klass, vm->lib.Class);

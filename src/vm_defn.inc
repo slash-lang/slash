@@ -378,9 +378,7 @@ INSTRUCTION(SL_OP_BIND_METHOD, {
     if(sl_likely(method != NULL)) {
         NEXT_REG() = sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), recv);
     } else {
-        SLVAL msg = sl_make_cstring(vm, "No such method ");
-        msg = sl_string_concat(vm, msg, sl_id_to_string(vm, method_name));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.NoMethodError, msg));
+        sl_error(vm, vm->lib.NoMethodError, "No such method %QI", method_name);
     }
 })
 

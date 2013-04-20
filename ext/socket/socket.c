@@ -76,9 +76,7 @@ get_tcp_socket(sl_vm_t* vm, SLVAL self)
 static void
 tcp_socket_error(sl_vm_t* vm, const char* message, const char* strerror)
 {
-    SLVAL err = sl_make_cstring(vm, (char*)message);
-    err = sl_string_concat(vm, err, sl_make_cstring(vm, (char*)strerror));
-    sl_throw(vm, sl_make_error2(vm, sl_vm_store_get(vm, &cTCPSocket_Error), err));
+    sl_error(vm, sl_vm_store_get(vm, &cTCPSocket_Error), "%s%s", message, strerror);
 }
 
 static SLVAL

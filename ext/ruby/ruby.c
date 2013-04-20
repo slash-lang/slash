@@ -186,11 +186,10 @@ static void
 locked_sl_ruby_object_inspect(sl_vm_t* vm, void* vargs)
 {
     struct sl_ruby_object_inspect_args* args = vargs;
-    SLVAL str = sl_make_cstring(vm, "#<Ruby: ");
-    VALUE inspected = rb_inspect(get_ruby_object(vm, args->self)->obj);
-    str = sl_string_concat(vm, str, sl_make_string(vm, (uint8_t*)RSTRING_PTR(inspected), RSTRING_LEN(inspected)));
-    str = sl_string_concat(vm, str, sl_make_cstring(vm, ">"));
-    args->ret = str;
+    VALUE ruby_inspected = rb_inspect(get_ruby_object(vm, args->self)->obj);
+    SLVAL slash_inspected = sl_make_string(vm, (uint8_t*)RSTRING_PTR(inspected), RSTRING_LEN(inspected));
+
+    args->ret = sl_make_formatted_string(vm, "#<Ruby: %V>", slash_inspected);
 }
 
 static SLVAL

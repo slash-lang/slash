@@ -41,13 +41,8 @@ sl_make_ptr(sl_object_t* ptr)
 SLVAL
 sl_expect(sl_vm_t* vm, SLVAL obj, SLVAL klass)
 {
-    SLVAL err;
     if(!sl_is_a(vm, obj, klass)) {
-        err = sl_make_cstring(vm, "Expected ");
-        err = sl_string_concat(vm, err, sl_inspect(vm, klass));
-        err = sl_string_concat(vm, err, sl_make_cstring(vm, ", instead have "));
-        err = sl_string_concat(vm, err, sl_inspect(vm, obj));
-        sl_throw(vm, sl_make_error2(vm, vm->lib.TypeError, err));
+        sl_error(vm, vm->lib.TypeError, "Expected %V, instead have %X", klass, obj);
     }
     return obj;
 }

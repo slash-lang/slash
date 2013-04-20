@@ -71,10 +71,7 @@ static SLVAL
 sl_gcrypt_algorithm_inspect(sl_vm_t* vm, SLVAL self)
 {
     gcrypt_algorithm_t* algo = get_algo(vm, self);
-    SLVAL str = sl_make_cstring(vm, "#<GCrypt::Algorithm: ");
-    str = sl_string_concat(vm, str, sl_id_to_string(vm, algo->name));
-    str = sl_string_concat(vm, str, sl_make_cstring(vm, ">"));
-    return str;
+    return sl_make_formatted_string(vm, "#<GCrypt::Algorithm %I>", algo->name);
 }
 
 void
