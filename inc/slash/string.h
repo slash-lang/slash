@@ -2,6 +2,7 @@
 #define SL_STRING_H
 
 #include "vm.h"
+#include <stdarg.h>
 
 extern struct sl_st_hash_type
 sl_string_hash_type;
@@ -13,7 +14,10 @@ SLVAL
 sl_make_string(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
 
 SLVAL
-sl_make_formatted_string(struct sl_vm* vm, char* format, ...);
+sl_make_formatted_string(struct sl_vm* vm, const char* format, ...);
+
+SLVAL
+sl_make_formatted_string_va(struct sl_vm* vm, const char* format, va_list va);
 
 SLVAL
 sl_make_string_no_copy(struct sl_vm* vm, uint8_t* buff, size_t buff_len);
