@@ -164,7 +164,7 @@ INSTRUCTION(SL_OP_IMMEDIATE, {
 
 /*  0: SEND
     1: <reg:object>
-    2: <ic:inline_cache>
+    2: <imc:inline_cache>
     3: <reg:first_arg> // arguments must be in a contiguous register region
     4: <reg:dest> */
 INSTRUCTION(SL_OP_SEND, {
