@@ -35,7 +35,7 @@ str_hash(sl_vm_t* vm, sl_string_t* str)
     
     m = 0x5bd1e995;
     r = 24;
-    seed = 0x9747b28c;
+    seed = 0x9747b28c ^ vm->hash_seed;
     hash = seed ^ str->buff_len;
     
     for(i = 0; i + 4 <= str->buff_len; i += 4) {
