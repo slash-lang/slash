@@ -225,6 +225,7 @@ sl_init_error(sl_vm_t* vm)
     ERROR(NoMethodError);
     ERROR(StackOverflowError);
     ERROR(SyntaxError);
+    ERROR(CompileError);
     ERROR(TypeError);
     ERROR(ZeroDivisionError);
     ERROR(NotImplementedError);

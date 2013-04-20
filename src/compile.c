@@ -61,7 +61,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->emitted_line_trace = false;
 }
 
-static size_t
+static sl_vm_reg_t
 reg_alloc(sl_compile_state_t* cs)
 {
     for(int i = 0; i < cs->section->max_registers; i++) {
@@ -73,10 +73,14 @@ reg_alloc(sl_compile_state_t* cs)
     cs->section->max_registers++;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
     cs->registers[cs->section->max_registers - 1] = 1;
-    return cs->section->max_registers - 1;
+    sl_vm_reg_t reg = cs->section->max_registers - 1;
+    if(reg >= SL_MAX_REGISTERS) {
+        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
+    }
+    return reg;
 }
 
-static size_t
+static sl_vm_reg_t
 reg_alloc_block(sl_compile_state_t* cs, int count)
 {
     if(count == 0) {
@@ -104,20 +108,22 @@ reg_alloc_block(sl_compile_state_t* cs, int count)
     for(int j = 0; j < count; j++) {
         cs->registers[i + j] = 1;
     }
+    if(i + count >= SL_MAX_REGISTERS) {
+        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
+    }
     return i;
 }
 
 static void
-reg_free(sl_compile_state_t* cs, size_t reg)
+reg_free(sl_compile_state_t* cs, sl_vm_reg_t reg)
 {
     cs->registers[reg] = 0;
 }
 
 static void
-reg_free_block(sl_compile_state_t* cs, size_t reg, size_t count)
+reg_free_block(sl_compile_state_t* cs, sl_vm_reg_t reg, int count)
 {
-    size_t i;
-    for(i = 0; i < count; i++) {
+    for(int i = 0; i < count; i++) {
         reg_free(cs, reg + i);
     }
 }
@@ -159,7 +165,7 @@ emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 }
 
 static size_t
-emit_reg(sl_compile_state_t* cs, size_t reg)
+emit_reg(sl_compile_state_t* cs, sl_vm_reg_t reg)
 {
     return emit(cs, &reg, sizeof(reg));
 }
@@ -174,7 +180,25 @@ emit_immediate(sl_compile_state_t* cs, SLVAL value)
 }
 
 static size_t
-emit_uint(sl_compile_state_t* cs, size_t u)
+emit_ip(sl_compile_state_t* cs, uint32_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_reg_count(sl_compile_state_t* cs, uint16_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_line_no(sl_compile_state_t* cs, uint16_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_frame_no(sl_compile_state_t* cs, uint16_t u)
 {
     return emit(cs, &u, sizeof(u));
 }
@@ -345,7 +369,7 @@ NODE(sl_node_var_t, var)
                 emit_opcode(cs, SL_OP_MOV);
             } else {
                 emit_opcode(cs, SL_OP_GET_OUTER);
-                emit_uint(cs, frame);
+                emit_frame_no(cs, frame);
                 mark_upper_scopes_as_closure_unsafe(cs, frame);
             }
             emit_reg(cs, index);
@@ -391,7 +415,7 @@ NODE(sl_node_interp_string_t, interp_string)
     }
     emit_opcode(cs, SL_OP_BUILD_STRING);
     emit_reg(cs, base_reg);
-    emit_uint(cs, node->components_count);
+    emit_reg_count(cs, node->components_count);
     emit_reg(cs, dest);
     reg_free_block(cs, base_reg, node->components_count);
 }
@@ -478,7 +502,7 @@ NODE(sl_node_try_t, try)
     cs->section->has_try_catch = true;
     
     emit_opcode(cs, SL_OP_TRY);
-    catch_fixup = emit_uint(cs, 0xdeadbeef);
+    catch_fixup = emit_ip(cs, 0xdeadbeef);
 
     if(cs->next_last_frames) {
         cs->next_last_frames->try_catch_blocks++;
@@ -493,9 +517,9 @@ NODE(sl_node_try_t, try)
     emit_opcode(cs, SL_OP_END_TRY);
     
     emit_opcode(cs, SL_OP_JUMP);
-    after_fixup = emit_uint(cs, 0xdeadbeef);
+    after_fixup = emit_ip(cs, 0xdeadbeef);
 
-    insn_at_ip(cs, catch_fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, catch_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_CATCH);
     emit_reg(cs, dest);
@@ -505,7 +529,7 @@ NODE(sl_node_try_t, try)
     emit_assignment(cs, node->lval, dest);
     compile_node(cs, node->catch_body, dest);
     
-    insn_at_ip(cs, after_fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, after_fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_class_t, class)
@@ -537,16 +561,16 @@ NODE(sl_node_if_t, if)
     /* emit a jump over the true branch, keeping a pointer to fixup later */
     compile_node(cs, node->condition, dest);
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    size_t fixup_1 = emit_uint(cs, 0x0000CAFE);
-    emit_uint(cs, dest);
+    size_t fixup_1 = emit_ip(cs, 0x0000CAFE);
+    emit_reg(cs, dest);
     
     /* true branch */
     compile_node(cs, node->body, dest);
     
     emit_opcode(cs, SL_OP_JUMP);
-    size_t fixup_2 = emit_uint(cs, 0x0000CAFE);
+    size_t fixup_2 = emit_ip(cs, 0x0000CAFE);
 
-    insn_at_ip(cs, fixup_1)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup_1)->ip = cs->section->insns_byte_count;
     
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
@@ -554,7 +578,7 @@ NODE(sl_node_if_t, if)
         op_immediate(cs, cs->vm->lib.nil, dest);
     }
     
-    insn_at_ip(cs, fixup_2)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup_2)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_while_t, while)
@@ -568,7 +592,7 @@ NODE(sl_node_while_t, while)
     
     /* emit code for !condition: */
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    size_t fixup = emit_uint(cs, 0x0000CAFE);
+    size_t fixup = emit_ip(cs, 0x0000CAFE);
     emit_reg(cs, dest);
     
     /* push this loop on to the next/last fixup stack */
@@ -584,20 +608,20 @@ NODE(sl_node_while_t, while)
     /* place the right address in the next fixups */
     cs->next_last_frames = nl.prev;
     while(nl.next_fixups) {
-        insn_at_ip(cs, nl.next_fixups->fixup)->uint = begin;
+        insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
     
     /* jump back to condition */
     emit_opcode(cs, SL_OP_JUMP);
-    emit_uint(cs, begin);
+    emit_ip(cs, begin);
     
     /* put the current IP into the JUMP_UNLESS fixup */
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
     
     /* place the right address in the last fixups */
     while(nl.last_fixups) {
-        insn_at_ip(cs, nl.last_fixups->fixup)->uint = cs->section->insns_byte_count;
+        insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
     
@@ -621,7 +645,7 @@ NODE(sl_node_for_t, for)
     op_send(cs, enum_reg, sl_intern(cs->vm, "next"), 0, 0, dest);
     
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    end_jump_fixup = emit_uint(cs, 0x0000cafe);
+    end_jump_fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
     
     op_immediate(cs, cs->vm->lib._true, has_looped_reg);
@@ -639,24 +663,24 @@ NODE(sl_node_for_t, for)
     compile_node(cs, node->body, dest);
     
     emit_opcode(cs, SL_OP_JUMP);
-    emit_uint(cs, begin);
+    emit_ip(cs, begin);
     
     cs->next_last_frames = nl.prev;
     
     while(nl.next_fixups) {
-        insn_at_ip(cs, nl.next_fixups->fixup)->uint = begin;
+        insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
     
     while(nl.last_fixups) {
-        insn_at_ip(cs, nl.last_fixups->fixup)->uint = cs->section->insns_byte_count;
+        insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
     
-    insn_at_ip(cs, end_jump_fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, end_jump_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_JUMP_IF);
-    end_else_fixup = emit_uint(cs, 0x0000cafe);
+    end_else_fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, has_looped_reg);
     
     reg_free(cs, has_looped_reg);
@@ -666,7 +690,7 @@ NODE(sl_node_for_t, for)
         compile_node(cs, node->else_body, dest);
     }
     
-    insn_at_ip(cs, end_else_fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, end_else_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, expr_reg);
@@ -722,12 +746,12 @@ NODE(sl_node_binary_t, and)
     compile_node(cs, node->left, dest);
     
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    fixup = emit_uint(cs, 0x0000cafe);
+    fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
     
     compile_node(cs, node->right, dest);
 
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_binary_t, or)
@@ -737,12 +761,12 @@ NODE(sl_node_binary_t, or)
     compile_node(cs, node->left, dest);
     
     emit_opcode(cs, SL_OP_JUMP_IF);
-    fixup = emit_uint(cs, 0x0000cafe);
+    fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
     
     compile_node(cs, node->right, dest);
     
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_unary_t, not)
@@ -784,8 +808,8 @@ NODE(sl_node_assign_var_t, assign_var)
                 emit_reg(cs, index);
             } else {
                 emit_opcode(cs, SL_OP_SET_OUTER);
-                emit_uint(cs, frame);
-                emit_uint(cs, index);
+                emit_frame_no(cs, frame);
+                emit_reg(cs, index);
                 emit_reg(cs, dest);
                 mark_upper_scopes_as_closure_unsafe(cs, frame);
             }
@@ -829,7 +853,7 @@ op_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval
     op_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
 
     emit_opcode(cs, opcode); /* SL_OP_JUMP_{IF, UNLESS} */
-    fixup = emit_uint(cs, 0xdeadbeef);
+    fixup = emit_ip(cs, 0xdeadbeef);
     emit_reg(cs, dest);
     
     /* compile the rval */
@@ -842,9 +866,9 @@ op_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval
     /* move the rval back to dest reg */
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, arg_base + lval->arg_count);
-    emit_uint(cs, dest);
+    emit_reg(cs, dest);
     
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_byte_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_assign_send_t, assign_send)
@@ -923,7 +947,7 @@ NODE(sl_node_assign_array_t, assign_array)
     
     emit_opcode(cs, SL_OP_ARRAY_DUMP);
     emit_reg(cs, dest);
-    emit_uint(cs, node->lval->node_count);
+    emit_reg_count(cs, node->lval->node_count);
     emit_reg(cs, dump_regs);
     
     for(i = 0; i < node->lval->node_count; i++) {
@@ -1000,7 +1024,7 @@ NODE(sl_node_array_t, array)
         compile_node(cs, node->nodes[i], reg_base + i);
     }
     emit_opcode(cs, SL_OP_ARRAY);
-    emit_uint(cs, node->node_count);
+    emit_reg_count(cs, node->node_count);
     emit_reg(cs, reg_base);
     emit_reg(cs, dest);
     reg_free_block(cs, reg_base, node->node_count);
@@ -1014,7 +1038,7 @@ NODE(sl_node_dict_t, dict)
         compile_node(cs, node->vals[i], reg_base + i * 2 + 1);
     }
     emit_opcode(cs, SL_OP_DICT);
-    emit_uint(cs, node->node_count);
+    emit_reg_count(cs, node->node_count);
     emit_reg(cs, reg_base);
     emit_reg(cs, dest);
     reg_free_block(cs, reg_base, node->node_count * 2);
@@ -1052,7 +1076,7 @@ NODE(sl_node_base_t, next)
         emit_opcode(cs, SL_OP_END_TRY);
     }
     emit_opcode(cs, SL_OP_JUMP);
-    fixup->fixup = emit_uint(cs, 0x0000cafe);
+    fixup->fixup = emit_ip(cs, 0x0000cafe);
     
     (void)node;
     (void)dest;
@@ -1067,7 +1091,7 @@ NODE(sl_node_base_t, last)
         emit_opcode(cs, SL_OP_END_TRY);
     }
     emit_opcode(cs, SL_OP_JUMP);
-    fixup->fixup = emit_uint(cs, 0x0000cafe);
+    fixup->fixup = emit_ip(cs, 0x0000cafe);
     
     (void)node;
     (void)dest;
@@ -1114,11 +1138,11 @@ emit_line_trace(sl_compile_state_t* cs, sl_node_base_t* node)
 {
     if(node->line != cs->last_line && node->line != 0) {
         if(cs->emitted_line_trace) {
-            insn_at_ip(cs, cs->section->insns_byte_count - sizeof(size_t))->uint = node->line;
+            insn_at_ip(cs, cs->section->insns_byte_count - sizeof(uint16_t))->uint16 = node->line;
         } else {
             cs->last_line = node->line;
             emit_opcode(cs, SL_OP_LINE_TRACE);
-            emit_uint(cs, node->line);
+            emit_line_no(cs, node->line);
         }
     }
 }

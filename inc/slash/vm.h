@@ -45,6 +45,7 @@ struct sl_vm_lib {
     SLVAL StackOverflowError;
     SLVAL StackOverflowError_instance;
     SLVAL SyntaxError;
+    SLVAL CompileError;
     SLVAL TypeError;
     SLVAL ZeroDivisionError;
     SLVAL NotImplementedError;
@@ -174,10 +175,14 @@ typedef struct sl_vm_inline_constant_cache {
 }
 sl_vm_inline_constant_cache_t;
 
+typedef uint16_t sl_vm_reg_t;
+#define SL_MAX_REGISTERS (65536)
+
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
-    size_t                          reg;
-    size_t                          uint;
+    sl_vm_reg_t                     reg;
+    uint32_t                        ip;
+    uint16_t                        uint16;
     struct sl_vm_section*           section;
     SLVAL                           imm;
     SLID                            id;
