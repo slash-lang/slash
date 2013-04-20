@@ -184,6 +184,14 @@ emit_imc(sl_compile_state_t* cs, size_t arg_size, SLID id)
     return emit(cs, insn);
 }
 
+static size_t
+emit_icc(sl_compile_state_t* cs)
+{
+    sl_vm_insn_t insn;
+    insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
+    return emit(cs, insn);
+}
+
 static void
 op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
 {
@@ -680,7 +688,6 @@ NODE(sl_node_bind_method_t, bind_method)
 
 NODE(sl_node_const_t, const)
 {
-    sl_vm_insn_t insn;
     if(node->obj) {
         compile_node(cs, node->obj, dest);
         emit_opcode(cs, SL_OP_GET_OBJECT_CONST);
@@ -689,8 +696,7 @@ NODE(sl_node_const_t, const)
         emit_reg(cs, dest);
     } else {
         emit_opcode(cs, SL_OP_GET_CONST);
-        insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
-        emit(cs, insn);
+        emit_icc(cs);
         emit_id(cs, node->id);
         emit_reg(cs, dest);
     }
