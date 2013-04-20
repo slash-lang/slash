@@ -109,13 +109,13 @@ sl_init(const char* sapi_name)
     vm->arena = arena;
     vm->cwd = ".";
     vm->initializing = 1;
-    vm->store = sl_st_init_numtable(vm->arena);
+    vm->store = sl_st_init_numtable(vm);
     vm->hash_seed = rand();
     vm->stack_limit = sl_stack_limit();
-    vm->required = sl_st_init_table(vm->arena, &sl_string_hash_type);
+    vm->required = sl_st_init_table(vm, &sl_string_hash_type);
     vm->call_stack = NULL;
 
-    vm->intern.name_to_id = sl_st_init_table(vm->arena, &sl_string_hash_type);
+    vm->intern.name_to_id = sl_st_init_table(vm, &sl_string_hash_type);
     vm->intern.id_to_name_cap = 32;
     vm->intern.id_to_name_size = 0;
     vm->intern.id_to_name = sl_alloc(vm->arena, sizeof(SLVAL) * vm->intern.id_to_name_cap);

@@ -34,7 +34,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
 {
     size_t i;
     cs->vm = vm;
-    cs->vars = sl_st_init_table(vm->arena, &sl_string_hash_type);
+    cs->vars = sl_st_init_table(vm, &sl_string_hash_type);
     cs->parent = parent;
     cs->last_line = 0;
     cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));

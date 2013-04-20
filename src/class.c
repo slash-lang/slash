@@ -15,9 +15,9 @@ allocate_class(sl_vm_t* vm)
 {
     sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
     klass->base.primitive_type = SL_T_CLASS;
-    klass->constants = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    klass->class_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    klass->instance_methods = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    klass->constants = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
     klass->super = vm->lib.Object;
     klass->name.id = 0;
     klass->in = vm->lib.Object;
@@ -39,13 +39,13 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->name.id = 0;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
-    obj->constants = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    obj->class_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    obj->instance_methods = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    obj->constants = sl_st_init_table(vm, &sl_id_hash_type);
+    obj->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
+    obj->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
     obj->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
     obj->base.primitive_type = SL_T_CLASS;
-    obj->base.instance_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    obj->base.instance_variables = sl_st_init_table(vm, &sl_id_hash_type);
 }
 
 static SLVAL
@@ -123,11 +123,11 @@ struct own_instance_methods_iter_state {
 };
 
 static int
-own_instance_methods_iter(SLID name, SLVAL method, struct own_instance_methods_iter_state* state)
+own_instance_methods_iter(sl_vm_t* vm, SLID name, SLVAL method, SLVAL ary)
 {
     if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
-        SLVAL namev = sl_id_to_string(state->vm, name);
-        sl_array_push(state->vm, state->ary, 1, &namev);
+        SLVAL namev = sl_id_to_string(vm, name);
+        sl_array_push(vm, ary, 1, &namev);
     }
     return SL_ST_CONTINUE;
 }
@@ -137,10 +137,7 @@ sl_class_own_instance_methods(sl_vm_t* vm, SLVAL klass)
 {
     sl_class_t* class = get_class(vm, klass);
     SLVAL ary = sl_make_array(vm, 0, NULL);
-    struct own_instance_methods_iter_state state;
-    state.vm = vm;
-    state.ary = ary;
-    sl_st_foreach(class->instance_methods, own_instance_methods_iter, (sl_st_data_t)&state);
+    sl_st_foreach(class->instance_methods, own_instance_methods_iter, (sl_st_data_t)ary.i);
     return ary;
 }
 
@@ -162,10 +159,10 @@ struct class_constants_state {
 };
 
 static int
-class_constants_iter(SLID id, SLVAL value, struct class_constants_state* state)
+class_constants_iter(sl_vm_t* vm, SLID id, SLVAL value, SLVAL ary)
 {
-    SLVAL name = sl_id_to_string(state->vm, id);
-    sl_array_push(state->vm, state->ary, 1, &name);
+    SLVAL name = sl_id_to_string(vm, id);
+    sl_array_push(vm, ary, 1, &name);
     return SL_ST_CONTINUE;
     (void)value;
 }
@@ -174,11 +171,9 @@ static SLVAL
 class_constants(sl_vm_t* vm, SLVAL klass)
 {
     sl_class_t* class = get_class(vm, klass);
-    struct class_constants_state state;
-    state.vm = vm;
-    state.ary = sl_make_array(vm, 0, NULL);
-    sl_st_foreach(class->constants, class_constants_iter, (sl_st_data_t)&state);
-    return state.ary;
+    SLVAL ary = sl_make_array(vm, 0, NULL);
+    sl_st_foreach(class->constants, class_constants_iter, (sl_st_data_t)ary.i);
+    return ary;
 }
 
 static void

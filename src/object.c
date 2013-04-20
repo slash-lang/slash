@@ -17,12 +17,12 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->super = vm->lib.nil;
     klass->name.id = 0;
     klass->in = vm->lib.nil;
-    klass->constants = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    klass->class_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
-    klass->instance_methods = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    klass->constants = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
     klass->base.klass = vm->lib.Class;
     klass->base.primitive_type = SL_T_CLASS;
-    klass->base.instance_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
+    klass->base.instance_variables = sl_st_init_table(vm, &sl_id_hash_type);
 }
 
 static SLVAL
@@ -254,7 +254,7 @@ sl_set_ivar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
     }
     p = sl_get_ptr(object);
     if(!p->instance_variables) {
-        p->instance_variables = sl_st_init_table(vm->arena, &sl_id_hash_type);
+        p->instance_variables = sl_st_init_table(vm, &sl_id_hash_type);
     }
     sl_st_insert(p->instance_variables, (sl_st_data_t)id.id, (sl_st_data_t)sl_get_ptr(val));
 }
@@ -316,17 +316,12 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     return vm->lib.nil;
 }
 
-struct collect_methods_iter_state {
-    sl_vm_t* vm;
-    SLVAL ary;
-};
-
 static int
-collect_methods_iter(SLID id, SLVAL method, struct collect_methods_iter_state* state)
+collect_methods_iter(sl_vm_t* vm, SLID id, SLVAL method, SLVAL ary)
 {
     if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
-        SLVAL name = sl_id_to_string(state->vm, id);
-        sl_array_push(state->vm, state->ary, 1, &name);
+        SLVAL name = sl_id_to_string(vm, id);
+        sl_array_push(vm, ary, 1, &name);
     }
     return SL_ST_CONTINUE;
 }
@@ -337,17 +332,15 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self)
     SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
     sl_class_t* klassp;
 
-    struct collect_methods_iter_state state;
-    state.vm = vm;
-    state.ary = sl_make_array(vm, 0, NULL);
+    SLVAL ary = sl_make_array(vm, 0, NULL);
 
     do {
         klassp = (sl_class_t*)sl_get_ptr(klass);
-        sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)&state);
+        sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)ary.i);
         klass = klassp->super;
     } while(klassp->singleton);
 
-    return state.ary;
+    return ary;
 }
 
 static SLVAL
@@ -355,17 +348,15 @@ sl_object_methods(sl_vm_t* vm, SLVAL self)
 {
     SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
 
-    struct collect_methods_iter_state state;
-    state.vm = vm;
-    state.ary = sl_make_array(vm, 0, NULL);
+    SLVAL ary = sl_make_array(vm, 0, NULL);
 
     while(sl_get_primitive_type(klass) == SL_T_CLASS) {
         sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
-        sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)&state);
+        sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)ary.i);
         klass = klassp->super;
     }
 
-    return state.ary;
+    return ary;
 }
 
 SLVAL

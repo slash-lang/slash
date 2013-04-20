@@ -49,7 +49,7 @@ allocate_dict(sl_vm_t* vm)
 {
     sl_dict_t* dict = sl_alloc(vm->arena, sizeof(sl_dict_t));
     dict->base.primitive_type = SL_T_DICT;
-    dict->st = sl_st_init_table(vm->arena, &dict_hash_type);
+    dict->st = sl_st_init_table(vm, &dict_hash_type);
     return (sl_object_t*)dict;
 }
 
@@ -118,9 +118,9 @@ sl_dict_delete(sl_vm_t* vm, SLVAL dict, SLVAL key)
 }
 
 static int
-sl_dict_merge_iter(sl_dict_key_t* key, SLVAL value, SLVAL dict)
+sl_dict_merge_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, SLVAL dict)
 {
-    sl_dict_set(key->vm, dict, key->key, value);
+    sl_dict_set(vm, dict, key->key, value);
     return SL_ST_CONTINUE;
 }
 
@@ -142,12 +142,12 @@ sl_dict_enumerate(sl_vm_t* vm, SLVAL dict)
 }
 
 static int
-dict_to_s_iter(sl_dict_key_t* key, SLVAL value, SLVAL* str)
+dict_to_s_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, SLVAL* str)
 {
-    if(sl_get_int(sl_string_length(key->vm, *str)) > 2) {
-        *str = sl_string_concat(key->vm, *str, sl_make_cstring(key->vm, ", "));
+    if(sl_get_int(sl_string_length(vm, *str)) > 2) {
+        *str = sl_string_concat(vm, *str, sl_make_cstring(vm, ", "));
     }
-    *str = sl_make_formatted_string(key->vm, "%V%X => %X", *str, key->key, value);
+    *str = sl_make_formatted_string(vm, "%V%X => %X", *str, key->key, value);
     return SL_ST_CHECK;
 }
 
@@ -178,9 +178,10 @@ allocate_dict_enumerator(sl_vm_t* vm)
 }
 
 static int
-dict_enumerator_init_iter(sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
+dict_enumerator_init_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL record, sl_dict_enumerator_t* e)
 {
     (void)record;
+    (void)vm;
     e->keys[e->at] = key->key;
     e->at++;
     return SL_ST_CONTINUE;
@@ -239,9 +240,10 @@ struct dict_keys_state {
 };
 
 static int
-sl_dict_keys_iter(sl_dict_key_t* key, SLVAL value, struct dict_keys_state* state)
+sl_dict_keys_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, struct dict_keys_state* state)
 {
     (void)value;
+    (void)vm;
     state->keys[state->at++] = key->key;
     return SL_ST_CONTINUE;
 }
@@ -274,20 +276,19 @@ sl_dict_has_key(sl_vm_t* vm, SLVAL dict, SLVAL key)
 }
 
 struct dict_eq_iter_state {
-    sl_vm_t* vm;
     sl_dict_t* other;
     int success;
 };
 
 static int
-dict_eq_iter(sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
+dict_eq_iter(sl_vm_t* vm, sl_dict_key_t* key, SLVAL value, struct dict_eq_iter_state* state)
 {
     SLVAL other_value;
     if(!sl_st_lookup(state->other->st, (sl_st_data_t)key, (sl_st_data_t*)&other_value)) {
         state->success = 0;
         return SL_ST_STOP;
     }
-    if(!sl_eq(state->vm, value, other_value)) {
+    if(!sl_eq(vm, value, other_value)) {
         state->success = 0;
         return SL_ST_STOP;
     }
@@ -303,7 +304,6 @@ sl_dict_eq(sl_vm_t* vm, SLVAL dict, SLVAL other)
     sl_dict_t* d = get_dict(vm, dict);
     sl_dict_t* o = get_dict(vm, other);
     struct dict_eq_iter_state state;
-    state.vm = vm;
     state.other = o;
     state.success = 1;
     if(d->st->num_entries != o->st->num_entries) {
