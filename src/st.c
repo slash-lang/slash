@@ -29,13 +29,6 @@ static struct sl_st_hash_type type_numhash =
     numhash,
 };
 
-static int strhash(const char *);
-static struct sl_st_hash_type type_strhash =
-{
-    strcmp,
-    strhash,
-};
-
 static void rehash(sl_st_table_t *);
 
 #define alloc(type) (type*)sl_alloc(tbl->vm->arena, sizeof(type))
@@ -89,8 +82,7 @@ static long primes[] =
 };
 
 static int
-new_size(size)
-unsigned int size;
+new_size(unsigned int size)
 {
     unsigned int i;
 
@@ -104,30 +96,10 @@ unsigned int size;
     return -1;                                    /* should raise exception */
 }
 
-#ifdef HASH_LOG
-static int collision = 0;
-static int init_st = 0;
-
-static void
-stat_col()
-{
-    FILE *f = fopen("/tmp/col", "w");
-    fprintf(f, "collision: %d\n", collision);
-    fclose(f);
-}
-#endif
-
 sl_st_table_t*
 sl_st_init_table_with_size(sl_vm_t* vm, struct sl_st_hash_type* type, int size)
 {
     sl_st_table_t *tbl;
-
-    #ifdef HASH_LOG
-    if (init_st == 0) {
-        init_st = 1;
-        atexit(stat_col);
-    }
-    #endif
 
     size = new_size(size);                        /* round up to prime number */
 
@@ -159,33 +131,14 @@ sl_st_init_numtable_with_size(sl_vm_t* vm, int size)
     return sl_st_init_table_with_size(vm, &type_numhash, size);
 }
 
-sl_st_table_t*
-sl_st_init_strtable(sl_vm_t* vm)
-{
-    return sl_st_init_table(vm, &type_strhash);
-}
-
-sl_st_table_t*
-sl_st_init_strtable_with_size(sl_vm_t* vm, int size)
-{
-    return sl_st_init_table_with_size(vm, &type_strhash, size);
-}
-
 #define PTR_NOT_EQUAL(table, ptr, hash_val, key) \
     ((ptr) != 0 && (ptr->hash != (hash_val) || !EQUAL((table), (key), (ptr)->key)))
-
-#ifdef HASH_LOG
-#define COLLISION collision++
-#else
-#define COLLISION
-#endif
 
 #define FIND_ENTRY(table, ptr, hash_val, bin_pos) do {\
         bin_pos = hash_val%(table)->num_bins;\
         ptr = (table)->bins[bin_pos];\
         if (PTR_NOT_EQUAL(table, ptr, hash_val, key)) \
         { \
-            COLLISION;\
             while (PTR_NOT_EQUAL(table, ptr->next, hash_val, key)) \
             { \
                 ptr = ptr->next;\
@@ -194,11 +147,8 @@ sl_st_init_strtable_with_size(sl_vm_t* vm, int size)
         }\
     } while (0)
 
-        int
-        sl_st_lookup(table, key, value)
-        sl_st_table_t *table;
-register sl_st_data_t key;
-sl_st_data_t *value;
+int
+sl_st_lookup(sl_st_table_t* table, sl_st_data_t key, sl_st_data_t* value)
 {
     unsigned int hash_val, bin_pos;
     register sl_st_table_entry *ptr;
@@ -234,13 +184,10 @@ sl_st_data_t *value;
 } while (0)
 
 int
-sl_st_insert(tbl, key, value)
-register sl_st_table_t *tbl;
-register sl_st_data_t key;
-sl_st_data_t value;
+sl_st_insert(sl_st_table_t* tbl, sl_st_data_t key, sl_st_data_t value)
 {
     unsigned int hash_val, bin_pos;
-    register sl_st_table_entry *ptr;
+    sl_st_table_entry *ptr;
 
     hash_val = do_hash(key, tbl);
     FIND_ENTRY(tbl, ptr, hash_val, bin_pos);
@@ -256,10 +203,7 @@ sl_st_data_t value;
 }
 
 void
-sl_st_add_direct(tbl, key, value)
-sl_st_table_t *tbl;
-sl_st_data_t key;
-sl_st_data_t value;
+sl_st_add_direct(sl_st_table_t* tbl, sl_st_data_t key, sl_st_data_t value)
 {
     unsigned int hash_val, bin_pos;
 
@@ -269,8 +213,7 @@ sl_st_data_t value;
 }
 
 static void
-rehash(tbl)
-register sl_st_table_t *tbl;
+rehash(sl_st_table_t* tbl)
 {
     register sl_st_table_entry *ptr, *next, **new_bins;
     int i, old_num_bins = tbl->num_bins, new_num_bins;
@@ -294,8 +237,7 @@ register sl_st_table_t *tbl;
 }
 
 sl_st_table_t*
-sl_st_copy(old_table)
-sl_st_table_t *old_table;
+sl_st_copy(sl_st_table_t* old_table)
 {
     sl_st_table_t *new_table;
     sl_st_table_entry *ptr, *entry;
@@ -336,10 +278,7 @@ sl_st_table_t *old_table;
 }
 
 int
-sl_st_delete(table, key, value)
-register sl_st_table_t *table;
-register sl_st_data_t *key;
-sl_st_data_t *value;
+sl_st_delete(sl_st_table_t* table, sl_st_data_t* key, sl_st_data_t* value)
 {
     unsigned int hash_val;
     sl_st_table_entry *tmp;
@@ -376,11 +315,7 @@ sl_st_data_t *value;
 }
 
 int
-sl_st_delete_safe(table, key, value, never)
-register sl_st_table_t *table;
-register sl_st_data_t *key;
-sl_st_data_t *value;
-sl_st_data_t never;
+sl_st_delete_safe(sl_st_table_t* table, sl_st_data_t* key, sl_st_data_t* value, sl_st_data_t never)
 {
     unsigned int hash_val;
     register sl_st_table_entry *ptr;
@@ -416,9 +351,7 @@ delete_never(sl_vm_t* vm, sl_st_data_t key, sl_st_data_t value, sl_st_data_t nev
 }
 
 void
-sl_st_cleanup_safe(table, never)
-sl_st_table_t *table;
-sl_st_data_t never;
+sl_st_cleanup_safe(sl_st_table_t* table, sl_st_data_t never)
 {
     int num_entries = table->num_entries;
 
@@ -473,54 +406,13 @@ sl_st_foreach(sl_st_table_t* table, int (*func)(), sl_st_data_t arg)
 }
 
 static int
-strhash(string)
-register const char *string;
-{
-    register int c;
-
-    #ifdef HASH_ELFHASH
-    register unsigned int h = 0, g;
-
-    while ((c = *string++) != '\0') {
-        h = ( h << 4 ) + c;
-        if ( g = h & 0xF0000000 )
-            h ^= g >> 24;
-        h &= ~g;
-    }
-    return h;
-    #elif defined(HASH_PERL)
-    register int val = 0;
-
-    while ((c = *string++) != '\0') {
-        val += c;
-        val += (val << 10);
-        val ^= (val >> 6);
-    }
-    val += (val << 3);
-    val ^= (val >> 11);
-
-    return val + (val << 15);
-    #else
-    register int val = 0;
-
-    while ((c = *string++) != '\0') {
-        val = val*997 + c;
-    }
-
-    return val + (val>>5);
-    #endif
-}
-
-static int
-numcmp(x, y)
-long x, y;
+numcmp(st_data_t x, st_data_t y)
 {
     return x != y;
 }
 
 static int
-numhash(n)
-long n;
+numhash(st_data_t n)
 {
     return n;
 }
