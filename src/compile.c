@@ -21,10 +21,10 @@ typedef struct sl_compile_state {
     sl_vm_t* vm;
     sl_st_table_t* vars;
     struct sl_compile_state* parent;
-    int last_line;
     uint8_t* registers;
     sl_vm_section_t* section;
     next_last_frame_t* next_last_frames;
+    int last_line;
     bool emitted_line_trace;
 }
 sl_compile_state_t;
