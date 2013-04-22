@@ -45,6 +45,7 @@ struct sl_vm_lib {
     SLVAL StackOverflowError;
     SLVAL StackOverflowError_instance;
     SLVAL SyntaxError;
+    SLVAL CompileError;
     SLVAL TypeError;
     SLVAL ZeroDivisionError;
     SLVAL NotImplementedError;
@@ -113,51 +114,50 @@ typedef struct sl_vm {
 }
 sl_vm_t;
 
-typedef enum sl_vm_opcode {
-    SL_OP_RAW = 1,
-    SL_OP_ECHO,
-    SL_OP_ECHO_RAW,
-    SL_OP_NOT,
-    SL_OP_MOV,
-    SL_OP_GET_OUTER,
-    SL_OP_GET_IVAR,
-    SL_OP_GET_CVAR,
-    SL_OP_GET_CONST,
-    SL_OP_GET_OBJECT_CONST,
-    SL_OP_SET_OUTER,
-    SL_OP_SET_IVAR,
-    SL_OP_SET_CVAR,
-    SL_OP_SET_CONST,
-    SL_OP_SET_OBJECT_CONST,
-    SL_OP_IMMEDIATE,
-    SL_OP_SEND,
-    SL_OP_JUMP,
-    SL_OP_JUMP_IF,
-    SL_OP_JUMP_UNLESS,
-    SL_OP_CLASS,
-    SL_OP_DEFINE,
-    SL_OP_DEFINE_ON,
-    SL_OP_LAMBDA,
-    SL_OP_SELF,
-    SL_OP_ARRAY,
-    SL_OP_ARRAY_DUMP,
-    SL_OP_DICT,
-    SL_OP_RETURN,
-    SL_OP_RANGE,
-    SL_OP_RANGE_EX,
-    SL_OP_LINE_TRACE,
-    SL_OP_ABORT,
-    SL_OP_THROW,
-    SL_OP_TRY,
-    SL_OP_END_TRY,
-    SL_OP_CATCH,
-    SL_OP_YADA_YADA,
-    SL_OP_BIND_METHOD,
-    SL_OP_USE,
-    SL_OP_USE_TOP_LEVEL,
-    SL_OP_BUILD_STRING
-}
-sl_vm_opcode_t;
+#define SL_OP_RAW                   1
+#define SL_OP_ECHO                  2
+#define SL_OP_ECHO_RAW              3
+#define SL_OP_NOT                   4
+#define SL_OP_MOV                   5
+#define SL_OP_GET_OUTER             6
+#define SL_OP_GET_IVAR              7
+#define SL_OP_GET_CVAR              8
+#define SL_OP_GET_CONST             9
+#define SL_OP_GET_OBJECT_CONST      10
+#define SL_OP_SET_OUTER             11
+#define SL_OP_SET_IVAR              12
+#define SL_OP_SET_CVAR              13
+#define SL_OP_SET_CONST             14
+#define SL_OP_SET_OBJECT_CONST      15
+#define SL_OP_IMMEDIATE             16
+#define SL_OP_SEND                  17
+#define SL_OP_JUMP                  18
+#define SL_OP_JUMP_IF               19
+#define SL_OP_JUMP_UNLESS           20
+#define SL_OP_CLASS                 21
+#define SL_OP_DEFINE                22
+#define SL_OP_DEFINE_ON             23
+#define SL_OP_LAMBDA                24
+#define SL_OP_SELF                  25
+#define SL_OP_ARRAY                 26
+#define SL_OP_ARRAY_DUMP            27
+#define SL_OP_DICT                  28
+#define SL_OP_RETURN                29
+#define SL_OP_RANGE                 30
+#define SL_OP_RANGE_EX              31
+#define SL_OP_LINE_TRACE            32
+#define SL_OP_ABORT                 33
+#define SL_OP_THROW                 34
+#define SL_OP_TRY                   35
+#define SL_OP_END_TRY               36
+#define SL_OP_CATCH                 37
+#define SL_OP_YADA_YADA             38
+#define SL_OP_BIND_METHOD           39
+#define SL_OP_USE                   40
+#define SL_OP_USE_TOP_LEVEL         41
+#define SL_OP_BUILD_STRING          42
+
+typedef uint8_t sl_vm_opcode_t;
 
 typedef struct sl_vm_inline_method_cache {
     uint32_t state;
@@ -176,31 +176,41 @@ typedef struct sl_vm_inline_constant_cache {
 }
 sl_vm_inline_constant_cache_t;
 
+typedef uint16_t sl_vm_reg_t;
+#define SL_MAX_REGISTERS (65536)
+
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
-    size_t                          uint;
+    sl_vm_reg_t                     reg;
+    uint32_t                        ip;
+    uint16_t                        uint16;
     struct sl_vm_section*           section;
     SLVAL                           imm;
     SLID                            id;
-    sl_string_t*                    str;
     sl_vm_inline_method_cache_t*    imc;
     sl_vm_inline_constant_cache_t*  icc;
 }
 sl_vm_insn_t;
 
 typedef struct sl_vm_section {
-    size_t insns_count;
-    size_t insns_cap;
-    sl_vm_insn_t* insns;
+    size_t insns_byte_count;
+    size_t insns_byte_cap;
+    char* insns_bytes;
+
     int max_registers;
     int req_registers;
     int arg_registers;
     int has_extra_rest_arg;
+    
     size_t* opt_skip;
     uint8_t* filename;
     bool can_stack_alloc_frame;
     bool has_try_catch;
     SLID name;
+
+    size_t gc_list_count;
+    size_t gc_list_cap;
+    sl_vm_insn_t* gc_list;
 }
 sl_vm_section_t;
 

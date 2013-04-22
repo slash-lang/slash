@@ -21,10 +21,10 @@ typedef struct sl_compile_state {
     sl_vm_t* vm;
     sl_st_table_t* vars;
     struct sl_compile_state* parent;
-    int last_line;
     uint8_t* registers;
     sl_vm_section_t* section;
     next_last_frame_t* next_last_frames;
+    int last_line;
     bool emitted_line_trace;
 }
 sl_compile_state_t;
@@ -44,12 +44,15 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->section->max_registers = init_registers;
     cs->section->req_registers = 0;
     cs->section->arg_registers = 0;
-    cs->section->insns_cap = 4;
-    cs->section->insns_count = 0;
-    cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
+    cs->section->insns_byte_cap = sizeof(sl_vm_insn_t) * 16;
+    cs->section->insns_byte_count = 0;
+    cs->section->insns_bytes = sl_alloc_buffer(vm->arena, cs->section->insns_byte_cap);
     cs->section->can_stack_alloc_frame = true;
     cs->section->has_try_catch = false;
     cs->section->opt_skip = NULL;
+    cs->section->gc_list_count = 0;
+    cs->section->gc_list_cap = 4;
+    cs->section->gc_list = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->gc_list_cap);
     cs->registers = sl_alloc(vm->arena, cs->section->max_registers);
     for(i = 0; i < init_registers; i++) {
         cs->registers[i] = 1;
@@ -58,7 +61,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->emitted_line_trace = false;
 }
 
-static size_t
+static sl_vm_reg_t
 reg_alloc(sl_compile_state_t* cs)
 {
     for(int i = 0; i < cs->section->max_registers; i++) {
@@ -70,10 +73,14 @@ reg_alloc(sl_compile_state_t* cs)
     cs->section->max_registers++;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
     cs->registers[cs->section->max_registers - 1] = 1;
-    return cs->section->max_registers - 1;
+    sl_vm_reg_t reg = cs->section->max_registers - 1;
+    if(reg >= SL_MAX_REGISTERS) {
+        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
+    }
+    return reg;
 }
 
-static size_t
+static sl_vm_reg_t
 reg_alloc_block(sl_compile_state_t* cs, int count)
 {
     if(count == 0) {
@@ -101,57 +108,118 @@ reg_alloc_block(sl_compile_state_t* cs, int count)
     for(int j = 0; j < count; j++) {
         cs->registers[i + j] = 1;
     }
+    if(i + count >= SL_MAX_REGISTERS) {
+        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
+    }
     return i;
 }
 
 static void
-reg_free(sl_compile_state_t* cs, size_t reg)
+reg_free(sl_compile_state_t* cs, sl_vm_reg_t reg)
 {
     cs->registers[reg] = 0;
 }
 
 static void
-reg_free_block(sl_compile_state_t* cs, size_t reg, size_t count)
+reg_free_block(sl_compile_state_t* cs, sl_vm_reg_t reg, int count)
 {
-    size_t i;
-    for(i = 0; i < count; i++) {
+    for(int i = 0; i < count; i++) {
         reg_free(cs, reg + i);
     }
 }
 
-static size_t
-emit(sl_compile_state_t* cs, sl_vm_insn_t insn)
+static sl_vm_insn_t*
+insn_at_ip(sl_compile_state_t* cs, size_t ip)
 {
-    if(cs->section->insns_count == cs->section->insns_cap) {
-        cs->section->insns_cap *= 2;
-        cs->section->insns = sl_realloc(cs->vm->arena, cs->section->insns, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
+    return (sl_vm_insn_t*)(cs->section->insns_bytes + ip);
+}
+
+static size_t
+emit(sl_compile_state_t* cs, void* buff, size_t size)
+{
+    if(cs->section->insns_byte_count + size >= cs->section->insns_byte_cap) {
+        cs->section->insns_byte_cap *= 2;
+        cs->section->insns_bytes = sl_realloc(cs->vm->arena, cs->section->insns_bytes, cs->section->insns_byte_cap);
     }
-    cs->section->insns[cs->section->insns_count++] = insn;
-    return cs->section->insns_count - 1;
+    size_t old_ip = cs->section->insns_byte_count;
+    memcpy(cs->section->insns_bytes + cs->section->insns_byte_count, buff, size);
+    cs->section->insns_byte_count += size;
+    return old_ip;
+}
+
+static void
+gc_list_add(sl_compile_state_t* cs, sl_vm_insn_t insn)
+{
+    if(cs->section->gc_list_count == cs->section->gc_list_cap) {
+        cs->section->gc_list_cap *= 2;
+        cs->section->gc_list = sl_realloc(cs->vm->arena, cs->section->gc_list, sizeof(sl_vm_insn_t) * cs->section->gc_list_cap);
+    }
+    cs->section->gc_list[cs->section->gc_list_count++] = insn;
 }
 
 static size_t
 emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
-    sl_vm_insn_t insn;
-    insn.opcode = opcode;
     cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
-    return emit(cs, insn);
+    return emit(cs, &opcode, sizeof(opcode));
 }
 
-static void
-emit_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
+static size_t
+emit_reg(sl_compile_state_t* cs, sl_vm_reg_t reg)
+{
+    return emit(cs, &reg, sizeof(reg));
+}
+
+static size_t
+emit_immediate(sl_compile_state_t* cs, SLVAL value)
 {
     sl_vm_insn_t insn;
-    emit_opcode(cs, SL_OP_IMMEDIATE);
-    insn.imm = immediate;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    insn.imm = value;
+    gc_list_add(cs, insn);
+    return emit(cs, &value, sizeof(value));
 }
 
-static void
-emit_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
+static size_t
+emit_ip(sl_compile_state_t* cs, uint32_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_reg_count(sl_compile_state_t* cs, uint16_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_line_no(sl_compile_state_t* cs, uint16_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_frame_no(sl_compile_state_t* cs, uint16_t u)
+{
+    return emit(cs, &u, sizeof(u));
+}
+
+static size_t
+emit_id(sl_compile_state_t* cs, SLID id)
+{
+    return emit(cs, &id, sizeof(id));
+}
+
+static size_t
+emit_section(sl_compile_state_t* cs, sl_vm_section_t* section)
+{
+    sl_vm_insn_t insn;
+    insn.section = section;
+    gc_list_add(cs, insn);
+    return emit(cs, &section, sizeof(section));
+}
+
+static size_t
+emit_imc(sl_compile_state_t* cs, size_t arg_size, SLID id)
 {
     sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
     imc->argc = arg_size;
@@ -159,15 +227,36 @@ emit_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t 
     imc->call = NULL;
 
     sl_vm_insn_t insn;
-    emit_opcode(cs, SL_OP_SEND);
-    insn.uint = recv;
-    emit(cs, insn);
     insn.imc = imc;
-    emit(cs, insn);
-    insn.uint = arg_base;
-    emit(cs, insn);
-    insn.uint = return_reg;
-    emit(cs, insn);
+    gc_list_add(cs, insn);
+    return emit(cs, &imc, sizeof(imc));
+}
+
+static size_t
+emit_icc(sl_compile_state_t* cs)
+{
+    sl_vm_insn_t insn;
+    insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
+    gc_list_add(cs, insn);
+    return emit(cs, &insn.icc, sizeof(insn.icc));
+}
+
+static void
+op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
+{
+    emit_opcode(cs, SL_OP_SEND);
+    emit_reg(cs, recv);
+    emit_imc(cs, arg_size, id);
+    emit_reg(cs, arg_base);
+    emit_reg(cs, return_reg);
+}
+
+static void
+op_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
+{
+    emit_opcode(cs, SL_OP_IMMEDIATE);
+    emit_immediate(cs, immediate);
+    emit_reg(cs, dest);
 }
 
 static void
@@ -233,35 +322,29 @@ NODE(sl_node_seq_t, seq)
         compile_node(cs, node->nodes[i], dest);
     }
     if(node->node_count == 0) {
-        emit_immediate(cs, cs->vm->lib.nil, dest);
+        op_immediate(cs, cs->vm->lib.nil, dest);
     }
 }
 
 NODE(sl_node_raw_t, raw)
 {
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_RAW);
-    insn.imm = node->string;
-    emit(cs, insn);
+    emit_immediate(cs, node->string);
     (void)dest;
 }
 
 NODE(sl_node_echo_t, echo)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->expr, dest);
     emit_opcode(cs, SL_OP_ECHO);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_echo_t, echo_raw)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->expr, dest);
     emit_opcode(cs, SL_OP_ECHO_RAW);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
 }
 
 static void
@@ -275,7 +358,6 @@ mark_upper_scopes_as_closure_unsafe(sl_compile_state_t* cs, size_t count)
 
 NODE(sl_node_var_t, var)
 {
-    sl_vm_insn_t insn;
     size_t frame;
     sl_compile_state_t* xcs = cs;
     size_t index = 0xCAFE;
@@ -287,14 +369,11 @@ NODE(sl_node_var_t, var)
                 emit_opcode(cs, SL_OP_MOV);
             } else {
                 emit_opcode(cs, SL_OP_GET_OUTER);
-                insn.uint = frame;
-                emit(cs, insn);
+                emit_frame_no(cs, frame);
                 mark_upper_scopes_as_closure_unsafe(cs, frame);
             }
-            insn.uint = index;
-            emit(cs, insn);
-            insn.uint = dest;
-            emit(cs, insn);
+            emit_reg(cs, index);
+            emit_reg(cs, dest);
             return;
         }
         xcs = xcs->parent;
@@ -308,28 +387,22 @@ NODE(sl_node_var_t, var)
 
 NODE(sl_node_var_t, ivar)
 {
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_GET_IVAR);
-    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name));
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name)));
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_var_t, cvar)
 {
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_GET_CVAR);
-    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name));
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->name)));
+    emit_reg(cs, dest);
 }
 
 
 NODE(sl_node_immediate_t, immediate)
 {
-    emit_immediate(cs, node->value, dest);
+    op_immediate(cs, node->value, dest);
 }
 
 NODE(sl_node_interp_string_t, interp_string)
@@ -338,29 +411,22 @@ NODE(sl_node_interp_string_t, interp_string)
     for(size_t i = 0; i < node->components_count; i++) {
         compile_node(cs, node->components[i], base_reg + i);
     }
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_BUILD_STRING);
-    insn.uint = base_reg;
-    emit(cs, insn);
-    insn.uint = node->components_count;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, base_reg);
+    emit_reg_count(cs, node->components_count);
+    emit_reg(cs, dest);
     reg_free_block(cs, base_reg, node->components_count);
 }
 
 NODE(sl_node_base_t, self)
 {
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_SELF);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
     (void)node;
 }
 
 NODE(sl_node_def_t, def)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i, on_reg;
     size_t init_regs = 1 + node->req_arg_count + node->opt_arg_count;
@@ -384,37 +450,31 @@ NODE(sl_node_def_t, def)
     sub_cs.section->opt_skip = sl_alloc(cs->vm->arena, sizeof(size_t) * (node->opt_arg_count + 1));
     
     for(i = 0; i < node->opt_arg_count; i++) {
-        sub_cs.section->opt_skip[i] = sub_cs.section->insns_count;
+        sub_cs.section->opt_skip[i] = sub_cs.section->insns_byte_count;
         compile_node(&sub_cs, node->opt_args[i].default_value, node->req_arg_count + i + 1);
     }
-    sub_cs.section->opt_skip[node->opt_arg_count] = sub_cs.section->insns_count;
+    sub_cs.section->opt_skip[node->opt_arg_count] = sub_cs.section->insns_byte_count;
     
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
-    insn.uint = 0;
-    emit(&sub_cs, insn);
+    emit_reg(&sub_cs, 0);
     
     if(node->on) {
         on_reg = reg_alloc(cs);
         compile_node(cs, node->on, on_reg);
         emit_opcode(cs, SL_OP_DEFINE_ON);
-        insn.uint = on_reg;
-        emit(cs, insn);
+        emit_reg(cs, on_reg);
         reg_free(cs, on_reg);
     } else {
         emit_opcode(cs, SL_OP_DEFINE);
     }
-    insn.id = node->name;
-    emit(cs, insn);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, node->name);
+    emit_section(cs, sub_cs.section);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_lambda_t, lambda)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     size_t i;
     init_compile_state(&sub_cs, cs->vm, cs, node->arg_count + 1);
@@ -426,26 +486,21 @@ NODE(sl_node_lambda_t, lambda)
     sub_cs.section->name = sl_intern(cs->vm, "<lambda>");
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
-    insn.uint = 0;
-    emit(&sub_cs, insn);
+    emit_reg(&sub_cs, 0);
     
     emit_opcode(cs, SL_OP_LAMBDA);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_section(cs, sub_cs.section);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_try_t, try)
 {
-    sl_vm_insn_t insn;
     size_t catch_fixup, after_fixup;
     
     cs->section->has_try_catch = true;
     
     emit_opcode(cs, SL_OP_TRY);
-    insn.uint = 0xdeadbeef;
-    catch_fixup = emit(cs, insn);
+    catch_fixup = emit_ip(cs, 0xdeadbeef);
 
     if(cs->next_last_frames) {
         cs->next_last_frames->try_catch_blocks++;
@@ -460,32 +515,29 @@ NODE(sl_node_try_t, try)
     emit_opcode(cs, SL_OP_END_TRY);
     
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = 0xdeadbeef;
-    after_fixup = emit(cs, insn);
-    
-    cs->section->insns[catch_fixup].uint = cs->section->insns_count;
+    after_fixup = emit_ip(cs, 0xdeadbeef);
+
+    insn_at_ip(cs, catch_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_CATCH);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
     
     emit_opcode(cs, SL_OP_END_TRY);
     
     emit_assignment(cs, node->lval, dest);
     compile_node(cs, node->catch_body, dest);
     
-    cs->section->insns[after_fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, after_fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_class_t, class)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t sub_cs;
     
     if(node->extends) {
         compile_node(cs, node->extends, dest);
     } else {
-        emit_immediate(cs, cs->vm->lib.Object, dest);
+        op_immediate(cs, cs->vm->lib.Object, dest);
     }
     
     init_compile_state(&sub_cs, cs->vm, cs, 1);
@@ -493,71 +545,53 @@ NODE(sl_node_class_t, class)
         sl_string_concat(cs->vm, sl_make_cstring(cs->vm, "class "), sl_id_to_string(cs->vm, node->name)));
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
-    insn.uint = 0;
-    emit(&sub_cs, insn);
+    emit_reg(&sub_cs, 0);
     
     emit_opcode(cs, SL_OP_CLASS);
-    insn.id = node->name;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.section = sub_cs.section;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, node->name);
+    emit_reg(cs, dest);
+    emit_section(cs, sub_cs.section);
+    emit_reg(cs, dest);
 }
-
-/* @TODO: class, def, lambda, try */
 
 NODE(sl_node_if_t, if)
 {
-    sl_vm_insn_t insn;
-    size_t fixup;
-    
     /* emit a jump over the true branch, keeping a pointer to fixup later */
     compile_node(cs, node->condition, dest);
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    insn.uint = 0x0000CAFE;
-    fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    size_t fixup_1 = emit_ip(cs, 0x0000CAFE);
+    emit_reg(cs, dest);
     
     /* true branch */
     compile_node(cs, node->body, dest);
     
-    /*  emit a jump over the else body, and compensate for the jump
-        by adding two bytes to the fixup's operand */
-    cs->section->insns[fixup].uint = cs->section->insns_count + 2 /* JUMP <end> */;
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = 0x0000CAFE;
-    fixup = emit(cs, insn);
+    size_t fixup_2 = emit_ip(cs, 0x0000CAFE);
+
+    insn_at_ip(cs, fixup_1)->ip = cs->section->insns_byte_count;
     
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
     } else {
-        emit_immediate(cs, cs->vm->lib.nil, dest);
+        op_immediate(cs, cs->vm->lib.nil, dest);
     }
     
-    cs->section->insns[fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, fixup_2)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_while_t, while)
 {
-    sl_vm_insn_t insn;
-    size_t fixup, begin;
     next_last_frame_t nl;
     
-    begin = cs->section->insns_count;
+    size_t begin = cs->section->insns_byte_count;
     
     /* loop condition */
     compile_node(cs, node->expr, dest);
     
     /* emit code for !condition: */
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    insn.uint = 0x0000CAFE;
-    fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    size_t fixup = emit_ip(cs, 0x0000CAFE);
+    emit_reg(cs, dest);
     
     /* push this loop on to the next/last fixup stack */
     nl.next_fixups = NULL;
@@ -572,61 +606,49 @@ NODE(sl_node_while_t, while)
     /* place the right address in the next fixups */
     cs->next_last_frames = nl.prev;
     while(nl.next_fixups) {
-        cs->section->insns[nl.next_fixups->fixup].uint = begin;
+        insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
     
     /* jump back to condition */
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = begin;
-    emit(cs, insn);
+    emit_ip(cs, begin);
     
     /* put the current IP into the JUMP_UNLESS fixup */
-    cs->section->insns[fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
     
     /* place the right address in the last fixups */
     while(nl.last_fixups) {
-        cs->section->insns[nl.last_fixups->fixup].uint = cs->section->insns_count;
+        insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
     
-    emit_immediate(cs, cs->vm->lib.nil, dest);
+    op_immediate(cs, cs->vm->lib.nil, dest);
 }
 
 NODE(sl_node_for_t, for)
 {
-    sl_vm_insn_t insn;
     size_t expr_reg = reg_alloc(cs), enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
     size_t begin, end_jump_fixup, end_else_fixup;
     next_last_frame_t nl;
     
     compile_node(cs, node->expr, expr_reg);
     
-    emit_opcode(cs, SL_OP_IMMEDIATE);
-    insn.imm = cs->vm->lib._false;
-    emit(cs, insn);
-    insn.uint = has_looped_reg;
-    emit(cs, insn);
+    op_immediate(cs, cs->vm->lib._false, has_looped_reg);
     
-    emit_send(cs, expr_reg, sl_intern(cs->vm, "enumerate"), 0, 0, enum_reg);
+    op_send(cs, expr_reg, sl_intern(cs->vm, "enumerate"), 0, 0, enum_reg);
     
-    begin = cs->section->insns_count;
+    begin = cs->section->insns_byte_count;
     
-    emit_send(cs, enum_reg, sl_intern(cs->vm, "next"), 0, 0, dest);
+    op_send(cs, enum_reg, sl_intern(cs->vm, "next"), 0, 0, dest);
     
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    insn.uint = 0x0000cafe;
-    end_jump_fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    end_jump_fixup = emit_ip(cs, 0x0000cafe);
+    emit_reg(cs, dest);
     
-    emit_opcode(cs, SL_OP_IMMEDIATE);
-    insn.imm = cs->vm->lib._true;
-    emit(cs, insn);
-    insn.uint = has_looped_reg;
-    emit(cs, insn);
+    op_immediate(cs, cs->vm->lib._true, has_looped_reg);
     
-    emit_send(cs, enum_reg, sl_intern(cs->vm, "current"), 0, 0, dest);
+    op_send(cs, enum_reg, sl_intern(cs->vm, "current"), 0, 0, dest);
     
     emit_assignment(cs, node->lval, dest);
     
@@ -639,28 +661,25 @@ NODE(sl_node_for_t, for)
     compile_node(cs, node->body, dest);
     
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = begin;
-    emit(cs, insn);
+    emit_ip(cs, begin);
     
     cs->next_last_frames = nl.prev;
     
     while(nl.next_fixups) {
-        cs->section->insns[nl.next_fixups->fixup].uint = begin;
+        insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
     
     while(nl.last_fixups) {
-        cs->section->insns[nl.last_fixups->fixup].uint = cs->section->insns_count;
+        insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
     
-    cs->section->insns[end_jump_fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, end_jump_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_JUMP_IF);
-    insn.uint = 0x0000cafe;
-    end_else_fixup = emit(cs, insn);
-    insn.uint = has_looped_reg;
-    emit(cs, insn);
+    end_else_fixup = emit_ip(cs, 0x0000cafe);
+    emit_reg(cs, has_looped_reg);
     
     reg_free(cs, has_looped_reg);
     reg_free(cs, enum_reg);
@@ -669,13 +688,11 @@ NODE(sl_node_for_t, for)
         compile_node(cs, node->else_body, dest);
     }
     
-    cs->section->insns[end_else_fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, end_else_fixup)->ip = cs->section->insns_byte_count;
     
     emit_opcode(cs, SL_OP_MOV);
-    insn.uint = expr_reg;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, expr_reg);
+    emit_reg(cs, dest);
     
     reg_free(cs, expr_reg);
 }
@@ -690,97 +707,76 @@ NODE(sl_node_send_t, send)
         compile_node(cs, node->args[i], arg_base + i);
     }
     
-    emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
+    op_send(cs, dest, node->id, arg_base, node->arg_count, dest);
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
 NODE(sl_node_bind_method_t, bind_method)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->recv, dest);
     
     emit_opcode(cs, SL_OP_BIND_METHOD);
-    insn.uint = dest; /* recv */
-    emit(cs, insn);
-    insn.id = node->id; /* id */
-    emit(cs, insn);
-    insn.uint = dest; /* dest */
-    emit(cs, insn);
+    emit_reg(cs, dest);
+    emit_id(cs, node->id);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_const_t, const)
 {
-    sl_vm_insn_t insn;
     if(node->obj) {
         compile_node(cs, node->obj, dest);
         emit_opcode(cs, SL_OP_GET_OBJECT_CONST);
-        insn.uint = dest;
-        emit(cs, insn);
-        insn.id = node->id;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_reg(cs, dest);
+        emit_id(cs, node->id);
+        emit_reg(cs, dest);
     } else {
         emit_opcode(cs, SL_OP_GET_CONST);
-        insn.icc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_constant_cache_t));
-        emit(cs, insn);
-        insn.id = node->id;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_icc(cs);
+        emit_id(cs, node->id);
+        emit_reg(cs, dest);
     }
 }
 
 NODE(sl_node_binary_t, and)
 {
-    sl_vm_insn_t insn;
     size_t fixup;
     
     compile_node(cs, node->left, dest);
     
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
-    insn.uint = 0x0000CAFE;
-    fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    fixup = emit_ip(cs, 0x0000cafe);
+    emit_reg(cs, dest);
     
     compile_node(cs, node->right, dest);
-    
-    cs->section->insns[fixup].uint = cs->section->insns_count;
+
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_binary_t, or)
 {
-    sl_vm_insn_t insn;
     size_t fixup;
     
     compile_node(cs, node->left, dest);
     
     emit_opcode(cs, SL_OP_JUMP_IF);
-    insn.uint = 0x0000CAFE;
-    fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    fixup = emit_ip(cs, 0x0000cafe);
+    emit_reg(cs, dest);
     
     compile_node(cs, node->right, dest);
     
-    cs->section->insns[fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_unary_t, not)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->expr, dest);
     emit_opcode(cs, SL_OP_NOT);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_assign_var_t, assign_var)
 {
-    sl_vm_insn_t insn;
     size_t frame;
     sl_compile_state_t* xcs;
     size_t index;
@@ -806,18 +802,13 @@ NODE(sl_node_assign_var_t, assign_var)
         if(sl_st_lookup(xcs->vars, (sl_st_data_t)node->lval->name, (sl_st_data_t*)&index)) {
             if(frame == 0) {
                 emit_opcode(cs, SL_OP_MOV);
-                insn.uint = dest;
-                emit(cs, insn);
-                insn.uint = index;
-                emit(cs, insn);
+                emit_reg(cs, dest);
+                emit_reg(cs, index);
             } else {
                 emit_opcode(cs, SL_OP_SET_OUTER);
-                insn.uint = frame;
-                emit(cs, insn);
-                insn.uint = index;
-                emit(cs, insn);
-                insn.uint = dest;
-                emit(cs, insn);
+                emit_frame_no(cs, frame);
+                emit_reg(cs, index);
+                emit_reg(cs, dest);
                 mark_upper_scopes_as_closure_unsafe(cs, frame);
             }
             return;
@@ -829,30 +820,23 @@ NODE(sl_node_assign_var_t, assign_var)
 
 NODE(sl_node_assign_ivar_t, assign_ivar)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->rval, dest);
     emit_opcode(cs, SL_OP_SET_IVAR);
-    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name));
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name)));
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_assign_cvar_t, assign_cvar)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->rval, dest);
     emit_opcode(cs, SL_OP_SET_CVAR);
-    insn.id = sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name));
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, sl_intern2(cs->vm, sl_make_ptr((sl_object_t*)node->lval->name)));
+    emit_reg(cs, dest);
 }
 
 static void
-emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval, sl_node_base_t* rval, sl_vm_opcode_t opcode, size_t dest)
+op_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval, sl_node_base_t* rval, sl_vm_opcode_t opcode, size_t dest)
 {
-    sl_vm_insn_t insn;
     size_t arg_base, receiver = reg_alloc(cs);
     size_t fixup, i;
     
@@ -864,41 +848,36 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     }
     
     /* compile the lval */
-    emit_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
+    op_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
 
     emit_opcode(cs, opcode); /* SL_OP_JUMP_{IF, UNLESS} */
-    insn.uint = 0xdeafbeef;
-    fixup = emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    fixup = emit_ip(cs, 0xdeadbeef);
+    emit_reg(cs, dest);
     
     /* compile the rval */
     compile_node(cs, rval, arg_base + lval->arg_count);
 
     /* call the = version of the method to assign the value back */
     SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, lval->id), sl_make_cstring(cs->vm, "="));
-    emit_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, lval->arg_count + 1, dest);
+    op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, lval->arg_count + 1, dest);
     
     /* move the rval back to dest reg */
     emit_opcode(cs, SL_OP_MOV);
-    insn.uint = arg_base + lval->arg_count;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, arg_base + lval->arg_count);
+    emit_reg(cs, dest);
     
-    cs->section->insns[fixup].uint = cs->section->insns_count;
+    insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_assign_send_t, assign_send)
 {
-    sl_vm_insn_t insn;
     size_t arg_base, i, receiver;
     
     if(node->op_method && strcmp(node->op_method, "||") == 0) {
-        emit_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_IF, dest);
+        op_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_IF, dest);
         return;
     } else if(node->op_method && strcmp(node->op_method, "&&") == 0) {
-        emit_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_UNLESS, dest);
+        op_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_UNLESS, dest);
         return;
     }
     
@@ -915,23 +894,21 @@ NODE(sl_node_assign_send_t, assign_send)
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
     } else {
         /* compile the lval */
-        emit_send(cs, receiver, node->lval->id, arg_base, node->lval->arg_count, dest);
+        op_send(cs, receiver, node->lval->id, arg_base, node->lval->arg_count, dest);
         
         /* compile the rval */
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
         
-        emit_send(cs, dest, sl_intern(cs->vm, node->op_method), arg_base + node->lval->arg_count, 1, arg_base + node->lval->arg_count);
+        op_send(cs, dest, sl_intern(cs->vm, node->op_method), arg_base + node->lval->arg_count, 1, arg_base + node->lval->arg_count);
     }
     
     /* call the = version of the method to assign the value back */
     SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, node->lval->id), sl_make_cstring(cs->vm, "="));
-    emit_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, node->lval->arg_count + 1, dest);
+    op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, node->lval->arg_count + 1, dest);
     
     emit_opcode(cs, SL_OP_MOV);
-    insn.uint = arg_base + node->lval->arg_count;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, arg_base + node->lval->arg_count);
+    emit_reg(cs, dest);
     
     reg_free(cs, receiver);
     reg_free_block(cs, arg_base, node->lval->arg_count + 1);
@@ -939,7 +916,6 @@ NODE(sl_node_assign_send_t, assign_send)
 
 NODE(sl_node_assign_const_t, assign_const)
 {
-    sl_vm_insn_t insn;
     size_t reg;
     if(node->lval->obj) {
         /* SL_OP_SET_OBJECT_CONST */
@@ -947,39 +923,30 @@ NODE(sl_node_assign_const_t, assign_const)
         compile_node(cs, node->lval->obj, reg);
         compile_node(cs, node->rval, dest);
         emit_opcode(cs, SL_OP_SET_OBJECT_CONST);
-        insn.uint = reg;
-        emit(cs, insn);
-        insn.id = node->lval->id;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_reg(cs, reg);
+        emit_id(cs, node->lval->id);
+        emit_reg(cs, dest);
         reg_free(cs, reg);
     } else {
         /* SL_OP_SET_CONST */
         compile_node(cs, node->rval, dest);
         emit_opcode(cs, SL_OP_SET_CONST);
-        insn.id = node->lval->id;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_id(cs, node->lval->id);
+        emit_reg(cs, dest);
     }
 }
 
 NODE(sl_node_assign_array_t, assign_array)
 {
-    sl_vm_insn_t insn;
     size_t dump_regs, i;
     dump_regs = reg_alloc_block(cs, node->lval->node_count);
     
     compile_node(cs, node->rval, dest);
     
     emit_opcode(cs, SL_OP_ARRAY_DUMP);
-    insn.uint = dest;
-    emit(cs, insn);
-    insn.uint = node->lval->node_count;
-    emit(cs, insn);
-    insn.uint = dump_regs;
-    emit(cs, insn);
+    emit_reg(cs, dest);
+    emit_reg_count(cs, node->lval->node_count);
+    emit_reg(cs, dump_regs);
     
     for(i = 0; i < node->lval->node_count; i++) {
         emit_assignment(cs, node->lval->nodes[i], dump_regs + i);
@@ -999,25 +966,22 @@ NODE(sl_node_mutate_t, prefix_mutate)
         for(size_t i = 0; i < send->arg_count; i++) {
             compile_node(cs, send->args[i], args_regs + i);
         }
-        emit_send(cs, recv, send->id, args_regs, send->arg_count, dest);
+        op_send(cs, recv, send->id, args_regs, send->arg_count, dest);
         
-        emit_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
+        op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
         
         SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
-        emit_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
+        op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
         
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
         
-        sl_vm_insn_t insn;
         emit_opcode(cs, SL_OP_MOV);
-        insn.uint = args_regs + send->arg_count;
-        emit(cs, insn);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_reg(cs, args_regs + send->arg_count);
+        emit_reg(cs, dest);
     } else {
         compile_node(cs, node->lval, dest);
-        emit_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, dest);
+        op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, dest);
         emit_assignment(cs, node->lval, dest);
     }
 }
@@ -1033,19 +997,19 @@ NODE(sl_node_mutate_t, postfix_mutate)
         for(size_t i = 0; i < send->arg_count; i++) {
             compile_node(cs, send->args[i], args_regs + i);
         }
-        emit_send(cs, recv, send->id, args_regs, send->arg_count, dest);
+        op_send(cs, recv, send->id, args_regs, send->arg_count, dest);
         
-        emit_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
+        op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
         
         SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
-        emit_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
+        op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
         
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
     } else {
         size_t temp_reg = reg_alloc(cs);
         compile_node(cs, node->lval, dest);
-        emit_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, temp_reg);
+        op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, temp_reg);
         emit_assignment(cs, node->lval, temp_reg);
         reg_free(cs, temp_reg);
     }
@@ -1053,51 +1017,40 @@ NODE(sl_node_mutate_t, postfix_mutate)
 
 NODE(sl_node_array_t, array)
 {
-    sl_vm_insn_t insn;
     size_t i, reg_base = reg_alloc_block(cs, node->node_count);
     for(i = 0; i < node->node_count; i++) {
         compile_node(cs, node->nodes[i], reg_base + i);
     }
     emit_opcode(cs, SL_OP_ARRAY);
-    insn.uint = node->node_count;
-    emit(cs, insn);
-    insn.uint = reg_base;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg_count(cs, node->node_count);
+    emit_reg(cs, reg_base);
+    emit_reg(cs, dest);
     reg_free_block(cs, reg_base, node->node_count);
 }
 
 NODE(sl_node_dict_t, dict)
 {
-    sl_vm_insn_t insn;
     size_t i, reg_base = reg_alloc_block(cs, node->node_count * 2);
     for(i = 0; i < node->node_count; i++) {
         compile_node(cs, node->keys[i], reg_base + i * 2);
         compile_node(cs, node->vals[i], reg_base + i * 2 + 1);
     }
     emit_opcode(cs, SL_OP_DICT);
-    insn.uint = node->node_count;
-    emit(cs, insn);
-    insn.uint = reg_base;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg_count(cs, node->node_count);
+    emit_reg(cs, reg_base);
+    emit_reg(cs, dest);
     reg_free_block(cs, reg_base, node->node_count * 2);
 }
 
 NODE(sl_node_unary_t, return)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->expr, dest);
     emit_opcode(cs, SL_OP_RETURN);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_range_t, range)
 {
-    sl_vm_insn_t insn;
     size_t left = dest, right = reg_alloc(cs);
     compile_node(cs, node->left, left);
     compile_node(cs, node->right, right);
@@ -1106,18 +1059,14 @@ NODE(sl_node_range_t, range)
     } else {
         emit_opcode(cs, SL_OP_RANGE);
     }
-    insn.uint = left;
-    emit(cs, insn);
-    insn.uint = right;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, left);
+    emit_reg(cs, right);
+    emit_reg(cs, dest);
     reg_free(cs, right);
 }
 
 NODE(sl_node_base_t, next)
 {
-    sl_vm_insn_t insn;
     fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
     fixup->next = cs->next_last_frames->next_fixups;
     cs->next_last_frames->next_fixups = fixup;
@@ -1125,8 +1074,7 @@ NODE(sl_node_base_t, next)
         emit_opcode(cs, SL_OP_END_TRY);
     }
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = 0x0000CAFE;
-    fixup->fixup = emit(cs, insn);
+    fixup->fixup = emit_ip(cs, 0x0000cafe);
     
     (void)node;
     (void)dest;
@@ -1134,7 +1082,6 @@ NODE(sl_node_base_t, next)
 
 NODE(sl_node_base_t, last)
 {
-    sl_vm_insn_t insn;
     fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
     fixup->next = cs->next_last_frames->last_fixups;
     cs->next_last_frames->last_fixups = fixup;
@@ -1142,8 +1089,7 @@ NODE(sl_node_base_t, last)
         emit_opcode(cs, SL_OP_END_TRY);
     }
     emit_opcode(cs, SL_OP_JUMP);
-    insn.uint = 0x0000CAFE;
-    fixup->fixup = emit(cs, insn);
+    fixup->fixup = emit_ip(cs, 0x0000cafe);
     
     (void)node;
     (void)dest;
@@ -1151,11 +1097,9 @@ NODE(sl_node_base_t, last)
 
 NODE(sl_node_unary_t, throw)
 {
-    sl_vm_insn_t insn;
     compile_node(cs, node->expr, dest);
     emit_opcode(cs, SL_OP_THROW);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node_base_t, yada_yada)
@@ -1167,29 +1111,22 @@ NODE(sl_node_base_t, yada_yada)
 
 NODE(sl_node_const_t, use)
 {
-    sl_vm_insn_t insn;
     if(node->obj) {
         compile_node(cs, node->obj, dest);
         emit_opcode(cs, SL_OP_USE);
-        insn.uint = dest;
-        emit(cs, insn);
+        emit_reg(cs, dest);
     } else {
         emit_opcode(cs, SL_OP_USE_TOP_LEVEL);
     }
-    insn.id = node->id;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_id(cs, node->id);
+    emit_reg(cs, dest);
 }
 
 NODE(sl_node__register_t, _register)
 {
-    sl_vm_insn_t insn;
     emit_opcode(cs, SL_OP_MOV);
-    insn.uint = node->reg;
-    emit(cs, insn);
-    insn.uint = dest;
-    emit(cs, insn);
+    emit_reg(cs, node->reg);
+    emit_reg(cs, dest);
 }
 
 #define COMPILE(type, caps, name) case SL_NODE_##caps: compile_##name(cs, (type*)node, dest); return;
@@ -1197,15 +1134,13 @@ NODE(sl_node__register_t, _register)
 static void
 emit_line_trace(sl_compile_state_t* cs, sl_node_base_t* node)
 {
-    sl_vm_insn_t insn;
     if(node->line != cs->last_line && node->line != 0) {
         if(cs->emitted_line_trace) {
-            cs->section->insns[cs->section->insns_count - 1].uint = node->line;
+            insn_at_ip(cs, cs->section->insns_byte_count - sizeof(uint16_t))->uint16 = node->line;
         } else {
             cs->last_line = node->line;
             emit_opcode(cs, SL_OP_LINE_TRACE);
-            insn.uint = node->line;
-            emit(cs, insn);
+            emit_line_no(cs, node->line);
         }
     }
 }
@@ -1263,7 +1198,6 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
 sl_vm_section_t*
 sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
 {
-    sl_vm_insn_t insn;
     sl_compile_state_t cs;
     init_compile_state(&cs, vm, NULL, 1);
     cs.section->filename = filename;
@@ -1272,8 +1206,7 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
     compile_node(&cs, ast, 0);
     
     emit_opcode(&cs, SL_OP_RETURN);
-    insn.uint = 0;
-    emit(&cs, insn);
+    emit_reg(&cs, 0);
     
     return cs.section;
 }

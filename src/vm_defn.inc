@@ -40,16 +40,16 @@ INSTRUCTION(SL_OP_MOV, {
 })
 
 /*  0: GET_OUTER
-    1: <uint:frame_count>
-    2: <uint:register_index>
+    1: <uint16:frame_count>
+    2: <uint16:register_index>
     3: <reg:local> */
 INSTRUCTION(SL_OP_GET_OUTER, {
-    size_t frame_count = NEXT_UINT();
+    uint16_t frame_count = NEXT_UINT16();
     sl_vm_exec_ctx_t* parent_ctx = ctx;
     while(frame_count--) {
         parent_ctx = parent_ctx->parent;
     }
-    size_t register_index = NEXT_UINT();
+    uint16_t register_index = NEXT_UINT16();
     NEXT_REG() = parent_ctx->registers[register_index];
 })
 
@@ -107,16 +107,16 @@ INSTRUCTION(SL_OP_GET_OBJECT_CONST, {
 })
 
 /*  0: SET_OUTER
-    1: <uint:frame_count>
-    2: <uint:register_index>
+    1: <uint16:frame_count>
+    2: <uint16:register_index>
     3: <reg:value> */
 INSTRUCTION(SL_OP_SET_OUTER, {
-    size_t frame_count = NEXT_UINT();
+    int frame_count = NEXT_UINT16();
     sl_vm_exec_ctx_t* lookup_ctx = ctx;
     while(frame_count--) {
         lookup_ctx = lookup_ctx->parent;
     }
-    size_t register_index = NEXT_UINT();
+    int register_index = NEXT_UINT16();
     lookup_ctx->registers[register_index] = NEXT_REG();
 })
 
@@ -164,7 +164,7 @@ INSTRUCTION(SL_OP_IMMEDIATE, {
 
 /*  0: SEND
     1: <reg:object>
-    2: <ic:inline_cache>
+    2: <imc:inline_cache>
     3: <reg:first_arg> // arguments must be in a contiguous register region
     4: <reg:dest> */
 INSTRUCTION(SL_OP_SEND, {
@@ -180,17 +180,17 @@ INSTRUCTION(SL_OP_SEND, {
 })
 
 /*  0: JUMP
-    1: <uint:ip> */
+    1: <uint32:ip> */
 INSTRUCTION(SL_OP_JUMP, {
-    size_t new_ip = NEXT_UINT();
+    size_t new_ip = NEXT_UINT32();
     ip = new_ip;
 })
 
 /*  0: JUMP_IF
-    1: <uint:ip>
+    1: <uint32:ip>
     2: <reg:condition> */
 INSTRUCTION(SL_OP_JUMP_IF, {
-    size_t branch_ip = NEXT_UINT();
+    size_t branch_ip = NEXT_UINT32();
     SLVAL val = NEXT_REG();
     if(sl_is_truthy(val)) {
         ip = branch_ip;
@@ -198,10 +198,10 @@ INSTRUCTION(SL_OP_JUMP_IF, {
 })
 
 /*  0: JUMP_UNLESS
-    1: <uint:ip>
+    1: <uint32:ip>
     2: <reg:condition> */
 INSTRUCTION(SL_OP_JUMP_UNLESS, {
-    size_t branch_ip = NEXT_UINT();
+    size_t branch_ip = NEXT_UINT32();
     SLVAL val = NEXT_REG();
     if(!sl_is_truthy(val)) {
         ip = branch_ip;
@@ -257,22 +257,22 @@ INSTRUCTION(SL_OP_SELF, {
 })
 
 /*  0: ARRAY
-    1: <uint:count>
+    1: <uint16:count>
     2: <reg:first_element>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_ARRAY, {
-    size_t count = NEXT_UINT();
+    size_t count = NEXT_UINT16();
     SLVAL* elements = &NEXT_REG();
     NEXT_REG() = sl_make_array(vm, count, elements);
 })
 
 /*  0: ARRAY_DUMP
     1: <reg:array>
-    2: <uint:count>
+    2: <uint16:count>
     3: <reg:first_element> */
 INSTRUCTION(SL_OP_ARRAY_DUMP, {
     SLVAL ary = NEXT_REG();
-    size_t count = NEXT_UINT();
+    size_t count = NEXT_UINT16();
     SLVAL* registers = &NEXT_REG();
     if(sl_is_a(vm, ary, vm->lib.Array)) {
         for(size_t j = 0; j < count; j++) {
@@ -289,11 +289,11 @@ INSTRUCTION(SL_OP_ARRAY_DUMP, {
 })
 
 /*  0: DICT
-    1: <uint:count>
+    1: <uint16:count>
     2: <reg:first_element>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_DICT, {
-    size_t count = NEXT_UINT();
+    size_t count = NEXT_UINT16();
     SLVAL* key_values = &NEXT_REG();
     NEXT_REG() = sl_make_dict(vm, count, key_values);
 })
@@ -326,9 +326,9 @@ INSTRUCTION(SL_OP_RANGE_EX, {
 })
 
 /*  0: LINE_TRACE
-    1: <uint:line> */
+    1: <uint16:line> */
 INSTRUCTION(SL_OP_LINE_TRACE, {
-    line = NEXT_UINT();
+    line = NEXT_UINT16();
 })
 
 /*  0: ABORT */
@@ -343,11 +343,11 @@ INSTRUCTION(SL_OP_THROW, {
 })
 
 /*  0: TRY
-    1: <uint:catch_ip> */
+    1: <uint32:catch_ip> */
 INSTRUCTION(SL_OP_TRY, {
     sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
     eh->prev = exception_handler;
-    eh->catch_ip = NEXT_UINT();
+    eh->catch_ip = NEXT_UINT32();
     exception_handler = eh;
 })
 
@@ -418,10 +418,10 @@ INSTRUCTION(SL_OP_USE_TOP_LEVEL, {
 
 /*  0: BUILD_STRING
     1: <reg:base_reg>
-    2: <uint:reg_count>
+    2: <uint16:reg_count>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_BUILD_STRING, {
     SLVAL* base = &NEXT_REG();
-    size_t count = NEXT_UINT();
+    uint16_t count = NEXT_UINT16();
     NEXT_REG() = vm_helper_build_string(vm, base, count);
 })
