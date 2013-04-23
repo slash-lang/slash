@@ -84,4 +84,10 @@ class TestObject extends Test {
         o.set_instance_variable('foo, 456);
         assert_equal(456, o.x);
     }
+
+    def test_is_an {
+        assert([].is_an(Array));
+        assert(42.is_an(Int));
+        refute(nil.is_an(Error));
+    }
 }

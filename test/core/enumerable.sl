@@ -65,6 +65,7 @@ class EnumerableTest extends Test {
         assert_equal(0, [].reduce(0, \(a,b) {}));
         assert_equal(6, [1,2,3].reduce(\(a,b) { a + b }));
         assert_equal(10, [1,2,3].reduce(4, \(a,b) { a + b }));
+        assert_equal(10, [1,2,3].fold(4, \(a,b) { a + b }));
     }
     
     def test_join {

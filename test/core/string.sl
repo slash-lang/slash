@@ -16,6 +16,7 @@ class StringTest extends Test {
         assert_equal("", "" + "");
         assert_equal("foobar", "foo" + "bar");
         assert_equal("АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ", "АБВГДЕЖЗИЙКЛМНО" + "ПРСТУФХЦЧШЩЪЫЬЭЮЯ");
+        assert_equal("helloworld", "hello".concat("world"));
     }
     
     def test_times {

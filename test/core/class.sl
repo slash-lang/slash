@@ -118,4 +118,17 @@ class ClassTest extends Test {
         o = Object.new;
         assert(o.singleton_class.has_instance(o));
     }
+
+    def test_remove_constant {
+        \{ SOME_CONSTANT = 1234 }.call_with_self(Object);
+        assert_equal(1234, SOME_CONSTANT);
+        Object.remove_constant('SOME_CONSTANT);
+        assert_throws(NameError, \{ SOME_CONSTANT });
+    }
+
+    def test_file_path {
+        assert_equal("string", String.file_path);
+        assert_equal("class_test", ClassTest.file_path);
+        assert_equal("class_test/foo", ClassTest::Foo.file_path);
+    }
 }
