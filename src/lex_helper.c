@@ -1,6 +1,7 @@
 #include <slash/lex.h>
 #include <slash/utf8.h>
 #include <slash/mem.h>
+#include <slash/string.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -97,8 +98,8 @@ sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
 void
 sl_lex_error(sl_lex_state_t* st, char* text, int lineno)
 {
-    size_t filename_len = strlen((char*)st->filename);
-    char* buff = sl_alloc(st->vm->arena, 128 + filename_len);
-    sprintf(buff, "Unexpected character '%c' in %s, line %d", text[0] /* todo utf 8 fix :\ */, st->filename, lineno);
-    sl_throw_message2(st->vm, st->vm->lib.SyntaxError, buff);
+    SLVAL msg = sl_make_formatted_string(st->vm, "Unexpected character '%s'", text);
+    SLVAL err = sl_make_error2(st->vm, st->vm->lib.SyntaxError, msg);
+    sl_error_add_frame(st->vm, err, sl_make_cstring(st->vm, "<lexer>"), sl_make_cstring(st->vm, (char*)st->filename), sl_make_int(st->vm, lineno));
+    sl_throw(st->vm, err);
 }
