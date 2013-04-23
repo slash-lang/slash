@@ -23,8 +23,14 @@ class TestError extends Test {
             assert_equal("test_backtrace", e.backtrace[4].method);
         }
     }
+
+    def test_backtrace_function {
+        assert_is_a(Array, backtrace());
+        assert_equal("test_backtrace_function", backtrace().first.method);
+    }
     
     def test_stack_overflow_error {
+        # FIXME: this test takes 200ms
         f = \{ f.call; };
         assert_throws(StackOverflowError, f);
     }
