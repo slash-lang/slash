@@ -49,9 +49,9 @@ internal_error_add_frame(struct sl_vm* vm, sl_error_t* error, SLVAL method, SLVA
 }
 
 static void
-build_backtrace(sl_vm_t* vm, sl_error_t* err)
+build_backtrace(sl_vm_t* vm, sl_error_t* err, sl_vm_frame_t* frame)
 {
-    for(sl_vm_frame_t* frame = vm->call_stack; frame; frame = frame->prev) {
+    for(; frame; frame = frame->prev) {
         if(frame->frame_type == SL_VM_FRAME_SLASH) {
             internal_error_add_frame(vm, err,
                 sl_id_to_string(vm, frame->as.call_frame.method),
@@ -187,7 +187,7 @@ static SLVAL
 f_backtrace(sl_vm_t* vm)
 {
     sl_error_t* err = get_error(vm, sl_allocate(vm, vm->lib.Error));
-    build_backtrace(vm, err);
+    build_backtrace(vm, err, vm->call_stack->prev);
     return err->backtrace;
 }
 
@@ -265,7 +265,7 @@ sl_unwind(sl_vm_t* vm, SLVAL value, sl_unwind_type_t type)
 void
 sl_throw(sl_vm_t* vm, SLVAL error)
 {
-    build_backtrace(vm, get_error(vm, error));
+    build_backtrace(vm, get_error(vm, error), vm->call_stack);
     sl_unwind(vm, error, SL_UNWIND_EXCEPTION);
 }
 
