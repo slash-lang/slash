@@ -203,6 +203,22 @@ if(compile("", "#include <unistd.h>\nint main(){}")) {
     print "failed\n";
 }
 
+print "Checking for -Wno-gnu... ";
+if(compile("-Wno-gnu", "int main() {}")) {
+    print "ok\n";
+    $CFLAGS .= " -Wno-gnu";
+} else {
+    print "failed\n";
+}
+
+print "Checking for computed goto... ";
+if(compile("", "int main() { void* x = &&y; goto *x; y: exit(0); }")) {
+    print "ok\n";
+    $CFLAGS .= " -DSL_HAS_COMPUTED_GOTO";
+} else {
+    print "failed\n";
+}
+
 open my $mf, ">$path/local.mk";
 
 print $mf "CC=$ENV{CC}\n";

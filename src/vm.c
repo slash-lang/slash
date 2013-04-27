@@ -19,6 +19,9 @@ void
 sl_static_init_exts();
 
 void
+sl_static_init_vm_internals();
+
+void
 sl_static_init()
 {
     if(sl_statically_initialized) {
@@ -26,6 +29,7 @@ sl_static_init()
     }
     sl_statically_initialized = 1;
     sl_static_init_exts();
+    sl_static_init_vm_internals();
 }
 
 #define LIB(lib) void sl_init_##lib(sl_vm_t*)
