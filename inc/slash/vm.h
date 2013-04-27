@@ -157,6 +157,8 @@ sl_vm_t;
 #define SL_OP_USE_TOP_LEVEL         41
 #define SL_OP_BUILD_STRING          42
 
+#define SL_OP__MAX_OPCODE           43
+
 typedef uint8_t sl_vm_opcode_t;
 
 typedef struct sl_vm_inline_method_cache {
@@ -181,6 +183,7 @@ typedef uint16_t sl_vm_reg_t;
 
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
+    void*                           threaded_opcode;
     sl_vm_reg_t                     reg;
     uint32_t                        ip;
     uint16_t                        uint16;

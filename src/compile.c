@@ -157,12 +157,25 @@ gc_list_add(sl_compile_state_t* cs, sl_vm_insn_t insn)
     cs->section->gc_list[cs->section->gc_list_count++] = insn;
 }
 
+#ifdef SL_HAS_COMPUTED_GOTO
+extern void*
+sl_vm_op_addresses[];
+
+static size_t
+emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
+{
+    cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
+    void* addr = sl_vm_op_addresses[opcode];
+    return emit(cs, &addr, sizeof(addr));
+}
+#else
 static size_t
 emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
     cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
     return emit(cs, &opcode, sizeof(opcode));
 }
+#endif
 
 static size_t
 emit_reg(sl_compile_state_t* cs, sl_vm_reg_t reg)

@@ -12,6 +12,7 @@
 #include <slash/lib/lambda.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 static SLVAL
 vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section);
@@ -27,15 +28,16 @@ vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
 #define NEXT(type) (*(type*)&ctx->section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
 
-#define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
-#define NEXT_IMM()      (NEXT(SLVAL))
-#define NEXT_UINT32()   (NEXT(uint32_t))
-#define NEXT_UINT16()   (NEXT(uint16_t))
-#define NEXT_IMC()      (NEXT(sl_vm_inline_method_cache_t*))
-#define NEXT_ICC()      (NEXT(sl_vm_inline_constant_cache_t*))
-#define NEXT_ID()       (NEXT(SLID))
-#define NEXT_REG_IDX()  (NEXT(sl_vm_reg_t))
-#define NEXT_SECTION()  (NEXT(sl_vm_section_t*))
+#define NEXT_OPCODE()           (NEXT(sl_vm_opcode_t))
+#define NEXT_THREADED_OPCODE()  (NEXT(void*))
+#define NEXT_IMM()              (NEXT(SLVAL))
+#define NEXT_UINT32()           (NEXT(uint32_t))
+#define NEXT_UINT16()           (NEXT(uint16_t))
+#define NEXT_IMC()              (NEXT(sl_vm_inline_method_cache_t*))
+#define NEXT_ICC()              (NEXT(sl_vm_inline_constant_cache_t*))
+#define NEXT_ID()               (NEXT(SLID))
+#define NEXT_REG_IDX()          (NEXT(sl_vm_reg_t))
+#define NEXT_SECTION()          (NEXT(sl_vm_section_t*))
 
 #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
 
@@ -49,9 +51,35 @@ typedef struct sl_vm_exception_handler {
 }
 sl_vm_exception_handler_t;
 
+#ifdef SL_HAS_COMPUTED_GOTO
+static sl_vm_exec_ctx_t dummy_ctx;
+
+void*
+sl_vm_op_addresses[SL_OP__MAX_OPCODE];
+#endif
+
+void
+sl_static_init_vm_internals()
+{
+#ifdef SL_HAS_COMPUTED_GOTO
+    sl_vm_exec(&dummy_ctx, 0);
+#endif
+}
+
 SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
 {
+    #ifdef SL_HAS_COMPUTED_GOTO
+        // thanks for the tip JavaScriptCore...
+        if(sl_unlikely(ctx == &dummy_ctx)) {
+            #undef INSTRUCTION
+            #define INSTRUCTION(opcode, code) sl_vm_op_addresses[opcode] = &&vm_op_##opcode;
+            #include "vm_defn.inc"
+            SLVAL dummy = { 0 };
+            return dummy;
+        }
+    #endif
+
     int line = 0;
     sl_vm_t* vm = ctx->vm;
     sl_vm_exception_handler_t* volatile exception_handler = NULL;
@@ -85,19 +113,30 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
         }
     }
 
-    while(1) {
-        switch(NEXT_OPCODE()) {
-            #undef INSTRUCTION
-            #define INSTRUCTION(opcode, code) \
-                case opcode: { \
-                    code; \
-                } break;
-            #include "vm_defn.inc"
-            
-            default:
-                sl_throw_message(vm, "BUG: Unknown opcode in VM"); /* should never be reached */
+    #ifdef SL_HAS_COMPUTED_GOTO
+        goto *NEXT_THREADED_OPCODE();
+
+        #undef INSTRUCTION
+        #define INSTRUCTION(opcode, code) \
+            vm_op_##opcode: \
+            code; \
+            goto *NEXT_THREADED_OPCODE();
+        #include "vm_defn.inc"
+    #else
+        while(1) {
+            switch(NEXT_OPCODE()) {
+                #undef INSTRUCTION
+                #define INSTRUCTION(opcode, code) \
+                    case opcode: { \
+                        code; \
+                    } break;
+                #include "vm_defn.inc"
+
+                default:
+                    abort();
+            }
         }
-    }
+    #endif
 }
 
 /* helper functions */
