@@ -35,7 +35,7 @@ dict_key_hash(sl_vm_t* vm, SLVAL a)
     return sl_hash(vm, a);
 }
 
-static struct sl_st_hash_type
+struct sl_st_hash_type
 dict_hash_type = { dict_key_cmp, dict_key_hash };
 
 static void
