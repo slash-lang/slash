@@ -151,6 +151,13 @@ class ArrayTest extends Test {
         assert_equal([1, 2, 3], [] + [1, 2, 3]);
         assert_equal([1, 2, 3, 4], [1, 2] + [3, 4]);
     }
+
+    def test_diff {
+        assert_equal([], [] - []);
+        assert_equal([1, 2, 3], [1, 2, 3] - [4, 5, 6]);
+        assert_equal([2], [1, 2, 3] - [1, 3]);
+        assert_equal([2], [1, 1, 2, 3] - [1, 3]);
+    }
     
     def test_resize {
         a = [];
