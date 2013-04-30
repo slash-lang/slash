@@ -46,6 +46,9 @@ SLVAL
 sl_array_concat(sl_vm_t* vm, SLVAL array, SLVAL other);
 
 SLVAL
+sl_array_diff(sl_vm_t* vm, SLVAL array, SLVAL other);
+
+SLVAL
 sl_array_join(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* joiner);
 
 #endif

@@ -252,6 +252,7 @@ sl_init_array(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Array, "sort", -1, sl_array_sort);
     sl_define_method(vm, vm->lib.Array, "concat", 1, sl_array_concat);
     sl_define_method(vm, vm->lib.Array, "+", 1, sl_array_concat);
+    sl_define_method(vm, vm->lib.Array, "-", 1, sl_array_diff);
     sl_define_method(vm, vm->lib.Array, "==", 1, sl_array_eq);
     sl_define_method(vm, vm->lib.Array, "join", -1, sl_array_join);
     
@@ -444,5 +445,35 @@ sl_array_concat(sl_vm_t* vm, SLVAL array, SLVAL other)
     new_ary->items = sl_alloc(vm->arena, sizeof(SLVAL) * new_ary->capacity);
     memcpy(new_ary->items, arrayp->items, sizeof(SLVAL) * arrayp->count);
     memcpy(new_ary->items + arrayp->count, otherp->items, sizeof(SLVAL) * otherp->count);
+    return sl_make_ptr((sl_object_t*)new_ary);
+}
+
+
+SLVAL
+sl_array_diff(sl_vm_t* vm, SLVAL array, SLVAL other)
+{
+    size_t i;
+    size_t j = 0;
+    sl_array_t* arrayp = get_array(vm, array);
+    sl_array_t* otherp = get_array(vm, other);
+    sl_array_t* new_ary = get_array(vm, sl_allocate(vm, vm->lib.Array));
+    sl_st_table_t* other_table = sl_st_init_table(vm, &dict_hash_type);
+
+    new_ary->capacity = arrayp->capacity;
+    new_ary->items = sl_alloc(vm->arena, sizeof(SLVAL) * new_ary->capacity);
+
+    for(i = 0; i < otherp->count; i++) {
+        sl_st_insert(other_table, (sl_st_data_t)sl_get_ptr(otherp->items[i]), (sl_st_data_t)1);
+    }
+
+    for(i = 0; i < arrayp->count; i++) {
+        if(!sl_st_lookup(other_table, (sl_st_data_t)sl_get_ptr(arrayp->items[i]), NULL)) {
+            new_ary->items[j] = arrayp->items[i];
+            j++;
+        }
+    }
+
+    new_ary->count = j;
+
     return sl_make_ptr((sl_object_t*)new_ary);
 }
