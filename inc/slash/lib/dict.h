@@ -3,6 +3,9 @@
 
 #include <slash.h>
 
+extern struct sl_st_hash_type
+dict_hash_type;
+
 SLVAL
 sl_make_dict(sl_vm_t* vm, size_t count, SLVAL* kvs);
 
