@@ -1,6 +1,5 @@
 $filename = shift;
-$filename =~ qr{/([^/]*)$};
-$symbol_name = $1;
+$symbol_name = $filename;
 $symbol_name =~ s/[^a-zA-Z_]/_/g;
 print "char* sl__$symbol_name = ";
 open FH, $filename;
