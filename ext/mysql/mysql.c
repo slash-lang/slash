@@ -116,9 +116,9 @@ sl_mysql_init(sl_vm_t* vm, SLVAL self, SLVAL host, SLVAL user, SLVAL password)
          *db_s = NULL;
     int  port_i = 3306,
          flag_i = CLIENT_IGNORE_SIGPIPE | CLIENT_MULTI_STATEMENTS;
-         
+
     mysql_t* mysql = (mysql_t*)sl_get_ptr(self);
-    
+
     if(sl_is_truthy(host)) {
         host_s = sl_to_cstr(vm, sl_expect(vm, host, vm->lib.String));
     }
@@ -128,17 +128,17 @@ sl_mysql_init(sl_vm_t* vm, SLVAL self, SLVAL host, SLVAL user, SLVAL password)
     if(sl_is_truthy(password)) {
         password_s = sl_to_cstr(vm, sl_expect(vm, password, vm->lib.String));
     }
-    
+
     if(!mysql_real_connect(&mysql->mysql, host_s, user_s, password_s, db_s, port_i, NULL, flag_i)) {
         sl_mysql_check_error(vm, &mysql->mysql);
     }
-    
+
     if(!mysql_set_character_set(&mysql->mysql, "utf8")) {
         sl_mysql_check_error(vm, &mysql->mysql);
     }
-    
+
     mysql->valid = 1;
-    
+
     return self;
 }
 
@@ -161,12 +161,12 @@ sl_mysql_prepare(sl_vm_t* vm, SLVAL self, SLVAL query)
     if(!(stmt->stmt = mysql_stmt_init(&mysql->mysql))) {
         sl_mysql_check_error(vm, &mysql->mysql);
     }
-    
+
     sl_string_t* str = sl_get_string(vm, query);
     if(mysql_stmt_prepare(stmt->stmt, (char*)str->buff, str->buff_len)) {
         sl_mysql_stmt_check_error(vm, stmt->stmt);
     }
-    
+
     return stmtv;
 }
 
@@ -186,11 +186,11 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         sprintf(buff, "Prepared statement has %lu parameter markers, but only %lu parameters were given", req, argc);
         sl_throw_message2(vm, vm->lib.ArgumentError, buff);
     }
-    
+
     if(!stmt->bind) {
         stmt->bind = sl_alloc(vm->arena, sizeof(MYSQL_BIND) * req);
     }
-    
+
     for(size_t i = 0; i < req; i++) {
         stmt->bind[i].buffer_type = MYSQL_TYPE_STRING;
         sl_string_t* str = sl_get_string(vm, sl_to_s(vm, argv[i]));
@@ -201,21 +201,21 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         stmt->bind[i].is_unsigned = 1;
         stmt->bind[i].error = NULL;
     }
-    
+
     if(mysql_stmt_bind_param(stmt->stmt, stmt->bind)) {
         sl_mysql_stmt_check_error(vm, stmt->stmt);
     }
-    
+
     if(mysql_stmt_execute(stmt->stmt)) {
         sl_mysql_stmt_check_error(vm, stmt->stmt);
     }
-    
+
     MYSQL_RES* res = mysql_stmt_result_metadata(stmt->stmt);
     if(!res) {
         /* query did not produce a result set */
         return sl_make_int(vm, mysql_stmt_affected_rows(stmt->stmt));
     }
-    
+
     int field_count = mysql_stmt_field_count(stmt->stmt);
     MYSQL_FIELD* field;
     SLVAL field_names[field_count];
@@ -230,7 +230,7 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         }
         field_i++;
     }
-    
+
     MYSQL_BIND output_binds[field_count];
     my_bool output_errors[field_count];
     my_bool output_is_nulls[field_count];
@@ -246,7 +246,7 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     if(mysql_stmt_bind_result(stmt->stmt, output_binds)) {
         sl_mysql_stmt_check_error(vm, stmt->stmt);
     }
-    
+
     SLVAL result_rows = sl_make_array(vm, 0, NULL);
     while(1) {
         int code = mysql_stmt_fetch(stmt->stmt);
@@ -288,7 +288,7 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
         }
         sl_array_push(vm, result_rows, 1, &row);
     }
-    
+
     return result_rows;
 }
 
@@ -303,11 +303,11 @@ sl_mysql_raw_query(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
     mysql_t* mysql = get_mysql(vm, self);
     sl_string_t* str = sl_get_string(vm, query);
-    
+
     if(mysql_real_query(&mysql->mysql, (char*)str->buff, str->buff_len)) {
         sl_mysql_check_error(vm, &mysql->mysql);
     }
-    
+
     MYSQL_RES* result;
     if((result = mysql_store_result(&mysql->mysql))) {
         /* do shit */
@@ -366,6 +366,9 @@ sl_mysql_insert_id(sl_vm_t* vm, SLVAL self)
     return sl_make_int(vm, mysql_insert_id(&mysql->mysql));
 }
 
+extern char*
+sl__ext_mysql_extensions_sl;
+
 void
 sl_init_ext_mysql(sl_vm_t* vm)
 {
@@ -378,16 +381,18 @@ sl_init_ext_mysql(sl_vm_t* vm)
     sl_define_method(vm, MySQL, "prepare", 1, sl_mysql_prepare);
     sl_define_method(vm, MySQL, "escape", 1, sl_mysql_escape);
     sl_define_method(vm, MySQL, "insert_id", 0, sl_mysql_insert_id);
-    
+
     MySQL_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, MySQL);
-    
+
     MySQL_Statement = sl_define_class3(vm, sl_intern(vm, "Statement"), vm->lib.Object, MySQL);
     sl_class_set_allocator(vm, MySQL_Statement, allocate_mysql_stmt);
     sl_define_method(vm, MySQL_Statement, "param_count", 0, sl_mysql_stmt_param_count);
     sl_define_method(vm, MySQL_Statement, "execute", -1, sl_mysql_stmt_execute);
     sl_define_method(vm, MySQL_Statement, "insert_id", 0, sl_mysql_stmt_insert_id);
-    
+
     sl_vm_store_put(vm, &cMySQL, MySQL);
     sl_vm_store_put(vm, &cMySQL_Error, MySQL_Error);
     sl_vm_store_put(vm, &cMySQL_Statement, MySQL_Statement);
+
+    sl_do_string(vm, (uint8_t*)sl__ext_mysql_extensions_sl, strlen(sl__ext_mysql_extensions_sl), "ext/mysql/extensions.sl", 0);
 }
