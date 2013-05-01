@@ -124,19 +124,19 @@ response_set_header(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
         resp->header_cap *= 2;
         resp->headers = sl_realloc(vm->arena, resp->headers, sizeof(sl_response_key_value_t) * resp->header_cap);
     }
-    
+
     h = sl_to_cstr(vm, name);
     if(strchr(h, '\n') || strchr(h, '\r')) {
         return vm->lib._false;
     }
     resp->headers[resp->header_count].name = h;
-    
+
     h = sl_to_cstr(vm, value);
     if(strchr(h, '\n') || strchr(h, '\r')) {
         return vm->lib._false;
     }
     resp->headers[resp->header_count].value = h;
-    
+
     resp->header_count++;
     return vm->lib._true;
 }
@@ -149,11 +149,11 @@ response_set_cookie(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
     sl_expect(vm, value, vm->lib.String);
     name = sl_string_url_encode(vm, name);
     value = sl_string_url_encode(vm, value);
-    
+
     header = name;
     header = sl_string_concat(vm, header, sl_make_cstring(vm, "="));
     header = sl_string_concat(vm, header, value);
-    
+
     return response_set_header(vm, self, sl_make_cstring(vm, "Set-Cookie"), header);
 }
 
@@ -213,7 +213,7 @@ response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
     return enabled;
 }
 
-extern char* sl__error_page_sl;
+extern char* sl__src_lib_error_page_sl;
 
 void
 sl_render_error_page(sl_vm_t* vm, SLVAL err)
@@ -224,7 +224,7 @@ sl_render_error_page(sl_vm_t* vm, SLVAL err)
     SLVAL caught_error;
     if(resp->descriptive_error_pages) {
         SL_TRY(frame, SL_UNWIND_EXCEPTION, {
-            SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__error_page_sl, strlen(sl__error_page_sl), "(error-page)", 0);
+            SLVAL error_lambda = sl_do_string(vm, (uint8_t*)sl__src_lib_error_page_sl, strlen(sl__src_lib_error_page_sl), "(error-page)", 0);
             sl_lambda_call(vm, error_lambda, 1, &err);
         }, caught_error, {
             sl_response_write(vm,
@@ -244,10 +244,10 @@ sl_init_response(sl_vm_t* vm)
 {
     SLVAL Response = sl_new(vm, vm->lib.Object, 0, NULL);
     sl_vm_store_put(vm, &Response_, Response);
-    
+
     sl_define_singleton_method(vm, Response, "write", -2, sl_response_write);
     sl_define_method(vm, vm->lib.Object, "print", -2, response_write);
-    
+
     sl_define_singleton_method(vm, Response, "flush", 0, sl_response_flush);
     sl_define_singleton_method(vm, Response, "unbuffer", 0, response_unbuffer);
     sl_define_singleton_method(vm, Response, "set_header", 2, response_set_header);
@@ -257,6 +257,6 @@ sl_init_response(sl_vm_t* vm)
     sl_define_singleton_method(vm, Response, "status=", 1, response_status_set);
     sl_define_singleton_method(vm, Response, "descriptive_error_pages", 0, response_descriptive_error_pages);
     sl_define_singleton_method(vm, Response, "descriptive_error_pages=", 1, response_descriptive_error_pages_set);
-    
+
     sl_class_set_const(vm, vm->lib.Object, "Response", Response);
 }
