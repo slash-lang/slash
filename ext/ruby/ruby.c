@@ -187,7 +187,7 @@ locked_sl_ruby_object_inspect(sl_vm_t* vm, void* vargs)
 {
     struct sl_ruby_object_inspect_args* args = vargs;
     VALUE ruby_inspected = rb_inspect(get_ruby_object(vm, args->self)->obj);
-    SLVAL slash_inspected = sl_make_string(vm, (uint8_t*)RSTRING_PTR(inspected), RSTRING_LEN(inspected));
+    SLVAL slash_inspected = sl_make_string(vm, (uint8_t*)RSTRING_PTR(ruby_inspected), RSTRING_LEN(ruby_inspected));
 
     args->ret = sl_make_formatted_string(vm, "#<Ruby: %V>", slash_inspected);
 }
@@ -261,8 +261,7 @@ void Init_enc();
 
 #define SIGNAL_COUNT_ASSUMPTION 32
 
-static int
-saved_signals[SIGNAL_COUNT_ASSUMPTION];
+static void(*saved_signals[SIGNAL_COUNT_ASSUMPTION])(int);
 
 static void
 save_signals()
