@@ -135,6 +135,33 @@ if_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+switch_expression(sl_parse_state_t* ps)
+{
+    expect_token(ps, SL_TOK_SWITCH);
+    sl_node_base_t* value = expression(ps);
+    expect_token(ps, SL_TOK_OPEN_BRACE);
+    size_t case_count = 0, case_cap = 2;
+    sl_node_switch_case_t* cases = sl_alloc(ps->vm->arena, sizeof(sl_node_switch_case_t) * case_cap);
+    sl_node_base_t* else_body = NULL;
+    while(peek_token(ps)->type != SL_TOK_CLOSE_BRACE) {
+        if(peek_token(ps)->type == SL_TOK_ELSE) {
+            next_token(ps);
+            else_body = body_expression(ps);
+            break;
+        }
+        if(case_count + 1 >= case_cap) {
+            case_cap *= 2;
+            cases = sl_realloc(ps->vm->arena, cases, sizeof(sl_node_switch_case_t) * case_cap);
+        }
+        cases[case_count].value = expression(ps);
+        cases[case_count].body = body_expression(ps);
+        case_count++;
+    }
+    expect_token(ps, SL_TOK_CLOSE_BRACE);
+    return sl_make_switch_node(ps, value, case_count, cases, else_body);
+}
+
+static sl_node_base_t*
 while_expression(sl_parse_state_t* ps)
 {
     sl_node_base_t *condition, *body;
@@ -587,6 +614,8 @@ primary_expression(sl_parse_state_t* ps)
         case SL_TOK_IF:
         case SL_TOK_UNLESS:
             return if_expression(ps);
+        case SL_TOK_SWITCH:
+            return switch_expression(ps);
         case SL_TOK_WHILE:
         case SL_TOK_UNTIL:
             return while_expression(ps);
@@ -1096,6 +1125,8 @@ statement(sl_parse_state_t* ps)
         case SL_TOK_IF:
         case SL_TOK_UNLESS:
             return if_expression(ps);
+        case SL_TOK_SWITCH:
+            return switch_expression(ps);
         case SL_TOK_FOR:
             return for_expression(ps);
         case SL_TOK_WHILE:

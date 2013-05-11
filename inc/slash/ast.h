@@ -19,6 +19,7 @@ typedef enum sl_node_type {
     SL_NODE_LAMBDA,
     SL_NODE_TRY,
     SL_NODE_IF,
+    SL_NODE_SWITCH,
     SL_NODE_FOR,
     SL_NODE_WHILE,
     SL_NODE_SEND,
@@ -140,6 +141,21 @@ typedef struct sl_node_if {
     sl_node_base_t* else_body;
 }
 sl_node_if_t;
+
+typedef struct sl_node_switch_case {
+    sl_node_base_t* value;
+    sl_node_base_t* body;
+}
+sl_node_switch_case_t;
+
+typedef struct sl_node_switch {
+    sl_node_base_t base;
+    sl_node_base_t* value;
+    size_t case_count;
+    sl_node_switch_case_t* cases;
+    sl_node_base_t* else_body;
+}
+sl_node_switch_t;
 
 typedef struct sl_node_for {
     sl_node_base_t base;
