@@ -92,22 +92,15 @@ class Parser {
     }
 
     def _parse_char(char) {
-        if char == ">" {
-            _add(AST::Next.new);
-        } elsif char == "<" {
-            _add(AST::Prev.new);
-        } elsif char == "+" {
-            _add(AST::Inc.new);
-        } elsif char == "-" {
-            _add(AST::Dec.new);
-        } elsif char == "." {
-            _add(AST::Output.new);
-        } elsif char == "," {
-            _add(AST::Input.new);
-        } elsif char == "[" {
-            _open_loop();
-        } elsif char == "]" {
-            _close_loop();
+        switch char {
+            ">" { _add(AST::Next.new); }
+            "<" { _add(AST::Prev.new); }
+            "+" { _add(AST::Inc.new); }
+            "-" { _add(AST::Dec.new); }
+            "." { _add(AST::Output.new); }
+            "," { _add(AST::Input.new); }
+            "[" { _open_loop(); }
+            "]" { _close_loop(); }
         }
     }
 
