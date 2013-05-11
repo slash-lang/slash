@@ -90,6 +90,9 @@ sl_node_base_t*
 sl_make_if_node(sl_parse_state_t* ps, sl_node_base_t* cond, sl_node_base_t* if_true, sl_node_base_t* if_false);
 
 sl_node_base_t*
+sl_make_switch_node(sl_parse_state_t* ps, sl_node_base_t* value, size_t case_count, sl_node_switch_case_t* cases, sl_node_base_t* else_body);
+
+sl_node_base_t*
 sl_make_while_node(sl_parse_state_t* ps, sl_node_base_t* expr, sl_node_base_t* body);
 
 sl_node_base_t*

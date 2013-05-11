@@ -117,6 +117,7 @@ HEX [0-9a-fA-F]
 <SLASH>"last"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_LAST)); }
 <SLASH>"throw"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_THROW)); }
 <SLASH>"use"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_USE)); }
+<SLASH>"switch"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_SWITCH)); }
 
 <SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 <SLASH>"λ"              { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }

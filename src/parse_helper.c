@@ -204,6 +204,17 @@ sl_make_if_node(sl_parse_state_t* ps, sl_node_base_t* cond, sl_node_base_t* if_t
 }
 
 sl_node_base_t*
+sl_make_switch_node(sl_parse_state_t* ps, sl_node_base_t* value, size_t case_count, sl_node_switch_case_t* cases, sl_node_base_t* else_body)
+{
+    MAKE_NODE(SL_NODE_SWITCH, sl_node_switch_t, {
+        node->value = value;
+        node->case_count = case_count;
+        node->cases = cases;
+        node->else_body = else_body;
+    });
+}
+
+sl_node_base_t*
 sl_make_while_node(sl_parse_state_t* ps, sl_node_base_t* expr, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_WHILE, sl_node_while_t, {

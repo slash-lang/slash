@@ -592,6 +592,33 @@ NODE(sl_node_if_t, if)
     insn_at_ip(cs, fixup_2)->ip = cs->section->insns_byte_count;
 }
 
+NODE(sl_node_switch_t, switch)
+{
+    compile_node(cs, node->value, dest);
+    size_t* fixups = sl_alloc_buffer(cs->vm->arena, sizeof(size_t) * node->case_count);
+    for(size_t i = 0; i < node->case_count; i++) {
+        size_t cmp_reg = reg_alloc(cs);
+        compile_node(cs, node->cases[i].value, cmp_reg);
+        op_send(cs, cmp_reg, sl_intern(cs->vm, "=="), dest, 1, cmp_reg);
+        emit_opcode(cs, SL_OP_JUMP_UNLESS);
+        size_t temp_fixup = emit_ip(cs, 0x0000CAFE);
+        emit_reg(cs, cmp_reg);
+        reg_free(cs, cmp_reg);
+        compile_node(cs, node->cases[i].body, dest);
+        emit_opcode(cs, SL_OP_JUMP);
+        fixups[i] = emit_ip(cs, 0x0000CAFE);
+        insn_at_ip(cs, temp_fixup)->ip = cs->section->insns_byte_count;
+    }
+    if(node->else_body) {
+        compile_node(cs, node->else_body, dest);
+    } else {
+        op_immediate(cs, cs->vm->lib.nil, dest);
+    }
+    for(size_t i = 0; i < node->case_count; i++) {
+        insn_at_ip(cs, fixups[i])->ip = cs->section->insns_byte_count;
+    }
+}
+
 NODE(sl_node_while_t, while)
 {
     next_last_frame_t nl;
@@ -1178,6 +1205,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_lambda_t,        LAMBDA,         lambda);
         COMPILE(sl_node_try_t,           TRY,            try);
         COMPILE(sl_node_if_t,            IF,             if);
+        COMPILE(sl_node_switch_t,        SWITCH,         switch);
         COMPILE(sl_node_while_t,         WHILE,          while);
         COMPILE(sl_node_for_t,           FOR,            for);
         COMPILE(sl_node_send_t,          SEND,           send);

@@ -132,7 +132,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t)) + size;
     void* ptr;
     intptr_t hash;
-    
+
     if(arena->allocs_since_gc > ALLOCS_PER_GC_RUN) {
         sl_gc_run(arena);
     }
