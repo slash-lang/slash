@@ -236,8 +236,6 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
     }
 }
 
-#include <stdio.h>
-
 static void
 sl_gc_sweep(sl_gc_arena_t* arena)
 {
