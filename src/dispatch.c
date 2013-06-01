@@ -48,9 +48,9 @@ call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLV
     frame.frame_type = SL_VM_FRAME_C;
     frame.as.call_frame.method = method->name;
     vm->call_stack = &frame;
-    
+
     SLVAL retn = call_c_func(vm, recv, method, argc, argv);
-    
+
     vm->call_stack = frame.prev;
     return retn;
 }
@@ -75,7 +75,7 @@ call_sl_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv
     }
     ctx->self = recv;
     ctx->parent = method->as.sl.parent_ctx;
-    
+
     memcpy(ctx->registers + 1, argv, sizeof(SLVAL) * ctx->section->arg_registers);
 
     if(ctx->section->has_extra_rest_arg) {
@@ -99,7 +99,6 @@ call_sl_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv
 SLVAL
 sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv)
 {
-    char errstr[1024];
     SLVAL arg;
     if((void*)&arg < vm->stack_limit) {
         /* we're about to blow the stack */
@@ -107,17 +106,14 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* a
     }
     if(method->arity < 0) {
         if(sl_unlikely(-method->arity - 1 > argc)) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %d.", (-method->arity - 1), argc);
-            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
+            sl_error(vm, vm->lib.ArgumentError, "Too few arguments. Expected %d, received %d.", (-method->arity - 1), argc);
         }
     } else {
         if(sl_unlikely(method->arity > argc)) {
-            sprintf(errstr, "Too few arguments. Expected %d, received %d.", method->arity, argc);
-            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
+            sl_error(vm, vm->lib.ArgumentError, "Too few arguments. Expected %d, received %d.", method->arity, argc);
         }
         if(sl_unlikely(method->arity < argc)) {
-            sprintf(errstr, "Too many arguments. Expected %d, received %d.", method->arity, argc);
-            sl_throw_message2(vm, vm->lib.ArgumentError, errstr);
+            sl_error(vm, vm->lib.ArgumentError, "Too many arguments. Expected %d, received %d.", method->arity, argc);
         }
     }
     if(method->is_c_func) {
@@ -160,14 +156,14 @@ sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
     SLVAL argv2[argc + 1];
     memcpy(&argv2[1], argv, sizeof(SLVAL) * argc);
     argv2[0] = sl_id_to_string(vm, id);
-    
+
     sl_method_t* method = sl_lookup_method(vm, recv, vm->id.method_missing);
     if(method) {
         return sl_apply_method(vm, recv, method, argc + 1, argv2);
     }
-    
+
     /* nope */
-    
+
     sl_error(vm, vm->lib.NoMethodError, "Undefined method %QI on %X", id, recv);
     return vm->lib.nil; /* shutup gcc */
 }
@@ -179,7 +175,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
     if(sl_likely(method != NULL)) {
         return sl_apply_method(vm, recv, method, argc, argv);
     }
-    return sl_send_missing(vm, recv, id, argc, argv);   
+    return sl_send_missing(vm, recv, id, argc, argv);
 }
 
 static sl_method_t*
