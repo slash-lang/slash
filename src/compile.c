@@ -86,7 +86,7 @@ reg_alloc_block(sl_compile_state_t* cs, int count)
     if(count == 0) {
         return 0;
     }
-    
+
     for(int i = 0; i + count < cs->section->max_registers + 1; i++) {
         if(cs->registers[i]) {
             continue_outer: continue;
@@ -280,14 +280,14 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
 {
     sl_node_assign_var_t a_var;
     sl_node_send_t send;
-    
+
     size_t dest_reg = reg_alloc(cs);
-    
+
     sl_node__register_t node;
     node.base.type = SL_NODE__REGISTER;
     node.base.line = 0;
     node.reg = reg;
-    
+
     switch(lval->type) {
         case SL_NODE_VAR:    a_var.base.type = SL_NODE_ASSIGN_VAR;    break;
         case SL_NODE_IVAR:   a_var.base.type = SL_NODE_ASSIGN_IVAR;   break;
@@ -315,12 +315,12 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
             sl_throw(cs->vm, err);
         }
     }
-    
+
     a_var.base.line = 0;
     a_var.lval = (void*)lval;
     a_var.rval = (sl_node_base_t*)&node;
     compile_node(cs, (sl_node_base_t*)&a_var, dest_reg);
-    
+
     reg_free(cs, dest_reg);
 }
 
@@ -461,17 +461,17 @@ NODE(sl_node_def_t, def)
     sub_cs.section->req_registers = node->req_arg_count;
     sub_cs.section->arg_registers = node->req_arg_count + node->opt_arg_count;
     sub_cs.section->opt_skip = sl_alloc(cs->vm->arena, sizeof(size_t) * (node->opt_arg_count + 1));
-    
+
     for(i = 0; i < node->opt_arg_count; i++) {
         sub_cs.section->opt_skip[i] = sub_cs.section->insns_byte_count;
         compile_node(&sub_cs, node->opt_args[i].default_value, node->req_arg_count + i + 1);
     }
     sub_cs.section->opt_skip[node->opt_arg_count] = sub_cs.section->insns_byte_count;
-    
+
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
     emit_reg(&sub_cs, 0);
-    
+
     if(node->on) {
         on_reg = reg_alloc(cs);
         compile_node(cs, node->on, on_reg);
@@ -500,7 +500,7 @@ NODE(sl_node_lambda_t, lambda)
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
     emit_reg(&sub_cs, 0);
-    
+
     emit_opcode(cs, SL_OP_LAMBDA);
     emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
@@ -509,16 +509,16 @@ NODE(sl_node_lambda_t, lambda)
 NODE(sl_node_try_t, try)
 {
     size_t catch_fixup, after_fixup;
-    
+
     cs->section->has_try_catch = true;
-    
+
     emit_opcode(cs, SL_OP_TRY);
     catch_fixup = emit_ip(cs, 0xdeadbeef);
 
     if(cs->next_last_frames) {
         cs->next_last_frames->try_catch_blocks++;
     }
-    
+
     compile_node(cs, node->body, dest);
 
     if(cs->next_last_frames) {
@@ -526,40 +526,40 @@ NODE(sl_node_try_t, try)
     }
 
     emit_opcode(cs, SL_OP_END_TRY);
-    
+
     emit_opcode(cs, SL_OP_JUMP);
     after_fixup = emit_ip(cs, 0xdeadbeef);
 
     insn_at_ip(cs, catch_fixup)->ip = cs->section->insns_byte_count;
-    
+
     emit_opcode(cs, SL_OP_CATCH);
     emit_reg(cs, dest);
-    
+
     emit_opcode(cs, SL_OP_END_TRY);
-    
+
     emit_assignment(cs, node->lval, dest);
     compile_node(cs, node->catch_body, dest);
-    
+
     insn_at_ip(cs, after_fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_class_t, class)
 {
     sl_compile_state_t sub_cs;
-    
+
     if(node->extends) {
         compile_node(cs, node->extends, dest);
     } else {
         op_immediate(cs, cs->vm->lib.Object, dest);
     }
-    
+
     init_compile_state(&sub_cs, cs->vm, cs, 1);
     sub_cs.section->name = sl_intern2(cs->vm,
         sl_string_concat(cs->vm, sl_make_cstring(cs->vm, "class "), sl_id_to_string(cs->vm, node->name)));
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
     emit_reg(&sub_cs, 0);
-    
+
     emit_opcode(cs, SL_OP_CLASS);
     emit_id(cs, node->name);
     emit_reg(cs, dest);
@@ -574,21 +574,21 @@ NODE(sl_node_if_t, if)
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
     size_t fixup_1 = emit_ip(cs, 0x0000CAFE);
     emit_reg(cs, dest);
-    
+
     /* true branch */
     compile_node(cs, node->body, dest);
-    
+
     emit_opcode(cs, SL_OP_JUMP);
     size_t fixup_2 = emit_ip(cs, 0x0000CAFE);
 
     insn_at_ip(cs, fixup_1)->ip = cs->section->insns_byte_count;
-    
+
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
     } else {
         op_immediate(cs, cs->vm->lib.nil, dest);
     }
-    
+
     insn_at_ip(cs, fixup_2)->ip = cs->section->insns_byte_count;
 }
 
@@ -622,47 +622,47 @@ NODE(sl_node_switch_t, switch)
 NODE(sl_node_while_t, while)
 {
     next_last_frame_t nl;
-    
+
     size_t begin = cs->section->insns_byte_count;
-    
+
     /* loop condition */
     compile_node(cs, node->expr, dest);
-    
+
     /* emit code for !condition: */
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
     size_t fixup = emit_ip(cs, 0x0000CAFE);
     emit_reg(cs, dest);
-    
+
     /* push this loop on to the next/last fixup stack */
     nl.next_fixups = NULL;
     nl.last_fixups = NULL;
     nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
-    
+
     /* loop body */
     compile_node(cs, node->body, dest);
-    
+
     /* place the right address in the next fixups */
     cs->next_last_frames = nl.prev;
     while(nl.next_fixups) {
         insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
-    
+
     /* jump back to condition */
     emit_opcode(cs, SL_OP_JUMP);
     emit_ip(cs, begin);
-    
+
     /* put the current IP into the JUMP_UNLESS fixup */
     insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
-    
+
     /* place the right address in the last fixups */
     while(nl.last_fixups) {
         insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
-    
+
     op_immediate(cs, cs->vm->lib.nil, dest);
 }
 
@@ -671,69 +671,69 @@ NODE(sl_node_for_t, for)
     size_t expr_reg = reg_alloc(cs), enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
     size_t begin, end_jump_fixup, end_else_fixup;
     next_last_frame_t nl;
-    
+
     compile_node(cs, node->expr, expr_reg);
-    
+
     op_immediate(cs, cs->vm->lib._false, has_looped_reg);
-    
+
     op_send(cs, expr_reg, sl_intern(cs->vm, "enumerate"), 0, 0, enum_reg);
-    
+
     begin = cs->section->insns_byte_count;
-    
+
     op_send(cs, enum_reg, sl_intern(cs->vm, "next"), 0, 0, dest);
-    
+
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
     end_jump_fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
-    
+
     op_immediate(cs, cs->vm->lib._true, has_looped_reg);
-    
+
     op_send(cs, enum_reg, sl_intern(cs->vm, "current"), 0, 0, dest);
-    
+
     emit_assignment(cs, node->lval, dest);
-    
+
     nl.next_fixups = NULL;
     nl.last_fixups = NULL;
     nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
-    
+
     compile_node(cs, node->body, dest);
-    
+
     emit_opcode(cs, SL_OP_JUMP);
     emit_ip(cs, begin);
-    
+
     cs->next_last_frames = nl.prev;
-    
+
     while(nl.next_fixups) {
         insn_at_ip(cs, nl.next_fixups->fixup)->ip = begin;
         nl.next_fixups = nl.next_fixups->next;
     }
-    
+
     while(nl.last_fixups) {
         insn_at_ip(cs, nl.last_fixups->fixup)->ip = cs->section->insns_byte_count;
         nl.last_fixups = nl.last_fixups->next;
     }
-    
+
     insn_at_ip(cs, end_jump_fixup)->ip = cs->section->insns_byte_count;
-    
+
     emit_opcode(cs, SL_OP_JUMP_IF);
     end_else_fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, has_looped_reg);
-    
+
     reg_free(cs, has_looped_reg);
     reg_free(cs, enum_reg);
-    
+
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
     }
-    
+
     insn_at_ip(cs, end_else_fixup)->ip = cs->section->insns_byte_count;
-    
+
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, expr_reg);
     emit_reg(cs, dest);
-    
+
     reg_free(cs, expr_reg);
 }
 
@@ -746,7 +746,7 @@ NODE(sl_node_send_t, send)
     for(i = 0; i < node->arg_count; i++) {
         compile_node(cs, node->args[i], arg_base + i);
     }
-    
+
     op_send(cs, dest, node->id, arg_base, node->arg_count, dest);
     reg_free_block(cs, arg_base, node->arg_count);
 }
@@ -754,7 +754,7 @@ NODE(sl_node_send_t, send)
 NODE(sl_node_bind_method_t, bind_method)
 {
     compile_node(cs, node->recv, dest);
-    
+
     emit_opcode(cs, SL_OP_BIND_METHOD);
     emit_reg(cs, dest);
     emit_id(cs, node->id);
@@ -780,13 +780,13 @@ NODE(sl_node_const_t, const)
 NODE(sl_node_binary_t, and)
 {
     size_t fixup;
-    
+
     compile_node(cs, node->left, dest);
-    
+
     emit_opcode(cs, SL_OP_JUMP_UNLESS);
     fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
-    
+
     compile_node(cs, node->right, dest);
 
     insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
@@ -795,15 +795,15 @@ NODE(sl_node_binary_t, and)
 NODE(sl_node_binary_t, or)
 {
     size_t fixup;
-    
+
     compile_node(cs, node->left, dest);
-    
+
     emit_opcode(cs, SL_OP_JUMP_IF);
     fixup = emit_ip(cs, 0x0000cafe);
     emit_reg(cs, dest);
-    
+
     compile_node(cs, node->right, dest);
-    
+
     insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
@@ -820,7 +820,7 @@ NODE(sl_node_assign_var_t, assign_var)
     size_t frame;
     sl_compile_state_t* xcs;
     size_t index;
-    
+
     /* create variable before compiling rval so that constructs such as: f = f; work */
     xcs = cs;
     while(xcs) {
@@ -833,9 +833,9 @@ NODE(sl_node_assign_var_t, assign_var)
         index = reg_alloc(cs);
         sl_st_insert(cs->vars, (sl_st_data_t)node->lval->name, (sl_st_data_t)index);
     }
-    
+
     compile_node(cs, node->rval, dest);
-    
+
     frame = 0;
     xcs = cs;
     while(xcs) {
@@ -879,40 +879,40 @@ op_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval
 {
     size_t arg_base, receiver = reg_alloc(cs);
     size_t fixup, i;
-    
+
     compile_node(cs, lval->recv, receiver);
-    
+
     arg_base = reg_alloc_block(cs, lval->arg_count + 1);
     for(i = 0; i < lval->arg_count; i++) {
         compile_node(cs, lval->args[i], arg_base + i);
     }
-    
+
     /* compile the lval */
     op_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
 
     emit_opcode(cs, opcode); /* SL_OP_JUMP_{IF, UNLESS} */
     fixup = emit_ip(cs, 0xdeadbeef);
     emit_reg(cs, dest);
-    
+
     /* compile the rval */
     compile_node(cs, rval, arg_base + lval->arg_count);
 
     /* call the = version of the method to assign the value back */
     SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, lval->id), sl_make_cstring(cs->vm, "="));
     op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, lval->arg_count + 1, dest);
-    
+
     /* move the rval back to dest reg */
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, arg_base + lval->arg_count);
     emit_reg(cs, dest);
-    
+
     insn_at_ip(cs, fixup)->ip = cs->section->insns_byte_count;
 }
 
 NODE(sl_node_assign_send_t, assign_send)
 {
     size_t arg_base, i, receiver;
-    
+
     if(node->op_method && strcmp(node->op_method, "||") == 0) {
         op_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_IF, dest);
         return;
@@ -920,36 +920,36 @@ NODE(sl_node_assign_send_t, assign_send)
         op_send_compound_conditional_assign(cs, node->lval, node->rval, SL_OP_JUMP_UNLESS, dest);
         return;
     }
-    
+
     receiver = reg_alloc(cs);
 
     compile_node(cs, node->lval->recv, receiver);
-    
+
     arg_base = reg_alloc_block(cs, node->lval->arg_count + 1);
     for(i = 0; i < node->lval->arg_count; i++) {
         compile_node(cs, node->lval->args[i], arg_base + i);
     }
-    
+
     if(node->op_method == NULL) {
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
     } else {
         /* compile the lval */
         op_send(cs, receiver, node->lval->id, arg_base, node->lval->arg_count, dest);
-        
+
         /* compile the rval */
         compile_node(cs, node->rval, arg_base + node->lval->arg_count);
-        
+
         op_send(cs, dest, sl_intern(cs->vm, node->op_method), arg_base + node->lval->arg_count, 1, arg_base + node->lval->arg_count);
     }
-    
+
     /* call the = version of the method to assign the value back */
     SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, node->lval->id), sl_make_cstring(cs->vm, "="));
     op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, node->lval->arg_count + 1, dest);
-    
+
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, arg_base + node->lval->arg_count);
     emit_reg(cs, dest);
-    
+
     reg_free(cs, receiver);
     reg_free_block(cs, arg_base, node->lval->arg_count + 1);
 }
@@ -980,18 +980,18 @@ NODE(sl_node_assign_array_t, assign_array)
 {
     size_t dump_regs, i;
     dump_regs = reg_alloc_block(cs, node->lval->node_count);
-    
+
     compile_node(cs, node->rval, dest);
-    
+
     emit_opcode(cs, SL_OP_ARRAY_DUMP);
     emit_reg(cs, dest);
     emit_reg_count(cs, node->lval->node_count);
     emit_reg(cs, dump_regs);
-    
+
     for(i = 0; i < node->lval->node_count; i++) {
         emit_assignment(cs, node->lval->nodes[i], dump_regs + i);
     }
-    
+
     reg_free_block(cs, dump_regs, node->lval->node_count);
 }
 
@@ -1001,21 +1001,21 @@ NODE(sl_node_mutate_t, prefix_mutate)
         sl_node_send_t* send = (sl_node_send_t*)node->lval;
         size_t recv = reg_alloc(cs);
         compile_node(cs, send->recv, recv);
-        
+
         size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
         for(size_t i = 0; i < send->arg_count; i++) {
             compile_node(cs, send->args[i], args_regs + i);
         }
         op_send(cs, recv, send->id, args_regs, send->arg_count, dest);
-        
+
         op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
-        
+
         SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
         op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
-        
+
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
-        
+
         emit_opcode(cs, SL_OP_MOV);
         emit_reg(cs, args_regs + send->arg_count);
         emit_reg(cs, dest);
@@ -1032,18 +1032,18 @@ NODE(sl_node_mutate_t, postfix_mutate)
         sl_node_send_t* send = (sl_node_send_t*)node->lval;
         size_t recv = reg_alloc(cs);
         compile_node(cs, send->recv, recv);
-        
+
         size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
         for(size_t i = 0; i < send->arg_count; i++) {
             compile_node(cs, send->args[i], args_regs + i);
         }
         op_send(cs, recv, send->id, args_regs, send->arg_count, dest);
-        
+
         op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
-        
+
         SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
         op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
-        
+
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
     } else {
@@ -1097,7 +1097,7 @@ NODE(sl_node_range_t, range)
     if(node->exclusive) {
         emit_opcode(cs, SL_OP_RANGE_EX);
     } else {
-        emit_opcode(cs, SL_OP_RANGE);
+        emit_opcode(cs, SL_OP_RANGE_IN);
     }
     emit_reg(cs, left);
     emit_reg(cs, right);
@@ -1115,7 +1115,7 @@ NODE(sl_node_base_t, next)
     }
     emit_opcode(cs, SL_OP_JUMP);
     fixup->fixup = emit_ip(cs, 0x0000cafe);
-    
+
     (void)node;
     (void)dest;
 }
@@ -1130,7 +1130,7 @@ NODE(sl_node_base_t, last)
     }
     emit_opcode(cs, SL_OP_JUMP);
     fixup->fixup = emit_ip(cs, 0x0000cafe);
-    
+
     (void)node;
     (void)dest;
 }
@@ -1243,11 +1243,11 @@ sl_compile(sl_vm_t* vm, sl_node_base_t* ast, uint8_t* filename)
     init_compile_state(&cs, vm, NULL, 1);
     cs.section->filename = filename;
     cs.section->name = sl_intern(vm, "<main>");
-    
+
     compile_node(&cs, ast, 0);
-    
+
     emit_opcode(&cs, SL_OP_RETURN);
     emit_reg(&cs, 0);
-    
+
     return cs.section;
 }

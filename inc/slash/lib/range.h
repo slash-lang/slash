@@ -5,7 +5,7 @@
 #include <slash/vm.h>
 
 SLVAL
-sl_make_range(sl_vm_t* vm, SLVAL lower, SLVAL upper);
+sl_make_range_inclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper);
 
 SLVAL
 sl_make_range_exclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper);

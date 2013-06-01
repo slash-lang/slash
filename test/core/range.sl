@@ -4,18 +4,18 @@ class RangeTest extends Test {
     def test_inclusive_range {
         assert_equal([1,2,3], (1..3).to_a);
     }
-    
+
     def test_exclusive_range {
         assert_equal([1,2], (1...3).to_a);
     }
-    
+
     def test_reverse_range_is_empty {
         assert_equal([], (1000..1).to_a);
     }
-    
+
     def test_init {
-        assert_equal([1,2,3,4], Range.new(1, 4).to_a);
-        assert_equal([1,2,3], Range.new(1, 4, true).to_a);
+        assert_equal([1,2,3,4], Range::Inclusive.new(1, 4).to_a);
+        assert_equal([1,2,3], Range::Exclusive.new(1, 4).to_a);
     }
 
     def test_lower {
@@ -27,7 +27,7 @@ class RangeTest extends Test {
         assert_equal(2, (1..2).upper);
         assert_equal(false, (true..false).upper);
     }
-    
+
     def test_enumerate {
         enumerator = (0...0).enumerate;
         assert_throws(TypeError, \{ enumerator.current });
@@ -35,25 +35,25 @@ class RangeTest extends Test {
         assert_throws(TypeError, \{ enumerator.current });
         assert_equal(false, enumerator.next);
     }
-    
+
     class MyOrdinalObject extends Comparable {
         def init(dots) {
             @dots = dots;
         }
-        
+
         def dots {
             @dots;
         }
-        
+
         def succ {
             MyOrdinalObject.new(@dots + ".");
         }
-        
+
         def <=>(other) {
             @dots.length <=> other.dots.length;
         }
     }
-    
+
     def test_range_works_on_arbitrary_objects {
         a = MyOrdinalObject.new("..");
         b = MyOrdinalObject.new(".....");

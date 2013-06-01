@@ -35,7 +35,7 @@ struct sl_vm_lib {
     SLVAL String;
     SLVAL Regexp;
     SLVAL Regexp_Match;
-    
+
     SLVAL Error;
     SLVAL Error_Frame;
     SLVAL ArgumentError;
@@ -49,16 +49,16 @@ struct sl_vm_lib {
     SLVAL TypeError;
     SLVAL ZeroDivisionError;
     SLVAL NotImplementedError;
-    
+
     SLVAL Nil;
     SLVAL nil;
-    
+
     SLVAL True;
     SLVAL _true;
-    
+
     SLVAL False;
     SLVAL _false;
-    
+
     SLVAL Comparable;
     SLVAL Number;
     SLVAL Int;
@@ -66,22 +66,23 @@ struct sl_vm_lib {
     SLVAL Bignum;
 
     SLVAL Buffer;
-    
+
     SLVAL Enumerable;
     SLVAL Array;
     SLVAL Array_Enumerator;
     SLVAL Dict;
     SLVAL Dict_Enumerator;
-    SLVAL Range;
+    SLVAL Range_Inclusive;
+    SLVAL Range_Exclusive;
     SLVAL Range_Enumerator;
-    
+
     SLVAL File;
     SLVAL File_NotFound;
-    
+
     SLVAL Method;
     SLVAL BoundMethod;
     SLVAL Lambda;
-    
+
     SLVAL Time;
 };
 
@@ -143,7 +144,7 @@ sl_vm_t;
 #define SL_OP_ARRAY_DUMP            27
 #define SL_OP_DICT                  28
 #define SL_OP_RETURN                29
-#define SL_OP_RANGE                 30
+#define SL_OP_RANGE_IN              30
 #define SL_OP_RANGE_EX              31
 #define SL_OP_LINE_TRACE            32
 #define SL_OP_ABORT                 33
@@ -204,7 +205,7 @@ typedef struct sl_vm_section {
     int req_registers;
     int arg_registers;
     int has_extra_rest_arg;
-    
+
     size_t* opt_skip;
     uint8_t* filename;
     bool can_stack_alloc_frame;
@@ -236,7 +237,7 @@ sl_vm_frame_type_t;
 typedef struct sl_vm_frame {
     struct sl_vm_frame* prev;
     sl_vm_frame_type_t frame_type;
-    
+
     union {
         struct {
             SLID method;
