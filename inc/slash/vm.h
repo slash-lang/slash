@@ -15,6 +15,7 @@ struct sl_vm_ids {
     SLID op_lte;
     SLID op_add;
     SLID op_sub;
+    SLID op_div;
     /* methods */
     SLID call;
     SLID current;
@@ -26,6 +27,7 @@ struct sl_vm_ids {
     SLID next;
     SLID succ;
     SLID to_s;
+    SLID to_f;
     SLID subclassed;
 };
 
