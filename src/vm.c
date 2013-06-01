@@ -92,7 +92,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(gc);
     LIB_INIT(eval);
     LIB_INIT(buffer);
-    
+
     sl_init_exts(vm);
 }
 
@@ -107,7 +107,7 @@ sl_init(const char* sapi_name)
     sl_class_t* Class;
     sl_class_t* String;
     sl_gc_arena_t* arena = sl_make_gc_arena();
-    
+
     sl_gc_disable(arena);
     vm = sl_alloc(arena, sizeof(sl_vm_t));
     vm->arena = arena;
@@ -123,21 +123,21 @@ sl_init(const char* sapi_name)
     vm->intern.id_to_name_cap = 32;
     vm->intern.id_to_name_size = 0;
     vm->intern.id_to_name = sl_alloc(vm->arena, sizeof(SLVAL) * vm->intern.id_to_name_cap);
-    
+
     vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));
-    
+
     sl_pre_init_class(vm);
     sl_pre_init_object(vm);
     sl_pre_init_string(vm);
-    
+
     Object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     Class = (sl_class_t*)sl_get_ptr(vm->lib.Class);
     String = (sl_class_t*)sl_get_ptr(vm->lib.String);
     Object->name = sl_intern(vm, "Object");
     Class->name = sl_intern(vm, "Class");
     String->name = sl_intern(vm, "String");
-    
+
     sl_init_id(vm);
 
     sl_init_method(vm);
@@ -145,15 +145,15 @@ sl_init(const char* sapi_name)
     sl_init_object(vm);
     sl_init_string(vm);
     sl_init_error(vm);
-    
+
     sl_init_libs(vm);
-    
+
     vm->initializing = 0;
 
     String->super = vm->lib.Comparable;
-    
+
     vm->lib.StackOverflowError_instance = sl_make_error2(vm, vm->lib.StackOverflowError, sl_make_cstring(vm, "Stack Overflow"));
-    
+
     vm->state_constant = 1;
     vm->state_method = 1;
 
@@ -189,6 +189,7 @@ sl_init_id(sl_vm_t* vm)
     OP(lte, "<=");
     OP(add, "+");
     OP(sub, "-");
+    OP(div, "/");
 
     ID(call);
     ID(current);
@@ -200,5 +201,6 @@ sl_init_id(sl_vm_t* vm)
     ID(next);
     ID(succ);
     ID(to_s);
+    ID(to_f);
     ID(subclassed);
 }
