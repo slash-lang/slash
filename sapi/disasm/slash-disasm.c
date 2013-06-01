@@ -63,6 +63,23 @@ int main(int argc, char** argv)
     });
 }
 
+#ifdef SL_HAS_COMPUTED_GOTO
+extern void*
+sl_vm_op_addresses[];
+
+static sl_vm_opcode_t
+decode_opcode(void* ptr)
+{
+    for(sl_vm_opcode_t i = 0; i < SL_OP__MAX_OPCODE; i++) {
+        if(ptr == sl_vm_op_addresses[i]) {
+            return i;
+        }
+    }
+    fprintf(stderr, "WTF: unknown opcode?\n");
+    abort();
+}
+#endif
+
 void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 {
     size_t ip = 0;
@@ -70,7 +87,11 @@ void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 
     #define NEXT(type) (*(type*)&section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
 
-    #define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
+    #ifdef SL_HAS_COMPUTED_GOTO
+        #define NEXT_OPCODE()   (decode_opcode(NEXT(void*)))
+    #else
+        #define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
+    #endif
     #define NEXT_IMM()      (NEXT(SLVAL))
     #define NEXT_UINT32()   (NEXT(uint32_t))
     #define NEXT_UINT16()   (NEXT(uint16_t))
