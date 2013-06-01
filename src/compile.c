@@ -265,6 +265,15 @@ op_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t ar
 }
 
 static void
+op_send_self(sl_compile_state_t* cs, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
+{
+    emit_opcode(cs, SL_OP_SEND_SELF);
+    emit_imc(cs, arg_size, id);
+    emit_reg(cs, arg_base);
+    emit_reg(cs, return_reg);
+}
+
+static void
 op_immediate(sl_compile_state_t* cs, SLVAL immediate, size_t dest)
 {
     emit_opcode(cs, SL_OP_IMMEDIATE);
@@ -741,13 +750,20 @@ NODE(sl_node_send_t, send)
 {
     size_t arg_base, i;
     /* compile the receiver into our 'dest' register */
-    compile_node(cs, node->recv, dest);
+    if(node->recv->type != SL_NODE_SELF) {
+        compile_node(cs, node->recv, dest);
+    }
+
     arg_base = node->arg_count ? reg_alloc_block(cs, node->arg_count) : 0;
     for(i = 0; i < node->arg_count; i++) {
         compile_node(cs, node->args[i], arg_base + i);
     }
 
-    op_send(cs, dest, node->id, arg_base, node->arg_count, dest);
+    if(node->recv->type == SL_NODE_SELF) {
+        op_send_self(cs, node->id, arg_base, node->arg_count, dest);
+    } else {
+        op_send(cs, dest, node->id, arg_base, node->arg_count, dest);
+    }
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
