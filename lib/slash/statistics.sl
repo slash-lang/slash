@@ -7,6 +7,8 @@ class Statistics {
     }
 
     def self.standard_deviation(values) {
-        variance(values) ** 0.5;
+        if var = variance(values) {
+            var ** 0.5;
+        }
     }
 }
