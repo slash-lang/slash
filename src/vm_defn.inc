@@ -179,6 +179,21 @@ INSTRUCTION(SL_OP_SEND, {
     }
 })
 
+/*  0: SEND_SELF
+    2: <imc:inline_cache>
+    3: <reg:first_arg> // arguments must be in a contiguous register region
+    4: <reg:dest> */
+INSTRUCTION(SL_OP_SEND_SELF, {
+    sl_vm_inline_method_cache_t* imc = NEXT_IMC();
+    SLVAL* argv = &NEXT_REG();
+
+    if(sl_likely(imc->state == vm->state_method && imc->klass.i == sl_real_class_of(vm, ctx->self).i)) {
+        NEXT_REG() = imc->call(vm, imc, ctx->self, argv);
+    } else {
+        NEXT_REG() = sl_imc_setup_call(vm, imc, ctx->self, argv);
+    }
+})
+
 /*  0: JUMP
     1: <uint32:ip> */
 INSTRUCTION(SL_OP_JUMP, {
