@@ -1,5 +1,7 @@
 <%
 
+use Statistics;
+
 class Benchmark {
     def self.measure(fun) {
         start = Time.clock;
@@ -17,7 +19,7 @@ class Benchmark {
         }).sort;
         mean = timings.average;
         median = timings[timings.length / 2];
-        std_dev = timings.map(\t { (t - mean) ** 2 }).average ** 0.5;
+        std_dev = Statistics.standard_deviation(timings);
         print("\n");
         print("  trials:  #{trials}\n");
         print("  mean:    #{mean} sec\n");
