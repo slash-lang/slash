@@ -12,14 +12,17 @@ class Benchmark {
 
     def self.[](name, fun, trials = 5) {
         print("#{name}: ");
+
         timings = (1..trials).map(\i {
             sec = measure(fun);
             print(".");
             sec;
         }).sort;
-        mean = timings.average;
-        median = timings[timings.length / 2];
+
+        mean = Statistics.average(timings);
+        median = Statistics.median(timings);
         std_dev = Statistics.standard_deviation(timings);
+
         print("\n");
         print("  trials:  #{trials}\n");
         print("  mean:    #{mean} sec\n");

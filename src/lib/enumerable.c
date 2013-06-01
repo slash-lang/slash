@@ -259,28 +259,6 @@ enumerable_sum(sl_vm_t* vm, SLVAL self)
     return acc;
 }
 
-static SLVAL
-enumerable_average(sl_vm_t* vm, SLVAL self)
-{
-    SLVAL enumerator = sl_send_id(vm, self, vm->id.enumerate, 0);
-    SLVAL acc;
-    size_t count = 0;
-    if(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
-        acc = sl_send_id(vm, enumerator, vm->id.current, 0);
-        count++;
-    } else {
-        return vm->lib.nil;
-    }
-    while(sl_is_truthy(sl_send_id(vm, enumerator, vm->id.next, 0))) {
-        SLVAL current = sl_send_id(vm, enumerator, vm->id.current, 0);
-        acc = sl_send_id(vm, acc, vm->id.op_add, 1, current);
-        count++;
-    }
-    SLVAL acc_f = sl_send_id(vm, acc, vm->id.to_f, 0);
-    SLVAL count_f = sl_make_float(vm, (double)count);
-    return sl_send_id(vm, acc_f, vm->id.op_div, 1, count_f);
-}
-
 void
 sl_init_enumerable(sl_vm_t* vm)
 {
@@ -305,5 +283,4 @@ sl_init_enumerable(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Enumerable, "includes", 1, enumerable_includes);
     sl_define_method(vm, vm->lib.Enumerable, "each", 1, enumerable_each);
     sl_define_method(vm, vm->lib.Enumerable, "sum", 0, enumerable_sum);
-    sl_define_method(vm, vm->lib.Enumerable, "average", 0, enumerable_average);
 }

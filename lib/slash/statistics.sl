@@ -1,9 +1,19 @@
 <%
 
 class Statistics {
+    def self.average(values) {
+        return nil if values.empty;
+        values.sum.to_f / values.length;
+    }
+
+    def self.median(values) {
+        values = values.sort;
+        values[values.length / 2];
+    }
+
     def self.variance(values) {
-        mean = values.average;
-        values.map(\t { (t - mean) ** 2 }).average;
+        mean = average(values);
+        average(values.map(\t { (t - mean) ** 2 }));
     }
 
     def self.standard_deviation(values) {
