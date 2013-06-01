@@ -468,6 +468,8 @@ sl_new(sl_vm_t* vm, SLVAL klass, size_t argc, SLVAL* argv)
     SLVAL obj = sl_allocate(vm, klass);
     if(sl_responds_to2(vm, obj, vm->id.init)) {
         sl_send2(vm, obj, vm->id.init, argc, argv);
+    } else if(argc) {
+        sl_error(vm, vm->lib.ArgumentError, "Too many arguments. Expected 0, received %d.", argc);
     }
     return obj;
 }
