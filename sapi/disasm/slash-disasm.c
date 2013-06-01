@@ -14,42 +14,42 @@ int main(int argc, char** argv)
 {
     sl_static_init();
     sl_vm_t* vm = sl_init("disasm");
-    
+
     if(argc < 1) {
         fprintf(stderr, "Usage: slash-dis <source file>\n");
         exit(1);
     }
-    
+
     FILE* f = fopen(argv[1], "r");
     if(!f) {
         fprintf(stderr, "Could not open %s for reading.\n", argv[1]);
         exit(1);
     }
-    
+
     fseek(f, 0, SEEK_END);
     size_t size = ftell(f);
     fseek(f, 0, SEEK_SET);
-    
+
     char* source = sl_alloc_buffer(vm->arena, size + 1);
     fread(source, size, 1, f);
     fclose(f);
-    
+
     SLVAL err;
     sl_vm_frame_t frame;
     SL_TRY(frame, SL_UNWIND_ALL, {
-        
+
         size_t token_count;
         sl_token_t* tokens = sl_lex(vm, (uint8_t*)argv[1], (uint8_t*)source, size, &token_count, 0);
-        
+
         sl_node_base_t* ast = sl_parse(vm, tokens, token_count, (uint8_t*)argv[1]);
-        
+
         sl_vm_section_t* section = sl_compile(vm, ast, (uint8_t*)argv[1]);
 
         disassemble(vm, section);
         while(section_j < section_i) {
             disassemble(vm, section_queue[++section_j]);
         }
-        
+
     }, err, {
         if(frame.as.handler_frame.unwind_type == SL_UNWIND_EXCEPTION) {
             fprintf(stderr, "%s\n", sl_to_cstr(vm, err));
@@ -66,6 +66,7 @@ int main(int argc, char** argv)
 void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 {
     size_t ip = 0;
+    sl_vm_inline_method_cache_t* imc;
 
     #define NEXT(type) (*(type*)&section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
 
@@ -80,14 +81,14 @@ void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
     #define NEXT_SECTION()  (NEXT(sl_vm_section_t*))
 
     #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
-    
+
     printf("%s (%p):\n", sl_to_cstr(vm, sl_id_to_string(vm, section->name)), section);
-    
+
     while(ip < section->insns_byte_count) {
         switch(NEXT_OPCODE()) {
             #include "dis.inc"
         }
     }
-    
+
     printf("\n");
 }

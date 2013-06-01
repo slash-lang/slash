@@ -5,7 +5,7 @@ def gen_operand_reader(operand_type)
   when "id"
     %{printf(" :%s", sl_to_cstr(vm, sl_id_to_string(vm, NEXT_ID())));}
   when "imc"
-    %{sl_vm_inline_method_cache_t* imc = NEXT_IMC(); printf(" #%s /%d", sl_to_cstr(vm, sl_id_to_string(vm, imc->id)), imc->argc);}
+    %{imc = NEXT_IMC(); printf(" #%s /%d", sl_to_cstr(vm, sl_id_to_string(vm, imc->id)), imc->argc);}
   when "icc"
     %{(void)NEXT_ICC(); printf(" <icc>");}
   when "reg"
