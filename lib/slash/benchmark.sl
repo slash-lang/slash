@@ -13,7 +13,7 @@ class Benchmark {
     def self.[](name, fun, trials = 5) {
         print("#{name}: ");
 
-        timings = (1..trials).map(\i {
+        timings = (1..trials).map(\{
             sec = measure(fun);
             print(".");
             sec;
