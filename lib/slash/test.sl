@@ -3,22 +3,22 @@
 class Test {
     FAILURES = [];
     CASES = [];
-    
+
     class Failure extends Error {
     }
 
     def self.assertions         { @@assertions ||= 0; }
     def self.assertions=(val)   { @@assertions = val; }
-    
+
     def self.failures           { @@failures ||= 0; }
     def self.failures=(val)     { @@failures = val; }
-    
+
     def self.passes             { @@passes ||= 0; }
     def self.passes=(val)       { @@passes = val; }
 
     def self.gc_after_test      { @@gc_after_test }
     def self.gc_after_test=(b)  { @@gc_after_test = b; }
-    
+
     def assert(what, message = "Assertion failed") {
         Test.assertions++;
         throw Failure.new(message) unless what;
@@ -27,23 +27,27 @@ class Test {
     def refute(what, message = "Refutation failed") {
         assert(!what, message);
     }
-    
+
     def flunk {
         assert(false, "flunked");
     }
-    
+
     def assert_equal(expect, what) {
         assert(expect == what, "Expected #{expect.inspect}, got #{what.inspect}");
     }
-    
+
     def assert_unequal(expect, what) {
         assert(expect != what, "Expected value to not equal #{expect.inspect}");
     }
-    
+
     def assert_is_a(klass, what) {
         assert(what.is_a(klass), "Expected #{what.inspect} to be a #{klass}");
     }
-    
+
+    def assert_is_an(klass, what) {
+        assert_is_a(klass, what);
+    }
+
     def assert_throws(klass, fn) {
         Test.assertions++;
         try {
@@ -56,7 +60,7 @@ class Test {
         }
         throw Failure.new("Expected callback to throw");
     }
-    
+
     def self.run {
         obj = new();
         for method in obj.own_methods {
@@ -74,7 +78,7 @@ class Test {
             }
         }
     }
-    
+
     def self.subclassed(klass) {
         CASES.push(klass);
     }
