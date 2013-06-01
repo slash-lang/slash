@@ -5,7 +5,7 @@ use URI;
 class HTTP {
     class Client {
         class ProtocolError extends Error {}
-        
+
         def init(uri) {
             uri = URI.parse(uri) unless uri.is_a(URI);
             @uri = uri;
@@ -13,17 +13,17 @@ class HTTP {
                 "User-Agent" => "Slash HTTP::Client"
             };
         }
-        
+
         def get    { perform("GET") }
         def head   { perform("HEAD") }
         def post   { perform("POST") }
         def put    { perform("PUT") }
         def delete { perform("DELETE") }
-            
+
         def response_headers { @response_headers }
         def response_body    { @response_body }
         def status           { @status }
-        
+
         def perform(method) {
             throw ArgumentError.new("Invalid method") if %r{[^A-Z]}.match(method);
             path = @uri.path || "/";
@@ -47,7 +47,7 @@ class HTTP {
             read_response(socket);
             true;
         }
-        
+
         def read_response(socket) {
             throw ProtocolError.new unless md = %r{^HTTP\d/\d (?<status>\d+)}.match(socket.read_line);
             @status = md["status"].to_i;
@@ -55,7 +55,7 @@ class HTTP {
                 line = socket.read_line;
                 last if line == "\r\n";
                 throw ProtocolError.new unless md = %r{^\s*(?<name>.*?):\s*(?<value>.*?)\s*$}.match(line);
-                if @response_headers[md["name"]].is_a(Array) {
+                if @response_headers[md["name"]].is_an(Array) {
                     @response_headers[md["name"]].push(md["value"]);
                 } elsif @response_headers[md["name"]] {
                     @response_headers[md["name"]] = [@response_headers[md["name"]], md["value"]];
