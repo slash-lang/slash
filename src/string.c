@@ -24,31 +24,31 @@ str_hash(sl_vm_t* vm, sl_string_t* str)
     uint32_t m;
     uint32_t r;
     uint32_t seed;
-    
+
     int hash;
     int k;
     size_t i;
-    
+
     if(str->hash_set) {
         return str->hash;
     }
-    
+
     m = 0x5bd1e995;
     r = 24;
     seed = 0x9747b28c ^ vm->hash_seed;
     hash = seed ^ str->buff_len;
-    
+
     for(i = 0; i + 4 <= str->buff_len; i += 4) {
         k = *(uint32_t*)&str->buff[i];
-        
+
         k *= m;
         k ^= k >> r;
         k *= m;
-        
+
         hash *= m;
         hash ^= k;
     }
-    
+
     k = 0;
     for(; i < str->buff_len; i++) {
         k *= 256;
@@ -56,11 +56,11 @@ str_hash(sl_vm_t* vm, sl_string_t* str)
     }
     hash ^= k;
     hash *= m;
-    
+
     hash ^= hash >> 13;
     hash *= m;
     hash ^= hash >> 15;
-    
+
     str->hash_set = 1;
     return str->hash = hash;
     (void)vm;
@@ -214,7 +214,7 @@ sl_string_times(sl_vm_t* vm, SLVAL self, SLVAL other)
         return sl_make_cstring(vm, "");
     }
     if(mul < 0) {
-        sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier must be positive");   
+        sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier must be positive");
     }
     if(mul > 0 && (size_t)LONG_MAX / mul < str->buff_len) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "String multiplier is too big");
@@ -428,7 +428,7 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
 {
     sl_string_t* haystack = sl_get_string(vm, self);
     sl_string_t* needle = sl_get_string(vm, substr);
-    
+
     /* @TODO use a more efficient algorithm */
     uint8_t* haystack_buff = haystack->buff;
     size_t haystack_len = haystack->buff_len;
@@ -440,7 +440,7 @@ sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
         sl_utf8_each_char(vm, &haystack_buff, &haystack_len);
         i++;
     }
-    
+
     return vm->lib.nil;
 }
 
@@ -492,7 +492,7 @@ SLVAL
 sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 {
     sl_string_t* str = sl_get_string(vm, self);
-    if(sl_is_a(vm, index, vm->lib.Range)) {
+    if(sl_is_a(vm, index, vm->lib.Range_Inclusive) || sl_is_a(vm, index, vm->lib.Range_Exclusive)) {
         return string_range_index(vm, self, index);
     }
     long idx = sl_get_int(sl_expect(vm, index, vm->lib.Int));
@@ -655,14 +655,14 @@ sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
     if(sl_is_a(vm, search, vm->lib.String)) {
         return sl_enumerable_join(vm, sl_string_split(vm, self, 1, &search), 1, &replace);
     }
-    
+
     sl_expect(vm, search, vm->lib.Regexp);
-    
+
     SLVAL retn = sl_make_cstring(vm, "");
-    
+
     while(1) {
         SLVAL match = sl_regexp_match(vm, search, 1, &self);
-        
+
         if(!sl_is_truthy(match)) {
             return sl_string_concat(vm, retn, self);
         } else {
@@ -674,7 +674,7 @@ sl_string_replace(sl_vm_t* vm, SLVAL self, SLVAL search, SLVAL replace)
             }
             retn = sl_string_concat(vm, retn, part);
         }
-        
+
         self = sl_regexp_match_after(vm, match);
     }
 }
@@ -686,18 +686,18 @@ sl_string_upper(sl_vm_t* vm, SLVAL selfv)
     sl_string_t* retn = sl_get_string(vm, sl_allocate(vm, vm->lib.String));
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
-    
+
     size_t len = self->buff_len;
     uint8_t* buff = self->buff;
     size_t out_offset = 0;
     uint32_t upper_c;
-    
+
     while(len) {
         uint32_t c = sl_utf8_each_char(vm, &buff, &len);
         upper_c = sl_unicode_toupper(c);
         out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
     }
-    
+
     return sl_make_ptr((sl_object_t*)retn);
 }
 
@@ -708,18 +708,18 @@ sl_string_lower(sl_vm_t* vm, SLVAL selfv)
     sl_string_t* retn = sl_get_string(vm, sl_allocate(vm, vm->lib.String));
     memcpy(retn, self, sizeof(sl_string_t));
     retn->buff = sl_alloc_buffer(vm->arena, retn->buff_len);
-    
+
     size_t len = self->buff_len;
     uint8_t* buff = self->buff;
     size_t out_offset = 0;
     uint32_t lower_c;
-    
+
     while(len) {
         uint32_t c = sl_utf8_each_char(vm, &buff, &len);
         lower_c = sl_unicode_tolower(c);
         out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
     }
-    
+
     return sl_make_ptr((sl_object_t*)retn);
 }
 

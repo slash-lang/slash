@@ -305,14 +305,14 @@ INSTRUCTION(SL_OP_RETURN, {
     return NEXT_REG();
 })
 
-/*  0: RANGE
+/*  0: RANGE_IN
     1: <reg:from>
     2: <reg:to>
     3: <reg:dest> */
-INSTRUCTION(SL_OP_RANGE, {
+INSTRUCTION(SL_OP_RANGE_IN, {
     SLVAL left = NEXT_REG();
     SLVAL right = NEXT_REG();
-    NEXT_REG() = sl_make_range(vm, left, right);
+    NEXT_REG() = sl_make_range_inclusive(vm, left, right);
 })
 
 /*  0: RANGE_EX

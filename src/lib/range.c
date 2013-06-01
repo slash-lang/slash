@@ -25,9 +25,8 @@ allocate_range(sl_vm_t* vm)
 }
 
 static sl_range_t*
-get_range(sl_vm_t* vm, SLVAL obj)
+range_ptr(SLVAL obj)
 {
-    sl_expect(vm, obj, vm->lib.Range);
     return (sl_range_t*)sl_get_ptr(obj);
 }
 
@@ -76,25 +75,32 @@ check_range_enumerator(sl_vm_t* vm, sl_range_enumerator_t* range_enum)
 }
 
 static SLVAL
-range_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
+range_inclusive_init(sl_vm_t* vm, SLVAL self, SLVAL left, SLVAL right)
 {
-    sl_range_t* range = get_range(vm, self);
-    range->left = argv[0];
-    range->right = argv[1];
-    if(argc > 2 && sl_is_truthy(argv[2])) {
-        range->exclusive = 1;
-    }
+    range_ptr(self)->left = left;
+    range_ptr(self)->right = right;
+    range_ptr(self)->exclusive = 0;
     return self;
+    (void)vm;
+}
+
+static SLVAL
+range_exclusive_init(sl_vm_t* vm, SLVAL self, SLVAL left, SLVAL right)
+{
+    range_ptr(self)->left = left;
+    range_ptr(self)->right = right;
+    range_ptr(self)->exclusive = 1;
+    return self;
+    (void)vm;
 }
 
 static SLVAL
 range_enumerate(sl_vm_t* vm, SLVAL self)
 {
-    sl_range_t* range = get_range(vm, self);
     sl_range_enumerator_t* range_enum = get_range_enumerator(vm, sl_allocate(vm, vm->lib.Range_Enumerator));
-    range_enum->current     = range->left;
-    range_enum->right       = range->right;
-    range_enum->method      = range->exclusive ? vm->id.op_lt : vm->id.op_lte;
+    range_enum->current     = range_ptr(self)->left;
+    range_enum->right       = range_ptr(self)->right;
+    range_enum->method      = range_ptr(self)->exclusive ? vm->id.op_lt : vm->id.op_lte;
     range_enum->state       = ES_BEFORE;
     return sl_make_ptr((sl_object_t*)range_enum);
 }
@@ -132,56 +138,80 @@ range_enumerator_next(sl_vm_t* vm, SLVAL self)
 }
 
 SLVAL
-sl_make_range(sl_vm_t* vm, SLVAL lower, SLVAL upper)
+sl_make_range_inclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper)
 {
-    SLVAL rangev = sl_allocate(vm, vm->lib.Range);
-    sl_range_t* range = get_range(vm, rangev);
-    range->left      = lower;
-    range->right     = upper;
-    range->exclusive = 0;
-    return rangev;
+    SLVAL range = sl_allocate(vm, vm->lib.Range_Inclusive);
+    range_ptr(range)->left      = lower;
+    range_ptr(range)->right     = upper;
+    range_ptr(range)->exclusive = 0;
+    return range;
 }
 
 SLVAL
 sl_make_range_exclusive(sl_vm_t* vm, SLVAL lower, SLVAL upper)
 {
-    SLVAL rangev = sl_allocate(vm, vm->lib.Range);
-    sl_range_t* range = get_range(vm, rangev);
-    range->left      = lower;
-    range->right     = upper;
-    range->exclusive = 1;
-    return rangev;
+    SLVAL range = sl_allocate(vm, vm->lib.Range_Exclusive);
+    range_ptr(range)->left      = lower;
+    range_ptr(range)->right     = upper;
+    range_ptr(range)->exclusive = 1;
+    return range;
 }
 
 SLVAL
 sl_range_lower(sl_vm_t* vm, SLVAL range)
 {
-    return get_range(vm, range)->left;
+    return range_ptr(range)->left;
+    (void)vm;
 }
 
 SLVAL
 sl_range_upper(sl_vm_t* vm, SLVAL range)
 {
-    return get_range(vm, range)->right;
+    return range_ptr(range)->right;
+    (void)vm;
 }
 
 bool
 sl_range_is_exclusive(sl_vm_t* vm, SLVAL range)
 {
-    return get_range(vm, range)->exclusive;
+    return range_ptr(range)->exclusive;
+    (void)vm;
+}
+
+static SLVAL
+range_inclusive_inspect(sl_vm_t* vm, SLVAL range)
+{
+    return sl_make_formatted_string(vm, "%V..%V", range_ptr(range)->left, range_ptr(range)->right);
+}
+
+static SLVAL
+range_exclusive_inspect(sl_vm_t* vm, SLVAL range)
+{
+    return sl_make_formatted_string(vm, "%V...%V", range_ptr(range)->left, range_ptr(range)->right);
 }
 
 void
 sl_init_range(sl_vm_t* vm)
 {
-    vm->lib.Range = sl_define_class(vm, "Range", vm->lib.Enumerable);
-    sl_class_set_allocator(vm, vm->lib.Range, allocate_range);
-    sl_define_method(vm, vm->lib.Range, "init", -3, range_init);
-    sl_define_method(vm, vm->lib.Range, "enumerate", 0, range_enumerate);
-    sl_define_method(vm, vm->lib.Range, "lower", 0, sl_range_lower);
-    sl_define_method(vm, vm->lib.Range, "upper", 0, sl_range_upper);
-    
-    vm->lib.Range_Enumerator = sl_define_class3(vm, sl_intern(vm, "Enumerator"), vm->lib.Object, vm->lib.Range);
+    SLVAL Range = sl_define_class(vm, "Range", vm->lib.Object);
+
+    vm->lib.Range_Inclusive = sl_define_class3(vm, sl_intern(vm, "Inclusive"), vm->lib.Enumerable, Range);
+    sl_class_set_allocator(vm, vm->lib.Range_Inclusive, allocate_range);
+    sl_define_method(vm, vm->lib.Range_Inclusive, "init", 2, range_inclusive_init);
+    sl_define_method(vm, vm->lib.Range_Inclusive, "enumerate", 0, range_enumerate);
+    sl_define_method(vm, vm->lib.Range_Inclusive, "lower", 0, sl_range_lower);
+    sl_define_method(vm, vm->lib.Range_Inclusive, "upper", 0, sl_range_upper);
+    sl_define_method(vm, vm->lib.Range_Inclusive, "inspect", 0, range_inclusive_inspect);
+
+    vm->lib.Range_Exclusive = sl_define_class3(vm, sl_intern(vm, "Exclusive"), vm->lib.Enumerable, Range);
+    sl_class_set_allocator(vm, vm->lib.Range_Exclusive, allocate_range);
+    sl_define_method(vm, vm->lib.Range_Exclusive, "init", 2, range_exclusive_init);
+    sl_define_method(vm, vm->lib.Range_Exclusive, "enumerate", 0, range_enumerate);
+    sl_define_method(vm, vm->lib.Range_Exclusive, "lower", 0, sl_range_lower);
+    sl_define_method(vm, vm->lib.Range_Exclusive, "upper", 0, sl_range_upper);
+    sl_define_method(vm, vm->lib.Range_Exclusive, "inspect", 0, range_exclusive_inspect);
+
+    vm->lib.Range_Enumerator = sl_define_class3(vm, sl_intern(vm, "Enumerator"), vm->lib.Object, Range);
     sl_class_set_allocator(vm, vm->lib.Range_Enumerator, allocate_range_enumerator);
     sl_define_method(vm, vm->lib.Range_Enumerator, "current", 0, range_enumerator_current);
     sl_define_method(vm, vm->lib.Range_Enumerator, "next", 0, range_enumerator_next);
