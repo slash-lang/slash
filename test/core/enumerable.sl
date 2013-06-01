@@ -186,10 +186,4 @@ class EnumerableTest extends Test {
         assert_equal(1, [1].sum);
         assert_equal(3, [1,2].sum);
     }
-
-    def test_average {
-        assert_equal(nil, [].average);
-        assert_equal(0.0, [0].average);
-        assert_equal(1.5, [1, 2].average);
-    }
 }
