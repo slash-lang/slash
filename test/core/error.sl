@@ -6,12 +6,12 @@ class TestError extends Test {
         assert_equal("ArgumentError", ArgumentError.new.name);
         assert_equal("TestError::FooBarError", class FooBarError extends Error {}.new.name);
     }
-    
+
     def test_message {
         assert_equal(nil, Error.new.message);
         assert_equal("foobar", Error.new("foobar").message);
     }
-    
+
     def test_backtrace {
         try {
             \{ \{ throw Error.new; }.call; }.call;
@@ -25,24 +25,24 @@ class TestError extends Test {
     }
 
     def test_backtrace_function {
-        assert_is_a(Array, backtrace());
+        assert_is_an(Array, backtrace());
         assert_equal("test_backtrace_function", backtrace().first.method);
     }
-    
+
     def test_stack_overflow_error {
         # FIXME: this test takes 200ms
         f = \{ f.call; };
         assert_throws(StackOverflowError, f);
     }
-    
+
     def test_throwing_non_error_throws_type_error {
         assert_throws(TypeError, \{ throw 1; });
     }
-    
+
     def test_yada_yada_operator {
         assert_throws(NotImplementedError, \{ ... });
     }
-    
+
     def test_jump_out_of_try_block {
         assert_throws(TypeError, \{
             while true {
