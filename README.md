@@ -8,7 +8,7 @@ It's inspired by Ruby, Perl and good old PHP.
 
 ## Supported Platforms
 
-* Linux - x86 and x86_64
+* Linux - x86, x86_64, ARMv6
 * Mac OS X - x86_64
 * Windows - x86
 
