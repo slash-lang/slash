@@ -278,12 +278,13 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_DIVIDE:
         case SL_TOK_MOD:
         case SL_TOK_CARET:
-        case SL_TOK_TILDE:
         case SL_TOK_AMP:
         case SL_TOK_PIPE:
             return sl_intern2(ps->vm, next_token(ps)->str);
         /* operators that can also be unary: */
-        case SL_TOK_MINUS: {
+        case SL_TOK_MINUS:
+        case SL_TOK_TILDE:
+        {
             sl_token_t* tok = next_token(ps);
             if(peek_token(ps)->type == SL_TOK_SELF) {
                 return sl_intern2(ps->vm, sl_string_concat(ps->vm, tok->str, next_token(ps)->str));
@@ -805,7 +806,7 @@ unary_expression(sl_parse_state_t* ps)
         case SL_TOK_TILDE:
             tok = next_token(ps);
             expr = unary_expression(ps);
-            return sl_make_send_node(ps, expr, sl_intern2(ps->vm, tok->str), 0, NULL);
+            return sl_make_send_node(ps, expr, sl_intern(ps->vm, "~self"), 0, NULL);
         case SL_TOK_NOT:
             next_token(ps);
             expr = unary_expression(ps);
