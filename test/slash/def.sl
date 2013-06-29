@@ -32,4 +32,12 @@ class DefTest extends Test {
         assert_is_a(SyntaxError, e);
         assert_equal("not a chance", e.message);
     }
+
+    def test_def_negate {
+        o = Object.new;
+        def o.-self {
+            123;
+        }
+        assert_equal(123, -o);
+    }
 }

@@ -273,7 +273,6 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_GTE:
         case SL_TOK_GT:
         case SL_TOK_PLUS:
-        case SL_TOK_MINUS:
         case SL_TOK_POW:
         case SL_TOK_TIMES:
         case SL_TOK_DIVIDE:
@@ -283,6 +282,16 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_AMP:
         case SL_TOK_PIPE:
             return sl_intern2(ps->vm, next_token(ps)->str);
+        /* operators that can also be unary: */
+        case SL_TOK_MINUS: {
+            sl_token_t* tok = next_token(ps);
+            if(peek_token(ps)->type == SL_TOK_SELF) {
+                return sl_intern2(ps->vm, sl_string_concat(ps->vm, tok->str, next_token(ps)->str));
+            } else {
+                return sl_intern2(ps->vm, tok->str);
+            }
+            break;
+        }
         /* keywords: */
         case SL_TOK_LAST:
         case SL_TOK_NEXT:
