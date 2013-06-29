@@ -342,7 +342,7 @@ sl_init_int(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Int, "&", 1, sl_int_and);
     sl_define_method(vm, vm->lib.Int, "|", 1, sl_int_or);
     sl_define_method(vm, vm->lib.Int, "^", 1, sl_int_xor);
-    sl_define_method(vm, vm->lib.Int, "~", 0, sl_int_not);
+    sl_define_method(vm, vm->lib.Int, "~self", 0, sl_int_not);
     sl_define_method(vm, vm->lib.Int, "to_s", 0, sl_int_to_s);
     sl_define_method(vm, vm->lib.Int, "inspect", 0, sl_int_to_s);
     sl_define_method(vm, vm->lib.Int, "to_i", 0, sl_int_to_i);
