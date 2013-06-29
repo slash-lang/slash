@@ -11,6 +11,9 @@ SLVAL
 sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv);
 
 SLVAL
+sl_regexp_is_match(sl_vm_t* vm, SLVAL self, SLVAL other);
+
+SLVAL
 sl_regexp_match_byte_offset(sl_vm_t* vm, SLVAL self, SLVAL i);
 
 SLVAL

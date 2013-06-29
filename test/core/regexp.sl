@@ -131,4 +131,9 @@ class RegexpTest extends Test {
         assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}ix.options);
         assert_equal(Regexp::CASELESS | Regexp::EXTENDED, %r{}xi.options);
     }
+
+    def test_tilde_operator {
+        assert_equal(true, %r{hello} ~ "hello world");
+        assert_equal(false, %r{hello} ~ "goodbye world");
+    }
 }

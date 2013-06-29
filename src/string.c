@@ -424,6 +424,16 @@ sl_string_eq(sl_vm_t* vm, SLVAL self, SLVAL other)
 }
 
 SLVAL
+sl_string_is_match(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    if(sl_is_a(vm, other, vm->lib.String)) {
+        SLVAL idx = sl_string_index(vm, self, other);
+        return sl_make_bool(vm, sl_get_ptr(idx) != sl_get_ptr(vm->lib.nil));
+    }
+    return sl_regexp_is_match(vm, other, self);
+}
+
+SLVAL
 sl_string_index(sl_vm_t* vm, SLVAL self, SLVAL substr)
 {
     sl_string_t* haystack = sl_get_string(vm, self);
@@ -743,6 +753,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_char_at_index);
     sl_define_method(vm, vm->lib.String, "split", -2, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
+    sl_define_method(vm, vm->lib.String, "~", 1, sl_string_is_match);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
     sl_define_method(vm, vm->lib.String, "hash", 0, sl_string_hash);
     sl_define_method(vm, vm->lib.String, "encode", 1, sl_string_encode2);
