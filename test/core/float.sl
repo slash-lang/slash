@@ -12,8 +12,8 @@ class FloatTest extends Test {
     }
 
     def test_negate {
-        assert_equal(-5.5, 5.5.negate);
-        assert_equal(-(5.5), 5.5.negate);
+        assert_equal(-5.5, 5.5.send("-self"));
+        assert_equal(-(5.5), 5.5.send("-self"));
     }
 
     def test_addition {
