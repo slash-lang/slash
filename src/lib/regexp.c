@@ -162,6 +162,17 @@ sl_regexp_compile(sl_vm_t* vm, SLVAL self)
 }
 */
 
+static void
+check_pcre_error(sl_vm_t* vm, int rc)
+{
+    if(rc == PCRE_ERROR_BADUTF8) {
+        sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 in regular expression or match text");
+    }
+    if(rc < 0) {
+        sl_error(vm, vm->lib.Error, "PCRE error (%d)", rc);
+    }
+}
+
 SLVAL
 sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
@@ -169,7 +180,6 @@ sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     sl_string_t* str = sl_get_string(vm, argv[0]);
     int offset = 0, rc, ncaps;
     int* caps;
-    char err_buff[256];
     sl_regexp_match_t* match;
     if(argc > 1) {
         offset = sl_get_int(sl_expect(vm, argv[1], vm->lib.Int));
@@ -183,22 +193,29 @@ sl_regexp_match(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     ncaps *= 3;
     caps = sl_alloc(vm->arena, sizeof(int) * ncaps);
     rc = pcre_exec(re->re, re->study, (char*)str->buff, str->buff_len, offset, PCRE_NEWLINE_LF, caps, ncaps);
-    if(rc < 0) {
-        if(rc == PCRE_ERROR_NOMATCH) {
-            return vm->lib.nil;
-        }
-        if(rc == PCRE_ERROR_BADUTF8) {
-            sl_throw_message2(vm, vm->lib.EncodingError, "Invalid UTF-8 in regular expression or match text");
-        }
-        sprintf(err_buff, "PCRE error (%d)", rc);
-        sl_throw_message2(vm, vm->lib.Error, err_buff);
+    if(rc == PCRE_ERROR_NOMATCH) {
+        return vm->lib.nil;
     }
+    check_pcre_error(vm, rc);
     match = (sl_regexp_match_t*)sl_get_ptr(sl_allocate(vm, vm->lib.Regexp_Match));
     match->re = re;
     match->match_string = argv[0];
     match->capture_count = ncaps / 3;
     match->captures = caps;
     return sl_make_ptr((sl_object_t*)match);
+}
+
+SLVAL
+sl_regexp_is_match(sl_vm_t* vm, SLVAL self, SLVAL other)
+{
+    sl_regexp_t* re = get_regexp_check(vm, self);
+    sl_string_t* str = sl_get_string(vm, other);
+    int rc = pcre_exec(re->re, re->study, (char*)str->buff, str->buff_len, 0, PCRE_NEWLINE_LF, NULL, 0);
+    if(rc == PCRE_ERROR_NOMATCH) {
+        return vm->lib._false;
+    }
+    check_pcre_error(vm, rc);
+    return vm->lib._true;
 }
 
 static SLVAL
@@ -345,6 +362,7 @@ sl_init_regexp(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Regexp, "compile", 0, sl_regexp_compile);
     */
     sl_define_method(vm, vm->lib.Regexp, "match", -2, sl_regexp_match);
+    sl_define_method(vm, vm->lib.Regexp, "~", 1, sl_regexp_is_match);
     sl_define_method(vm, vm->lib.Regexp, "source", 0, sl_regexp_source);
     sl_define_method(vm, vm->lib.Regexp, "options", 0, sl_regexp_options);
     sl_define_method(vm, vm->lib.Regexp, "==", 1, sl_regexp_eq);

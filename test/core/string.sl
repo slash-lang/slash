@@ -158,4 +158,12 @@ class StringTest extends Test {
         assert_equal("ABCDEF", "AbCdEf".upper);
         assert_equal("ÅÉÎØÜ", "åéîøü".upper);
     }
+
+    def test_tilde_operator {
+        assert_equal(true, "hello world" ~ %r{hello});
+        assert_equal(false, "goodbye world" ~ %r{hello});
+
+        assert_equal(true, "hello world" ~ "hello");
+        assert_equal(false, "goodbye world" ~ "hello");
+    }
 }
