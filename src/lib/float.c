@@ -144,7 +144,7 @@ sl_init_float(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Float, "to_f", 0, sl_float_to_f);
     sl_define_method(vm, vm->lib.Float, "succ", 0, sl_float_succ);
     sl_define_method(vm, vm->lib.Float, "pred", 0, sl_float_pred);
-    sl_define_method(vm, vm->lib.Float, "negate", 0, sl_float_negate);
+    sl_define_method(vm, vm->lib.Float, "-self", 0, sl_float_negate);
     sl_define_method(vm, vm->lib.Float, "round", 0, sl_float_round);
     sl_define_method(vm, vm->lib.Float, "floor", 0, sl_float_floor);
     sl_define_method(vm, vm->lib.Float, "ceil", 0, sl_float_ceil);
