@@ -916,6 +916,7 @@ relational_expression(sl_parse_state_t* ps)
         case SL_TOK_LTE:
         case SL_TOK_GTE:
         case SL_TOK_SPACESHIP:
+        case SL_TOK_TILDE:
             tok = next_token(ps);
             right = bitwise_expression(ps);
             return sl_make_send_node(ps, left, sl_intern2(ps->vm, tok->str), 1, &right);
