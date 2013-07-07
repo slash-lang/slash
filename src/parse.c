@@ -348,8 +348,7 @@ def_expression(sl_parse_state_t* ps)
     }
     if(peek_token(ps)->type == SL_TOK_EQUALS) {
         next_token(ps);
-        name = sl_intern2(ps->vm,
-            sl_string_concat(ps->vm, sl_id_to_string(ps->vm, name), sl_make_cstring(ps->vm, "=")));
+        name = sl_id_make_setter(ps->vm, name);
     }
     int at_opt_args = 0;
     if(peek_token(ps)->type != SL_TOK_OPEN_BRACE) {
