@@ -62,6 +62,7 @@ LIB(time);
 LIB(gc);
 LIB(eval);
 LIB(buffer);
+LIB(version);
 
 void sl_init_exts(sl_vm_t* vm);
 
@@ -92,6 +93,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(gc);
     LIB_INIT(eval);
     LIB_INIT(buffer);
+    LIB_INIT(version);
 
     sl_init_exts(vm);
 }
