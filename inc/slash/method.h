@@ -30,4 +30,7 @@ sl_intern2(sl_vm_t* vm, SLVAL str);
 SLID
 sl_intern(sl_vm_t* vm, char* cstr);
 
+SLID
+sl_id_make_setter(sl_vm_t* vm, SLID id);
+
 #endif

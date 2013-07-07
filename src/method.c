@@ -235,3 +235,10 @@ sl_intern(sl_vm_t* vm, char* cstr)
 {
     return sl_intern2(vm, sl_make_cstring(vm, cstr));
 }
+
+SLID
+sl_id_make_setter(sl_vm_t* vm, SLID id)
+{
+    SLVAL str = sl_make_formatted_string(vm, "%I=", id);
+    return sl_intern2(vm, str);
+}

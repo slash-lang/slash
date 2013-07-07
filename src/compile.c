@@ -308,8 +308,7 @@ emit_assignment(sl_compile_state_t* cs, sl_node_base_t* lval, size_t reg)
             /* this is separate to the other method of handling send assignments
                which also handles compound assignments. */
             memcpy(&send, lval, sizeof(sl_node_send_t));
-            send.id = sl_intern2(cs->vm,
-                sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send.id), sl_make_cstring(cs->vm, "=")));
+            send.id = sl_id_make_setter(cs->vm, send.id);
             sl_node_base_t** args = sl_alloc(cs->vm->arena, sizeof(sl_node_base_t*) * (send.arg_count + 1));
             memcpy(args, send.args, sizeof(sl_node_base_t*) * send.arg_count);
             args[send.arg_count++] = (sl_node_base_t*)&node;
@@ -914,8 +913,9 @@ op_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval
     compile_node(cs, rval, arg_base + lval->arg_count);
 
     /* call the = version of the method to assign the value back */
-    SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, lval->id), sl_make_cstring(cs->vm, "="));
-    op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, lval->arg_count + 1, dest);
+
+    SLID mid = sl_id_make_setter(cs->vm, lval->id);
+    op_send(cs, receiver, mid, arg_base, lval->arg_count + 1, dest);
 
     /* move the rval back to dest reg */
     emit_opcode(cs, SL_OP_MOV);
@@ -959,8 +959,8 @@ NODE(sl_node_assign_send_t, assign_send)
     }
 
     /* call the = version of the method to assign the value back */
-    SLVAL mid = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, node->lval->id), sl_make_cstring(cs->vm, "="));
-    op_send(cs, receiver, sl_intern2(cs->vm, mid), arg_base, node->lval->arg_count + 1, dest);
+    SLID mid = sl_id_make_setter(cs->vm, node->lval->id);
+    op_send(cs, receiver, mid, arg_base, node->lval->arg_count + 1, dest);
 
     emit_opcode(cs, SL_OP_MOV);
     emit_reg(cs, arg_base + node->lval->arg_count);
@@ -1026,8 +1026,8 @@ NODE(sl_node_mutate_t, prefix_mutate)
 
         op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
 
-        SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
-        op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
+        SLID assign_id = sl_id_make_setter(cs->vm, send->id);
+        op_send(cs, recv, assign_id, args_regs, send->arg_count + 1, recv);
 
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
@@ -1057,8 +1057,8 @@ NODE(sl_node_mutate_t, postfix_mutate)
 
         op_send(cs, dest, sl_intern(cs->vm, node->op_method), 0, 0, args_regs + send->arg_count);
 
-        SLVAL assign_id = sl_string_concat(cs->vm, sl_id_to_string(cs->vm, send->id), sl_make_cstring(cs->vm, "="));
-        op_send(cs, recv, sl_intern2(cs->vm, assign_id), args_regs, send->arg_count + 1, recv);
+        SLID assign_id = sl_id_make_setter(cs->vm, send->id);
+        op_send(cs, recv, assign_id, args_regs, send->arg_count + 1, recv);
 
         reg_free(cs, recv);
         reg_free_block(cs, args_regs, send->arg_count + 1);
