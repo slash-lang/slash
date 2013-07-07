@@ -13,7 +13,7 @@ OBJS+=src/class.o src/error.o src/method.o src/object.o src/dispatch.o \
 	src/init_exts.o src/lib/rand.o src/lib/dict.o src/lib/request.o \
 	src/lib/response.o src/lib/error_page.o src/lib/system.o src/lib/regexp.o \
 	src/gc.o src/lib/range.o src/vm_exec.o src/compile.o src/lib/time.o \
-	src/unicode.o src/lib/gc.o src/lib/buffer.o
+	src/unicode.o src/lib/gc.o src/lib/buffer.o src/lib/version.o
 
 SAPIS=$(shell ls -F sapi | grep "/" | sed -e 's/\///')
 
