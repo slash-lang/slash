@@ -42,6 +42,16 @@ class StringTest extends Test {
         assert_equal(7, "     7".to_i);
         assert_equal(0, " not 7".to_i);
     }
+
+    def test_to_f {
+        assert_equal(123.0, "123".to_f);
+        assert_equal(123.4, "123.4".to_f);
+        assert_equal(-0, "-0".to_f);
+        assert_equal(0, "not a number".to_f);
+        assert_equal(Infinity, "Infinity".to_f);
+        assert_equal(-Infinity, "-Infinity".to_f);
+        assert("NaN".to_f.nan);
+    }
     
     def test_inspect {
         assert_equal("\"hello\"", "hello".inspect);
