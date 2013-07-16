@@ -21,6 +21,9 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size);
 void
 sl_gc_run(sl_gc_arena_t* arena);
 
+void*
+sl_gc_get_stack_top(sl_gc_arena_t* arena);
+
 void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr);
 
