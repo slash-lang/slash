@@ -32,43 +32,12 @@ sl_static_init()
     sl_static_init_vm_internals();
 }
 
-#define LIB(lib) void sl_init_##lib(sl_vm_t*)
-#define LIB_INIT(lib) sl_init_##lib(vm)
-
-LIB(method);
-
-LIB(true);
-LIB(false);
-LIB(nil);
-LIB(comparable);
-LIB(number);
-LIB(int);
-LIB(float);
-LIB(bignum);
-LIB(method);
-LIB(enumerable);
-LIB(array);
-LIB(require);
-LIB(lambda);
-LIB(file);
-LIB(dict);
-LIB(rand);
-LIB(request);
-LIB(response);
-LIB(system);
-LIB(regexp);
-LIB(range);
-LIB(time);
-LIB(gc);
-LIB(eval);
-LIB(buffer);
-LIB(version);
-
 void sl_init_exts(sl_vm_t* vm);
 
 static void
 sl_init_libs(sl_vm_t* vm)
 {
+    #define LIB_INIT(lib) do { void sl_init_##lib(sl_vm_t*); sl_init_##lib(vm); } while(0)
     LIB_INIT(nil);
     LIB_INIT(comparable);
     LIB_INIT(number);
@@ -94,6 +63,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(eval);
     LIB_INIT(buffer);
     LIB_INIT(version);
+    #undef LIB_INIT
 
     sl_init_exts(vm);
 }
