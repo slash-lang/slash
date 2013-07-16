@@ -366,6 +366,15 @@ sl_string_to_i(sl_vm_t* vm, SLVAL self)
     return sl_integer_parse(vm, str->buff, str->buff_len);
 }
 
+static SLVAL
+sl_string_to_f(sl_vm_t* vm, SLVAL self)
+{
+    char* str = sl_to_cstr(vm, self);
+    double dbl = 0;
+    sscanf(str, "%lf", &dbl);
+    return sl_make_float(vm, dbl);
+}
+
 SLVAL
 sl_string_inspect(sl_vm_t* vm, SLVAL self)
 {
@@ -745,6 +754,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "*", 1, sl_string_times);
     sl_define_method(vm, vm->lib.String, "to_s", 0, sl_string_to_s);
     sl_define_method(vm, vm->lib.String, "to_i", 0, sl_string_to_i);
+    sl_define_method(vm, vm->lib.String, "to_f", 0, sl_string_to_f);
     sl_define_method(vm, vm->lib.String, "inspect", 0, sl_string_inspect);
     sl_define_method(vm, vm->lib.String, "html_escape", 0, sl_string_html_escape);
     sl_define_method(vm, vm->lib.String, "url_decode", 0, sl_string_url_decode);
