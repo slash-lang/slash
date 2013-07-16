@@ -62,7 +62,7 @@ sl_init_libs(sl_vm_t* vm)
     LIB_INIT(gc);
     LIB_INIT(eval);
     LIB_INIT(buffer);
-    LIB_INIT(version);
+    LIB_INIT(slash);
     #undef LIB_INIT
 
     sl_init_exts(vm);
