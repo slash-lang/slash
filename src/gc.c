@@ -276,6 +276,12 @@ sl_gc_run(sl_gc_arena_t* arena)
     sl_gc_sweep(arena);
 }
 
+void*
+sl_gc_get_stack_top(sl_gc_arena_t* arena)
+{
+    return (void*)arena->stack_top;
+}
+
 void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 {
