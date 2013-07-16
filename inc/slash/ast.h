@@ -49,16 +49,11 @@ typedef enum sl_node_type {
 }
 sl_node_type_t;
 
-struct sl_eval_ctx;
-struct sl_node_base;
-
-typedef struct sl_node_base {
+typedef struct {
     sl_node_type_t type;
     int line;
 }
 sl_node_base_t;
-
-typedef SLVAL(*sl_node_eval_fn_t)(sl_node_base_t*, struct sl_eval_ctx*);
 
 typedef struct sl_node_seq {
     sl_node_base_t base;
