@@ -21,6 +21,7 @@ allocate_class(sl_vm_t* vm)
     klass->super = vm->lib.Object;
     klass->name.id = 0;
     klass->in = vm->lib.Object;
+    klass->doc = vm->lib.nil;
     return (sl_object_t*)klass;
 }
 
@@ -39,6 +40,7 @@ sl_pre_init_class(sl_vm_t* vm)
     obj->name.id = 0;
     obj->super = vm->lib.Object;
     obj->in = vm->lib.Object;
+    obj->doc = vm->lib.nil;
     obj->constants = sl_st_init_table(vm, &sl_id_hash_type);
     obj->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
     obj->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);

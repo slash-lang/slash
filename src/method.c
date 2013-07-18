@@ -34,6 +34,7 @@ allocate_method(sl_vm_t* vm)
 {
     sl_object_t* method = sl_alloc(vm->arena, sizeof(sl_method_t));
     method->primitive_type = SL_T_METHOD;
+    method->doc = vm->lib.nil;
     return method;
 }
 
@@ -42,6 +43,7 @@ allocate_bound_method(sl_vm_t* vm)
 {
     sl_object_t* bound_method = sl_alloc(vm->arena, sizeof(sl_bound_method_t));
     bound_method->primitive_type = SL_T_BOUND_METHOD;
+    bound_method->doc = vm->lib.nil;
     return bound_method;
 }
 
