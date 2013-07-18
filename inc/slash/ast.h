@@ -97,6 +97,7 @@ sl_node_interp_string_t;
 typedef struct sl_node_class {
     sl_node_base_t base;
     SLID name;
+    SLVAL doc;
     sl_node_base_t* extends;
     sl_node_base_t* body;
 }
@@ -112,6 +113,7 @@ typedef struct sl_node_def {
     sl_node_base_t base;
     sl_node_base_t* on;
     SLID name;
+    SLVAL doc;
     sl_string_t** req_args;
     size_t req_arg_count;
     sl_node_opt_arg_t* opt_args;

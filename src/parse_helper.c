@@ -235,20 +235,22 @@ sl_make_for_node(sl_parse_state_t* ps, sl_node_base_t* lval, sl_node_base_t* exp
 }
 
 sl_node_base_t*
-sl_make_class_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* extends, sl_node_base_t* body)
+sl_make_class_node(sl_parse_state_t* ps, SLID name, SLVAL doc, sl_node_base_t* extends, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_CLASS, sl_node_class_t, {
         node->name = name;
+        node->doc = doc;
         node->extends = extends;
         node->body = body;
     });
 }
 
 sl_node_base_t*
-sl_make_def_node(sl_parse_state_t* ps, SLID name, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body, sl_string_t* rest_arg)
+sl_make_def_node(sl_parse_state_t* ps, SLID name, SLVAL doc, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body, sl_string_t* rest_arg)
 {
     MAKE_NODE(SL_NODE_DEF, sl_node_def_t, {
         node->name = name;
+        node->doc = doc;
         node->on = on;
         node->req_args = req_args;
         node->req_arg_count = req_arg_count;

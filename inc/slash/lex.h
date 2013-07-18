@@ -121,10 +121,18 @@ typedef enum sl_token_type {
 }
 sl_token_type_t;
 
+typedef struct sl_token_comment {
+    uint8_t* buff;
+    size_t len;
+    size_t cap;
+}
+sl_token_comment_t;
+
 typedef struct sl_token {
     sl_token_type_t type;
     int line;
     SLVAL str;
+    sl_token_comment_t* comment;
     union {
         struct {
             uint8_t* buff;
@@ -143,6 +151,7 @@ typedef struct sl_lex_state {
     size_t len;
     uint8_t* filename;
     int line;
+    sl_token_comment_t* comment;
 }
 sl_lex_state_t;
 
@@ -171,6 +180,9 @@ sl_lex_append_byte_to_string(sl_lex_state_t* st, char c);
 
 void
 sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex);
+
+void
+sl_lex_append_byte_to_comment(sl_lex_state_t* st, char c);
 
 void
 sl_lex_error(sl_lex_state_t* st, char* text, int lineno);

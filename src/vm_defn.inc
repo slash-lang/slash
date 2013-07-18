@@ -225,11 +225,13 @@ INSTRUCTION(SL_OP_JUMP_UNLESS, {
 
 /*  0: CLASS
     1: <id:name>
-    2: <reg:extends>
-    3: <section:body>
-    4: <reg:dest> */
+    2: <imm:doc>
+    3: <reg:extends>
+    4: <section:body>
+    5: <reg:dest> */
 INSTRUCTION(SL_OP_CLASS, {
     SLID class_name = NEXT_ID();
+    SLVAL doc = NEXT_IMM();
     SLVAL super_class = NEXT_REG();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_class(ctx, class_name, super_class, body);
@@ -237,10 +239,12 @@ INSTRUCTION(SL_OP_CLASS, {
 
 /*  0: DEFINE
     1: <id:name>
-    2: <section:body>
-    3: <reg:dest> */
+    2: <imm:doc>
+    3: <section:body>
+    4: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE, {
     SLID id = NEXT_ID();
+    SLVAL doc = NEXT_IMM();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_method(ctx, id, body);
 })
@@ -248,11 +252,13 @@ INSTRUCTION(SL_OP_DEFINE, {
 /*  0: DEFINE_ON
     1: <reg:on>
     2: <id:name>
-    3: <section:body>
-    4: <reg:dest> */
+    3: <imm:doc>
+    4: <section:body>
+    5: <reg:dest> */
 INSTRUCTION(SL_OP_DEFINE_ON, {
     SLVAL obj = NEXT_REG();
     SLID id = NEXT_ID();
+    SLVAL doc = NEXT_IMM();
     sl_vm_section_t* body = NEXT_SECTION();
     NEXT_REG() = vm_helper_define_singleton_method(ctx, obj, id, body);
 })
