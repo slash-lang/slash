@@ -16,6 +16,8 @@
             yyextra->tokens[yyextra->len] = (tok); \
             yyextra->tokens[yyextra->len].str = sl_make_string(yyextra->vm, (uint8_t*)yytext, yyleng); \
             yyextra->tokens[yyextra->len].line = yyextra->line; \
+            yyextra->tokens[yyextra->len].comment = yyextra->comment; \
+            yyextra->comment = NULL; \
             yyextra->len++; \
         } while(0)
 
@@ -45,8 +47,9 @@ HEX [0-9a-fA-F]
 <COMMENT_TAG>\n     { yyextra->line++; }
 <COMMENT_TAG>.      { }
 
-<COMMENT_LINE>.     { }
-<COMMENT_LINE>\n    { yyextra->line++;                                                BEGIN(SLASH); }
+<COMMENT_LINE>.     { sl_lex_append_byte_to_comment(yyextra, yytext[0]); }
+<COMMENT_LINE>\n    { sl_lex_append_byte_to_comment(yyextra, yytext[0]);
+                      yyextra->line++;                                                BEGIN(SLASH); }
 
 <COMMENT_ML_C>"*/"  {                                                                 BEGIN(SLASH); }
 <COMMENT_ML_C>\n    { yyextra->line++; }
@@ -83,7 +86,7 @@ HEX [0-9a-fA-F]
 <REGEXP_R>.|\n      { sl_lex_append_byte_to_string(yyextra, yytext[0]); }
 
 <SLASH>"/*"         {                                                                 BEGIN(COMMENT_ML_C); }
-<SLASH>"#"|"//"     {                                                                 BEGIN(COMMENT_LINE); }
+<SLASH>("#"|"//")" "? {                                                               BEGIN(COMMENT_LINE); }
 <SLASH>"%>"         { ADD_TOKEN(sl_make_token(SL_TOK_CLOSE_TAG));                     BEGIN(INITIAL); }
 
 <SLASH>"-"?[0-9]+"e"[+-]?[0-9]+                 { ADD_TOKEN(sl_make_float_token(yytext)); }
@@ -222,6 +225,7 @@ sl_lex(sl_vm_t* vm, uint8_t* filename, uint8_t* buff, size_t len, size_t* token_
     ls.tokens = sl_alloc(vm->arena, sizeof(sl_token_t) * ls.cap);
     ls.filename = filename;
     ls.line = 1;
+    ls.comment = NULL;
     
     if(!start_in_slash) {
         ls.tokens[ls.len].line = 1;

@@ -242,7 +242,11 @@ for_expression(sl_parse_state_t* ps)
 static sl_node_base_t*
 class_expression(sl_parse_state_t* ps)
 {
-    expect_token(ps, SL_TOK_CLASS);
+    sl_token_t* class_token = expect_token(ps, SL_TOK_CLASS);
+    SLVAL doc = ps->vm->lib.nil;
+    if(class_token->comment) {
+        doc = sl_make_string(ps->vm, class_token->comment->buff, class_token->comment->len);
+    }
     sl_token_t* tok = expect_token(ps, SL_TOK_CONSTANT);
     SLID name = sl_intern2(ps->vm, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
     sl_node_base_t *extends, *body;
@@ -253,7 +257,7 @@ class_expression(sl_parse_state_t* ps)
         extends = NULL;
     }
     body = body_expression(ps);
-    return sl_make_class_node(ps, name, extends, body);
+    return sl_make_class_node(ps, name, doc, extends, body);
 }
 
 static SLID
@@ -321,7 +325,11 @@ def_expression(sl_parse_state_t* ps)
     sl_node_opt_arg_t* opt_args = sl_alloc(ps->vm->arena, sizeof(sl_node_opt_arg_t) * opt_arg_cap);
     sl_parse_scope_t scope;
     sl_string_t* rest_arg = NULL;
-    expect_token(ps, SL_TOK_DEF);
+    sl_token_t* def_token = expect_token(ps, SL_TOK_DEF);
+    SLVAL doc = ps->vm->lib.nil;
+    if(def_token->comment) {
+        doc = sl_make_string(ps->vm, def_token->comment->buff, def_token->comment->len);
+    }
     switch(peek_token(ps)->type) {
         case SL_TOK_IDENTIFIER:
             if(peek_token_n(ps, 2)->type == SL_TOK_DOT) {
@@ -393,7 +401,7 @@ def_expression(sl_parse_state_t* ps)
     body = body_expression(ps);
     ps->scope = scope.prev;
     ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
-    return sl_make_def_node(ps, name, on, req_arg_count, req_args, opt_arg_count, opt_args, body, rest_arg);
+    return sl_make_def_node(ps, name, doc, on, req_arg_count, req_args, opt_arg_count, opt_args, body, rest_arg);
 }
 
 static sl_node_base_t*

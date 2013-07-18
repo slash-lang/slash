@@ -96,6 +96,22 @@ sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
 }
 
 void
+sl_lex_append_byte_to_comment(sl_lex_state_t* st, char c)
+{
+    if(!st->comment) {
+        st->comment = sl_alloc(st->vm->arena, sizeof(*st->comment));
+        st->comment->cap = 32;
+        st->comment->len = 0;
+        st->comment->buff = sl_alloc_buffer(st->vm->arena, st->comment->cap);
+    }
+    if(st->comment->len + 1 >= st->comment->cap) {
+        st->comment->cap *= 2;
+        st->comment->buff = sl_realloc(st->vm->arena, st->comment->buff, st->comment->cap);
+    }
+    st->comment->buff[st->comment->len++] = (uint8_t)c;
+}
+
+void
 sl_lex_error(sl_lex_state_t* st, char* text, int lineno)
 {
     SLVAL msg = sl_make_formatted_string(st->vm, "Unexpected character '%s'", text);

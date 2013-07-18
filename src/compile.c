@@ -490,6 +490,7 @@ NODE(sl_node_def_t, def)
         emit_opcode(cs, SL_OP_DEFINE);
     }
     emit_id(cs, node->name);
+    emit_immediate(cs, node->doc);
     emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
 }
@@ -570,6 +571,7 @@ NODE(sl_node_class_t, class)
 
     emit_opcode(cs, SL_OP_CLASS);
     emit_id(cs, node->name);
+    emit_immediate(cs, node->doc);
     emit_reg(cs, dest);
     emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
