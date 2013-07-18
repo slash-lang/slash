@@ -74,10 +74,16 @@ sl_class_in(sl_vm_t* vm, SLVAL self)
     return get_class(vm, self)->in;
 }
 
-static SLVAL
+SLVAL
 sl_class_doc(sl_vm_t* vm, SLVAL self)
 {
     return get_class(vm, self)->doc;
+}
+
+SLVAL
+sl_class_doc_set(sl_vm_t* vm, SLVAL self, SLVAL doc)
+{
+    return get_class(vm, self)->doc = doc;
 }
 
 static SLVAL

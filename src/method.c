@@ -87,7 +87,7 @@ sl_method_arity(sl_vm_t* vm, SLVAL method)
     return sl_make_int(vm, methp->arity);
 }
 
-static SLVAL
+SLVAL
 sl_method_doc(sl_vm_t* vm, SLVAL method)
 {
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
@@ -95,6 +95,14 @@ sl_method_doc(sl_vm_t* vm, SLVAL method)
         return vm->lib.nil;
     }
     return methp->doc;
+}
+
+SLVAL
+sl_method_doc_set(sl_vm_t* vm, SLVAL method, SLVAL doc)
+{
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    return methp->doc = doc;
+    (void)vm;
 }
 
 static SLVAL
