@@ -61,7 +61,8 @@ exit 1 unless GetOptions "with-lib-dir=s"  => sub { push @lib_dirs, $_[1] },
                          };
 
 for(@lib_dirs) {
-    $CFLAGS .= " -I$_/include -L$_/lib";
+    $CFLAGS .= " -I$_/include";
+    $LDFLAGS .= " -L$_/lib";
 }
 if($profile) {
     $CFLAGS .= " -pg";
@@ -82,7 +83,7 @@ sub compile {
     $binary =~ s/\.c$//;
     print $fh $src;
     close $fh;
-    my $command = "$ENV{CC} $CFLAGS $flags -o $binary $filename $flags 2>&1";
+    my $command = "$ENV{CC} $CFLAGS $LDFLAGS $flags -o $binary $filename $flags 2>&1";
     print "% $command\n" if $verbose;
     my $output = `$command`;
     print $output if $verbose;
