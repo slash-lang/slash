@@ -207,6 +207,7 @@ sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver)
     
     bmethp->method.initialized  = 1;
     bmethp->method.name         = methp->name;
+    bmethp->method.doc          = methp->doc;
     bmethp->method.klass        = methp->klass;
     bmethp->method.is_c_func    = methp->is_c_func;
     bmethp->method.arity        = methp->arity;

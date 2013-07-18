@@ -15,13 +15,13 @@
 #include <stdlib.h>
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section);
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section);
 
 static SLVAL
-vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, sl_vm_section_t* section);
+vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, sl_vm_section_t* section);
 
 static SLVAL
-vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl_vm_section_t* section);
+vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, SLVAL doc, sl_vm_section_t* section);
 
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
@@ -142,7 +142,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
 /* helper functions */
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_section_t* section)
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section)
 {
     SLVAL klass, in;
     sl_vm_exec_ctx_t* subctx;
@@ -162,30 +162,33 @@ vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL extends, sl_vm_se
     subctx->registers = sl_alloc(ctx->vm->arena, sizeof(SLVAL) * section->max_registers);
     subctx->self = klass;
     subctx->parent = ctx;
+    sl_class_doc_set(ctx->vm, klass, doc);
     sl_vm_exec(subctx, 0);
     return klass;
 }
 
 static SLVAL
-vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, sl_vm_section_t* section)
+vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, sl_vm_section_t* section)
 {
     SLVAL on = ctx->self, method;
     if(!sl_is_a(ctx->vm, on, ctx->vm->lib.Class)) {
         on = sl_class_of(ctx->vm, on);
     }
     method = sl_make_method(ctx->vm, on, name, section, ctx);
+    sl_method_doc_set(ctx->vm, method, doc);
     sl_define_method3(ctx->vm, on, name, method);
     return method;
 }
 
 static SLVAL
-vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, sl_vm_section_t* section)
+vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, SLVAL doc, sl_vm_section_t* section)
 {
     SLVAL klass = on, method;
     if(!sl_is_a(ctx->vm, klass, ctx->vm->lib.Class)) {
         klass = sl_class_of(ctx->vm, klass);
     }
     method = sl_make_method(ctx->vm, klass, name, section, ctx);
+    sl_method_doc_set(ctx->vm, method, doc);
     sl_define_singleton_method3(ctx->vm, on, name, method);
     return method;
 }

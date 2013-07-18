@@ -234,7 +234,7 @@ INSTRUCTION(SL_OP_CLASS, {
     SLVAL doc = NEXT_IMM();
     SLVAL super_class = NEXT_REG();
     sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_class(ctx, class_name, super_class, body);
+    NEXT_REG() = vm_helper_define_class(ctx, class_name, doc, super_class, body);
 })
 
 /*  0: DEFINE
@@ -246,7 +246,7 @@ INSTRUCTION(SL_OP_DEFINE, {
     SLID id = NEXT_ID();
     SLVAL doc = NEXT_IMM();
     sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_method(ctx, id, body);
+    NEXT_REG() = vm_helper_define_method(ctx, id, doc, body);
 })
 
 /*  0: DEFINE_ON
@@ -260,7 +260,7 @@ INSTRUCTION(SL_OP_DEFINE_ON, {
     SLID id = NEXT_ID();
     SLVAL doc = NEXT_IMM();
     sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_singleton_method(ctx, obj, id, body);
+    NEXT_REG() = vm_helper_define_singleton_method(ctx, obj, id, doc, body);
 })
 
 /*  0: LAMBDA
