@@ -78,4 +78,10 @@ sl_class_has_full_path(sl_vm_t* vm, SLVAL klass);
 SLVAL
 sl_class_file_path(sl_vm_t* vm, SLVAL klass);
 
+SLVAL
+sl_class_doc(sl_vm_t* vm, SLVAL klass);
+
+SLVAL
+sl_class_doc_set(sl_vm_t* vm, SLVAL klass, SLVAL doc);
+
 #endif
