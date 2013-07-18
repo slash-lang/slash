@@ -53,6 +53,7 @@ typedef struct sl_class {
     SLID name;
     SLVAL super;
     SLVAL in;
+    SLVAL doc;
     sl_st_table_t* constants;
     sl_st_table_t* class_variables;
     sl_st_table_t* instance_methods;
@@ -75,6 +76,7 @@ typedef struct sl_method {
     sl_object_t base;
     SLID name;
     SLVAL klass;
+    SLVAL doc;
     char initialized;
     char is_c_func;
     int arity;

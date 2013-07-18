@@ -17,6 +17,7 @@ sl_pre_init_object(sl_vm_t* vm)
     klass->super = vm->lib.nil;
     klass->name.id = 0;
     klass->in = vm->lib.nil;
+    klass->doc = vm->lib.nil;
     klass->constants = sl_st_init_table(vm, &sl_id_hash_type);
     klass->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
     klass->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
