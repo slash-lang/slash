@@ -75,6 +75,12 @@ sl_class_in(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+sl_class_doc(sl_vm_t* vm, SLVAL self)
+{
+    return get_class(vm, self)->doc;
+}
+
+static SLVAL
 sl_class_super(sl_vm_t* vm, SLVAL self)
 {
     return get_class(vm, self)->super;
@@ -249,6 +255,7 @@ sl_init_class(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Class, "to_s", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "name", 0, sl_class_name);
     sl_define_method(vm, vm->lib.Class, "in", 0, sl_class_in);
+    sl_define_method(vm, vm->lib.Class, "doc", 0, sl_class_doc);
     sl_define_method(vm, vm->lib.Class, "super", 0, sl_class_super);
     sl_define_method(vm, vm->lib.Class, "inspect", 0, sl_class_to_s);
     sl_define_method(vm, vm->lib.Class, "new", -1, sl_new);

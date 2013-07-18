@@ -32,19 +32,19 @@ sl_id_hash_type = { id_cmp, id_hash };
 static sl_object_t*
 allocate_method(sl_vm_t* vm)
 {
-    sl_object_t* method = sl_alloc(vm->arena, sizeof(sl_method_t));
-    method->primitive_type = SL_T_METHOD;
+    sl_method_t* method = sl_alloc(vm->arena, sizeof(sl_method_t));
+    method->base.primitive_type = SL_T_METHOD;
     method->doc = vm->lib.nil;
-    return method;
+    return (sl_object_t*)method;
 }
 
 static sl_object_t*
 allocate_bound_method(sl_vm_t* vm)
 {
-    sl_object_t* bound_method = sl_alloc(vm->arena, sizeof(sl_bound_method_t));
-    bound_method->primitive_type = SL_T_BOUND_METHOD;
-    bound_method->doc = vm->lib.nil;
-    return bound_method;
+    sl_bound_method_t* bound_method = sl_alloc(vm->arena, sizeof(sl_bound_method_t));
+    bound_method->method.base.primitive_type = SL_T_BOUND_METHOD;
+    bound_method->method.doc = vm->lib.nil;
+    return (sl_object_t*)bound_method;
 }
 
 static SLVAL
@@ -85,6 +85,16 @@ sl_method_arity(sl_vm_t* vm, SLVAL method)
         return vm->lib.nil;
     }
     return sl_make_int(vm, methp->arity);
+}
+
+static SLVAL
+sl_method_doc(sl_vm_t* vm, SLVAL method)
+{
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    if(!methp->initialized) {
+        return vm->lib.nil;
+    }
+    return methp->doc;
 }
 
 static SLVAL
@@ -133,6 +143,7 @@ sl_init_method(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Method, "name", 0, sl_method_name);
     sl_define_method(vm, vm->lib.Method, "on", 0, sl_method_on);
     sl_define_method(vm, vm->lib.Method, "arity", 0, sl_method_arity);
+    sl_define_method(vm, vm->lib.Method, "doc", 0, sl_method_doc);
     sl_define_method(vm, vm->lib.Method, "inspect", 0, method_inspect);
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
