@@ -298,11 +298,9 @@ def_expression_method_name(sl_parse_state_t* ps)
         case SL_TOK_NEXT:
             return sl_intern2(ps->vm, next_token(ps)->str);
         case SL_TOK_OPEN_BRACKET:
-            if(peek_token_n(ps, 2)->type == SL_TOK_CLOSE_BRACKET) {
-                next_token(ps);
-                next_token(ps);
-                return sl_intern(ps->vm, "[]");
-            }
+            next_token(ps);
+            expect_token(ps, SL_TOK_CLOSE_BRACKET);
+            return sl_intern(ps->vm, "[]");
         default:
             unexpected(ps, next_token(ps));
             SLID dummy;
