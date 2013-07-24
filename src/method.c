@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <slash/class.h>
 #include <slash/method.h>
 #include <slash/object.h>
@@ -141,6 +142,28 @@ method_inspect(sl_vm_t* vm, SLVAL method)
         methp->klass, methp->name, methp->arity);
 }
 
+static SLVAL
+method_eq(sl_vm_t* vm, SLVAL method, SLVAL other)
+{
+    if(sl_get_ptr(sl_class_of(vm, other)) != sl_get_ptr(vm->lib.Method)) {
+        return vm->lib._false;
+    }
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    sl_method_t* othp = (sl_method_t*)sl_get_ptr(other);
+    return sl_make_bool(vm, memcmp(methp, othp, sizeof(sl_method_t)) == 0);
+}
+
+static SLVAL
+bound_method_eq(sl_vm_t* vm, SLVAL method, SLVAL other)
+{
+    if(sl_get_ptr(sl_class_of(vm, other)) != sl_get_ptr(vm->lib.BoundMethod)) {
+        return vm->lib._false;
+    }
+    sl_bound_method_t* methp = (sl_bound_method_t*)sl_get_ptr(method);
+    sl_bound_method_t* othp = (sl_bound_method_t*)sl_get_ptr(other);
+    return sl_make_bool(vm, memcmp(methp, othp, sizeof(sl_bound_method_t)) == 0);
+}
+
 void
 sl_init_method(sl_vm_t* vm)
 {
@@ -153,11 +176,13 @@ sl_init_method(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Method, "arity", 0, sl_method_arity);
     sl_define_method(vm, vm->lib.Method, "doc", 0, sl_method_doc);
     sl_define_method(vm, vm->lib.Method, "inspect", 0, method_inspect);
+    sl_define_method(vm, vm->lib.Method, "==", 1, method_eq);
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
     sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);
     sl_define_method(vm, vm->lib.BoundMethod, "unbind", 0, bound_method_unbind);
     sl_define_method(vm, vm->lib.BoundMethod, "call", -1, bound_method_call);
+    sl_define_method(vm, vm->lib.BoundMethod, "==", 1, bound_method_eq);
 }
 
 SLVAL
