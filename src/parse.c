@@ -537,6 +537,15 @@ bracketed_expression(sl_parse_state_t* ps)
     sl_node_base_t* node;
     expect_token(ps, SL_TOK_OPEN_PAREN);
     node = expression(ps);
+    if(peek_token(ps)->type == SL_TOK_SEMICOLON) {
+        sl_node_seq_t* seq = sl_make_seq_node(ps);
+        sl_seq_node_append(ps, seq, node);
+        while(peek_token(ps)->type == SL_TOK_SEMICOLON) {
+            next_token(ps);
+            sl_seq_node_append(ps, seq, expression(ps));
+        }
+        node = (sl_node_base_t*)seq;
+    }
     expect_token(ps, SL_TOK_CLOSE_PAREN);
     return node;
 }
