@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TABS="$(git ls-files | grep -v Makefile$ | xargs grep -n '\t')"
+TABS="$(git ls-files | grep -v Makefile$ | xargs grep -En '\t')"
 if [ -n "$TABS" ]; then
     echo "There are hard tab characters in the following source files:"
     echo
