@@ -546,7 +546,9 @@ NODE(sl_node_try_t, try)
 
     emit_opcode(cs, SL_OP_END_TRY);
 
-    emit_assignment(cs, node->lval, dest);
+    if(node->lval) {
+        emit_assignment(cs, node->lval, dest);
+    }
     compile_node(cs, node->catch_body, dest);
 
     insn_at_ip(cs, after_fixup)->ip = cs->section->insns_byte_count;
