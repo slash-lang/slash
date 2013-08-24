@@ -1,14 +1,5 @@
 #!/bin/bash
 
-if git ls-files | grep -v Makefile$ | xargs grep -n '\t'; then
-    echo "There are hard tab characters in the following source files:"
-    echo
-    git ls-files | grep -v Makefile$ | xargs grep -n '\t'
-    echo
-    echo "Failing build."
-    exit 1
-fi
-
 ./configure --prefix=`pwd` --no-ext=json
 make
 make test
