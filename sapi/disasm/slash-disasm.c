@@ -82,7 +82,7 @@ decode_opcode(void* ptr)
 
 void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
 {
-    size_t ip = 0;
+    size_t ip = 0, orig_ip;
     sl_vm_inline_method_cache_t* imc;
 
     #define NEXT(type) (*(type*)&section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
@@ -106,6 +106,7 @@ void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
     printf("%s (%p):\n", sl_to_cstr(vm, sl_id_to_string(vm, section->name)), section);
 
     while(ip < section->insns_byte_count) {
+        orig_ip = ip;
         switch(NEXT_OPCODE()) {
             #include "dis.inc"
         }

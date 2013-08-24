@@ -26,7 +26,7 @@ ARGF.readlines.slice_before { |line| line =~ %r{/\*\s+0: [A-Z_]+} }.each do |lin
   ins = $1
   operands = operands.map { |o| o =~ /([a-z][a-z0-9]*)[:>]/; $1 }
   puts "case SL_OP_#{ins}:"
-  puts %{    printf("    %04zu:  %-16s", ip - 1, #{ins.inspect});}
+  puts %{    printf("    %04zu:  %-16s", orig_ip, #{ins.inspect});}
   if operands.empty?
     puts '    printf("\n");'
     puts '    break;'
