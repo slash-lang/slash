@@ -6,6 +6,7 @@ posix_fork(sl_vm_t* vm, SLVAL self)
     int ret;
     ret = fork();
     return sl_make_int(vm, ret);
+    (void)self;
 }
 
 inline static void
