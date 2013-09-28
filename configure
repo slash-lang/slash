@@ -31,6 +31,22 @@ sub success {
     my $message = shift;
     print "\n\e[32m$message\n\e[0m";
 };
+sub help {
+    print "usage: ./configure <opts>\n";
+    print " --with-lib-dir=DIR      : search DIR for libraries\n";
+    print " --debug                 : enable a debug build\n";
+    print " --profile               : enable a profiled build\n";
+    print " --coverage              : enable code coverage\n";
+    print " --prefix=PREFIX         : install into PREFIX\n";
+    print " --cflags=FLAGS          : pass FLAGS to the compiler\n";
+    print " --ldflags=FLAGS         : pass FLAGS to the linker\n";
+    print " --vanilla               : build without any extensions or SAPIs\n";
+    print " --ext=EXTENSION         : enable EXTENSION\n";
+    print " --no-ext=EXTENSION      : disable EXTENSION\n";
+    print " --sapi=SAPI             : enable SAPI\n";
+    print " --no-sapi=SAPI          : disable SAPI\n";
+    print " --help                  : print this help\n";
+}
 
 exit 1 unless GetOptions "with-lib-dir=s"  => sub { push @lib_dirs, $_[1] },
                          "debug"     => \my $debug,
@@ -58,6 +74,10 @@ exit 1 unless GetOptions "with-lib-dir=s"  => sub { push @lib_dirs, $_[1] },
                          "no-sapi=s" => sub {
                              my $sapi = $_[1];
                              @sapis = grep { $_ ne $sapi } @sapis;
+                         },
+                         "help" => sub {
+                             help;
+                             exit 0;
                          };
 
 for(@lib_dirs) {
