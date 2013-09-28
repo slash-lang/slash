@@ -4,13 +4,13 @@
 
 #ifdef __WIN32
     #define _WIN32_WINNT 0x0501
-    
+
     #include <Windows.h>
     #include <winsock2.h>
     #include <winsock.h>
     #include <Ws2tcpip.h>
     #include <stdio.h>
-    
+
     static WSADATA wsaData;
 #else
     #include <sys/socket.h>
@@ -86,47 +86,47 @@ static SLVAL
 sl_tcp_socket_init(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
 {
     sl_expect(vm, hostv, vm->lib.String);
-    
+
     int port = sl_get_int(sl_expect(vm, portv, vm->lib.Int));
     if(port < 1 || port > 65535) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "Port number out of range");
     }
-    
+
     sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
     if(sock->socket != -1) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "Cannot reinitialize TCPSocket instance");
     }
-    
+
     struct addrinfo* ai;
     int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, NULL, &ai);
     if(gai_error != 0) {
         tcp_socket_error(vm, "Could not create TCPSocket: ", gai_strerror(gai_error));
     }
-    
+
     if(ai->ai_family != AF_INET && ai->ai_family != AF_INET6) {
         freeaddrinfo(ai);
         tcp_socket_error(vm, "Could not create TCPSocket: ", "only IPv4 and IPv6 supported");
     }
-    
+
     sock->socket = socket(ai->ai_family, SOCK_STREAM, 0);
     if(sock->socket == -1) {
         freeaddrinfo(ai);
         tcp_socket_error(vm, "Could not create TCPSocket: ", strerror(errno));
     }
-    
+
     if(ai->ai_family == AF_INET) {
         ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
     } else if(ai->ai_family == AF_INET6) {
         ((struct sockaddr_in6*)ai->ai_addr)->sin6_port = htons(port);
     }
-    
+
     if(connect(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
         freeaddrinfo(ai);
         tcp_socket_error(vm, "Could not create TCPSocket: ", strerror(errno));
     }
-    
+
     sock->buffer = sl_make_cstring(vm, "");
-    
+
     freeaddrinfo(ai);
     return vm->lib.nil;
 }
@@ -224,9 +224,9 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, TCPSocket, "read", 1, sl_tcp_socket_read);
     sl_define_method(vm, TCPSocket, "read_line", 0, sl_tcp_socket_read_line);
     sl_define_method(vm, TCPSocket, "close", 0, sl_tcp_socket_close);
-    
+
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
-    
+
     vm->store[cTCPSocket] = TCPSocket;
     vm->store[cTCPSocket_Error] = TCPSocket_Error;
 }
