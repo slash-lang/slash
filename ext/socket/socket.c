@@ -21,7 +21,22 @@
 #endif
 
 static int
+cSocket;
+
+static int
 cTCPSocket;
+
+static const struct addrinfo
+af_inet_hints = {
+    0,         /* ai_flags */
+    AF_INET,   /* ai_family */
+    0,         /* ai_socktype */
+    0,         /* ai_protocol */
+    0,         /* ai_addrlen */
+    0,         /* ai_addr */
+    0,         /* ai_canonname */
+    0          /* ai_next */
+};
 
 static int
 cTCPSocket_Error;
@@ -33,6 +48,7 @@ sl_static_init_ext_socket()
         WSAStartup(MAKEWORD(2, 2), &wsaData);
     #endif
 
+    cSocket = sl_vm_store_register_slot();
     cTCPSocket = sl_vm_store_register_slot();
     cTCPSocket_Error = sl_vm_store_register_slot();
 }
@@ -83,7 +99,70 @@ tcp_socket_error(sl_vm_t* vm, const char* message, const char* strerror)
 }
 
 static SLVAL
-sl_tcp_socket_init(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
+sl_tcp_socket_init(sl_vm_t* vm, SLVAL self)
+{
+
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+    if(sock->socket != -1) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Cannot reinitialize TCPSocket instance");
+    }
+
+    sock->socket = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock->socket == -1) {
+        tcp_socket_error(vm, "Could not create TCPSocket: ", strerror(errno));
+    }
+
+    sock->buffer = sl_make_cstring(vm, "");
+
+    return vm->lib.nil;
+}
+
+static SLVAL
+sl_tcp_socket_bind(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
+{
+    sl_expect(vm, hostv, vm->lib.String);
+    int port = sl_get_int(sl_expect(vm, portv, vm->lib.Int));
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+
+    if(port < 1 || port > 65535) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Port number out of range");
+    }
+
+    struct addrinfo* ai;
+    int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, &af_inet_hints, &ai);
+    if(gai_error != 0) {
+        tcp_socket_error(vm, "Could not create TCPSocket: ", gai_strerror(gai_error));
+    }
+
+    if(ai->ai_family != AF_INET) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not bind TCPSocket: ", "only IPv4 addresses supported");
+    }
+
+    ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
+    if(bind(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not bind TCPSocket: ", strerror(errno));
+    }
+
+    return self;
+}
+
+static SLVAL
+sl_socket_listen(sl_vm_t* vm, SLVAL self, SLVAL backlogv)
+{
+    int backlog = sl_get_int(sl_expect(vm, backlogv, vm->lib.Int));
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+
+    if(listen(sock->socket, backlog) != 0) {
+        tcp_socket_error(vm, "Could not listen Socket: ", strerror(errno));
+    }
+
+    return self;
+}
+
+static SLVAL
+sl_tcp_socket_connect(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
 {
     sl_expect(vm, hostv, vm->lib.String);
 
@@ -93,36 +172,29 @@ sl_tcp_socket_init(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
     }
 
     sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
-    if(sock->socket != -1) {
-        sl_throw_message2(vm, vm->lib.ArgumentError, "Cannot reinitialize TCPSocket instance");
-    }
 
     struct addrinfo* ai;
-    int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, NULL, &ai);
+    int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, &af_inet_hints, &ai);
     if(gai_error != 0) {
-        tcp_socket_error(vm, "Could not create TCPSocket: ", gai_strerror(gai_error));
+        tcp_socket_error(vm, "Could not connect TCPSocket: ", gai_strerror(gai_error));
     }
 
-    if(ai->ai_family != AF_INET && ai->ai_family != AF_INET6) {
+    if(ai->ai_family != AF_INET) {
         freeaddrinfo(ai);
-        tcp_socket_error(vm, "Could not create TCPSocket: ", "only IPv4 and IPv6 supported");
+        tcp_socket_error(vm, "Could not connect TCPSocket: ", "only IPv4 supported");
     }
 
-    sock->socket = socket(ai->ai_family, SOCK_STREAM, 0);
+    sock->socket = socket(AF_INET, SOCK_STREAM, 0);
     if(sock->socket == -1) {
         freeaddrinfo(ai);
-        tcp_socket_error(vm, "Could not create TCPSocket: ", strerror(errno));
+        tcp_socket_error(vm, "Could not connect TCPSocket: ", strerror(errno));
     }
 
-    if(ai->ai_family == AF_INET) {
-        ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
-    } else if(ai->ai_family == AF_INET6) {
-        ((struct sockaddr_in6*)ai->ai_addr)->sin6_port = htons(port);
-    }
+    ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
 
     if(connect(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
         freeaddrinfo(ai);
-        tcp_socket_error(vm, "Could not create TCPSocket: ", strerror(errno));
+        tcp_socket_error(vm, "Could not connect TCPSocket: ", strerror(errno));
     }
 
     sock->buffer = sl_make_cstring(vm, "");
@@ -131,8 +203,28 @@ sl_tcp_socket_init(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
     return vm->lib.nil;
 }
 
+
 static SLVAL
-sl_tcp_socket_write(sl_vm_t* vm, SLVAL self, SLVAL strv)
+sl_socket_accept(sl_vm_t* vm, SLVAL self)
+{
+    int connfd;
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+    if ((connfd = accept(sock->socket, NULL, NULL)) == -1) {
+        tcp_socket_error(vm, "Could not accept on Socket: ", strerror(errno));
+    }
+
+    SLVAL conn_klass = vm->store[cTCPSocket];
+    SLVAL conn = sl_allocate(vm, conn_klass);
+
+    sl_socket_t* conn_obj = (sl_socket_t*)sl_get_ptr(conn);
+    conn_obj->socket = connfd;
+    conn_obj->buffer = sl_make_cstring(vm, "");
+
+    return conn;
+}
+
+static SLVAL
+sl_socket_write(sl_vm_t* vm, SLVAL self, SLVAL strv)
 {
     sl_string_t* str = sl_get_string(vm, strv);
     sl_socket_t* sock = get_tcp_socket(vm, self);
@@ -144,7 +236,7 @@ sl_tcp_socket_write(sl_vm_t* vm, SLVAL self, SLVAL strv)
 }
 
 static SLVAL
-sl_tcp_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
+sl_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
 {
     sl_socket_t* sock = get_tcp_socket(vm, self);
     if(((sl_string_t*)sl_get_ptr(sock->buffer))->buff_len) {
@@ -171,13 +263,13 @@ sl_tcp_socket_read(sl_vm_t* vm, SLVAL self, SLVAL bytesv)
 }
 
 static SLVAL
-sl_tcp_socket_read_line(sl_vm_t* vm, SLVAL self)
+sl_socket_read_line(sl_vm_t* vm, SLVAL self)
 {
     sl_socket_t* sock = get_tcp_socket(vm, self);
     SLVAL bytes = sl_make_int(vm, 65536);
     SLVAL buffered = sl_make_cstring(vm, "");
     while(1) {
-        SLVAL read = sl_tcp_socket_read(vm, self, bytes);
+        SLVAL read = sl_socket_read(vm, self, bytes);
         if(sl_get_primitive_type(read) == SL_T_NIL) {
             if(sl_get_int(sl_string_length(vm, buffered)) == 0) {
                 return vm->lib.nil;
@@ -200,7 +292,7 @@ sl_tcp_socket_read_line(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
-sl_tcp_socket_close(sl_vm_t* vm, SLVAL self)
+sl_socket_close(sl_vm_t* vm, SLVAL self)
 {
     sl_socket_t* sock = get_tcp_socket(vm, self);
     #ifdef __WIN32
@@ -217,16 +309,23 @@ sl_tcp_socket_close(sl_vm_t* vm, SLVAL self)
 void
 sl_init_ext_socket(sl_vm_t* vm)
 {
-    SLVAL TCPSocket = sl_define_class(vm, "TCPSocket", vm->lib.Object);
-    sl_class_set_allocator(vm, TCPSocket, allocate_socket);
-    sl_define_method(vm, TCPSocket, "init", 2, sl_tcp_socket_init);
-    sl_define_method(vm, TCPSocket, "write", 1, sl_tcp_socket_write);
-    sl_define_method(vm, TCPSocket, "read", 1, sl_tcp_socket_read);
-    sl_define_method(vm, TCPSocket, "read_line", 0, sl_tcp_socket_read_line);
-    sl_define_method(vm, TCPSocket, "close", 0, sl_tcp_socket_close);
+    SLVAL Socket = sl_define_class(vm, "Socket", vm->lib.Object);
+    sl_class_set_allocator(vm, Socket, allocate_socket);
+    sl_define_method(vm, Socket, "write", 1, sl_socket_write);
+    sl_define_method(vm, Socket, "read", 1, sl_socket_read);
+    sl_define_method(vm, Socket, "read_line", 0, sl_socket_read_line);
+    sl_define_method(vm, Socket, "close", 0, sl_socket_close);
+    sl_define_method(vm, Socket, "accept", 0, sl_socket_accept);
+    sl_define_method(vm, Socket, "listen", 1, sl_socket_listen);
+
+    SLVAL TCPSocket = sl_define_class(vm, "TCPSocket", Socket);
+    sl_define_method(vm, TCPSocket, "init", 0, sl_tcp_socket_init);
+    sl_define_method(vm, TCPSocket, "bind", 2, sl_tcp_socket_bind);
+    sl_define_method(vm, TCPSocket, "connect", 2, sl_tcp_socket_connect);
 
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
 
+    vm->store[cSocket] = Socket;
     vm->store[cTCPSocket] = TCPSocket;
     vm->store[cTCPSocket_Error] = TCPSocket_Error;
 }
