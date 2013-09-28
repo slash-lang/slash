@@ -22,6 +22,7 @@ sl_posix_oserror_get_errno(sl_vm_t* vm, SLVAL self)
 
 #include "errno.c.inc"
 #include "fork.c.inc"
+#include "getpid.c.inc"
 
 void
 sl_init_ext_posix(sl_vm_t* vm)
@@ -34,4 +35,5 @@ sl_init_ext_posix(sl_vm_t* vm)
 
     sl_init_ext_posix_errno(vm, Posix);
     sl_init_ext_posix_fork(vm, Posix);
+    sl_init_ext_posix_getpid(vm, Posix);
 }
