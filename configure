@@ -129,6 +129,25 @@ sub check_lib {
     }
 };
 
+sub check_header {
+    my ($header) = @_;
+    print "Checking for $header...";
+    my $src = <<C
+#include <$header>
+int main() {
+    return 0;
+}
+C
+;
+
+    if(compile "", $src) {
+        print "ok\n";
+    } else {
+        print "failed\n";
+        error "Could not find $header\nPlease make sure it is available before building Slash";
+    }
+}
+
 sub check_prog {
     my ($cmd, $expect) = @_;
     my ($prog) = split / /, $cmd;
