@@ -27,6 +27,10 @@ void
 sl_static_init_ext_mysql()
 {
     mysql_library_init(0, NULL, NULL);
+
+    cMySQL = sl_vm_store_register_slot();
+    cMySQL_Statement = sl_vm_store_register_slot();
+    cMySQL_Error = sl_vm_store_register_slot();
 }
 
 static void
@@ -68,7 +72,7 @@ static mysql_t*
 get_mysql(sl_vm_t* vm, SLVAL obj)
 {
     mysql_t* mysql;
-    sl_expect(vm, obj, sl_vm_store_get(vm, &cMySQL));
+    sl_expect(vm, obj, vm->store[cMySQL]);
     mysql = (mysql_t*)sl_get_ptr(obj);
     if(!mysql->valid) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid MySQL instance");
@@ -79,7 +83,7 @@ get_mysql(sl_vm_t* vm, SLVAL obj)
 static mysql_stmt_t*
 get_mysql_stmt(sl_vm_t* vm, SLVAL obj)
 {
-    sl_expect(vm, obj, sl_vm_store_get(vm, &cMySQL_Statement));
+    sl_expect(vm, obj, vm->store[cMySQL_Statement]);
     mysql_stmt_t* stmt = (mysql_stmt_t*)sl_get_ptr(obj);
     if(!stmt->stmt) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on uninitialized MySQL::Statement instance");
@@ -94,7 +98,7 @@ sl_mysql_check_error(sl_vm_t* vm, MYSQL* mysql)
     if(!cerr[0]) {
         return;
     }
-    sl_throw_message2(vm, sl_vm_store_get(vm, &cMySQL_Error), (char*)cerr);
+    sl_throw_message2(vm, vm->store[cMySQL_Error], (char*)cerr);
 }
 
 static void
@@ -104,7 +108,7 @@ sl_mysql_stmt_check_error(sl_vm_t* vm, MYSQL_STMT* stmt)
     if(!cerr[0]) {
         return;
     }
-    sl_throw_message2(vm, sl_vm_store_get(vm, &cMySQL_Error), (char*)cerr);
+    sl_throw_message2(vm, vm->store[cMySQL_Error], (char*)cerr);
 }
 
 static SLVAL
@@ -155,7 +159,7 @@ static SLVAL
 sl_mysql_prepare(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
     mysql_t* mysql = get_mysql(vm, self);
-    SLVAL stmtv = sl_allocate(vm, sl_vm_store_get(vm, &cMySQL_Statement));
+    SLVAL stmtv = sl_allocate(vm, vm->store[cMySQL_Statement]);
     mysql_stmt_t* stmt = (mysql_stmt_t*)sl_get_ptr(stmtv);
     stmt->mysql = mysql;
     if(!(stmt->stmt = mysql_stmt_init(&mysql->mysql))) {
@@ -390,9 +394,9 @@ sl_init_ext_mysql(sl_vm_t* vm)
     sl_define_method(vm, MySQL_Statement, "execute", -1, sl_mysql_stmt_execute);
     sl_define_method(vm, MySQL_Statement, "insert_id", 0, sl_mysql_stmt_insert_id);
 
-    sl_vm_store_put(vm, &cMySQL, MySQL);
-    sl_vm_store_put(vm, &cMySQL_Error, MySQL_Error);
-    sl_vm_store_put(vm, &cMySQL_Statement, MySQL_Statement);
+    vm->store[cMySQL] = MySQL;
+    vm->store[cMySQL_Error] = MySQL_Error;
+    vm->store[cMySQL_Statement] = MySQL_Statement;
 
     sl_do_string(vm, (uint8_t*)sl__ext_mysql_extensions_sl, strlen(sl__ext_mysql_extensions_sl), "ext/mysql/extensions.sl", 0);
 }
