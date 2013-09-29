@@ -41,7 +41,7 @@ alloc_ruby_object(sl_vm_t* vm)
 static sl_ruby_object_t*
 get_ruby_object(sl_vm_t* vm, SLVAL obj)
 {
-    SLVAL Ruby_Object = sl_vm_store_get(vm, &cRuby_Object);
+    SLVAL Ruby_Object = vm->store[cRuby_Object];
     sl_expect(vm, obj, Ruby_Object);
     return (sl_ruby_object_t*)sl_get_ptr(obj);
 }
@@ -49,7 +49,7 @@ get_ruby_object(sl_vm_t* vm, SLVAL obj)
 static SLVAL
 make_ruby_object(sl_vm_t* vm, VALUE ruby_value)
 {
-    SLVAL Ruby_Object = sl_vm_store_get(vm, &cRuby_Object);
+    SLVAL Ruby_Object = vm->store[cRuby_Object];
     SLVAL robj = sl_allocate(vm, Ruby_Object);
     ((sl_ruby_object_t*)sl_get_ptr(robj))->obj = ruby_value;
     return robj;
@@ -90,7 +90,7 @@ sl_ruby_protect(sl_vm_t* vm, void(*func)(sl_vm_t*,void*), void* data)
         rb_rescue2(sl_ruby_protect_try, (VALUE)&args, sl_ruby_protect_catch, (VALUE)&args, rb_eException, 0);
         pthread_mutex_unlock(&sl_ruby_lock);
         if(args.exception) {
-            SLVAL Ruby_Exception = sl_vm_store_get(vm, &cRuby_Exception);
+            SLVAL Ruby_Exception = vm->store[cRuby_Exception];
             SLVAL err = sl_allocate(vm, Ruby_Exception);
             sl_error_set_message(vm, err, sl_ruby_to_slash(vm, rb_obj_as_string(args.exception)));
             sl_set_ivar(vm, err, sl_intern(vm, "object"), make_ruby_object(vm, args.exception));
@@ -250,11 +250,11 @@ sl_init_ext_ruby(sl_vm_t* vm)
     sl_class_set_allocator(vm, Ruby_Object, alloc_ruby_object);
     sl_define_method(vm, Ruby_Object, "inspect", 0, sl_ruby_object_inspect);
     sl_define_method(vm, Ruby_Object, "ruby_send", -2, sl_ruby_object_ruby_send);
-    sl_vm_store_put(vm, &cRuby_Object, Ruby_Object);
+    vm->store[cRuby_Object] = Ruby_Object;
 
     SLVAL Ruby_Exception = sl_define_class3(vm, sl_intern(vm, "Exception"), vm->lib.Error, Ruby);
     sl_define_method(vm, Ruby_Exception, "object", 0, sl_ruby_exception_object);
-    sl_vm_store_put(vm, &cRuby_Exception, Ruby_Exception);
+    vm->store[cRuby_Exception] = Ruby_Exception;
 }
 
 void Init_enc();

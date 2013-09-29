@@ -188,7 +188,7 @@ sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yaj
     if(status == yajl_status_client_canceled) {
         /* the only reason we'd cancel the parse is if the data structre is too deep */
         yajl_free(json->yajl);
-        sl_throw_message2(vm, sl_vm_store_get(vm, &cJSON_ParseError),
+        sl_throw_message2(vm, vm->store[cJSON_ParseError],
             "JSON structure recurses too deep");
     }
     if(status == yajl_status_error) {
@@ -196,7 +196,7 @@ sl_json_parse_check_error(sl_vm_t* vm, sl_string_t* str, json_parse_t* json, yaj
         err = sl_make_cstring(vm, (char*)err_str);
         yajl_free_error(json->yajl, err_str);
         yajl_free(json->yajl);
-        sl_throw(vm, sl_make_error2(vm, sl_vm_store_get(vm, &cJSON_ParseError), err));
+        sl_throw(vm, sl_make_error2(vm, vm->store[cJSON_ParseError], err));
     }
 }
 
@@ -254,7 +254,7 @@ json_dump_t;
 #define JSON_CHECK_RECURSION(obj) do { \
         for(i = 0; i < state->seen_len; i++) { \
             if(state->seen_ptrs[i] == sl_get_ptr((obj))) { \
-                sl_throw_message2(state->vm, sl_vm_store_get(state->vm, &cJSON_DumpError), "Can't dump recursive data structure to JSON"); \
+                sl_throw_message2(state->vm, state->vm->store[cJSON_DumpError], "Can't dump recursive data structure to JSON"); \
             } \
         } \
         if(state->seen_len >= state->seen_cap) { \
@@ -351,7 +351,7 @@ json_dump(json_dump_t* state, SLVAL object)
             break;
         default:
             if(!sl_responds_to(state->vm, object, "to_json")) {
-                SLVAL DumpError = sl_vm_store_get(state->vm, &cJSON_DumpError);
+                SLVAL DumpError = state->vm->store[cJSON_DumpError];
                 sl_error(state->vm, DumpError, "Can't convert type %V to JSON. You can implement #to_json to fix this.", sl_class_of(state->vm, object));
             }
             str = (sl_string_t*)sl_get_ptr(sl_to_s(state->vm, sl_send(state->vm, object, "to_json", 0, NULL)));
@@ -389,8 +389,16 @@ sl_init_ext_json(sl_vm_t* vm)
     
     sl_define_singleton_method(vm, JSON, "decode", -2, sl_json_parse);
     sl_define_singleton_method(vm, JSON, "encode", 1, sl_json_dump);
-    
-    sl_vm_store_put(vm, &cJSON, JSON);
-    sl_vm_store_put(vm, &cJSON_ParseError, JSON_ParseError);
-    sl_vm_store_put(vm, &cJSON_DumpError, JSON_DumpError);
+
+    vm->store[cJSON] = JSON;
+    vm->store[cJSON_ParseError] = JSON_ParseError;
+    vm->store[cJSON_DumpError] = JSON_DumpError;
+}
+
+void
+sl_static_init_ext_json()
+{
+    cJSON = sl_vm_store_register_slot();
+    cJSON_DumpError = sl_vm_store_register_slot();
+    cJSON_ParseError = sl_vm_store_register_slot();
 }
