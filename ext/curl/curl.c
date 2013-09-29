@@ -34,16 +34,10 @@ curl_easy_alloc(sl_vm_t* vm)
     return (void*)c;
 }
 
-static SLVAL
-Curl_Easy(sl_vm_t* vm)
-{
-    return sl_vm_store_get(vm, &cCurl_Easy);
-}
-
 static curl_easy_t*
 get_curl_easy(sl_vm_t* vm, SLVAL obj)
 {
-    sl_expect(vm, obj, Curl_Easy(vm));
+    sl_expect(vm, obj, vm->store[cCurl_Easy]);
     curl_easy_t* curl = (void*)sl_get_ptr(obj);
     if(!curl->curl) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on uninitialized Curl::Easy");
@@ -55,7 +49,7 @@ static void
 curl_easy_check_error(sl_vm_t* vm, CURLcode code)
 {
     if(code != CURLE_OK) {
-        SLVAL Curl_Error = sl_vm_store_get(vm, &cCurl_Error);
+        SLVAL Curl_Error = vm->store[cCurl_Error];
         sl_throw_message2(vm, Curl_Error, curl_easy_strerror(code));
     }
 }
@@ -86,8 +80,8 @@ sl_init_ext_curl(sl_vm_t* vm)
     sl_define_method(vm, Curl_Easy_, "set_opt", 2, sl_curl_easy_setopt);
     sl_define_method(vm, Curl_Easy_, "perform", 0, sl_curl_easy_perform);
 
-    sl_vm_store_put(vm, &cCurl_Error, Curl_Error);
-    sl_vm_store_put(vm, &cCurl_Easy, Curl_Easy_);
+    vm->store[cCurl_Error] = Curl_Error;
+    vm->store[cCurl_Easy] = Curl_Easy_;
 
     sl_curlopts_init(vm, Curl);
 }
@@ -95,6 +89,9 @@ sl_init_ext_curl(sl_vm_t* vm)
 void
 sl_static_init_ext_curl()
 {
+    cCurl_Error = sl_vm_store_register_slot();
+    cCurl_Easy = sl_vm_store_register_slot();
+
     curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 
