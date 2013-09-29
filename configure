@@ -19,7 +19,7 @@ our $prefix = "/usr/local";
 sub error {
     my $message = shift;
     print "\n\e[31m$message\n\e[0m";
-    exit 1;
+    die;
 };
 
 sub warning {
@@ -296,7 +296,13 @@ for my $ext (@exts) {
     print "\e[34;1mConfiguring ext/$ext\e[0m\n";
     my $conf = "$path/ext/$ext/configure.pl";
     $CURRENT_EXT = $ext;
-    require $conf if -e $conf;
+    if(-e $conf) {
+        eval { require $conf; };
+        if($@) {
+            print "Skipping installation of ext/$ext\n\n";
+            next;
+        }
+    }
     $ext_decls .= "void sl_init_ext_$ext(sl_vm_t* vm);";
     $ext_inits .= "sl_init_ext_$ext(vm);";
     print $mf "include $path/ext/$ext/$ext.mk\n";
