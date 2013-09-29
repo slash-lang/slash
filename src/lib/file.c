@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <errno.h>
 
-static int
-cFile_InvalidOperation;
-
 typedef struct {
     sl_object_t base;
     FILE* file;
@@ -69,7 +66,7 @@ file_write(sl_vm_t* vm, SLVAL self, SLVAL str)
     sl_file_t* file = get_file(vm, self);
     sl_string_t* strp = (sl_string_t*)sl_get_ptr(sl_to_s(vm, str));
     if(!file->file) {
-        sl_throw_message2(vm, sl_vm_store_get(vm, &cFile_InvalidOperation), "Can't write to closed file");
+        sl_throw_message2(vm, vm->lib.File_InvalidOperation, "Can't write to closed file");
     }
     return sl_make_int(vm, fwrite(strp->buff, 1, strp->buff_len, file->file));
 }
@@ -79,7 +76,7 @@ file_read(sl_vm_t* vm, SLVAL self)
 {
     sl_file_t* file = get_file(vm, self);
     if(!file->file) {
-        sl_throw_message2(vm, sl_vm_store_get(vm, &cFile_InvalidOperation), "Can't write to closed file");
+        sl_throw_message2(vm, vm->lib.File_InvalidOperation, "Can't write to closed file");
     }
     uint8_t* buff = sl_alloc_buffer(vm->arena, 4096);
     size_t buff_cap = 4096, buff_len = 0;
@@ -143,8 +140,7 @@ sl_init_file(sl_vm_t* vm)
 {
     vm->lib.File = sl_define_class(vm, "File", vm->lib.Object);
     vm->lib.File_NotFound = sl_define_class3(vm, sl_intern(vm, "NotFound"), vm->lib.Error, vm->lib.File);
-    SLVAL File_InvalidOperation = sl_define_class3(vm, sl_intern(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
-    sl_vm_store_put(vm, &cFile_InvalidOperation, File_InvalidOperation);
+    vm->lib.File_InvalidOperation = sl_define_class3(vm, sl_intern(vm, "InvalidOperation"), vm->lib.Error, vm->lib.File);
     sl_class_set_allocator(vm, vm->lib.File, allocate_file);
     sl_define_method(vm, vm->lib.File, "init", -2, file_init);
     sl_define_method(vm, vm->lib.File, "write", 1, file_write);

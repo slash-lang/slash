@@ -3,10 +3,7 @@
 #include <slash/lib/lambda.h>
 #include <slash/lib/dict.h>
 
-static int Response_;
-static int Response_opts;
-
-typedef struct {
+typedef struct sl_response_internal_opts {
     int status;
     int descriptive_error_pages;
     sl_response_key_value_t* headers;
@@ -34,19 +31,13 @@ sl_response_set_opts(sl_vm_t* vm, sl_response_opts_t* opts)
     iopts->header_count  = 0;
     iopts->headers       = sl_alloc(vm->arena, sizeof(sl_response_key_value_t) * iopts->header_cap);
     iopts->descriptive_error_pages = opts->descriptive_error_pages;
-    sl_vm_store_put(vm, &Response_opts, sl_make_ptr((sl_object_t*)iopts));
-}
-
-static sl_response_internal_opts_t*
-response(sl_vm_t* vm)
-{
-    return (sl_response_internal_opts_t*)sl_get_ptr(sl_vm_store_get(vm, &Response_opts));
+    vm->response = iopts;
 }
 
 static SLVAL
 response_write(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    sl_response_internal_opts_t* resp = response(vm);
+    sl_response_internal_opts_t* resp = vm->response;
     size_t i;
     sl_string_t* str;
     (void)self;
@@ -76,7 +67,7 @@ sl_response_write(sl_vm_t* vm, SLVAL str)
 SLVAL
 sl_response_flush(sl_vm_t* vm)
 {
-    sl_response_internal_opts_t* resp = response(vm);
+    sl_response_internal_opts_t* resp = vm->response;
     size_t i, total_size = 0, offset = 0;
     char* output_buffer;
     sl_string_t* str;
@@ -98,13 +89,13 @@ sl_response_flush(sl_vm_t* vm)
 void
 sl_response_clear(sl_vm_t* vm)
 {
-    response(vm)->output_len = 0;
+    vm->response->output_len = 0;
 }
 
 static SLVAL
 response_unbuffer(sl_vm_t* vm)
 {
-    sl_response_internal_opts_t* resp = response(vm);
+    sl_response_internal_opts_t* resp = vm->response;
     if(!resp->buffered) {
         return vm->lib._false;
     }
@@ -116,7 +107,7 @@ static SLVAL
 response_set_header(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
 {
     char* h;
-    sl_response_internal_opts_t* resp = response(vm);
+    sl_response_internal_opts_t* resp = vm->response;
     (void)self;
     sl_expect(vm, name, vm->lib.String);
     sl_expect(vm, value, vm->lib.String);
@@ -160,7 +151,7 @@ response_set_cookie(sl_vm_t* vm, SLVAL self, SLVAL name, SLVAL value)
 static SLVAL
 response_redirect(sl_vm_t* vm, SLVAL self, SLVAL url)
 {
-    response(vm)->status = 302;
+    vm->response->status = 302;
     response_set_header(vm, self, sl_make_cstring(vm, "Location"), url);
     sl_exit(vm, sl_make_int(vm, 0));
     return self; /* never reached */
@@ -174,20 +165,20 @@ struct get_headers_iter_state {
 sl_response_key_value_t*
 sl_response_get_headers(sl_vm_t* vm, size_t* count)
 {
-    *count = response(vm)->header_count;
-    return response(vm)->headers;
+    *count = vm->response->header_count;
+    return vm->response->headers;
 }
 
 int
 sl_response_get_status(sl_vm_t* vm)
 {
-    return response(vm)->status;
+    return vm->response->status;
 }
 
 static SLVAL
 response_status(sl_vm_t* vm)
 {
-    return sl_make_int(vm, response(vm)->status);
+    return sl_make_int(vm, vm->response->status);
 }
 
 static SLVAL
@@ -195,21 +186,21 @@ response_status_set(sl_vm_t* vm, SLVAL self, SLVAL status)
 {
     (void)self;
     sl_expect(vm, status, vm->lib.Int);
-    response(vm)->status = sl_get_int(status);
+    vm->response->status = sl_get_int(status);
     return status;
 }
 
 static SLVAL
 response_descriptive_error_pages(sl_vm_t* vm)
 {
-    return sl_make_bool(vm, response(vm)->descriptive_error_pages);
+    return sl_make_bool(vm, vm->response->descriptive_error_pages);
 }
 
 static SLVAL
 response_descriptive_error_pages_set(sl_vm_t* vm, SLVAL self, SLVAL enabled)
 {
     (void)self;
-    response(vm)->descriptive_error_pages = sl_is_truthy(enabled);
+    vm->response->descriptive_error_pages = sl_is_truthy(enabled);
     return enabled;
 }
 
@@ -219,7 +210,7 @@ void
 sl_render_error_page(sl_vm_t* vm, SLVAL err)
 {
     sl_vm_frame_t frame;
-    sl_response_internal_opts_t* resp = response(vm);
+    sl_response_internal_opts_t* resp = vm->response;
     resp->status = 500;
     SLVAL caught_error;
     if(resp->descriptive_error_pages) {
@@ -243,7 +234,7 @@ void
 sl_init_response(sl_vm_t* vm)
 {
     SLVAL Response = sl_new(vm, vm->lib.Object, 0, NULL);
-    sl_vm_store_put(vm, &Response_, Response);
+    vm->lib.Response = Response;
 
     sl_define_singleton_method(vm, Response, "write", -2, sl_response_write);
     sl_define_method(vm, vm->lib.Object, "print", -2, response_write);

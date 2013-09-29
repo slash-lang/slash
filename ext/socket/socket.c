@@ -20,12 +20,21 @@
     #include <netdb.h>
 #endif
 
+static int
+cTCPSocket;
+
+static int
+cTCPSocket_Error;
+
 void
 sl_static_init_ext_socket()
 {
     #ifdef __WIN32
         WSAStartup(MAKEWORD(2, 2), &wsaData);
     #endif
+
+    cTCPSocket = sl_vm_store_register_slot();
+    cTCPSocket_Error = sl_vm_store_register_slot();
 }
 
 typedef struct {
@@ -34,12 +43,6 @@ typedef struct {
     SLVAL buffer;
 }
 sl_socket_t;
-
-static int
-cTCPSocket;
-
-static int
-cTCPSocket_Error;
 
 static void
 free_socket(sl_socket_t* sock)
@@ -65,7 +68,7 @@ allocate_socket(sl_vm_t* vm)
 static sl_socket_t*
 get_tcp_socket(sl_vm_t* vm, SLVAL self)
 {
-    sl_expect(vm, self, sl_vm_store_get(vm, &cTCPSocket));
+    sl_expect(vm, self, vm->store[cTCPSocket]);
     sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
     if(sock->socket == -1) {
         sl_throw_message2(vm, vm->lib.ArgumentError, "Invalid operation on closed TCPSocket");
@@ -76,7 +79,7 @@ get_tcp_socket(sl_vm_t* vm, SLVAL self)
 static void
 tcp_socket_error(sl_vm_t* vm, const char* message, const char* strerror)
 {
-    sl_error(vm, sl_vm_store_get(vm, &cTCPSocket_Error), "%s%s", message, strerror);
+    sl_error(vm, vm->store[cTCPSocket_Error], "%s%s", message, strerror);
 }
 
 static SLVAL
@@ -224,6 +227,6 @@ sl_init_ext_socket(sl_vm_t* vm)
     
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
     
-    sl_vm_store_put(vm, &cTCPSocket, TCPSocket);
-    sl_vm_store_put(vm, &cTCPSocket_Error, TCPSocket_Error);
+    vm->store[cTCPSocket] = TCPSocket;
+    vm->store[cTCPSocket_Error] = TCPSocket_Error;
 }
