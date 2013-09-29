@@ -24,11 +24,8 @@ allocate_gcrypt_algorithm(sl_vm_t* vm)
 static gcrypt_algorithm_t*
 get_algo(sl_vm_t* vm, SLVAL obj)
 {
-    SLVAL klass = sl_vm_store_get(vm, &cGCrypt_Algorithm);
-    gcrypt_algorithm_t* ptr;
-    sl_expect(vm, obj, klass);
-    ptr = (gcrypt_algorithm_t*)sl_get_ptr(obj);
-    return ptr;
+    sl_expect(vm, obj, vm->store[cGCrypt_Algorithm]);
+    return (gcrypt_algorithm_t*)sl_get_ptr(obj);
 }
 
 static gcrypt_algorithm_t*
@@ -79,8 +76,8 @@ sl_init_ext_gcrypt(sl_vm_t* vm)
 {
     SLVAL GCrypt = sl_define_class(vm, "GCrypt", vm->lib.Object);
     SLVAL Algorithm = sl_define_class3(vm, sl_intern(vm, "Algorithm"), vm->lib.Object, GCrypt);
-    sl_vm_store_put(vm, &cGCrypt, GCrypt);
-    sl_vm_store_put(vm, &cGCrypt_Algorithm, Algorithm);
+    vm->store[cGCrypt] = GCrypt;
+    vm->store[cGCrypt_Algorithm] = Algorithm;
     sl_class_set_allocator(vm, Algorithm, allocate_gcrypt_algorithm);
     
     sl_define_method(vm, Algorithm, "hex_digest", 1, sl_gcrypt_algorithm_hex_digest);
@@ -95,4 +92,11 @@ sl_init_ext_gcrypt(sl_vm_t* vm)
     MAKE_ALGO(SHA384);
     MAKE_ALGO(SHA512);
     MAKE_ALGO(WHIRLPOOL);
+}
+
+void
+sl_static_init_ext_gcrypt()
+{
+    cGCrypt = sl_vm_store_register_slot();
+    cGCrypt_Algorithm = sl_vm_store_register_slot();
 }

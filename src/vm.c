@@ -15,6 +15,9 @@
 static int
 sl_statically_initialized;
 
+static int
+vm_store_slot_count = 0;
+
 void
 sl_static_init_exts();
 
@@ -85,7 +88,6 @@ sl_init(const char* sapi_name)
     vm->arena = arena;
     vm->cwd = ".";
     vm->initializing = 1;
-    vm->store = sl_st_init_numtable(vm);
     vm->hash_seed = rand();
     vm->stack_limit = sl_stack_limit();
     vm->required = sl_st_init_table(vm, &sl_string_hash_type);
@@ -98,6 +100,11 @@ sl_init(const char* sapi_name)
 
     vm->lib.nil = sl_make_ptr(sl_alloc(arena, sizeof(sl_object_t)));
     vm->lib.Object = sl_make_ptr(sl_alloc(arena, sizeof(sl_class_t)));
+
+    vm->store = sl_alloc(arena, sizeof(SLVAL) * vm_store_slot_count);
+    for(int i = 0; i < vm_store_slot_count; i++) {
+        vm->store[i] = vm->lib.nil;
+    }
 
     sl_pre_init_class(vm);
     sl_pre_init_object(vm);
@@ -135,18 +142,10 @@ sl_init(const char* sapi_name)
     return vm;
 }
 
-SLVAL
-sl_vm_store_get(sl_vm_t* vm, void* key)
+int
+sl_vm_store_register_slot()
 {
-    SLVAL val = vm->lib.nil;
-    sl_st_lookup(vm->store, (sl_st_data_t)key, (sl_st_data_t*)&val);
-    return val;
-}
-
-void
-sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val)
-{
-    sl_st_insert(vm->store, (sl_st_data_t)key, (sl_st_data_t)sl_get_ptr(val));
+    return vm_store_slot_count++;
 }
 
 static void

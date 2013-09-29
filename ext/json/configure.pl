@@ -5,3 +5,5 @@ check_lib "yajl_s", <<C;
         yajl_alloc(0, 0, 0);
     }
 C
+
+needs_static_init;

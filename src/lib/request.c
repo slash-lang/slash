@@ -2,7 +2,7 @@
 #include <slash/lib/request.h>
 #include <slash/lib/dict.h>
 
-typedef struct {
+typedef struct sl_request_internal_opts {
     SLVAL method;
     SLVAL uri;
     SLVAL path_info;
@@ -17,15 +17,6 @@ typedef struct {
     SLVAL cookies;
 }
 sl_request_internal_opts_t;
-
-static int Request_;
-static int Request_opts;
-
-static sl_request_internal_opts_t*
-request(sl_vm_t* vm)
-{
-    return (sl_request_internal_opts_t*)sl_get_ptr(sl_vm_store_get(vm, &Request_opts));
-}
 
 static void
 parse_query_string(sl_vm_t* vm, SLVAL dict, size_t len, uint8_t* query_string)
@@ -180,7 +171,7 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
         parse_cookie_string(vm, req->cookies, str->buff_len, str->buff);
     }
     req->params = sl_dict_merge(vm, req->get, req->post);
-    sl_vm_store_put(vm, &Request_opts, sl_make_ptr((sl_object_t*)req));
+    vm->request = req;
 
     // convenience constants
     sl_class_set_const(vm, vm->lib.Object, "ENV", req->env);
@@ -189,52 +180,52 @@ sl_request_set_opts(sl_vm_t* vm, sl_request_opts_t* opts)
 static SLVAL
 request_get(sl_vm_t* vm)
 {
-    return request(vm)->get;
+    return vm->request->get;
 }
 
 static SLVAL
 request_post(sl_vm_t* vm)
 {
-    return request(vm)->post;
+    return vm->request->post;
 }
 
 static SLVAL
 request_post_data(sl_vm_t* vm)
 {
-    return request(vm)->post_data;
+    return vm->request->post_data;
 }
 
 static SLVAL
 request_headers(sl_vm_t* vm)
 {
-    return request(vm)->headers;
+    return vm->request->headers;
 }
 
 static SLVAL
 request_env(sl_vm_t* vm)
 {
-    return request(vm)->env;
+    return vm->request->env;
 }
 
 static SLVAL
 request_cookies(sl_vm_t* vm)
 {
-    return request(vm)->cookies;
+    return vm->request->cookies;
 }
 
 static SLVAL
 request_method(sl_vm_t* vm)
 {
-    return request(vm)->method;
+    return vm->request->method;
 }
 
 static SLVAL
 request_safe_method(sl_vm_t* vm)
 {
-    if(sl_eq(vm, request(vm)->method, sl_make_cstring(vm, "GET"))) {
+    if(sl_eq(vm, vm->request->method, sl_make_cstring(vm, "GET"))) {
         return vm->lib._true;
     }
-    if(sl_eq(vm, request(vm)->method, sl_make_cstring(vm, "HEAD"))) {
+    if(sl_eq(vm, vm->request->method, sl_make_cstring(vm, "HEAD"))) {
         return vm->lib._true;
     }
     return vm->lib._false;
@@ -243,39 +234,39 @@ request_safe_method(sl_vm_t* vm)
 static SLVAL
 request_uri(sl_vm_t* vm)
 {
-    return request(vm)->uri;
+    return vm->request->uri;
 }
 
 static SLVAL
 request_path_info(sl_vm_t* vm)
 {
-    return request(vm)->path_info;
+    return vm->request->path_info;
 }
 
 static SLVAL
 request_query_string(sl_vm_t* vm)
 {
-    return request(vm)->query_string;
+    return vm->request->query_string;
 }
 
 static SLVAL
 request_remote_addr(sl_vm_t* vm)
 {
-    return request(vm)->remote_addr;
+    return vm->request->remote_addr;
 }
 
 static SLVAL
 request_index(sl_vm_t* vm, SLVAL self, SLVAL name)
 {
     (void)self;
-    return sl_dict_get(vm, request(vm)->params, name);
+    return sl_dict_get(vm, vm->request->params, name);
 }
 
 void
 sl_init_request(sl_vm_t* vm)
 {
     SLVAL Request = sl_new(vm, vm->lib.Object, 0, NULL);
-    sl_vm_store_put(vm, &Request_, Request);
+    vm->lib.Request = Request;
     sl_define_singleton_method(vm, Request, "get", 0, request_get);
     sl_define_singleton_method(vm, Request, "post", 0, request_post);
     sl_define_singleton_method(vm, Request, "post_data", 0, request_post_data);
