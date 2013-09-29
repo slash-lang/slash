@@ -1,9 +1,7 @@
 #include <time.h>
 #include <slash.h>
 
-static int mt;
-
-typedef struct {
+typedef struct sl_mt_state {
     int mt[624];
     int index;
 }
@@ -29,12 +27,11 @@ sl_rand(sl_vm_t* vm)
         sl_rand_init_mt(vm);
         vm->inited |= SL_INIT_RAND;
     }
-    sl_mt_state_t* state = (sl_mt_state_t*)sl_get_ptr(sl_vm_store_get(vm, &mt));
-    if(state->index == 0) {
-        generate_numbers(state);
+    if(vm->mt_state->index == 0) {
+        generate_numbers(vm->mt_state);
     }
-    int y = state->mt[state->index];
-    state->index = (state->index + 1) % 624;
+    int y = vm->mt_state->mt[vm->mt_state->index];
+    vm->mt_state->index = (vm->mt_state->index + 1) % 624;
     y ^= y >> 11;
     y ^= (y << 7) & 2636928640;
     y ^= (y << 15) & 4022730752;
@@ -45,13 +42,12 @@ sl_rand(sl_vm_t* vm)
 void
 sl_rand_init_mt(sl_vm_t* vm)
 {
-    sl_mt_state_t* state = sl_alloc_buffer(vm->arena, sizeof(sl_mt_state_t));
     int seed = sl_seed(), i;
-    state->mt[0] = seed;
+    vm->mt_state = sl_alloc_buffer(vm->arena, sizeof(*vm->mt_state));
+    vm->mt_state->mt[0] = seed;
     for(i = 1; i < 624; i++) {
-        state->mt[i] = 1812433253 * (state->mt[i - 1] ^ (state->mt[i - 1] >> 30)) + 1;
+        vm->mt_state->mt[i] = 1812433253 * (vm->mt_state->mt[i - 1] ^ (vm->mt_state->mt[i - 1] >> 30)) + 1;
     }
-    sl_vm_store_put(vm, &mt, sl_make_ptr((sl_object_t*)state));
 }
 
 static SLVAL

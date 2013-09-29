@@ -80,12 +80,16 @@ struct sl_vm_lib {
 
     SLVAL File;
     SLVAL File_NotFound;
+    SLVAL File_InvalidOperation;
 
     SLVAL Method;
     SLVAL BoundMethod;
     SLVAL Lambda;
 
     SLVAL Time;
+
+    SLVAL Request;
+    SLVAL Response;
 };
 
 typedef enum {
@@ -101,6 +105,9 @@ typedef struct sl_vm {
     void* data;
     SLVAL* store;
     int hash_seed;
+    struct sl_mt_state* mt_state;
+    struct sl_request_internal_opts* request;
+    struct sl_response_internal_opts* response;
     void* stack_limit;
     char* cwd;
     sl_gc_arena_t* arena;
