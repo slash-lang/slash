@@ -99,7 +99,7 @@ typedef struct sl_vm {
     struct sl_vm_ids id;
     struct sl_vm_frame* call_stack;
     void* data;
-    sl_st_table_t* store;
+    SLVAL* store;
     int hash_seed;
     void* stack_limit;
     char* cwd;
@@ -264,14 +264,11 @@ sl_vm_frame_t;
 void
 sl_static_init();
 
+int
+sl_vm_store_register_slot();
+
 sl_vm_t*
 sl_init(const char* sapi_name);
-
-SLVAL
-sl_vm_store_get(sl_vm_t* vm, void* key);
-
-void
-sl_vm_store_put(sl_vm_t* vm, void* key, SLVAL val);
 
 SLVAL
 sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip);
