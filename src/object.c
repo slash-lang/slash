@@ -307,9 +307,7 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     do {
         klassp = (sl_class_t*)sl_get_ptr(klass);
         if(sl_st_lookup(klassp->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
-            if(sl_get_ptr(method)->primitive_type != SL_T_CACHED_METHOD_ENTRY) {
-                return method;
-            }
+            return method;
         }
         klass = klassp->super;
     } while(klassp->singleton);
@@ -320,11 +318,10 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 static int
 collect_methods_iter(sl_vm_t* vm, SLID id, SLVAL method, SLVAL ary)
 {
-    if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
-        SLVAL name = sl_id_to_string(vm, id);
-        sl_array_push(vm, ary, 1, &name);
-    }
+    SLVAL name = sl_id_to_string(vm, id);
+    sl_array_push(vm, ary, 1, &name);
     return SL_ST_CONTINUE;
+    (void)method;
 }
 
 static SLVAL

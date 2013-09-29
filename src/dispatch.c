@@ -187,28 +187,11 @@ lookup_method_rec(sl_vm_t* vm, SLVAL klass, SLID id)
     }
 
     sl_method_t* method;
-    sl_cached_method_entry_t* cme = NULL;
     if(sl_st_lookup(klassp->instance_methods, (sl_st_data_t)id.id, (sl_st_data_t*)&method)) {
-        if(method->base.primitive_type == SL_T_CACHED_METHOD_ENTRY) {
-            cme = (sl_cached_method_entry_t*)method;
-            // TODO - improve cache invalidation. this is too coarse
-            if(cme->state == vm->state_method) {
-                return cme->method;
-            }
-        } else {
-            return method;
-        }
+        return method;
     }
 
-    method = lookup_method_rec(vm, klassp->super, id);
-    if(!cme) {
-        cme = sl_alloc(vm->arena, sizeof(*cme));
-    }
-    cme->primitive_type = SL_T_CACHED_METHOD_ENTRY;
-    cme->state = vm->state_method;
-    cme->method = method;
-    sl_st_insert(klassp->instance_methods, (sl_st_data_t)id.id, (sl_st_data_t)cme);
-    return method;
+    return lookup_method_rec(vm, klassp->super, id);
 }
 
 sl_method_t*
