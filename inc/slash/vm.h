@@ -32,64 +32,53 @@ struct sl_vm_ids {
 };
 
 struct sl_vm_lib {
-    SLVAL Object;
-    SLVAL Class;
-    SLVAL String;
-    SLVAL Regexp;
-    SLVAL Regexp_Match;
-
-    SLVAL Error;
-    SLVAL Error_Frame;
-    SLVAL ArgumentError;
-    SLVAL EncodingError;
-    SLVAL NameError;
-    SLVAL NoMethodError;
-    SLVAL StackOverflowError;
-    SLVAL StackOverflowError_instance;
-    SLVAL SyntaxError;
-    SLVAL CompileError;
-    SLVAL TypeError;
-    SLVAL ZeroDivisionError;
-    SLVAL NotImplementedError;
-
-    SLVAL Nil;
-    SLVAL nil;
-
-    SLVAL True;
-    SLVAL _true;
-
-    SLVAL False;
     SLVAL _false;
-
-    SLVAL Comparable;
-    SLVAL Number;
-    SLVAL Int;
-    SLVAL Float;
-    SLVAL Bignum;
-
-    SLVAL Buffer;
-
-    SLVAL Enumerable;
+    SLVAL _true;
+    SLVAL ArgumentError;
     SLVAL Array;
     SLVAL Array_Enumerator;
+    SLVAL Bignum;
+    SLVAL BoundMethod;
+    SLVAL Buffer;
+    SLVAL Class;
+    SLVAL Comparable;
+    SLVAL CompileError;
     SLVAL Dict;
     SLVAL Dict_Enumerator;
-    SLVAL Range_Inclusive;
-    SLVAL Range_Exclusive;
-    SLVAL Range_Enumerator;
-
+    SLVAL EncodingError;
+    SLVAL Enumerable;
+    SLVAL Error;
+    SLVAL Error_Frame;
+    SLVAL False;
     SLVAL File;
-    SLVAL File_NotFound;
     SLVAL File_InvalidOperation;
-
-    SLVAL Method;
-    SLVAL BoundMethod;
+    SLVAL File_NotFound;
+    SLVAL Float;
+    SLVAL Int;
     SLVAL Lambda;
-
-    SLVAL Time;
-
+    SLVAL Method;
+    SLVAL NameError;
+    SLVAL Nil;
+    SLVAL nil;
+    SLVAL NoMethodError;
+    SLVAL NotImplementedError;
+    SLVAL Number;
+    SLVAL Object;
+    SLVAL Range_Enumerator;
+    SLVAL Range_Exclusive;
+    SLVAL Range_Inclusive;
+    SLVAL Regexp;
+    SLVAL Regexp_Match;
     SLVAL Request;
     SLVAL Response;
+    SLVAL StackOverflowError;
+    SLVAL StackOverflowError_instance;
+    SLVAL String;
+    SLVAL SyntaxError;
+    SLVAL Time;
+    SLVAL True;
+    SLVAL TypeError;
+    SLVAL ZeroDivisionError;
 };
 
 typedef enum {
