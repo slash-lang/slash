@@ -11,7 +11,7 @@ free_data(void* data_)
 sl_object_t*
 sl_make_data(sl_vm_t* vm, SLVAL klass, sl_data_type_t* type, void* data)
 {
-    sl_data_t* object = sl_alloc(vm->arena, sizeof(sl_data_t*));
+    sl_data_t* object = sl_alloc(vm->arena, sizeof(sl_data_t));
     object->base.klass = klass;
     object->base.primitive_type = SL_T_DATA;
     object->base.instance_variables = sl_st_init_table(vm, &sl_id_hash_type);

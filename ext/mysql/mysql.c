@@ -5,7 +5,6 @@
 #include <stdio.h>
 
 typedef struct {
-    sl_object_t base;
     int valid;
     MYSQL mysql;
 }
@@ -34,20 +33,27 @@ sl_static_init_ext_mysql()
 }
 
 static void
-free_mysql(mysql_t* mysql)
+free_mysql(sl_vm_t* vm, void* ptr)
 {
+    mysql_t* mysql = ptr;
     if(mysql->valid) {
         mysql_close(&mysql->mysql);
     }
+    free(mysql);
+    (void)vm;
 }
+
+static sl_data_type_t
+mysql_data_type = {
+    .name = "MySQL",
+    .free = free_mysql,
+};
 
 static sl_object_t*
 allocate_mysql(sl_vm_t* vm)
 {
-    mysql_t* mysql = sl_alloc(vm->arena, sizeof(mysql_t));
-    mysql_init(&mysql->mysql);
-    sl_gc_set_finalizer(mysql, (void(*)(void*))free_mysql);
-    return (sl_object_t*)mysql;
+    mysql_t* mysql = calloc(1, sizeof(*mysql));
+    return sl_make_data(vm, vm->store[cMySQL], &mysql_data_type, mysql);
 }
 
 static void
@@ -71,9 +77,7 @@ allocate_mysql_stmt(sl_vm_t* vm)
 static mysql_t*
 get_mysql(sl_vm_t* vm, SLVAL obj)
 {
-    mysql_t* mysql;
-    sl_expect(vm, obj, vm->store[cMySQL]);
-    mysql = (mysql_t*)sl_get_ptr(obj);
+    mysql_t* mysql = sl_data_get_ptr(vm, &mysql_data_type, obj);
     if(!mysql->valid) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid MySQL instance");
     }
@@ -121,7 +125,7 @@ sl_mysql_init(sl_vm_t* vm, SLVAL self, SLVAL host, SLVAL user, SLVAL password)
     int  port_i = 3306,
          flag_i = CLIENT_IGNORE_SIGPIPE | CLIENT_MULTI_STATEMENTS;
 
-    mysql_t* mysql = (mysql_t*)sl_get_ptr(self);
+    mysql_t* mysql = sl_data_get_ptr(vm, &mysql_data_type, self);
 
     if(sl_is_truthy(host)) {
         host_s = sl_to_cstr(vm, sl_expect(vm, host, vm->lib.String));
