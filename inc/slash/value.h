@@ -76,9 +76,6 @@ sl_string_t;
 
 typedef struct sl_method {
     sl_object_t base;
-    SLID name;
-    SLVAL klass;
-    SLVAL doc;
     int arity;
     union {
         struct {
@@ -89,6 +86,11 @@ typedef struct sl_method {
             SLVAL(*func)(/* vm, self, ... */);
         } c;
     } as;
+    struct {
+        SLID name;
+        SLVAL klass;
+        SLVAL doc;
+    }* extra;
 }
 sl_method_t;
 #define SL_FLAG_METHOD_INITIALIZED  (1 << 0)
