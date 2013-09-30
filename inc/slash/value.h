@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
+#include <gmp.h>
 #include "st.h"
 
 struct sl_vm;
@@ -23,26 +24,26 @@ typedef union slid {
 SLID;
 
 typedef enum sl_primitive_type {
-    SL_T__INVALID = 0,
-    SL_T_NIL,
-    SL_T_FALSE,
-    SL_T_TRUE,
-    SL_T_CLASS,
-    SL_T_OBJECT,
-    SL_T_STRING,
-    SL_T_INT,
-    SL_T_FLOAT,
-    SL_T_BIGNUM,
-    SL_T_METHOD,
-    SL_T_CACHED_METHOD_ENTRY,
-    SL_T_BOUND_METHOD,
-    SL_T_ARRAY,
-    SL_T_DICT
+    SL_T__INVALID       = 0,
+    SL_T_NIL            = 1,
+    SL_T_FALSE          = 2,
+    SL_T_TRUE           = 3,
+    SL_T_CLASS          = 4,
+    SL_T_OBJECT         = 5,
+    SL_T_STRING         = 6,
+    SL_T_INT            = 7,
+    SL_T_FLOAT          = 8,
+    SL_T_BIGNUM         = 9,
+    SL_T_METHOD         = 10,
+    SL_T_BOUND_METHOD   = 11,
+    SL_T_ARRAY          = 12,
+    SL_T_DICT           = 13,
 }
 sl_primitive_type_t;
 
 typedef struct sl_object {
-    sl_primitive_type_t primitive_type;
+    sl_primitive_type_t primitive_type : 4;
+    int user_flags : 2;
     SLVAL klass;
     sl_st_table_t* instance_variables;
 }
@@ -50,17 +51,19 @@ sl_object_t;
 
 typedef struct sl_class {
     sl_object_t base;
-    SLID name;
     SLVAL super;
-    SLVAL in;
-    SLVAL doc;
     sl_st_table_t* constants;
-    sl_st_table_t* class_variables;
     sl_st_table_t* instance_methods;
-    sl_object_t*(*allocator)(struct sl_vm*);
-    bool singleton;
+    struct {
+        sl_st_table_t* class_variables;
+        SLVAL in;
+        SLVAL doc;
+        SLID name;
+        sl_object_t*(*allocator)(struct sl_vm*);
+    }* extra;
 }
 sl_class_t;
+#define SL_FLAG_CLASS_SINGLETON (1 << 0)
 
 typedef struct sl_string {
     sl_object_t base;
@@ -68,17 +71,24 @@ typedef struct sl_string {
     size_t buff_len;
     size_t char_len;
     int hash;
-    int hash_set;
 }
 sl_string_t;
+#define SL_FLAG_STRING_HASH_SET (1 << 0)
+
+typedef struct sl_float {
+    sl_object_t base;
+    double d;
+}
+sl_float_t;
+
+typedef struct {
+    sl_object_t base;
+    mpz_t mpz;
+}
+sl_bignum_t;
 
 typedef struct sl_method {
     sl_object_t base;
-    SLID name;
-    SLVAL klass;
-    SLVAL doc;
-    char initialized;
-    char is_c_func;
     int arity;
     union {
         struct {
@@ -89,27 +99,55 @@ typedef struct sl_method {
             SLVAL(*func)(/* vm, self, ... */);
         } c;
     } as;
+    struct {
+        SLID name;
+        SLVAL klass;
+        SLVAL doc;
+    }* extra;
 }
 sl_method_t;
-
-typedef struct sl_cached_method_entry {
-    /*
-    be very careful with this struct.
-    for the sake of memory efficiency, this doesn't have a full object header,
-    so when pulling methods out of method tables, we need to do a primitive_type
-    check first and follow the method pointer if it's a SL_T_CACHED_METHOD_ENTRY
-    */
-    sl_primitive_type_t primitive_type;
-    uint32_t state;
-    sl_method_t* method;
-}
-sl_cached_method_entry_t;
+#define SL_FLAG_METHOD_INITIALIZED  (1 << 0)
+#define SL_FLAG_METHOD_IS_C_FUNC    (1 << 1)
 
 typedef struct sl_bound_method {
     sl_method_t method;
     SLVAL self;
 }
 sl_bound_method_t;
+
+typedef struct {
+    sl_object_t base;
+    size_t count;
+    size_t capacity;
+    SLVAL* items;
+}
+sl_array_t;
+#define SL_FLAG_ARRAY_ENUMERATOR_INSPECTING (1 << 0)
+
+typedef struct {
+    sl_object_t base;
+    SLVAL* items;
+    size_t count;
+    size_t at;
+}
+sl_array_enumerator_t;
+
+typedef struct {
+    sl_object_t base;
+    sl_st_table_t* st;
+}
+sl_dict_t;
+#define SL_FLAG_DICT_INSPECTING (1 << 0)
+
+typedef struct {
+    sl_object_t base;
+    SLVAL dict;
+    SLVAL* keys;
+    size_t count;
+    size_t at;
+}
+sl_dict_enumerator_t;
+#define SL_FLAG_DICT_ENUMERATOR_INITIALIZED (1 << 0)
 
 #define SL_IS_INT(val) ((val).i & 1)
 

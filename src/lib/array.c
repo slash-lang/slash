@@ -2,23 +2,6 @@
 #include <string.h>
 #include <slash.h>
 
-typedef struct {
-    sl_object_t base;
-    int inspecting;
-    size_t count;
-    size_t capacity;
-    SLVAL* items;
-}
-sl_array_t;
-
-typedef struct {
-    sl_object_t base;
-    SLVAL* items;
-    size_t count;
-    size_t at;
-}
-sl_array_enumerator_t;
-
 static sl_object_t*
 allocate_array(sl_vm_t* vm)
 {
@@ -92,11 +75,11 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
     volatile SLVAL str;
-    if(aryp->inspecting) {
+    if(aryp->base.user_flags & SL_FLAG_ARRAY_ENUMERATOR_INSPECTING) {
         return sl_make_cstring(vm, "[ <recursive> ]");
     }
     SL_ENSURE(frame, {
-        aryp->inspecting = 1;
+        aryp->base.user_flags |= SL_FLAG_ARRAY_ENUMERATOR_INSPECTING;
         str = sl_make_cstring(vm, "[");
         for(i = 0; i < aryp->count; i++) {
             if(i != 0) {
@@ -106,7 +89,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
         }
         str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
     }, {
-        aryp->inspecting = 0;
+        aryp->base.user_flags &= ~SL_FLAG_ARRAY_ENUMERATOR_INSPECTING;
     });
     return str;
 }

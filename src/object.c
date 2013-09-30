@@ -14,12 +14,13 @@ sl_pre_init_object(sl_vm_t* vm)
 {
     sl_class_t* klass;
     klass = (sl_class_t*)sl_get_ptr(vm->lib.Object);
+    klass->extra = sl_alloc(vm->arena, sizeof(*klass->extra));
     klass->super = vm->lib.nil;
-    klass->name.id = 0;
-    klass->in = vm->lib.nil;
-    klass->doc = vm->lib.nil;
+    klass->extra->name.id = 0;
+    klass->extra->in = vm->lib.nil;
+    klass->extra->doc = vm->lib.nil;
     klass->constants = sl_st_init_table(vm, &sl_id_hash_type);
-    klass->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->extra->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
     klass->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
     klass->base.klass = vm->lib.Class;
     klass->base.primitive_type = SL_T_CLASS;
@@ -238,7 +239,7 @@ sl_get_cvar(sl_vm_t* vm, SLVAL object, SLID id)
     }
     while(sl_get_primitive_type(object) == SL_T_CLASS) {
         sl_class_t* p = (sl_class_t*)sl_get_ptr(object);
-        if(sl_st_lookup(p->class_variables, (sl_st_data_t)id.id, (sl_st_data_t*)&val)) {
+        if(sl_st_lookup(p->extra->class_variables, (sl_st_data_t)id.id, (sl_st_data_t*)&val)) {
             return val;
         }
         object = p->super;
@@ -268,7 +269,7 @@ sl_set_cvar(sl_vm_t* vm, SLVAL object, SLID id, SLVAL val)
         object = sl_class_of(vm, object);
     }
     p = (sl_class_t*)sl_get_ptr(object);
-    sl_st_insert(p->class_variables, (sl_st_data_t)id.id, (sl_st_data_t)sl_get_ptr(val));
+    sl_st_insert(p->extra->class_variables, (sl_st_data_t)id.id, (sl_st_data_t)sl_get_ptr(val));
 }
 
 static SLVAL
@@ -307,12 +308,10 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     do {
         klassp = (sl_class_t*)sl_get_ptr(klass);
         if(sl_st_lookup(klassp->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
-            if(sl_get_ptr(method)->primitive_type != SL_T_CACHED_METHOD_ENTRY) {
-                return method;
-            }
+            return method;
         }
         klass = klassp->super;
-    } while(klassp->singleton);
+    } while(klassp->base.user_flags & SL_FLAG_CLASS_SINGLETON);
 
     return vm->lib.nil;
 }
@@ -320,11 +319,10 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 static int
 collect_methods_iter(sl_vm_t* vm, SLID id, SLVAL method, SLVAL ary)
 {
-    if(sl_get_primitive_type(method) != SL_T_CACHED_METHOD_ENTRY) {
-        SLVAL name = sl_id_to_string(vm, id);
-        sl_array_push(vm, ary, 1, &name);
-    }
+    SLVAL name = sl_id_to_string(vm, id);
+    sl_array_push(vm, ary, 1, &name);
     return SL_ST_CONTINUE;
+    (void)method;
 }
 
 static SLVAL
@@ -339,7 +337,7 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self)
         klassp = (sl_class_t*)sl_get_ptr(klass);
         sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)ary.i);
         klass = klassp->super;
-    } while(klassp->singleton);
+    } while(klassp->base.user_flags & SL_FLAG_CLASS_SINGLETON);
 
     return ary;
 }
@@ -368,10 +366,10 @@ sl_singleton_class(sl_vm_t* vm, SLVAL object)
     }
     sl_object_t* ptr = sl_get_ptr(object);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(ptr->klass);
-    if(klass->singleton) {
+    if(klass->base.user_flags & SL_FLAG_CLASS_SINGLETON) {
         return ptr->klass;
     }
     SLVAL singleton_class = sl_make_class(vm, ptr->klass);
-    ((sl_class_t*)sl_get_ptr(singleton_class))->singleton = true;
+    ((sl_class_t*)sl_get_ptr(singleton_class))->base.user_flags |= SL_FLAG_CLASS_SINGLETON;
     return ptr->klass = singleton_class;
 }
