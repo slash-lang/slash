@@ -60,7 +60,7 @@ build_backtrace(sl_vm_t* vm, sl_error_t* err, sl_vm_frame_t* frame)
         }
         if(frame->frame_type == SL_VM_FRAME_C) {
             internal_error_add_frame(vm, err,
-                sl_id_to_string(vm, frame->as.c_call_frame.method->name),
+                sl_id_to_string(vm, frame->as.c_call_frame.method->extra->name),
                 vm->lib.nil,
                 vm->lib.nil);
         }
