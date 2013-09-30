@@ -4,12 +4,12 @@
 
 typedef struct {
     sl_object_t base;
-    int inspecting;
     size_t count;
     size_t capacity;
     SLVAL* items;
 }
 sl_array_t;
+#define SL_FLAG_ARRAY_ENUMERATOR_INSPECTING (1 << 0)
 
 typedef struct {
     sl_object_t base;
@@ -92,11 +92,11 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
     sl_array_t* aryp = get_array(vm, array);
     size_t i;
     volatile SLVAL str;
-    if(aryp->inspecting) {
+    if(aryp->base.user_flags & SL_FLAG_ARRAY_ENUMERATOR_INSPECTING) {
         return sl_make_cstring(vm, "[ <recursive> ]");
     }
     SL_ENSURE(frame, {
-        aryp->inspecting = 1;
+        aryp->base.user_flags |= SL_FLAG_ARRAY_ENUMERATOR_INSPECTING;
         str = sl_make_cstring(vm, "[");
         for(i = 0; i < aryp->count; i++) {
             if(i != 0) {
@@ -106,7 +106,7 @@ sl_array_to_s(sl_vm_t* vm, SLVAL array)
         }
         str = sl_string_concat(vm, str, sl_make_cstring(vm, "]"));
     }, {
-        aryp->inspecting = 0;
+        aryp->base.user_flags &= ~SL_FLAG_ARRAY_ENUMERATOR_INSPECTING;
     });
     return str;
 }

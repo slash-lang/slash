@@ -311,7 +311,7 @@ sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
             return method;
         }
         klass = klassp->super;
-    } while(klassp->extra->singleton);
+    } while(klassp->base.user_flags & SL_FLAG_CLASS_SINGLETON);
 
     return vm->lib.nil;
 }
@@ -337,7 +337,7 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self)
         klassp = (sl_class_t*)sl_get_ptr(klass);
         sl_st_foreach(klassp->instance_methods, collect_methods_iter, (sl_st_data_t)ary.i);
         klass = klassp->super;
-    } while(klassp->extra->singleton);
+    } while(klassp->base.user_flags & SL_FLAG_CLASS_SINGLETON);
 
     return ary;
 }
@@ -366,10 +366,10 @@ sl_singleton_class(sl_vm_t* vm, SLVAL object)
     }
     sl_object_t* ptr = sl_get_ptr(object);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(ptr->klass);
-    if(klass->extra->singleton) {
+    if(klass->base.user_flags & SL_FLAG_CLASS_SINGLETON) {
         return ptr->klass;
     }
     SLVAL singleton_class = sl_make_class(vm, ptr->klass);
-    ((sl_class_t*)sl_get_ptr(singleton_class))->extra->singleton = true;
+    ((sl_class_t*)sl_get_ptr(singleton_class))->base.user_flags |= SL_FLAG_CLASS_SINGLETON;
     return ptr->klass = singleton_class;
 }
