@@ -38,6 +38,7 @@ typedef enum sl_primitive_type {
     SL_T_BOUND_METHOD   = 11,
     SL_T_ARRAY          = 12,
     SL_T_DICT           = 13,
+    SL_T_DATA           = 14,
 }
 sl_primitive_type_t;
 
@@ -148,6 +149,20 @@ typedef struct {
 }
 sl_dict_enumerator_t;
 #define SL_FLAG_DICT_ENUMERATOR_INITIALIZED (1 << 0)
+
+typedef struct sl_data_type {
+    const char* name;
+    void(*free)(struct sl_vm*, void*);
+}
+sl_data_type_t;
+
+typedef struct sl_data {
+    sl_object_t base;
+    struct sl_vm* vm; // hack - get rid of this
+    sl_data_type_t* type;
+    void* data;
+}
+sl_data_t;
 
 #define SL_IS_INT(val) ((val).i & 1)
 
