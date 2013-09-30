@@ -40,16 +40,6 @@ allocate_method(sl_vm_t* vm)
     return (sl_object_t*)method;
 }
 
-static sl_object_t*
-allocate_bound_method(sl_vm_t* vm)
-{
-    sl_bound_method_t* bound_method = sl_alloc(vm->arena, sizeof(sl_bound_method_t));
-    bound_method->method.extra = sl_alloc(vm->arena, sizeof(*bound_method->method.extra));
-    bound_method->method.base.primitive_type = SL_T_BOUND_METHOD;
-    bound_method->method.extra->doc = vm->lib.nil;
-    return (sl_object_t*)bound_method;
-}
-
 static SLVAL
 method_apply(sl_vm_t* vm, SLVAL method, size_t argc, SLVAL* argv)
 {
@@ -111,26 +101,33 @@ sl_method_doc_set(sl_vm_t* vm, SLVAL method, SLVAL doc)
 static SLVAL
 bound_method_call(sl_vm_t* vm, SLVAL bmethod, size_t argc, SLVAL* argv)
 {
-    sl_bound_method_t* bmethp = (sl_bound_method_t*)sl_get_ptr(bmethod);
-    if(!(bmethp->method.base.user_flags & SL_FLAG_METHOD_INITIALIZED)) {
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(bmethod);
+    if(!(methp->base.user_flags & SL_FLAG_METHOD_INITIALIZED)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Can't call uninitialized BoundMethod");
     }
-    return sl_apply_method(vm, bmethp->self, &bmethp->method, argc, argv);
+    return sl_apply_method(vm, methp->extra->bound_self, methp, argc, argv);
+}
+
+static sl_method_t*
+method_dup(sl_vm_t* vm, sl_method_t* method)
+{
+    sl_method_t* new_method = sl_alloc(vm->arena, sizeof(sl_method_t));
+    memcpy(new_method, method, sizeof(*method));
+    new_method->extra = sl_alloc(vm->arena, sizeof(*new_method->extra));
+    memcpy(new_method->extra, method->extra, sizeof(*method->extra));
+    return new_method;
 }
 
 static SLVAL
 bound_method_unbind(sl_vm_t* vm, SLVAL bmethod)
 {
-    sl_bound_method_t* bmethp = (sl_bound_method_t*)sl_get_ptr(bmethod);
-    sl_method_t* methp = (sl_method_t*)sl_get_ptr(sl_allocate(vm, vm->lib.Method));
-    methp->extra->name  = bmethp->method.extra->name;
-    methp->arity        = bmethp->method.arity;
-    methp->extra->klass = bmethp->method.extra->klass;
-    methp->as           = bmethp->method.as;
-    methp->base.user_flags |= SL_FLAG_METHOD_INITIALIZED;
-    if(bmethp->method.base.user_flags & SL_FLAG_METHOD_IS_C_FUNC) {
-        methp->base.user_flags |= SL_FLAG_METHOD_IS_C_FUNC;
+    sl_method_t* bmethp = (sl_method_t*)sl_get_ptr(bmethod);
+    if(!(bmethp->base.user_flags & SL_FLAG_METHOD_INITIALIZED)) {
+        sl_throw_message2(vm, vm->lib.TypeError, "Can't unbind uninitalized BoundMethod");
     }
+    sl_method_t* methp = method_dup(vm, bmethp);
+    methp->extra->bound_self = vm->lib.nil;
+    methp->base.klass = vm->lib.Method;
     return sl_make_ptr((sl_object_t*)methp);
 }
 
@@ -163,9 +160,15 @@ bound_method_eq(sl_vm_t* vm, SLVAL method, SLVAL other)
     if(sl_get_ptr(sl_class_of(vm, other)) != sl_get_ptr(vm->lib.BoundMethod)) {
         return vm->lib._false;
     }
-    sl_bound_method_t* methp = (sl_bound_method_t*)sl_get_ptr(method);
-    sl_bound_method_t* othp = (sl_bound_method_t*)sl_get_ptr(other);
-    return sl_make_bool(vm, memcmp(methp, othp, sizeof(sl_bound_method_t)) == 0);
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    sl_method_t* othp = (sl_method_t*)sl_get_ptr(other);
+    if(memcmp(methp, othp, sizeof(sl_method_t)) != 0) {
+        return vm->lib._false;
+    }
+    if(memcmp(methp->extra, othp->extra, sizeof(*methp->extra)) != 0) {
+        return vm->lib._false;
+    }
+    return vm->lib._true;
 }
 
 void
@@ -183,7 +186,6 @@ sl_init_method(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Method, "==", 1, method_eq);
     
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
-    sl_class_set_allocator(vm, vm->lib.BoundMethod, allocate_bound_method);
     sl_define_method(vm, vm->lib.BoundMethod, "unbind", 0, bound_method_unbind);
     sl_define_method(vm, vm->lib.BoundMethod, "call", -1, bound_method_call);
     sl_define_method(vm, vm->lib.BoundMethod, "==", 1, bound_method_eq);
@@ -227,25 +229,12 @@ SLVAL
 sl_method_bind(sl_vm_t* vm, SLVAL method, SLVAL receiver)
 {
     sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
-    sl_bound_method_t* bmethp = (sl_bound_method_t*)sl_get_ptr(sl_allocate(vm, vm->lib.BoundMethod));
-    
     if(!(methp->base.user_flags & SL_FLAG_METHOD_INITIALIZED)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Can't bind uninitialized Method");
     }
-    
-    bmethp->method.base.user_flags |= SL_FLAG_METHOD_INITIALIZED;
-
-    if(methp->base.user_flags & SL_FLAG_METHOD_IS_C_FUNC) {
-        bmethp->method.base.user_flags |= SL_FLAG_METHOD_IS_C_FUNC;
-    }
-
-    bmethp->method.extra->name  = methp->extra->name;
-    bmethp->method.extra->doc   = methp->extra->doc;
-    bmethp->method.extra->klass = methp->extra->klass;
-    bmethp->method.arity        = methp->arity;
-    bmethp->method.as           = methp->as;
-    
-    bmethp->self = sl_expect(vm, receiver, methp->extra->klass);
+    sl_method_t* bmethp = method_dup(vm, methp);
+    bmethp->extra->bound_self = sl_expect(vm, receiver, methp->extra->klass);
+    bmethp->base.klass = vm->lib.BoundMethod;
     return sl_make_ptr((sl_object_t*)bmethp);
 }
 

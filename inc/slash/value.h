@@ -35,7 +35,6 @@ typedef enum sl_primitive_type {
     SL_T_FLOAT          = 8,
     SL_T_BIGNUM         = 9,
     SL_T_METHOD         = 10,
-    SL_T_BOUND_METHOD   = 11,
     SL_T_ARRAY          = 12,
     SL_T_DICT           = 13,
     SL_T_DATA           = 14,
@@ -104,17 +103,12 @@ typedef struct sl_method {
         SLID name;
         SLVAL klass;
         SLVAL doc;
+        SLVAL bound_self;
     }* extra;
 }
 sl_method_t;
 #define SL_FLAG_METHOD_INITIALIZED  (1 << 0)
 #define SL_FLAG_METHOD_IS_C_FUNC    (1 << 1)
-
-typedef struct sl_bound_method {
-    sl_method_t method;
-    SLVAL self;
-}
-sl_bound_method_t;
 
 typedef struct {
     sl_object_t base;
