@@ -14,6 +14,7 @@
 #include "slash/string.h"
 #include "slash/dispatch.h"
 #include "slash/platform.h"
+#include "slash/data.h"
 #include "slash/lib/array.h"
 #include "slash/lib/buffer.h"
 #include "slash/lib/dict.h"
