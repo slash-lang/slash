@@ -46,7 +46,7 @@ call_c_func_guard(sl_vm_t* vm, SLVAL recv, sl_method_t* method, size_t argc, SLV
     sl_vm_frame_t frame;
     frame.prev = vm->call_stack;
     frame.frame_type = SL_VM_FRAME_C;
-    frame.as.call_frame.method = method->name;
+    frame.as.c_call_frame.method = method;
     vm->call_stack = &frame;
 
     SLVAL retn = call_c_func(vm, recv, method, argc, argv);
@@ -226,7 +226,7 @@ sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
     sl_vm_frame_t frame;                                    \
     frame.prev = vm->call_stack;                            \
     frame.frame_type = SL_VM_FRAME_C;                       \
-    frame.as.call_frame.method = imc->id;                   \
+    frame.as.c_call_frame.method = imc->method;             \
     vm->call_stack = &frame;
 
 #define C_FRAME_END \

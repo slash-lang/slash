@@ -241,11 +241,12 @@ typedef struct sl_vm_frame {
 
     union {
         struct {
-            SLID method;
-            /* left undefined if type == SL_VM_FRAME_C: */
-            char* filename;
+            sl_method_t* method;
+        } c_call_frame;
+        struct {
+            sl_vm_section_t* section;
             int* line;
-        } call_frame;
+        } sl_call_frame;
         struct {
             jmp_buf env;
             SLVAL value;
