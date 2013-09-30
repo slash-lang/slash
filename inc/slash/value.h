@@ -49,15 +49,17 @@ sl_object_t;
 
 typedef struct sl_class {
     sl_object_t base;
-    SLID name;
     SLVAL super;
-    SLVAL in;
-    SLVAL doc;
     sl_st_table_t* constants;
-    sl_st_table_t* class_variables;
     sl_st_table_t* instance_methods;
-    sl_object_t*(*allocator)(struct sl_vm*);
-    bool singleton;
+    struct {
+        sl_st_table_t* class_variables;
+        SLVAL in;
+        SLVAL doc;
+        SLID name;
+        sl_object_t*(*allocator)(struct sl_vm*);
+        bool singleton;
+    }* extra;
 }
 sl_class_t;
 

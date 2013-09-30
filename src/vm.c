@@ -113,9 +113,9 @@ sl_init(const char* sapi_name)
     Object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
     Class = (sl_class_t*)sl_get_ptr(vm->lib.Class);
     String = (sl_class_t*)sl_get_ptr(vm->lib.String);
-    Object->name = sl_intern(vm, "Object");
-    Class->name = sl_intern(vm, "Class");
-    String->name = sl_intern(vm, "String");
+    Object->extra->name = sl_intern(vm, "Object");
+    Class->extra->name = sl_intern(vm, "Class");
+    String->extra->name = sl_intern(vm, "String");
 
     sl_init_id(vm);
 

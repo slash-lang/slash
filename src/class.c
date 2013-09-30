@@ -14,14 +14,15 @@ static sl_object_t*
 allocate_class(sl_vm_t* vm)
 {
     sl_class_t* klass = sl_alloc(vm->arena, sizeof(sl_class_t));
+    klass->extra = sl_alloc(vm->arena, sizeof(*klass->extra));
     klass->base.primitive_type = SL_T_CLASS;
     klass->constants = sl_st_init_table(vm, &sl_id_hash_type);
-    klass->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
+    klass->extra->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
     klass->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
     klass->super = vm->lib.Object;
-    klass->name.id = 0;
-    klass->in = vm->lib.Object;
-    klass->doc = vm->lib.nil;
+    klass->extra->name.id = 0;
+    klass->extra->in = vm->lib.Object;
+    klass->extra->doc = vm->lib.nil;
     return (sl_object_t*)klass;
 }
 
@@ -35,19 +36,10 @@ get_class(sl_vm_t* vm, SLVAL klass)
 void
 sl_pre_init_class(sl_vm_t* vm)
 {
-    sl_class_t* obj = sl_alloc(vm->arena, sizeof(sl_class_t));
+    sl_class_t* obj = (sl_class_t*)allocate_class(vm);
     vm->lib.Class = sl_make_ptr((sl_object_t*)obj);
-    obj->name.id = 0;
-    obj->super = vm->lib.Object;
-    obj->in = vm->lib.Object;
-    obj->doc = vm->lib.nil;
-    obj->constants = sl_st_init_table(vm, &sl_id_hash_type);
-    obj->class_variables = sl_st_init_table(vm, &sl_id_hash_type);
-    obj->instance_methods = sl_st_init_table(vm, &sl_id_hash_type);
-    obj->allocator = allocate_class;
+    obj->extra->allocator = allocate_class;
     obj->base.klass = vm->lib.Class;
-    obj->base.primitive_type = SL_T_CLASS;
-    obj->base.instance_variables = sl_st_init_table(vm, &sl_id_hash_type);
 }
 
 static SLVAL
@@ -55,35 +47,35 @@ sl_class_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_class_t* klass = get_class(vm, self);
     sl_class_t* object = (sl_class_t*)sl_get_ptr(vm->lib.Object);
-    if(klass == object || sl_get_ptr(klass->in) == (sl_object_t*)object) {
-        return sl_id_to_string(vm, klass->name);
+    if(klass == object || sl_get_ptr(klass->extra->in) == (sl_object_t*)object) {
+        return sl_id_to_string(vm, klass->extra->name);
     } else {
-        return sl_make_formatted_string(vm, "%V::%I", sl_class_to_s(vm, klass->in), klass->name);
+        return sl_make_formatted_string(vm, "%V::%I", sl_class_to_s(vm, klass->extra->in), klass->extra->name);
     }
 }
 
 static SLVAL
 sl_class_name(sl_vm_t* vm, SLVAL self)
 {
-    return sl_id_to_string(vm, get_class(vm, self)->name);
+    return sl_id_to_string(vm, get_class(vm, self)->extra->name);
 }
 
 static SLVAL
 sl_class_in(sl_vm_t* vm, SLVAL self)
 {
-    return get_class(vm, self)->in;
+    return get_class(vm, self)->extra->in;
 }
 
 SLVAL
 sl_class_doc(sl_vm_t* vm, SLVAL self)
 {
-    return get_class(vm, self)->doc;
+    return get_class(vm, self)->extra->doc;
 }
 
 SLVAL
 sl_class_doc_set(sl_vm_t* vm, SLVAL self, SLVAL doc)
 {
-    return get_class(vm, self)->doc = doc;
+    return get_class(vm, self)->extra->doc = doc;
 }
 
 static SLVAL
@@ -217,7 +209,7 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
 static SLVAL
 class_singleton(sl_vm_t* vm, SLVAL klass)
 {
-    return sl_make_bool(vm, get_class(vm, klass)->singleton);
+    return sl_make_bool(vm, get_class(vm, klass)->extra->singleton);
 }
 
 static SLVAL
@@ -286,8 +278,8 @@ sl_define_class3(sl_vm_t* vm, SLID name, SLVAL super, SLVAL in)
 {
     SLVAL vklass = sl_make_class(vm, super);
     sl_class_t* klass = (sl_class_t*)sl_get_ptr(vklass);
-    klass->name = name;
-    klass->in = sl_expect(vm, in, vm->lib.Class);
+    klass->extra->name = name;
+    klass->extra->in = sl_expect(vm, in, vm->lib.Class);
     sl_st_insert(((sl_class_t*)sl_get_ptr(in))->constants,
         (sl_st_data_t)name.id, (sl_st_data_t)klass);
     return vklass;
@@ -304,14 +296,14 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
 
     sl_class_t* super = (sl_class_t*)sl_get_ptr(vsuper);
 
-    sing->allocator = NULL;
+    sing->extra->allocator = NULL;
     sing->super = super->base.klass;
-    sing->singleton = true;
+    sing->extra->singleton = true;
 
     klass->base.klass = vsing;
-    klass->allocator = super->allocator;
+    klass->extra->allocator = super->extra->allocator;
     klass->super = vsuper;
-    klass->singleton = false;
+    klass->extra->singleton = false;
 
     if(!vm->initializing) {
         sl_send_id(vm, vsuper, vm->id.subclassed, 1, vklass);
@@ -323,7 +315,7 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
 void
 sl_class_set_allocator(sl_vm_t* vm, SLVAL klass, sl_object_t*(*allocator)(sl_vm_t*))
 {
-    get_class(vm, klass)->allocator = allocator;
+    get_class(vm, klass)->extra->allocator = allocator;
 }
 
 void
@@ -458,7 +450,7 @@ sl_class_of(sl_vm_t* vm, SLVAL obj)
     } else {
         SLVAL klass = sl_get_ptr(obj)->klass;
         sl_class_t* pklass = (sl_class_t*)sl_get_ptr(klass);
-        while(pklass->singleton) {
+        while(pklass->extra->singleton) {
             klass = pklass->super;
             pklass = (sl_class_t*)sl_get_ptr(klass);
         }
@@ -488,10 +480,10 @@ sl_class_has_full_path(sl_vm_t* vm, SLVAL klass)
         return false;
     }
     sl_class_t* klassp = get_class(vm, klass);
-    if(!klassp->name.id) {
+    if(!klassp->extra->name.id) {
         return false;
     }
-    return sl_class_has_full_path(vm, klassp->in);
+    return sl_class_has_full_path(vm, klassp->extra->in);
 }
 
 SLVAL
@@ -534,11 +526,11 @@ static SLVAL
 class_file_path_rec(sl_vm_t* vm, SLVAL klass)
 {
     sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
-    SLVAL seg = sl_camel_case_to_underscore(vm, sl_id_to_string(vm, klassp->name));
-    if(sl_get_ptr(klassp->in) == sl_get_ptr(vm->lib.Object)) {
+    SLVAL seg = sl_camel_case_to_underscore(vm, sl_id_to_string(vm, klassp->extra->name));
+    if(sl_get_ptr(klassp->extra->in) == sl_get_ptr(vm->lib.Object)) {
         return seg;
     }
-    SLVAL path = class_file_path_rec(vm, klassp->in);
+    SLVAL path = class_file_path_rec(vm, klassp->extra->in);
     path = sl_string_concat(vm, path, sl_make_cstring(vm, "/"));
     return sl_string_concat(vm, path, seg);
 }
