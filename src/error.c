@@ -54,13 +54,13 @@ build_backtrace(sl_vm_t* vm, sl_error_t* err, sl_vm_frame_t* frame)
     for(; frame; frame = frame->prev) {
         if(frame->frame_type == SL_VM_FRAME_SLASH) {
             internal_error_add_frame(vm, err,
-                sl_id_to_string(vm, frame->as.call_frame.method),
-                sl_make_cstring(vm, frame->as.call_frame.filename),
-                sl_make_int(vm, *frame->as.call_frame.line));
+                sl_id_to_string(vm, frame->as.sl_call_frame.section->name),
+                sl_make_cstring(vm, (char*)frame->as.sl_call_frame.section->filename),
+                sl_make_int(vm, *frame->as.sl_call_frame.line));
         }
         if(frame->frame_type == SL_VM_FRAME_C) {
             internal_error_add_frame(vm, err,
-                sl_id_to_string(vm, frame->as.call_frame.method),
+                sl_id_to_string(vm, frame->as.c_call_frame.method->name),
                 vm->lib.nil,
                 vm->lib.nil);
         }

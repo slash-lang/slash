@@ -89,9 +89,8 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     sl_vm_frame_t call_frame;
     call_frame.prev = vm->call_stack;
     call_frame.frame_type = SL_VM_FRAME_SLASH;
-    call_frame.as.call_frame.method = section->name;
-    call_frame.as.call_frame.filename = (char*)section->filename;
-    call_frame.as.call_frame.line = (int*)&line;
+    call_frame.as.sl_call_frame.section = section;
+    call_frame.as.sl_call_frame.line = (int*)&line;
     vm->call_stack = &call_frame;
 
     if(ctx->section->has_try_catch) {
