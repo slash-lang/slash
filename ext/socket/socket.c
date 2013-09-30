@@ -38,6 +38,21 @@ af_inet_hints = {
     0          /* ai_next */
 };
 
+static const struct addrinfo
+af_inet6_hints = {
+    0,         /* ai_flags */
+    AF_INET6,   /* ai_family */
+    0,         /* ai_socktype */
+    0,         /* ai_protocol */
+    0,         /* ai_addrlen */
+    0,         /* ai_addr */
+    0,         /* ai_canonname */
+    0          /* ai_next */
+};
+
+static int
+cTCP6Socket;
+
 static int
 cTCPSocket_Error;
 
@@ -51,6 +66,7 @@ sl_static_init_ext_socket()
     cSocket = sl_vm_store_register_slot();
     cTCPSocket = sl_vm_store_register_slot();
     cTCPSocket_Error = sl_vm_store_register_slot();
+    cTCP6Socket = sl_vm_store_register_slot();
 }
 
 typedef struct {
@@ -118,6 +134,25 @@ sl_tcp_socket_init(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+sl_tcp6_socket_init(sl_vm_t* vm, SLVAL self)
+{
+
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+    if(sock->socket != -1) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Cannot reinitialize TCP6Socket instance");
+    }
+
+    sock->socket = socket(AF_INET6, SOCK_STREAM, 0);
+    if(sock->socket == -1) {
+        tcp_socket_error(vm, "Could not create TCP6Socket: ", strerror(errno));
+    }
+
+    sock->buffer = sl_make_cstring(vm, "");
+
+    return vm->lib.nil;
+}
+
+static SLVAL
 sl_tcp_socket_bind(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
 {
     sl_expect(vm, hostv, vm->lib.String);
@@ -143,6 +178,37 @@ sl_tcp_socket_bind(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
     if(bind(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
         freeaddrinfo(ai);
         tcp_socket_error(vm, "Could not bind TCPSocket: ", strerror(errno));
+    }
+
+    return self;
+}
+
+static SLVAL
+sl_tcp6_socket_bind(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
+{
+    sl_expect(vm, hostv, vm->lib.String);
+    int port = sl_get_int(sl_expect(vm, portv, vm->lib.Int));
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+
+    if(port < 1 || port > 65535) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Port number out of range");
+    }
+
+    struct addrinfo* ai;
+    int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, &af_inet6_hints, &ai);
+    if(gai_error != 0) {
+        tcp_socket_error(vm, "Could not create TCP6Socket: ", gai_strerror(gai_error));
+    }
+
+    if(ai->ai_family != AF_INET6) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not bind TCP6Socket: ", "only IPv6 addresses supported");
+    }
+
+    ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
+    if(bind(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not bind TCP6Socket: ", strerror(errno));
     }
 
     return self;
@@ -195,6 +261,48 @@ sl_tcp_socket_connect(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
     if(connect(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
         freeaddrinfo(ai);
         tcp_socket_error(vm, "Could not connect TCPSocket: ", strerror(errno));
+    }
+
+    sock->buffer = sl_make_cstring(vm, "");
+
+    freeaddrinfo(ai);
+    return vm->lib.nil;
+}
+
+static SLVAL
+sl_tcp6_socket_connect(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
+{
+    sl_expect(vm, hostv, vm->lib.String);
+
+    int port = sl_get_int(sl_expect(vm, portv, vm->lib.Int));
+    if(port < 1 || port > 65535) {
+        sl_throw_message2(vm, vm->lib.ArgumentError, "Port number out of range");
+    }
+
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+
+    struct addrinfo* ai;
+    int gai_error = getaddrinfo(sl_to_cstr(vm, hostv), NULL, &af_inet6_hints, &ai);
+    if(gai_error != 0) {
+        tcp_socket_error(vm, "Could not connect TCP6Socket: ", gai_strerror(gai_error));
+    }
+
+    if(ai->ai_family != AF_INET6) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not connect TCP6Socket: ", "only IPv6 supported");
+    }
+
+    sock->socket = socket(AF_INET6, SOCK_STREAM, 0);
+    if(sock->socket == -1) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not connect TCP6Socket: ", strerror(errno));
+    }
+
+    ((struct sockaddr_in*)ai->ai_addr)->sin_port = htons(port);
+
+    if(connect(sock->socket, ai->ai_addr, ai->ai_addrlen) != 0) {
+        freeaddrinfo(ai);
+        tcp_socket_error(vm, "Could not connect TCP6Socket: ", strerror(errno));
     }
 
     sock->buffer = sl_make_cstring(vm, "");
@@ -323,9 +431,15 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, TCPSocket, "bind", 2, sl_tcp_socket_bind);
     sl_define_method(vm, TCPSocket, "connect", 2, sl_tcp_socket_connect);
 
+    SLVAL TCP6Socket = sl_define_class(vm, "TCP6Socket", Socket);
+    sl_define_method(vm, TCP6Socket, "init", 0, sl_tcp6_socket_init);
+    sl_define_method(vm, TCP6Socket, "bind", 2, sl_tcp6_socket_bind);
+    sl_define_method(vm, TCP6Socket, "connect", 2, sl_tcp6_socket_connect);
+
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
 
     vm->store[cSocket] = Socket;
     vm->store[cTCPSocket] = TCPSocket;
+    vm->store[cTCP6Socket] = TCP6Socket;
     vm->store[cTCPSocket_Error] = TCPSocket_Error;
 }
