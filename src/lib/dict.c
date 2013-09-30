@@ -2,23 +2,6 @@
 #include <string.h>
 #include <slash.h>
 
-typedef struct {
-    sl_object_t base;
-    int inspecting;
-    sl_st_table_t* st;
-}
-sl_dict_t;
-
-typedef struct {
-    sl_object_t base;
-    SLVAL dict;
-    SLVAL* keys;
-    size_t count;
-    size_t at;
-    int initialized;
-}
-sl_dict_enumerator_t;
-
 static int
 dict_key_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 {
@@ -166,18 +149,18 @@ sl_dict_to_s(sl_vm_t* vm, SLVAL dict)
     sl_vm_frame_t frame;
     SLVAL str;
     sl_dict_t* d = get_dict(vm, dict);
-    if(d->inspecting) {
+    if(d->base.user_flags & SL_FLAG_DICT_INSPECTING) {
         return sl_make_cstring(vm, "{ <recursive> }");
     }
     SL_ENSURE(frame, {
-        d->inspecting = 1;
+        d->base.user_flags |= SL_FLAG_DICT_INSPECTING;
         str = sl_make_cstring(vm, "{ ");
         if(d->st) {
             sl_st_foreach(d->st, dict_to_s_iter, (sl_st_data_t)&str);
         }
         str = sl_string_concat(vm, str, sl_make_cstring(vm, " }"));
     }, {
-        d->inspecting = 0;
+        d->base.user_flags &= ~SL_FLAG_DICT_INSPECTING;
     });
     return str;
 }
@@ -213,7 +196,7 @@ sl_dict_enumerator_init(sl_vm_t* vm, SLVAL self, SLVAL dict)
         e->keys = NULL;
     }
     e->at = 0;
-    e->initialized = 1;
+    e->base.user_flags |= SL_FLAG_DICT_ENUMERATOR_INITIALIZED;
     return self;
 }
 
@@ -221,7 +204,7 @@ static SLVAL
 sl_dict_enumerator_next(sl_vm_t* vm, SLVAL self)
 {
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
-    if(!e->initialized) {
+    if(!(e->base.user_flags & SL_FLAG_DICT_ENUMERATOR_INITIALIZED)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at > e->count) {
@@ -240,7 +223,7 @@ sl_dict_enumerator_current(sl_vm_t* vm, SLVAL self)
 {
     sl_dict_enumerator_t* e = get_dict_enumerator(vm, self);
     SLVAL kv[2];
-    if(!e->initialized) {
+    if(!(e->base.user_flags & SL_FLAG_DICT_ENUMERATOR_INITIALIZED)) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on Dict::Enumerator");
     }
     if(e->at == 0 || e->at > e->count) {

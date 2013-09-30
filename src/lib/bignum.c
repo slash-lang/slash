@@ -4,13 +4,6 @@
 #include <slash/lib/float.h>
 #include <slash/lib/bignum.h>
 #include <slash/string.h>
-#include <gmp.h>
-
-typedef struct {
-    sl_object_t base;
-    mpz_t mpz;
-}
-sl_bignum_t;
 
 static void
 free_bignum(sl_bignum_t* bn)

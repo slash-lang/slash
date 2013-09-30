@@ -116,7 +116,7 @@ sl_apply_method(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* a
             sl_error(vm, vm->lib.ArgumentError, "Too many arguments. Expected %d, received %d.", method->arity, argc);
         }
     }
-    if(method->is_c_func) {
+    if(method->base.user_flags & SL_FLAG_METHOD_IS_C_FUNC) {
         return call_c_func_guard(vm, recv, method, argc, argv);
     } else {
         return call_sl_func(vm, recv, method, argc, argv);
@@ -187,28 +187,11 @@ lookup_method_rec(sl_vm_t* vm, SLVAL klass, SLID id)
     }
 
     sl_method_t* method;
-    sl_cached_method_entry_t* cme = NULL;
     if(sl_st_lookup(klassp->instance_methods, (sl_st_data_t)id.id, (sl_st_data_t*)&method)) {
-        if(method->base.primitive_type == SL_T_CACHED_METHOD_ENTRY) {
-            cme = (sl_cached_method_entry_t*)method;
-            // TODO - improve cache invalidation. this is too coarse
-            if(cme->state == vm->state_method) {
-                return cme->method;
-            }
-        } else {
-            return method;
-        }
+        return method;
     }
 
-    method = lookup_method_rec(vm, klassp->super, id);
-    if(!cme) {
-        cme = sl_alloc(vm->arena, sizeof(*cme));
-    }
-    cme->primitive_type = SL_T_CACHED_METHOD_ENTRY;
-    cme->state = vm->state_method;
-    cme->method = method;
-    sl_st_insert(klassp->instance_methods, (sl_st_data_t)id.id, (sl_st_data_t)cme);
-    return method;
+    return lookup_method_rec(vm, klassp->super, id);
 }
 
 sl_method_t*
@@ -287,7 +270,7 @@ sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLV
         imc->state = vm->state_method;
         imc->klass = klass;
         imc->method = method;
-        if(method->is_c_func) {
+        if(method->base.user_flags & SL_FLAG_METHOD_IS_C_FUNC) {
             if(method->arity < 0) {
                 if(sl_likely(-imc->argc - 1 <= method->arity)) {
                     imc->call = dispatch_c_call_variadic;
