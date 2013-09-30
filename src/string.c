@@ -29,7 +29,7 @@ str_hash(sl_vm_t* vm, sl_string_t* str)
     int k;
     size_t i;
 
-    if(str->hash_set) {
+    if(str->base.user_flags & SL_FLAG_STRING_HASH_SET) {
         return str->hash;
     }
 
@@ -61,7 +61,7 @@ str_hash(sl_vm_t* vm, sl_string_t* str)
     hash *= m;
     hash ^= hash >> 15;
 
-    str->hash_set = 1;
+    str->base.user_flags |= SL_FLAG_STRING_HASH_SET;
     return str->hash = hash;
     (void)vm;
 }
@@ -143,7 +143,6 @@ sl_make_string_no_copy(sl_vm_t* vm, uint8_t* buff, size_t buff_len)
     str->char_len = sl_utf8_strlen(vm, buff, buff_len);
     str->buff = buff;
     str->buff_len = buff_len;
-    str->hash_set = 0;
     return vstr;
 }
 

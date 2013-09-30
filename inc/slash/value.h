@@ -23,25 +23,26 @@ typedef union slid {
 SLID;
 
 typedef enum sl_primitive_type {
-    SL_T__INVALID = 0,
-    SL_T_NIL,
-    SL_T_FALSE,
-    SL_T_TRUE,
-    SL_T_CLASS,
-    SL_T_OBJECT,
-    SL_T_STRING,
-    SL_T_INT,
-    SL_T_FLOAT,
-    SL_T_BIGNUM,
-    SL_T_METHOD,
-    SL_T_BOUND_METHOD,
-    SL_T_ARRAY,
-    SL_T_DICT
+    SL_T__INVALID       = 0,
+    SL_T_NIL            = 1,
+    SL_T_FALSE          = 2,
+    SL_T_TRUE           = 3,
+    SL_T_CLASS          = 4,
+    SL_T_OBJECT         = 5,
+    SL_T_STRING         = 6,
+    SL_T_INT            = 7,
+    SL_T_FLOAT          = 8,
+    SL_T_BIGNUM         = 9,
+    SL_T_METHOD         = 10,
+    SL_T_BOUND_METHOD   = 11,
+    SL_T_ARRAY          = 12,
+    SL_T_DICT           = 13,
 }
 sl_primitive_type_t;
 
 typedef struct sl_object {
-    sl_primitive_type_t primitive_type;
+    sl_primitive_type_t primitive_type : 4;
+    int user_flags : 2;
     SLVAL klass;
     sl_st_table_t* instance_variables;
 }
@@ -58,10 +59,10 @@ typedef struct sl_class {
         SLVAL doc;
         SLID name;
         sl_object_t*(*allocator)(struct sl_vm*);
-        bool singleton;
     }* extra;
 }
 sl_class_t;
+#define SL_FLAG_CLASS_SINGLETON (1 << 0)
 
 typedef struct sl_string {
     sl_object_t base;
@@ -69,17 +70,15 @@ typedef struct sl_string {
     size_t buff_len;
     size_t char_len;
     int hash;
-    int hash_set;
 }
 sl_string_t;
+#define SL_FLAG_STRING_HASH_SET (1 << 0)
 
 typedef struct sl_method {
     sl_object_t base;
     SLID name;
     SLVAL klass;
     SLVAL doc;
-    char initialized;
-    char is_c_func;
     int arity;
     union {
         struct {
@@ -92,6 +91,8 @@ typedef struct sl_method {
     } as;
 }
 sl_method_t;
+#define SL_FLAG_METHOD_INITIALIZED  (1 << 0)
+#define SL_FLAG_METHOD_IS_C_FUNC    (1 << 1)
 
 typedef struct sl_bound_method {
     sl_method_t method;

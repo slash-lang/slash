@@ -209,7 +209,7 @@ class_remove_constant(sl_vm_t* vm, SLVAL klass, SLVAL name)
 static SLVAL
 class_singleton(sl_vm_t* vm, SLVAL klass)
 {
-    return sl_make_bool(vm, get_class(vm, klass)->extra->singleton);
+    return sl_make_bool(vm, get_class(vm, klass)->base.user_flags & SL_FLAG_CLASS_SINGLETON);
 }
 
 static SLVAL
@@ -298,12 +298,11 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
 
     sing->extra->allocator = NULL;
     sing->super = super->base.klass;
-    sing->extra->singleton = true;
+    sing->base.user_flags |= SL_FLAG_CLASS_SINGLETON;
 
     klass->base.klass = vsing;
     klass->extra->allocator = super->extra->allocator;
     klass->super = vsuper;
-    klass->extra->singleton = false;
 
     if(!vm->initializing) {
         sl_send_id(vm, vsuper, vm->id.subclassed, 1, vklass);
@@ -450,7 +449,7 @@ sl_class_of(sl_vm_t* vm, SLVAL obj)
     } else {
         SLVAL klass = sl_get_ptr(obj)->klass;
         sl_class_t* pklass = (sl_class_t*)sl_get_ptr(klass);
-        while(pklass->extra->singleton) {
+        while(pklass->base.user_flags & SL_FLAG_CLASS_SINGLETON) {
             klass = pklass->super;
             pklass = (sl_class_t*)sl_get_ptr(klass);
         }
