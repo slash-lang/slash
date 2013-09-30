@@ -2,23 +2,6 @@
 #include <string.h>
 #include <slash.h>
 
-typedef struct {
-    sl_object_t base;
-    size_t count;
-    size_t capacity;
-    SLVAL* items;
-}
-sl_array_t;
-#define SL_FLAG_ARRAY_ENUMERATOR_INSPECTING (1 << 0)
-
-typedef struct {
-    sl_object_t base;
-    SLVAL* items;
-    size_t count;
-    size_t at;
-}
-sl_array_enumerator_t;
-
 static sl_object_t*
 allocate_array(sl_vm_t* vm)
 {

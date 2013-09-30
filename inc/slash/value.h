@@ -5,6 +5,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <limits.h>
+#include <gmp.h>
 #include "st.h"
 
 struct sl_vm;
@@ -74,6 +75,18 @@ typedef struct sl_string {
 sl_string_t;
 #define SL_FLAG_STRING_HASH_SET (1 << 0)
 
+typedef struct sl_float {
+    sl_object_t base;
+    double d;
+}
+sl_float_t;
+
+typedef struct {
+    sl_object_t base;
+    mpz_t mpz;
+}
+sl_bignum_t;
+
 typedef struct sl_method {
     sl_object_t base;
     int arity;
@@ -101,6 +114,40 @@ typedef struct sl_bound_method {
     SLVAL self;
 }
 sl_bound_method_t;
+
+typedef struct {
+    sl_object_t base;
+    size_t count;
+    size_t capacity;
+    SLVAL* items;
+}
+sl_array_t;
+#define SL_FLAG_ARRAY_ENUMERATOR_INSPECTING (1 << 0)
+
+typedef struct {
+    sl_object_t base;
+    SLVAL* items;
+    size_t count;
+    size_t at;
+}
+sl_array_enumerator_t;
+
+typedef struct {
+    sl_object_t base;
+    sl_st_table_t* st;
+}
+sl_dict_t;
+#define SL_FLAG_DICT_INSPECTING (1 << 0)
+
+typedef struct {
+    sl_object_t base;
+    SLVAL dict;
+    SLVAL* keys;
+    size_t count;
+    size_t at;
+}
+sl_dict_enumerator_t;
+#define SL_FLAG_DICT_ENUMERATOR_INITIALIZED (1 << 0)
 
 #define SL_IS_INT(val) ((val).i & 1)
 
