@@ -11,7 +11,6 @@ typedef struct {
 mysql_t;
 
 typedef struct {
-    sl_object_t base;
     mysql_t* mysql;
     MYSQL_STMT* stmt;
     MYSQL_BIND* bind;
@@ -57,21 +56,27 @@ allocate_mysql(sl_vm_t* vm)
 }
 
 static void
-free_mysql_stmt(mysql_stmt_t* stmt)
+free_mysql_stmt(sl_vm_t* vm, void* ptr)
 {
+    mysql_stmt_t* stmt = ptr;
     if(stmt->stmt) {
         mysql_stmt_close(stmt->stmt);
     }
+    free(stmt);
+    (void)vm;
 }
+
+static sl_data_type_t
+mysql_stmt_data_type = {
+    .name = "MySQL::Statement",
+    .free = free_mysql_stmt,
+};
 
 static sl_object_t*
 allocate_mysql_stmt(sl_vm_t* vm)
 {
-    mysql_stmt_t* stmt = sl_alloc(vm->arena, sizeof(mysql_stmt_t));
-    stmt->mysql = NULL;
-    stmt->stmt = NULL;
-    sl_gc_set_finalizer(stmt, (void(*)(void*))free_mysql_stmt);
-    return (sl_object_t*)stmt;
+    mysql_stmt_t* stmt = calloc(1, sizeof(*stmt));
+    return sl_make_data(vm, vm->store[cMySQL_Statement], &mysql_stmt_data_type, stmt);
 }
 
 static mysql_t*
@@ -87,8 +92,7 @@ get_mysql(sl_vm_t* vm, SLVAL obj)
 static mysql_stmt_t*
 get_mysql_stmt(sl_vm_t* vm, SLVAL obj)
 {
-    sl_expect(vm, obj, vm->store[cMySQL_Statement]);
-    mysql_stmt_t* stmt = (mysql_stmt_t*)sl_get_ptr(obj);
+    mysql_stmt_t* stmt = sl_data_get_ptr(vm, &mysql_stmt_data_type, obj);
     if(!stmt->stmt) {
         sl_throw_message2(vm, vm->lib.TypeError, "Invalid operation on uninitialized MySQL::Statement instance");
     }
@@ -164,7 +168,7 @@ sl_mysql_prepare(sl_vm_t* vm, SLVAL self, SLVAL query)
 {
     mysql_t* mysql = get_mysql(vm, self);
     SLVAL stmtv = sl_allocate(vm, vm->store[cMySQL_Statement]);
-    mysql_stmt_t* stmt = (mysql_stmt_t*)sl_get_ptr(stmtv);
+    mysql_stmt_t* stmt = sl_data_get_ptr(vm, &mysql_stmt_data_type, stmtv);
     stmt->mysql = mysql;
     if(!(stmt->stmt = mysql_stmt_init(&mysql->mysql))) {
         sl_mysql_check_error(vm, &mysql->mysql);
