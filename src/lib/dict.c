@@ -2,23 +2,6 @@
 #include <string.h>
 #include <slash.h>
 
-typedef struct {
-    sl_object_t base;
-    sl_st_table_t* st;
-}
-sl_dict_t;
-#define SL_FLAG_DICT_INSPECTING (1 << 0)
-
-typedef struct {
-    sl_object_t base;
-    SLVAL dict;
-    SLVAL* keys;
-    size_t count;
-    size_t at;
-}
-sl_dict_enumerator_t;
-#define SL_FLAG_DICT_ENUMERATOR_INITIALIZED (1 << 0)
-
 static int
 dict_key_cmp(sl_vm_t* vm, SLVAL a, SLVAL b)
 {

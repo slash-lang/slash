@@ -9,12 +9,6 @@
 #include <math.h>
 #include <string.h>
 
-typedef struct sl_float {
-    sl_object_t base;
-    double d;
-}
-sl_float_t;
-
 static sl_object_t*
 allocate_float(sl_vm_t* vm)
 {
