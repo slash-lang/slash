@@ -91,6 +91,17 @@ expect_token(sl_parse_state_t* ps, sl_token_type_t type)
 }
 
 static sl_node_base_t*
+lval_expression(sl_parse_state_t* ps)
+{
+    sl_token_t* tok = peek_token(ps);
+    sl_node_base_t* lval = call_expression(ps);
+    if(!sl_node_is_lval(lval)) {
+        error(ps, sl_make_cstring(ps->vm, "expected lval"), tok);
+    }
+    return lval;
+}
+
+static sl_node_base_t*
 body_expression(sl_parse_state_t* ps)
 {
     sl_node_seq_t* seq = sl_make_seq_node(ps);
@@ -198,10 +209,7 @@ for_expression(sl_parse_state_t* ps)
     expect_token(ps, SL_TOK_FOR);
     /* save current token to allow rewinding and erroring */
     tok = peek_token(ps);
-    lval = call_expression(ps);
-    if(!sl_node_is_lval(lval)) {
-        unexpected(ps, tok);
-    }
+    lval = lval_expression(ps);
     if(peek_token(ps)->type == SL_TOK_COMMA || peek_token(ps)->type == SL_TOK_FAT_COMMA) {
         seq_lval = sl_make_seq_node(ps);
         seq_lval->nodes[seq_lval->node_count++] = lval;
@@ -212,10 +220,7 @@ for_expression(sl_parse_state_t* ps)
                 seq_lval->nodes = sl_realloc(ps->vm->arena, seq_lval->nodes, sizeof(sl_node_base_t*) * seq_lval->node_capacity);
             }
             tok = peek_token(ps);
-            lval = call_expression(ps);
-            if(!sl_node_is_lval(lval)) {
-                unexpected(ps, tok);
-            }
+            lval = lval_expression(ps);
             seq_lval->nodes[seq_lval->node_count++] = lval;
         }
         lval = sl_make_array_node(ps, seq_lval->node_count, seq_lval->nodes);
@@ -238,6 +243,7 @@ for_expression(sl_parse_state_t* ps)
     }
     return sl_make_for_node(ps, lval, expr, body, else_body);
 }
+
 
 static sl_node_base_t*
 class_expression(sl_parse_state_t* ps)
@@ -457,10 +463,7 @@ try_expression(sl_parse_state_t* ps)
     expect_token(ps, SL_TOK_CATCH);
     tok = peek_token(ps);
     if(tok->type != SL_TOK_OPEN_BRACE) {
-        lval = primary_expression(ps);
-        if(!sl_node_is_lval(lval)) {
-            unexpected(ps, tok);
-        }
+        lval = lval_expression(ps);
     }
     catch_body = body_expression(ps);
     return sl_make_try_node(ps, body, lval, catch_body);
