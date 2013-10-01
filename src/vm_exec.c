@@ -15,7 +15,7 @@
 #include <stdlib.h>
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section);
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL in, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section);
 
 static SLVAL
 vm_helper_define_method(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, sl_vm_section_t* section);
@@ -141,15 +141,14 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
 /* helper functions */
 
 static SLVAL
-vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section)
+vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLVAL in, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section)
 {
-    SLVAL klass, in;
+    SLVAL klass;
     sl_vm_exec_ctx_t* subctx;
     if(sl_class_has_const2(ctx->vm, ctx->self, name)) {
         /* @TODO: verify same superclass */
         klass = sl_class_get_const2(ctx->vm, ctx->self, name);
     } else {
-        in = ctx->self;
         if(!sl_is_a(ctx->vm, in, ctx->vm->lib.Class)) {
             in = sl_class_of(ctx->vm, in);
         }

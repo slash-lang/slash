@@ -224,17 +224,19 @@ INSTRUCTION(SL_OP_JUMP_UNLESS, {
 })
 
 /*  0: CLASS
-    1: <id:name>
-    2: <imm:doc>
-    3: <reg:extends>
-    4: <section:body>
-    5: <reg:dest> */
+    1: <reg:in>
+    2: <id:name>
+    3: <imm:doc>
+    4: <reg:extends>
+    5: <section:body>
+    6: <reg:dest> */
 INSTRUCTION(SL_OP_CLASS, {
+    SLVAL in = NEXT_REG();
     SLID class_name = NEXT_ID();
     SLVAL doc = NEXT_IMM();
     SLVAL super_class = NEXT_REG();
     sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_class(ctx, class_name, doc, super_class, body);
+    NEXT_REG() = vm_helper_define_class(ctx, in, class_name, doc, super_class, body);
 })
 
 /*  0: DEFINE

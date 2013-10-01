@@ -558,6 +558,14 @@ NODE(sl_node_class_t, class)
 {
     sl_compile_state_t sub_cs;
 
+    size_t in_reg = reg_alloc(cs);
+    if(node->name->obj) {
+        compile_node(cs, node->name->obj, in_reg);
+    } else {
+        emit_opcode(cs, SL_OP_SELF);
+        emit_reg(cs, in_reg);
+    }
+
     if(node->extends) {
         compile_node(cs, node->extends, dest);
     } else {
@@ -566,17 +574,20 @@ NODE(sl_node_class_t, class)
 
     init_compile_state(&sub_cs, cs->vm, cs, 1);
     sub_cs.section->name = sl_intern2(cs->vm,
-        sl_string_concat(cs->vm, sl_make_cstring(cs->vm, "class "), sl_id_to_string(cs->vm, node->name)));
+        sl_string_concat(cs->vm, sl_make_cstring(cs->vm, "class "), sl_id_to_string(cs->vm, node->name->id)));
     compile_node(&sub_cs, node->body, 0);
     emit_opcode(&sub_cs, SL_OP_RETURN);
     emit_reg(&sub_cs, 0);
 
     emit_opcode(cs, SL_OP_CLASS);
-    emit_id(cs, node->name);
+    emit_reg(cs, in_reg);
+    emit_id(cs, node->name->id);
     emit_immediate(cs, node->doc);
     emit_reg(cs, dest);
     emit_section(cs, sub_cs.section);
     emit_reg(cs, dest);
+
+    reg_free(cs, in_reg);
 }
 
 NODE(sl_node_if_t, if)
