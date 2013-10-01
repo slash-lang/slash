@@ -287,6 +287,65 @@ sl_socket_getsockopt(sl_vm_t* vm, SLVAL self, SLVAL namev)
 }
 
 static SLVAL
+sl_socket_setsockopt(sl_vm_t* vm, SLVAL self, SLVAL namev, SLVAL valuev)
+{
+    int name = sl_get_int(sl_expect(vm, namev, vm->lib.Int));
+    int value;
+    sl_socket_t* sock = (sl_socket_t*)sl_get_ptr(self);
+    int res;
+    switch(name) {
+        case SO_DEBUG:
+        case SO_REUSEADDR:
+#ifdef SO_REUSEPORT
+        case SO_REUSEPORT:
+#endif
+        case SO_KEEPALIVE:
+        case SO_DONTROUTE:
+        case SO_LINGER:
+        case SO_BROADCAST:
+        case SO_OOBINLINE:
+            value = sl_is_truthy(valuev);
+            res = setsockopt(sock->socket, SOL_SOCKET, name, &value, sizeof value);
+            if (res == -1) {
+                tcp_socket_error(vm, "Unable to setsockopt on Socket: ", strerror(errno));
+            }
+            return value ? vm->lib._true : vm->lib._true;
+        case SO_SNDBUF:
+        case SO_RCVBUF:
+            value = sl_get_int(sl_expect(vm, namev, vm->lib.Int));
+            res = setsockopt(sock->socket, SOL_SOCKET, name, &value, sizeof value);
+            if (res == -1) {
+                tcp_socket_error(vm, "Unable to setsockopt on Socket: ", strerror(errno));
+            }
+            return sl_make_int(vm, value);
+        case SO_SNDLOWAT:
+        case SO_RCVLOWAT:
+        case SO_TYPE:
+        case SO_ERROR:
+#ifdef SO_NOSIGPIPE
+        case SO_NOSIGPIPE:
+#endif
+#ifdef SO_NREAD
+        case SO_NREAD:
+#endif
+#ifdef SO_NWRITE
+        case SO_NWRITE:
+#endif
+#ifdef SO_LINGER_SEC
+        case SO_LINGER_SEC:
+#endif
+        case SO_SNDTIMEO:
+        case SO_RCVTIMEO:
+            tcp_socket_error(vm, "Unsupported option to getsockopt", "");
+            break;
+        default:
+            tcp_socket_error(vm, "Unrecognized option to getsockopt", "");
+            break;
+    }
+    return vm->lib.nil;
+}
+
+static SLVAL
 sl_tcp_socket_connect(sl_vm_t* vm, SLVAL self, SLVAL hostv, SLVAL portv)
 {
     sl_expect(vm, hostv, vm->lib.String);
@@ -485,6 +544,7 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, Socket, "accept", 0, sl_socket_accept);
     sl_define_method(vm, Socket, "listen", 1, sl_socket_listen);
     sl_define_method(vm, Socket, "getsockopt", 1, sl_socket_getsockopt);
+    sl_define_method(vm, Socket, "setsockopt", 2, sl_socket_setsockopt);
 
     SLVAL TCPSocket = sl_define_class(vm, "TCPSocket", Socket);
     sl_define_method(vm, TCPSocket, "init", 0, sl_tcp_socket_init);
