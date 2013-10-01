@@ -235,7 +235,7 @@ sl_make_for_node(sl_parse_state_t* ps, sl_node_base_t* lval, sl_node_base_t* exp
 }
 
 sl_node_base_t*
-sl_make_class_node(sl_parse_state_t* ps, SLID name, SLVAL doc, sl_node_base_t* extends, sl_node_base_t* body)
+sl_make_class_node(sl_parse_state_t* ps, sl_node_const_t* name, SLVAL doc, sl_node_base_t* extends, sl_node_base_t* body)
 {
     MAKE_NODE(SL_NODE_CLASS, sl_node_class_t, {
         node->name = name;

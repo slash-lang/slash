@@ -96,7 +96,7 @@ sl_node_interp_string_t;
 
 typedef struct sl_node_class {
     sl_node_base_t base;
-    SLID name;
+    struct sl_node_const* name;
     SLVAL doc;
     sl_node_base_t* extends;
     sl_node_base_t* body;
@@ -194,7 +194,7 @@ typedef struct sl_node_bind_method {
 }
 sl_node_bind_method_t;
 
-typedef struct sl_node_const_get {
+typedef struct sl_node_const {
     sl_node_base_t base;
     sl_node_base_t* obj;
     SLID id;

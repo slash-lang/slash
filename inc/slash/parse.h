@@ -99,7 +99,7 @@ sl_node_base_t*
 sl_make_for_node(sl_parse_state_t* ps, sl_node_base_t* lval, sl_node_base_t* expr, sl_node_base_t* body, sl_node_base_t* else_body);
 
 sl_node_base_t*
-sl_make_class_node(sl_parse_state_t* ps, SLID name, SLVAL doc, sl_node_base_t* extends, sl_node_base_t* body);
+sl_make_class_node(sl_parse_state_t* ps, sl_node_const_t* name, SLVAL doc, sl_node_base_t* extends, sl_node_base_t* body);
 
 sl_node_base_t*
 sl_make_def_node(sl_parse_state_t* ps, SLID name, SLVAL doc, sl_node_base_t* on, size_t req_arg_count, sl_string_t** req_args, size_t opt_arg_count, sl_node_opt_arg_t* opt_args, sl_node_base_t* body, sl_string_t* rest_arg);
