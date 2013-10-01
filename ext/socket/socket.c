@@ -2,6 +2,8 @@
 #include <errno.h>
 #include <string.h>
 
+#include "sockopt.c.inc"
+
 #ifdef __WIN32
     #define _WIN32_WINNT 0x0501
 
@@ -437,6 +439,8 @@ sl_init_ext_socket(sl_vm_t* vm)
     sl_define_method(vm, TCP6Socket, "connect", 2, sl_tcp6_socket_connect);
 
     SLVAL TCPSocket_Error = sl_define_class3(vm, sl_intern(vm, "Error"), vm->lib.Error, TCPSocket);
+
+    sl_init_ext_socket_sockopt(vm, Socket);
 
     vm->store[cSocket] = Socket;
     vm->store[cTCPSocket] = TCPSocket;
