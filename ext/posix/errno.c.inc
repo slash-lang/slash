@@ -19,6 +19,7 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #endif
 #ifdef	EIO
     define_errno_code(EIO);
+    sl_class_set_const(vm, Errno, "OLD_MAC_DONALD", sl_make_int(vm, EIO));
 #endif
 #ifdef	ENXIO
     define_errno_code(ENXIO);
@@ -40,6 +41,7 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #endif
 #ifdef	ENOMEM
     define_errno_code(ENOMEM);
+    sl_class_set_const(vm, Errno, "EMACS", sl_make_int(vm, ENOMEM));
 #endif
 #ifdef	EACCES
     define_errno_code(EACCES);
