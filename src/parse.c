@@ -253,8 +253,10 @@ class_expression(sl_parse_state_t* ps)
     if(class_token->comment) {
         doc = sl_make_string(ps->vm, class_token->comment->buff, class_token->comment->len);
     }
-    sl_token_t* tok = expect_token(ps, SL_TOK_CONSTANT);
-    SLID name = sl_intern2(ps->vm, sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+    sl_node_base_t* name = lval_expression(ps);
+    if(name->type != SL_NODE_CONST) {
+        error(ps, sl_make_cstring(ps->vm, "class name must be a constant"), class_token);
+    }
     sl_node_base_t *extends, *body;
     if(peek_token(ps)->type == SL_TOK_EXTENDS) {
         next_token(ps);
@@ -263,7 +265,7 @@ class_expression(sl_parse_state_t* ps)
         extends = NULL;
     }
     body = body_expression(ps);
-    return sl_make_class_node(ps, name, doc, extends, body);
+    return sl_make_class_node(ps, (sl_node_const_t*)name, doc, extends, body);
 }
 
 static SLID
