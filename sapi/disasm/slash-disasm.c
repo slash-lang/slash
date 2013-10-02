@@ -15,7 +15,7 @@ int main(int argc, char** argv)
     sl_static_init();
     sl_vm_t* vm = sl_init("disasm");
 
-    if(argc < 1) {
+    if(argc < 2) {
         fprintf(stderr, "Usage: slash-dis <source file>\n");
         exit(1);
     }
