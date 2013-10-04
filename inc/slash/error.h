@@ -45,6 +45,9 @@ sl_throw_message2(struct sl_vm* vm, SLVAL klass, const char* cstr);
 void
 sl_error(struct sl_vm* vm, SLVAL klass, const char* format, ...);
 
+SLVAL
+sl_make_error_fmt(struct sl_vm* vm, SLVAL klass, const char* format, ...);
+
 #define SL_TRY(frame, catch_unwinds, try_block, e, catch_block) do { \
         frame.prev = vm->call_stack; \
         frame.frame_type = SL_VM_FRAME_HANDLER; \

@@ -296,3 +296,13 @@ sl_error(struct sl_vm* vm, SLVAL klass, const char* format, ...)
     va_end(va);
     sl_throw(vm, sl_make_error2(vm, klass, str));
 }
+
+SLVAL
+sl_make_error_fmt(struct sl_vm* vm, SLVAL klass, const char* format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    SLVAL str = sl_make_formatted_string_va(vm, format, va);
+    va_end(va);
+    return sl_make_error2(vm, klass, str);
+}
