@@ -48,7 +48,27 @@ src/lex.o: CFLAGS += -Wno-unused -Wno-unused-parameter -Wno-sign-compare
 	@echo "cc   $<"
 	@$(CC) -o $@ $(WARNING_CFLAGS) $(CFLAGS) -c $<
 
-src/vm_exec.o: src/vm_exec.c src/vm_defn.inc inc/*.h Makefile local.mk
+src/vm_exec.o: \
+	src/vm_exec.c \
+	src/gen/goto_vm.inc \
+	src/gen/goto_vm_setup.inc \
+	src/gen/opcode_enum.inc \
+	src/gen/switch_vm.inc \
+	inc/*.h \
+	Makefile \
+	local.mk
+
+src/gen/goto_vm.inc: src/vm_defn.inc
+	ruby scripts/vm_generator.rb
+
+src/gen/goto_vm_setup.inc: src/vm_defn.inc
+	ruby scripts/vm_generator.rb
+
+src/gen/opcode_enum.inc: src/vm_defn.inc
+	ruby scripts/vm_generator.rb
+
+src/gen/switch_vm.inc: src/vm_defn.inc
+	ruby scripts/vm_generator.rb
 
 %.c: %.yy inc/*.h Makefile local.mk
 	@echo "flex $<"
