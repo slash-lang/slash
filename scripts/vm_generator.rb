@@ -140,7 +140,7 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
     f.puts "static size_t op_#{insn.name.downcase}(#{args})"
     f.puts "{"
     f.puts "    sl_vm_insn_t insn;" if insn.operands.any?
-    f.puts "    size_t _ip = emit_opcode(cs, SL_OP_#{insn.name});"
+    f.puts "    size_t _ip = _emit_opcode(cs, SL_OP_#{insn.name});"
     insn.operands.each do |operand|
       field =
         case operand.type
@@ -156,7 +156,7 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
           raise "dunno how to emit #{operand.type}"
         end
       f.puts "    insn.#{field} = #{operand.name};"
-      f.puts "    emit(cs, insn);"
+      f.puts "    _emit(cs, insn);"
     end
     f.puts "    return _ip;"
     f.puts "}"
