@@ -1,90 +1,65 @@
-/*  0: RAW
-    1: <imm> */
-INSTRUCTION(SL_OP_RAW, {
-    sl_response_write(vm, NEXT_IMM());
-})
+RAW(SLVAL imm)
+{
+    sl_response_write(vm, imm);
+}
 
-/*  0: ECHO
-    1: <reg> */
-INSTRUCTION(SL_OP_ECHO, {
-    SLVAL tmp = sl_to_s(vm, NEXT_REG());
-    tmp = sl_string_html_escape(vm, tmp);
-    sl_response_write(vm, tmp);
-})
+ECHO(REG str)
+{
+    str = sl_to_s(vm, str);
+    str = sl_string_html_escape(vm, str);
+    sl_response_write(vm, str);
+}
 
-/*  0: ECHO_RAW
-    1: <reg> */
-INSTRUCTION(SL_OP_ECHO_RAW, {
-    SLVAL tmp = sl_to_s(vm, NEXT_REG());
-    sl_response_write(vm, tmp);
-})
+ECHO_RAW(REG str)
+{
+    str = sl_to_s(vm, str);
+    sl_response_write(vm, str);
+}
 
-/*  0: NOT
-    1: <reg:src>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_NOT, {
-    SLVAL tmp = NEXT_REG();
-    if(sl_is_truthy(tmp)) {
-        NEXT_REG() = V_FALSE;
+NOT(REG src, REG* dest)
+{
+    if(sl_is_truthy(src)) {
+        *dest = V_FALSE;
     } else {
-        NEXT_REG() = V_TRUE;
+        *dest = V_TRUE;
     }
-})
+}
 
-/*  0: MOV
-    1: <reg:src>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_MOV, {
-    SLVAL tmp = NEXT_REG();
-    NEXT_REG() = tmp;
-})
+MOV(REG src, REG* dest)
+{
+    *dest = src;
+}
 
-/*  0: GET_OUTER
-    1: <uint:frame_count>
-    2: <uint:register_index>
-    3: <reg:local> */
-INSTRUCTION(SL_OP_GET_OUTER, {
-    size_t frame_count = NEXT_UINT();
+GET_OUTER(size_t frame_count, size_t register_index, REG* dest)
+{
     sl_vm_exec_ctx_t* parent_ctx = ctx;
     while(frame_count--) {
         parent_ctx = parent_ctx->parent;
     }
-    size_t register_index = NEXT_UINT();
-    NEXT_REG() = parent_ctx->registers[register_index];
-})
+    *dest = parent_ctx->registers[register_index];
+}
 
-/*  0: GET_IVAR
-    1: <id:var_name>
-    2: <reg:dst> */
-INSTRUCTION(SL_OP_GET_IVAR, {
-    SLID var_name = NEXT_ID();
-    NEXT_REG() = sl_get_ivar(vm, ctx->self, var_name);
-})
+GET_IVAR(SLID var_name, REG* dest)
+{
+    *dest = sl_get_ivar(vm, ctx->self, var_name);
+}
 
-/*  0: GET_CVAR
-    1: <id:var_name>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_GET_CVAR, {
-    SLID var_name = NEXT_ID();
-    NEXT_REG() = sl_get_cvar(vm, ctx->self, var_name);
-})
+GET_CVAR(SLID var_name, REG* dest)
+{
+    *dest = sl_get_cvar(vm, ctx->self, var_name);
+}
 
-/*  0: GET_CONST
-    1: <icc:inline_cache>
-    2: <id:const_name>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_GET_CONST, {
-    sl_vm_inline_constant_cache_t* icc = NEXT_ICC();
-    SLID const_name = NEXT_ID();
+GET_CONST(sl_vm_inline_constant_cache_t* icc, SLID const_name, REG* dest)
+{
     if(sl_likely(icc->state == vm->state_constant)) {
-        NEXT_REG() = icc->value;
+        *dest = icc->value;
     } else {
         sl_vm_exec_ctx_t* lookup_ctx = ctx;
         while(lookup_ctx) {
             if(sl_class_has_const2(vm, lookup_ctx->self, const_name)) {
                 icc->state = vm->state_constant;
                 icc->value = sl_class_get_const2(vm, lookup_ctx->self, const_name);
-                NEXT_REG() = icc->value;
+                *dest = icc->value;
                 break;
             }
             lookup_ctx = lookup_ctx->parent;
@@ -94,207 +69,116 @@ INSTRUCTION(SL_OP_GET_CONST, {
             sl_class_get_const2(vm, ctx->self, const_name);
         }
     }
-})
+}
 
-/*  0: GET_OBJECT_CONST
-    1: <reg:object>
-    2: <id:const_name>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_GET_OBJECT_CONST, {
-    SLVAL obj = NEXT_REG();
-    SLID const_name = NEXT_ID();
-    NEXT_REG() = sl_class_get_const2(vm, obj, const_name);
-})
+GET_OBJECT_CONST(REG object, SLID const_name, REG* dest)
+{
+    *dest = sl_class_get_const2(vm, object, const_name);
+}
 
-/*  0: SET_OUTER
-    1: <uint:frame_count>
-    2: <uint:register_index>
-    3: <reg:value> */
-INSTRUCTION(SL_OP_SET_OUTER, {
-    size_t frame_count = NEXT_UINT();
+SET_OUTER(size_t frame_count, size_t register_index, REG value)
+{
     sl_vm_exec_ctx_t* lookup_ctx = ctx;
     while(frame_count--) {
         lookup_ctx = lookup_ctx->parent;
     }
-    size_t register_index = NEXT_UINT();
-    lookup_ctx->registers[register_index] = NEXT_REG();
-})
+    lookup_ctx->registers[register_index] = value;
+}
 
-/*  0: SET_IVAR
-    1: <id:var_name>
-    2: <reg:value> */
-INSTRUCTION(SL_OP_SET_IVAR, {
-    SLID var_name = NEXT_ID();
-    sl_set_ivar(vm, ctx->self, var_name, NEXT_REG());
-})
+SET_IVAR(SLID var_name, REG value)
+{
+    sl_set_ivar(vm, ctx->self, var_name, value);
+}
 
-/*  0: SET_CVAR
-    1: <id:var_name>
-    2: <reg:value> */
-INSTRUCTION(SL_OP_SET_CVAR, {
-    SLID var_name = NEXT_ID();
-    sl_set_cvar(vm, ctx->self, var_name, NEXT_REG());
-})
+SET_CVAR(SLID var_name, REG value)
+{
+    sl_set_cvar(vm, ctx->self, var_name, value);
+}
 
-/*  0: SET_CONST
-    1: <id:const_name>
-    2: <reg:value> */
-INSTRUCTION(SL_OP_SET_CONST, {
-    SLID const_name = NEXT_ID();
-    sl_class_set_const2(vm, ctx->self, const_name, NEXT_REG());
-})
+SET_CONST(SLID const_name, REG value)
+{
+    sl_class_set_const2(vm, ctx->self, const_name, value);
+}
 
-/*  0: SET_OBJECT_CONST
-    1: <reg:object>
-    2: <id:const_name>
-    3: <reg:value> */
-INSTRUCTION(SL_OP_SET_OBJECT_CONST, {
-    SLVAL obj = NEXT_REG();
-    SLID const_name = NEXT_ID();
-    sl_class_set_const2(vm, obj, const_name, NEXT_REG());
-})
+SET_OBJECT_CONST(REG object, SLID const_name, SLVAL value)
+{
+    sl_class_set_const2(vm, object, const_name, value);
+}
 
-/*  0: IMMEDIATE
-    1: <imm:value>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_IMMEDIATE, {
-    SLVAL imm = NEXT_IMM();
-    NEXT_REG() = imm;
-})
+IMMEDIATE(SLVAL value, REG* dest)
+{
+    *dest = value;
+}
 
-/*  0: SEND
-    1: <reg:object>
-    2: <imc:inline_cache>
-    3: <reg:first_arg> // arguments must be in a contiguous register region
-    4: <reg:dest> */
-INSTRUCTION(SL_OP_SEND, {
-    SLVAL receiver = NEXT_REG();
-    sl_vm_inline_method_cache_t* imc = NEXT_IMC();
-    SLVAL* argv = &NEXT_REG();
-
+SEND(REG receiver, sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
+{
     if(sl_likely(imc->state == vm->state_method && imc->klass.i == sl_real_class_of(vm, receiver).i)) {
-        NEXT_REG() = imc->call(vm, imc, receiver, argv);
+        *dest = imc->call(vm, imc, receiver, argv);
     } else {
-        NEXT_REG() = sl_imc_setup_call(vm, imc, receiver, argv);
+        *dest = sl_imc_setup_call(vm, imc, receiver, argv);
     }
-})
+}
 
-/*  0: SEND_SELF
-    2: <imc:inline_cache>
-    3: <reg:first_arg> // arguments must be in a contiguous register region
-    4: <reg:dest> */
-INSTRUCTION(SL_OP_SEND_SELF, {
-    sl_vm_inline_method_cache_t* imc = NEXT_IMC();
-    SLVAL* argv = &NEXT_REG();
-
+SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
+{
     if(sl_likely(imc->state == vm->state_method && imc->klass.i == sl_real_class_of(vm, ctx->self).i)) {
-        NEXT_REG() = imc->call(vm, imc, ctx->self, argv);
+        *dest = imc->call(vm, imc, ctx->self, argv);
     } else {
-        NEXT_REG() = sl_imc_setup_call(vm, imc, ctx->self, argv);
+        *dest = sl_imc_setup_call(vm, imc, ctx->self, argv);
     }
-})
+}
 
-/*  0: JUMP
-    1: <uint:ip> */
-INSTRUCTION(SL_OP_JUMP, {
-    size_t new_ip = NEXT_UINT();
+JUMP(size_t new_ip)
+{
     ip = new_ip;
-})
+}
 
-/*  0: JUMP_IF
-    1: <uint:ip>
-    2: <reg:condition> */
-INSTRUCTION(SL_OP_JUMP_IF, {
-    size_t branch_ip = NEXT_UINT();
-    SLVAL val = NEXT_REG();
+JUMP_IF(size_t branch_ip, REG val)
+{
     if(sl_is_truthy(val)) {
         ip = branch_ip;
     }
-})
+}
 
-/*  0: JUMP_UNLESS
-    1: <uint:ip>
-    2: <reg:condition> */
-INSTRUCTION(SL_OP_JUMP_UNLESS, {
-    size_t branch_ip = NEXT_UINT();
-    SLVAL val = NEXT_REG();
+JUMP_UNLESS(size_t branch_ip, REG val)
+{
     if(!sl_is_truthy(val)) {
         ip = branch_ip;
     }
-})
+}
 
-/*  0: CLASS
-    1: <id:name>
-    2: <imm:doc>
-    3: <reg:extends>
-    4: <section:body>
-    5: <reg:dest> */
-INSTRUCTION(SL_OP_CLASS, {
-    SLID class_name = NEXT_ID();
-    SLVAL doc = NEXT_IMM();
-    SLVAL super_class = NEXT_REG();
-    sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_class(ctx, class_name, doc, super_class, body);
-})
+CLASS(SLID name, SLVAL doc, REG extends, sl_vm_section_t* section, REG* dest)
+{
+    *dest = vm_helper_define_class(ctx, name, doc, extends, section);
+}
 
-/*  0: DEFINE
-    1: <id:name>
-    2: <imm:doc>
-    3: <section:body>
-    4: <reg:dest> */
-INSTRUCTION(SL_OP_DEFINE, {
-    SLID id = NEXT_ID();
-    SLVAL doc = NEXT_IMM();
-    sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_method(ctx, id, doc, body);
-})
+DEFINE(SLID name, SLVAL doc, sl_vm_section_t* section, REG* dest)
+{
+    *dest = vm_helper_define_method(ctx, name, doc, section);
+}
 
-/*  0: DEFINE_ON
-    1: <reg:on>
-    2: <id:name>
-    3: <imm:doc>
-    4: <section:body>
-    5: <reg:dest> */
-INSTRUCTION(SL_OP_DEFINE_ON, {
-    SLVAL obj = NEXT_REG();
-    SLID id = NEXT_ID();
-    SLVAL doc = NEXT_IMM();
-    sl_vm_section_t* body = NEXT_SECTION();
-    NEXT_REG() = vm_helper_define_singleton_method(ctx, obj, id, doc, body);
-})
+DEFINE_ON(REG obj, SLID name, SLVAL doc, sl_vm_section_t* section, REG* dest)
+{
+    *dest = vm_helper_define_singleton_method(ctx, obj, name, doc, section);
+}
 
-/*  0: LAMBDA
-    1: <section:body>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_LAMBDA, {
-    SLVAL lambda = sl_make_lambda(NEXT_SECTION(), ctx);
-    NEXT_REG() = lambda;
-})
+LAMBDA(sl_vm_section_t* section, REG* dest)
+{
+    *dest = sl_make_lambda(section, ctx);
+}
 
-/*  0: SELF
-    1: <reg:dest> */
-INSTRUCTION(SL_OP_SELF, {
-    NEXT_REG() = ctx->self;
-})
+SELF(REG* dest)
+{
+    *dest = ctx->self;
+}
 
-/*  0: ARRAY
-    1: <uint:count>
-    2: <reg:first_element>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_ARRAY, {
-    size_t count = NEXT_UINT();
-    SLVAL* elements = &NEXT_REG();
-    NEXT_REG() = sl_make_array(vm, count, elements);
-})
+ARRAY(size_t count, REG* elements, REG* dest)
+{
+    *dest = sl_make_array(vm, count, elements);
+}
 
-/*  0: ARRAY_DUMP
-    1: <reg:array>
-    2: <uint:count>
-    3: <reg:first_element> */
-INSTRUCTION(SL_OP_ARRAY_DUMP, {
-    SLVAL ary = NEXT_REG();
-    size_t count = NEXT_UINT();
-    SLVAL* registers = &NEXT_REG();
+ARRAY_DUMP(REG ary, size_t count, REG* registers)
+{
     if(sl_is_a(vm, ary, vm->lib.Array)) {
         for(size_t j = 0; j < count; j++) {
             registers[j] = sl_array_get(vm, ary, j);
@@ -307,109 +191,75 @@ INSTRUCTION(SL_OP_ARRAY_DUMP, {
             registers[j] = V_NIL;
         }
     }
-})
+}
 
-/*  0: DICT
-    1: <uint:count>
-    2: <reg:first_element>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_DICT, {
-    size_t count = NEXT_UINT();
-    SLVAL* key_values = &NEXT_REG();
-    NEXT_REG() = sl_make_dict(vm, count, key_values);
-})
+DICT(size_t count, REG* key_values, REG* dest)
+{
+    *dest = sl_make_dict(vm, count, key_values);
+}
 
-/*  0: RETURN
-    1: <reg:value> */
-INSTRUCTION(SL_OP_RETURN, {
+
+RETURN(REG value)
+{
     vm->call_stack = call_frame.prev;
-    return NEXT_REG();
-})
+    return value;
+}
 
-/*  0: RANGE_IN
-    1: <reg:from>
-    2: <reg:to>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_RANGE_IN, {
-    SLVAL left = NEXT_REG();
-    SLVAL right = NEXT_REG();
-    NEXT_REG() = sl_make_range_inclusive(vm, left, right);
-})
+RANGE_IN(REG left, REG right, REG* dest)
+{
+    *dest = sl_make_range_inclusive(vm, left, right);
+}
 
-/*  0: RANGE_EX
-    1: <reg:from>
-    2: <reg:to>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_RANGE_EX, {
-    SLVAL left = NEXT_REG();
-    SLVAL right = NEXT_REG();
-    NEXT_REG() = sl_make_range_exclusive(vm, left, right);
-})
+RANGE_EX(REG left, REG right, REG* dest)
+{
+    *dest = sl_make_range_exclusive(vm, left, right);
+}
 
-/*  0: LINE_TRACE
-    1: <uint:line> */
-INSTRUCTION(SL_OP_LINE_TRACE, {
-    line = NEXT_UINT();
-})
+LINE_TRACE(size_t new_line)
+{
+    line = new_line;
+}
 
-/*  0: ABORT */
-INSTRUCTION(SL_OP_ABORT, {
-    sl_throw_message(vm, "VM abort");
-})
+THROW(REG exception)
+{
+    sl_throw(vm, exception);
+}
 
-/*  0: THROW
-    1: <reg:exception> */
-INSTRUCTION(SL_OP_THROW, {
-    sl_throw(vm, NEXT_REG());
-})
-
-/*  0: TRY
-    1: <uint:catch_ip> */
-INSTRUCTION(SL_OP_TRY, {
+TRY(size_t catch_ip)
+{
     sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
     eh->prev = exception_handler;
-    eh->catch_ip = NEXT_UINT();
+    eh->catch_ip = catch_ip;
     exception_handler = eh;
-})
+}
 
-/*  0: END_TRY */
-INSTRUCTION(SL_OP_END_TRY, {
+END_TRY()
+{
     exception_handler = exception_handler->prev;
-})
+}
 
-/*  0: CATCH
-    1: <reg:exception_dest> */
-INSTRUCTION(SL_OP_CATCH, {
-    NEXT_REG() = catch_frame.as.handler_frame.value;
-})
+CATCH(REG* dest)
+{
+    *dest = catch_frame.as.handler_frame.value;
+}
 
-/*  0: YADA_YADA */
-INSTRUCTION(SL_OP_YADA_YADA, {
+YADA_YADA()
+{
     sl_throw_message2(vm, vm->lib.NotImplementedError, "Not Implemented");
-})
+}
 
-/*  0: BIND_METHOD
-    1: <reg:receiver>
-    2: <id:method_name>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_BIND_METHOD, {
-    SLVAL recv = NEXT_REG();
-    SLID method_name = NEXT_ID();
+BIND_METHOD(REG recv, SLID method_name, REG* dest)
+{
     sl_method_t* method = sl_lookup_method(vm, recv, method_name);
     if(sl_likely(method != NULL)) {
-        NEXT_REG() = sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), recv);
+        *dest = sl_method_bind(vm, sl_make_ptr((sl_object_t*)method), recv);
     } else {
         sl_error(vm, vm->lib.NoMethodError, "No such method %QI", method_name);
     }
-})
+}
 
-/*  0: USE
-    1: <reg:klass>
-    2: <id:const_name>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_USE, {
-    SLVAL klass = NEXT_REG();
-    SLID id = NEXT_ID();
+USE(REG klass, SLID id, REG* dest)
+{
     if(sl_unlikely(sl_get_primitive_type(klass) != SL_T_CLASS)) {
         klass = sl_class_of(vm, klass);
     }
@@ -422,27 +272,19 @@ INSTRUCTION(SL_OP_USE, {
         require_path = sl_string_concat(vm, require_path, sl_camel_case_to_underscore(vm, sl_id_to_string(vm, id)));
         sl_require(vm, sl_to_cstr(vm, require_path));
     }
-    NEXT_REG() = sl_class_get_const2(vm, klass, id);
-})
+    *dest = sl_class_get_const2(vm, klass, id);
+}
 
-/*  0: USE_TOP_LEVEL
-    1: <id:const_name>
-    2: <reg:dest> */
-INSTRUCTION(SL_OP_USE_TOP_LEVEL, {
-    SLID id = NEXT_ID();
+USE_TOP_LEVEL(SLID id, REG* dest)
+{
     if(sl_unlikely(!sl_class_has_const2(vm, vm->lib.Object, id))) {
         SLVAL require_path = sl_camel_case_to_underscore(vm, sl_id_to_string(vm, id));
         sl_require(vm, sl_to_cstr(vm, require_path));
     }
-    NEXT_REG() = sl_class_get_const2(vm, vm->lib.Object, id);
-})
+    *dest = sl_class_get_const2(vm, vm->lib.Object, id);
+}
 
-/*  0: BUILD_STRING
-    1: <reg:base_reg>
-    2: <uint:reg_count>
-    3: <reg:dest> */
-INSTRUCTION(SL_OP_BUILD_STRING, {
-    SLVAL* base = &NEXT_REG();
-    size_t count = NEXT_UINT();
-    NEXT_REG() = vm_helper_build_string(vm, base, count);
-})
+BUILD_STRING(REG* base_reg, size_t size, REG* dest)
+{
+    *dest = vm_helper_build_string(vm, base_reg, size);
+}
