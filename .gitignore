@@ -11,4 +11,5 @@ local.mk
 src/init_exts.c
 src/lib/error_page.c
 src/CaseFolding-3.2.0.txt
+src/gen
 tmp
