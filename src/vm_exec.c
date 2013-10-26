@@ -14,6 +14,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "gen/opcode_enum.inc"
+
 static SLVAL
 vm_helper_define_class(sl_vm_exec_ctx_t* ctx, SLID name, SLVAL doc, SLVAL extends, sl_vm_section_t* section);
 
@@ -70,9 +72,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     #ifdef SL_HAS_COMPUTED_GOTO
         // thanks for the tip JavaScriptCore...
         if(sl_unlikely(ctx == &dummy_ctx)) {
-            #undef INSTRUCTION
-            #define INSTRUCTION(opcode, code) sl_vm_op_addresses[opcode] = &&vm_op_##opcode;
-            #include "vm_defn.inc"
+            #include "gen/goto_vm_setup.inc"
             SLVAL dummy = { 0 };
             return dummy;
         }
@@ -113,22 +113,12 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     #ifdef SL_HAS_COMPUTED_GOTO
         goto *NEXT_THREADED_OPCODE();
 
-        #undef INSTRUCTION
-        #define INSTRUCTION(opcode, code) \
-            vm_op_##opcode: \
-            code; \
-            goto *NEXT_THREADED_OPCODE();
-        #include "vm_defn.inc"
+        #include "gen/goto_vm.inc"
     #else
         while(1) {
             size_t op;
             switch(op = NEXT_OPCODE()) {
-                #undef INSTRUCTION
-                #define INSTRUCTION(opcode, code) \
-                    case opcode: { \
-                        code; \
-                    } break;
-                #include "vm_defn.inc"
+                #include "gen/switch_vm.inc"
 
                 default:
                     fprintf(stderr, "unknown opcode - %zu!\n", op);
