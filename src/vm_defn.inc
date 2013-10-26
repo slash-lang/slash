@@ -100,7 +100,7 @@ SET_CONST(SLID const_name, REG value)
     sl_class_set_const2(vm, ctx->self, const_name, value);
 }
 
-SET_OBJECT_CONST(REG object, SLID const_name, SLVAL value)
+SET_OBJECT_CONST(REG object, SLID const_name, REG value)
 {
     sl_class_set_const2(vm, object, const_name, value);
 }
