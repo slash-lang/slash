@@ -10,9 +10,7 @@ def gen_operand_reader(operand_type)
     %{(void)NEXT_ICC(); printf(" <icc>");}
   when "reg"
     %{printf(" r%zu", NEXT_UINT());}
-  when "uint32"
-    %{printf(" %zu", NEXT_UINT());}
-  when "uint16"
+  when "uint"
     %{printf(" %zu", NEXT_UINT());}
   when "section"
     %{section_queue[++section_i] = NEXT_SECTION();  printf(" <section %s (%p)>", sl_to_cstr(vm, sl_id_to_string(vm, section_queue[section_i]->name)), section_queue[section_i]);}
