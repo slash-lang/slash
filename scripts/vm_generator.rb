@@ -77,6 +77,8 @@ insns = source.split(/(?=^[A-Z_]+\()/).reject { |section|
   Instruction.parse(section)
 }
 
+Dir.mkdir("src/gen") unless Dir.exist?("src/gen")
+
 # generate the opcode enum
 File.open("src/gen/opcode_enum.inc", "w") do |f|
   f.puts "enum {"
