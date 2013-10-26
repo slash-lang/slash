@@ -46,14 +46,16 @@ class Instruction
   def self.parse(str)
     first, *rest = str.lines.to_a
 
-    unless /\A(?<name>[A-Z_]+)\((?<args>.*)\)\Z/ =~ first
+    unless /\A([A-Z_]+)\((.*)\)\Z/ =~ first
       raise "Syntax error on line: #{first.inspect}"
     end
 
+    name, args = $1, $2
+
     operands = args.split(",").map { |arg|
       arg.strip.split
-    }.map { |type, name|
-      Operand.new(type, name)
+    }.map { |type, operand_name|
+      Operand.new(type, operand_name)
     }
 
     new(name, operands, rest.join)
@@ -69,11 +71,7 @@ source.gsub!(%r{/\* .*? \*/}x, "")
 source.gsub!(%r{//.*$}, "")
 
 # parse out instructions
-insns = source.lines.slice_before { |line|
-  line =~ /^[A-Z_]+\(/
-}.map { |lines|
-  lines.join.strip
-}.reject { |section|
+insns = source.split(/(?=^[A-Z_]+\()/).reject { |section|
   section.empty?
 }.map { |section|
   Instruction.parse(section)
