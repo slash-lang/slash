@@ -85,27 +85,27 @@ void disassemble(sl_vm_t* vm, sl_vm_section_t* section)
     size_t ip = 0, orig_ip;
     sl_vm_inline_method_cache_t* imc;
 
-    #define NEXT(type) (*(type*)&section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
+    #define NEXT() (section->insns[ip++])
 
     #ifdef SL_HAS_COMPUTED_GOTO
-        #define NEXT_OPCODE()   (decode_opcode(NEXT(void*)))
+        #define NEXT_OPCODE()   (decode_opcode(NEXT().threaded_opcode))
     #else
-        #define NEXT_OPCODE()   (NEXT(sl_vm_opcode_t))
+        #define NEXT_OPCODE()   (NEXT().opcode)
     #endif
-    #define NEXT_IMM()      (NEXT(SLVAL))
-    #define NEXT_UINT32()   (NEXT(uint32_t))
-    #define NEXT_UINT16()   (NEXT(uint16_t))
-    #define NEXT_IMC()      (NEXT(sl_vm_inline_method_cache_t*))
-    #define NEXT_ICC()      (NEXT(sl_vm_inline_constant_cache_t*))
-    #define NEXT_ID()       (NEXT(SLID))
-    #define NEXT_REG_IDX()  (NEXT(sl_vm_reg_t))
-    #define NEXT_SECTION()  (NEXT(sl_vm_section_t*))
+
+    #define NEXT_IMM()              (NEXT().imm)
+    #define NEXT_UINT()             (NEXT().uint)
+    #define NEXT_IMC()              (NEXT().imc)
+    #define NEXT_ICC()              (NEXT().icc)
+    #define NEXT_ID()               (NEXT().id)
+    #define NEXT_REG_IDX()          (NEXT().reg)
+    #define NEXT_SECTION()          (NEXT().section)
 
     #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
 
     printf("%s (%p):\n", sl_to_cstr(vm, sl_id_to_string(vm, section->name)), section);
 
-    while(ip < section->insns_byte_count) {
+    while(ip < section->insns_count) {
         orig_ip = ip;
         switch(NEXT_OPCODE()) {
             #include "dis.inc"

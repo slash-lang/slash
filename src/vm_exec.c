@@ -26,18 +26,17 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, SL
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
-#define NEXT(type) (*(type*)&ctx->section->insns_bytes[(ip += sizeof(type)) - sizeof(type)])
+#define NEXT() (ctx->section->insns[ip++])
 
-#define NEXT_OPCODE()           (NEXT(sl_vm_opcode_t))
-#define NEXT_THREADED_OPCODE()  (NEXT(void*))
-#define NEXT_IMM()              (NEXT(SLVAL))
-#define NEXT_UINT32()           (NEXT(uint32_t))
-#define NEXT_UINT16()           (NEXT(uint16_t))
-#define NEXT_IMC()              (NEXT(sl_vm_inline_method_cache_t*))
-#define NEXT_ICC()              (NEXT(sl_vm_inline_constant_cache_t*))
-#define NEXT_ID()               (NEXT(SLID))
-#define NEXT_REG_IDX()          (NEXT(sl_vm_reg_t))
-#define NEXT_SECTION()          (NEXT(sl_vm_section_t*))
+#define NEXT_OPCODE()           (NEXT().opcode)
+#define NEXT_THREADED_OPCODE()  (NEXT().threaded_opcode)
+#define NEXT_IMM()              (NEXT().imm)
+#define NEXT_UINT()             (NEXT().uint)
+#define NEXT_IMC()              (NEXT().imc)
+#define NEXT_ICC()              (NEXT().icc)
+#define NEXT_ID()               (NEXT().id)
+#define NEXT_REG_IDX()          (NEXT().reg)
+#define NEXT_SECTION()          (NEXT().section)
 
 #define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
 
@@ -123,7 +122,8 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
         #include "vm_defn.inc"
     #else
         while(1) {
-            switch(NEXT_OPCODE()) {
+            size_t op;
+            switch(op = NEXT_OPCODE()) {
                 #undef INSTRUCTION
                 #define INSTRUCTION(opcode, code) \
                     case opcode: { \
@@ -132,6 +132,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
                 #include "vm_defn.inc"
 
                 default:
+                    fprintf(stderr, "unknown opcode - %zu!\n", op);
                     abort();
             }
         }
