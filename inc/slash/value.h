@@ -42,8 +42,8 @@ typedef enum sl_primitive_type {
 sl_primitive_type_t;
 
 typedef struct sl_object {
-    sl_primitive_type_t primitive_type : 4;
-    int user_flags : 2;
+    unsigned primitive_type : 4;
+    unsigned user_flags : 2;
     SLVAL klass;
     sl_st_table_t* instance_variables;
 }
