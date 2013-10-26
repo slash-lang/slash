@@ -9,11 +9,11 @@ def gen_operand_reader(operand_type)
   when "icc"
     %{(void)NEXT_ICC(); printf(" <icc>");}
   when "reg"
-    %{printf(" r%u", (unsigned int)NEXT_REG_IDX());}
+    %{printf(" r%zu", NEXT_UINT());}
   when "uint32"
-    %{printf(" %u", NEXT_UINT32());}
+    %{printf(" %zu", NEXT_UINT());}
   when "uint16"
-    %{printf(" %u", (unsigned int)NEXT_UINT16());}
+    %{printf(" %zu", NEXT_UINT());}
   when "section"
     %{section_queue[++section_i] = NEXT_SECTION();  printf(" <section %s (%p)>", sl_to_cstr(vm, sl_id_to_string(vm, section_queue[section_i]->name)), section_queue[section_i]);}
   else

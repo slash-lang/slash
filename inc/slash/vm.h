@@ -180,15 +180,14 @@ typedef struct sl_vm_inline_constant_cache {
 }
 sl_vm_inline_constant_cache_t;
 
-typedef uint16_t sl_vm_reg_t;
+typedef size_t sl_vm_reg_t;
 #define SL_MAX_REGISTERS (65536)
 
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
     void*                           threaded_opcode;
     sl_vm_reg_t                     reg;
-    uint32_t                        ip;
-    uint16_t                        uint16;
+    size_t                          uint;
     struct sl_vm_section*           section;
     SLVAL                           imm;
     SLID                            id;
@@ -198,9 +197,9 @@ typedef union sl_vm_insn {
 sl_vm_insn_t;
 
 typedef struct sl_vm_section {
-    size_t insns_byte_count;
-    size_t insns_byte_cap;
-    char* insns_bytes;
+    size_t insns_cap;
+    size_t insns_count;
+    sl_vm_insn_t* insns;
 
     int max_registers;
     int req_registers;
@@ -212,10 +211,6 @@ typedef struct sl_vm_section {
     bool can_stack_alloc_frame;
     bool has_try_catch;
     SLID name;
-
-    size_t gc_list_count;
-    size_t gc_list_cap;
-    sl_vm_insn_t* gc_list;
 }
 sl_vm_section_t;
 

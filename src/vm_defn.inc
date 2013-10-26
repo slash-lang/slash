@@ -44,12 +44,12 @@ INSTRUCTION(SL_OP_MOV, {
     2: <uint16:register_index>
     3: <reg:local> */
 INSTRUCTION(SL_OP_GET_OUTER, {
-    uint16_t frame_count = NEXT_UINT16();
+    uint16_t frame_count = NEXT_UINT();
     sl_vm_exec_ctx_t* parent_ctx = ctx;
     while(frame_count--) {
         parent_ctx = parent_ctx->parent;
     }
-    uint16_t register_index = NEXT_UINT16();
+    uint16_t register_index = NEXT_UINT();
     NEXT_REG() = parent_ctx->registers[register_index];
 })
 
@@ -111,12 +111,12 @@ INSTRUCTION(SL_OP_GET_OBJECT_CONST, {
     2: <uint16:register_index>
     3: <reg:value> */
 INSTRUCTION(SL_OP_SET_OUTER, {
-    int frame_count = NEXT_UINT16();
+    size_t frame_count = NEXT_UINT();
     sl_vm_exec_ctx_t* lookup_ctx = ctx;
     while(frame_count--) {
         lookup_ctx = lookup_ctx->parent;
     }
-    int register_index = NEXT_UINT16();
+    size_t register_index = NEXT_UINT();
     lookup_ctx->registers[register_index] = NEXT_REG();
 })
 
@@ -197,7 +197,7 @@ INSTRUCTION(SL_OP_SEND_SELF, {
 /*  0: JUMP
     1: <uint32:ip> */
 INSTRUCTION(SL_OP_JUMP, {
-    size_t new_ip = NEXT_UINT32();
+    size_t new_ip = NEXT_UINT();
     ip = new_ip;
 })
 
@@ -205,7 +205,7 @@ INSTRUCTION(SL_OP_JUMP, {
     1: <uint32:ip>
     2: <reg:condition> */
 INSTRUCTION(SL_OP_JUMP_IF, {
-    size_t branch_ip = NEXT_UINT32();
+    size_t branch_ip = NEXT_UINT();
     SLVAL val = NEXT_REG();
     if(sl_is_truthy(val)) {
         ip = branch_ip;
@@ -216,7 +216,7 @@ INSTRUCTION(SL_OP_JUMP_IF, {
     1: <uint32:ip>
     2: <reg:condition> */
 INSTRUCTION(SL_OP_JUMP_UNLESS, {
-    size_t branch_ip = NEXT_UINT32();
+    size_t branch_ip = NEXT_UINT();
     SLVAL val = NEXT_REG();
     if(!sl_is_truthy(val)) {
         ip = branch_ip;
@@ -282,7 +282,7 @@ INSTRUCTION(SL_OP_SELF, {
     2: <reg:first_element>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_ARRAY, {
-    size_t count = NEXT_UINT16();
+    size_t count = NEXT_UINT();
     SLVAL* elements = &NEXT_REG();
     NEXT_REG() = sl_make_array(vm, count, elements);
 })
@@ -293,7 +293,7 @@ INSTRUCTION(SL_OP_ARRAY, {
     3: <reg:first_element> */
 INSTRUCTION(SL_OP_ARRAY_DUMP, {
     SLVAL ary = NEXT_REG();
-    size_t count = NEXT_UINT16();
+    size_t count = NEXT_UINT();
     SLVAL* registers = &NEXT_REG();
     if(sl_is_a(vm, ary, vm->lib.Array)) {
         for(size_t j = 0; j < count; j++) {
@@ -314,7 +314,7 @@ INSTRUCTION(SL_OP_ARRAY_DUMP, {
     2: <reg:first_element>
     3: <reg:dest> */
 INSTRUCTION(SL_OP_DICT, {
-    size_t count = NEXT_UINT16();
+    size_t count = NEXT_UINT();
     SLVAL* key_values = &NEXT_REG();
     NEXT_REG() = sl_make_dict(vm, count, key_values);
 })
@@ -349,7 +349,7 @@ INSTRUCTION(SL_OP_RANGE_EX, {
 /*  0: LINE_TRACE
     1: <uint16:line> */
 INSTRUCTION(SL_OP_LINE_TRACE, {
-    line = NEXT_UINT16();
+    line = NEXT_UINT();
 })
 
 /*  0: ABORT */
@@ -368,7 +368,7 @@ INSTRUCTION(SL_OP_THROW, {
 INSTRUCTION(SL_OP_TRY, {
     sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
     eh->prev = exception_handler;
-    eh->catch_ip = NEXT_UINT32();
+    eh->catch_ip = NEXT_UINT();
     exception_handler = eh;
 })
 
@@ -443,6 +443,6 @@ INSTRUCTION(SL_OP_USE_TOP_LEVEL, {
     3: <reg:dest> */
 INSTRUCTION(SL_OP_BUILD_STRING, {
     SLVAL* base = &NEXT_REG();
-    uint16_t count = NEXT_UINT16();
+    uint16_t count = NEXT_UINT();
     NEXT_REG() = vm_helper_build_string(vm, base, count);
 })
