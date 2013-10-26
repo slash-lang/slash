@@ -113,56 +113,6 @@ typedef struct sl_vm {
 }
 sl_vm_t;
 
-enum {
-    SL_OP_RAW,
-    SL_OP_ECHO,
-    SL_OP_ECHO_RAW,
-    SL_OP_NOT,
-    SL_OP_MOV,
-    SL_OP_GET_OUTER,
-    SL_OP_GET_IVAR,
-    SL_OP_GET_CVAR,
-    SL_OP_GET_CONST,
-    SL_OP_GET_OBJECT_CONST,
-    SL_OP_SET_OUTER,
-    SL_OP_SET_IVAR,
-    SL_OP_SET_CVAR,
-    SL_OP_SET_CONST,
-    SL_OP_SET_OBJECT_CONST,
-    SL_OP_IMMEDIATE,
-    SL_OP_SEND,
-    SL_OP_SEND_SELF,
-    SL_OP_JUMP,
-    SL_OP_JUMP_IF,
-    SL_OP_JUMP_UNLESS,
-    SL_OP_CLASS,
-    SL_OP_DEFINE,
-    SL_OP_DEFINE_ON,
-    SL_OP_LAMBDA,
-    SL_OP_SELF,
-    SL_OP_ARRAY,
-    SL_OP_ARRAY_DUMP,
-    SL_OP_DICT,
-    SL_OP_RETURN,
-    SL_OP_RANGE_IN,
-    SL_OP_RANGE_EX,
-    SL_OP_LINE_TRACE,
-    SL_OP_ABORT,
-    SL_OP_THROW,
-    SL_OP_TRY,
-    SL_OP_END_TRY,
-    SL_OP_CATCH,
-    SL_OP_YADA_YADA,
-    SL_OP_BIND_METHOD,
-    SL_OP_USE,
-    SL_OP_USE_TOP_LEVEL,
-    SL_OP_BUILD_STRING,
-
-    SL_OP__MAX_OPCODE
-};
-
-typedef uint8_t sl_vm_opcode_t;
-
 typedef struct sl_vm_inline_method_cache {
     uint32_t state;
     SLVAL klass;
@@ -179,6 +129,8 @@ typedef struct sl_vm_inline_constant_cache {
     SLVAL value;
 }
 sl_vm_inline_constant_cache_t;
+
+typedef size_t sl_vm_opcode_t;
 
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
