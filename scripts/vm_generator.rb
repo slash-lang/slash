@@ -123,3 +123,42 @@ File.open("src/gen/goto_vm_setup.inc", "w") do |f|
     f.puts "sl_vm_op_addresses[SL_OP_#{insn.name}] = &&vm_op_#{insn.name};"
   end
 end
+
+# generate emitters for each opcode
+File.open("src/gen/compile_helper.inc", "w") do |f|
+  insns.each do |insn|
+    args = "sl_compile_state_t* cs"
+    insn.operands.each do |operand|
+      c_type =
+        case operand.type
+        when "REG"  then "size_t"
+        when "REG*" then "size_t"
+        else operand.type
+        end
+      args << ", #{c_type} #{operand.name}"
+    end
+    f.puts "static size_t op_#{insn.name.downcase}(#{args})"
+    f.puts "{"
+    f.puts "    sl_vm_insn_t insn;" if insn.operands.any?
+    f.puts "    size_t _ip = emit_opcode(cs, SL_OP_#{insn.name});"
+    insn.operands.each do |operand|
+      field =
+        case operand.type
+        when "REG"    then "uint"
+        when "REG*"   then "uint"
+        when "SLVAL"  then "imm"
+        when "size_t" then "uint"
+        when "SLID"   then "id"
+        when "sl_vm_section_t*" then "section"
+        when "sl_vm_inline_method_cache_t*" then "imc"
+        when "sl_vm_inline_constant_cache_t*" then "icc"
+        else
+          raise "dunno how to emit #{operand.type}"
+        end
+      f.puts "    insn.#{field} = #{operand.name};"
+      f.puts "    emit(cs, insn);"
+    end
+    f.puts "    return _ip;"
+    f.puts "}"
+  end
+end

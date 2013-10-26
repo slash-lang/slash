@@ -58,16 +58,26 @@ src/vm_exec.o: \
 	Makefile \
 	local.mk
 
-src/gen/goto_vm.inc: src/vm_defn.inc
+src/compile.o: \
+	src/compile.c \
+	src/gen/compile_helper.inc \
+	inc/*.h \
+	Makefile \
+	local.mk
+
+src/gen/compile_helper.inc: src/vm_defn.inc scripts/vm_generator.rb
 	ruby scripts/vm_generator.rb
 
-src/gen/goto_vm_setup.inc: src/vm_defn.inc
+src/gen/goto_vm.inc: src/vm_defn.inc scripts/vm_generator.rb
 	ruby scripts/vm_generator.rb
 
-src/gen/opcode_enum.inc: src/vm_defn.inc
+src/gen/goto_vm_setup.inc: src/vm_defn.inc scripts/vm_generator.rb
 	ruby scripts/vm_generator.rb
 
-src/gen/switch_vm.inc: src/vm_defn.inc
+src/gen/opcode_enum.inc: src/vm_defn.inc scripts/vm_generator.rb
+	ruby scripts/vm_generator.rb
+
+src/gen/switch_vm.inc: src/vm_defn.inc scripts/vm_generator.rb
 	ruby scripts/vm_generator.rb
 
 %.c: %.yy inc/*.h Makefile local.mk
