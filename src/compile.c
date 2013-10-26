@@ -3,6 +3,8 @@
 #include <slash/method.h>
 #include <string.h>
 
+#include "gen/opcode_enum.inc"
+
 typedef struct fixup {
     struct fixup* next;
     size_t fixup;
