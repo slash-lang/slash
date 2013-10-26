@@ -180,13 +180,9 @@ typedef struct sl_vm_inline_constant_cache {
 }
 sl_vm_inline_constant_cache_t;
 
-typedef size_t sl_vm_reg_t;
-#define SL_MAX_REGISTERS (65536)
-
 typedef union sl_vm_insn {
     sl_vm_opcode_t                  opcode;
     void*                           threaded_opcode;
-    sl_vm_reg_t                     reg;
     size_t                          uint;
     struct sl_vm_section*           section;
     SLVAL                           imm;

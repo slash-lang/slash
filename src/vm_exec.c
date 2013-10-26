@@ -35,10 +35,9 @@ vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 #define NEXT_IMC()              (NEXT().imc)
 #define NEXT_ICC()              (NEXT().icc)
 #define NEXT_ID()               (NEXT().id)
-#define NEXT_REG_IDX()          (NEXT().reg)
 #define NEXT_SECTION()          (NEXT().section)
 
-#define NEXT_REG() (ctx->registers[NEXT_REG_IDX()])
+#define NEXT_REG() (ctx->registers[NEXT_UINT()])
 
 #define V_TRUE (vm->lib._true)
 #define V_FALSE (vm->lib._false)

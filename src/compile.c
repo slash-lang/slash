@@ -58,7 +58,7 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->emitted_line_trace = false;
 }
 
-static sl_vm_reg_t
+static size_t
 reg_alloc(sl_compile_state_t* cs)
 {
     for(int i = 0; i < cs->section->max_registers; i++) {
@@ -70,14 +70,10 @@ reg_alloc(sl_compile_state_t* cs)
     cs->section->max_registers++;
     cs->registers = sl_realloc(cs->vm->arena, cs->registers, cs->section->max_registers);
     cs->registers[cs->section->max_registers - 1] = 1;
-    sl_vm_reg_t reg = cs->section->max_registers - 1;
-    if(reg >= SL_MAX_REGISTERS) {
-        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
-    }
-    return reg;
+    return cs->section->max_registers - 1;
 }
 
-static sl_vm_reg_t
+static size_t
 reg_alloc_block(sl_compile_state_t* cs, int count)
 {
     if(count == 0) {
@@ -105,20 +101,17 @@ reg_alloc_block(sl_compile_state_t* cs, int count)
     for(int j = 0; j < count; j++) {
         cs->registers[i + j] = 1;
     }
-    if(i + count >= SL_MAX_REGISTERS) {
-        sl_throw_message2(cs->vm, cs->vm->lib.CompileError, "Too many registers in scope, please consider breaking this code up.");
-    }
     return i;
 }
 
 static void
-reg_free(sl_compile_state_t* cs, sl_vm_reg_t reg)
+reg_free(sl_compile_state_t* cs, size_t reg)
 {
     cs->registers[reg] = 0;
 }
 
 static void
-reg_free_block(sl_compile_state_t* cs, sl_vm_reg_t reg, int count)
+reg_free_block(sl_compile_state_t* cs, size_t reg, int count)
 {
     for(int i = 0; i < count; i++) {
         reg_free(cs, reg + i);
@@ -166,10 +159,10 @@ emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 #endif
 
 static size_t
-emit_reg(sl_compile_state_t* cs, sl_vm_reg_t reg)
+emit_reg(sl_compile_state_t* cs, size_t reg)
 {
     sl_vm_insn_t insn;
-    insn.reg = reg;
+    insn.uint = reg;
     return emit(cs, insn);
 }
 
