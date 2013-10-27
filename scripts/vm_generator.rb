@@ -98,6 +98,7 @@ File.open("src/gen/switch_vm.inc", "w") do |f|
       f.puts operand.code
     end
     f.puts insn.code
+    f.puts "saved_ip = ip + 1;"
     f.puts "} break;"
     f.puts
   end
@@ -112,6 +113,7 @@ File.open("src/gen/goto_vm.inc", "w") do |f|
     end
     f.puts insn.code
     f.puts "}"
+    f.puts "saved_ip = ip + 1;"
     f.puts "goto *NEXT_THREADED_OPCODE();"
     f.puts
   end

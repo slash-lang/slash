@@ -78,7 +78,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
         }
     #endif
 
-    size_t line = 0;
+    size_t saved_ip = ip;
     sl_vm_t* vm = ctx->vm;
     sl_vm_exception_handler_t* volatile exception_handler = NULL;
     sl_vm_section_t* section = ctx->section;
@@ -88,7 +88,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     call_frame.prev = vm->call_stack;
     call_frame.frame_type = SL_VM_FRAME_SLASH;
     call_frame.as.sl_call_frame.section = section;
-    call_frame.as.sl_call_frame.ip = &ip;
+    call_frame.as.sl_call_frame.ip = &saved_ip;
     vm->call_stack = &call_frame;
 
     if(ctx->section->has_try_catch) {

@@ -215,11 +215,6 @@ RANGE_EX(REG left, REG right, REG* dest)
     *dest = sl_make_range_exclusive(vm, left, right);
 }
 
-LINE_TRACE(size_t new_line)
-{
-    line = new_line;
-}
-
 THROW(REG exception)
 {
     sl_throw(vm, exception);
