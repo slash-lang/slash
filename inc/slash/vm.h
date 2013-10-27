@@ -198,7 +198,7 @@ typedef struct sl_vm_frame {
         } c_call_frame;
         struct {
             sl_vm_section_t* section;
-            size_t* line;
+            size_t* ip;
         } sl_call_frame;
         struct {
             jmp_buf env;
