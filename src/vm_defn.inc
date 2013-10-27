@@ -130,20 +130,20 @@ SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
 
 JUMP(size_t new_ip)
 {
-    ip = new_ip;
+    ip = section->insns + new_ip;
 }
 
 JUMP_IF(size_t branch_ip, REG val)
 {
     if(sl_is_truthy(val)) {
-        ip = branch_ip;
+        ip = section->insns + branch_ip;
     }
 }
 
 JUMP_UNLESS(size_t branch_ip, REG val)
 {
     if(!sl_is_truthy(val)) {
-        ip = branch_ip;
+        ip = section->insns + branch_ip;
     }
 }
 
@@ -224,7 +224,7 @@ TRY(size_t catch_ip)
 {
     sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
     eh->prev = exception_handler;
-    eh->catch_ip = catch_ip;
+    eh->catch_ip = section->insns + catch_ip;
     exception_handler = eh;
 }
 

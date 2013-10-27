@@ -28,7 +28,7 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, SL
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
-#define NEXT() (ctx->section->insns[ip++])
+#define NEXT() (*ip++)
 
 #define NEXT_OPCODE()           (NEXT().opcode)
 #define NEXT_THREADED_OPCODE()  (NEXT().threaded_opcode)
@@ -47,7 +47,7 @@ vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
 typedef struct sl_vm_exception_handler {
     struct sl_vm_exception_handler* prev;
-    size_t catch_ip;
+    sl_vm_insn_t* catch_ip;
 }
 sl_vm_exception_handler_t;
 
@@ -67,7 +67,7 @@ sl_static_init_vm_internals()
 }
 
 SLVAL
-sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
+sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t start_ip)
 {
     #ifdef SL_HAS_COMPUTED_GOTO
         // thanks for the tip JavaScriptCore...
@@ -78,10 +78,12 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
         }
     #endif
 
-    size_t saved_ip = ip;
     sl_vm_t* vm = ctx->vm;
     sl_vm_exception_handler_t* volatile exception_handler = NULL;
     sl_vm_section_t* section = ctx->section;
+
+    sl_vm_insn_t* ip = section->insns + start_ip;
+    sl_vm_insn_t* saved_ip = ip;
 
     sl_vm_frame_t catch_frame;
     sl_vm_frame_t call_frame;

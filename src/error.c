@@ -66,7 +66,8 @@ sl_backtrace(sl_vm_t* vm)
 {
     for(sl_vm_frame_t* frame = vm->call_stack; frame; frame = frame->prev) {
         if(frame->frame_type == SL_VM_FRAME_SLASH) {
-            int line = line_number_from_ip(frame->as.sl_call_frame.section, *frame->as.sl_call_frame.ip);
+            size_t ip = *frame->as.sl_call_frame.ip - frame->as.sl_call_frame.section->insns;
+            int line = line_number_from_ip(frame->as.sl_call_frame.section, ip);
             fprintf(stderr, "SL: %s at %s:%d\n",
                 sl_to_cstr(vm, sl_id_to_string(vm, frame->as.sl_call_frame.section->name)),
                 (char*)frame->as.sl_call_frame.section->filename,
@@ -84,7 +85,8 @@ build_backtrace(sl_vm_t* vm, sl_error_t* err, sl_vm_frame_t* frame)
 {
     for(; frame; frame = frame->prev) {
         if(frame->frame_type == SL_VM_FRAME_SLASH) {
-            int line = line_number_from_ip(frame->as.sl_call_frame.section, *frame->as.sl_call_frame.ip);
+            size_t ip = *frame->as.sl_call_frame.ip - frame->as.sl_call_frame.section->insns;
+            int line = line_number_from_ip(frame->as.sl_call_frame.section, ip);
             internal_error_add_frame(vm, err,
                 sl_id_to_string(vm, frame->as.sl_call_frame.section->name),
                 sl_make_cstring(vm, (char*)frame->as.sl_call_frame.section->filename),
