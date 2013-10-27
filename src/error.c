@@ -53,7 +53,7 @@ sl_backtrace(sl_vm_t* vm)
 {
     for(sl_vm_frame_t* frame = vm->call_stack; frame; frame = frame->prev) {
         if(frame->frame_type == SL_VM_FRAME_SLASH) {
-            fprintf(stderr, "SL: %s at %s:%d\n",
+            fprintf(stderr, "SL: %s at %s:%zu\n",
                 sl_to_cstr(vm, sl_id_to_string(vm, frame->as.sl_call_frame.section->name)),
                 (char*)frame->as.sl_call_frame.section->filename,
                 *frame->as.sl_call_frame.line);
