@@ -88,7 +88,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t ip)
     call_frame.prev = vm->call_stack;
     call_frame.frame_type = SL_VM_FRAME_SLASH;
     call_frame.as.sl_call_frame.section = section;
-    call_frame.as.sl_call_frame.line = &line;
+    call_frame.as.sl_call_frame.ip = &ip;
     vm->call_stack = &call_frame;
 
     if(ctx->section->has_try_catch) {
