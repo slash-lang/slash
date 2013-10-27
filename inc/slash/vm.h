@@ -144,10 +144,20 @@ typedef union sl_vm_insn {
 }
 sl_vm_insn_t;
 
+typedef struct {
+    size_t offset;
+    int line;
+}
+sl_vm_line_mapping_t;
+
 typedef struct sl_vm_section {
     size_t insns_cap;
     size_t insns_count;
     sl_vm_insn_t* insns;
+
+    size_t line_mappings_cap;
+    size_t line_mappings_count;
+    sl_vm_line_mapping_t* line_mappings;
 
     int max_registers;
     int req_registers;
