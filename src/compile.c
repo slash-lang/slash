@@ -26,8 +26,6 @@ typedef struct sl_compile_state {
     uint8_t* registers;
     sl_vm_section_t* section;
     next_last_frame_t* next_last_frames;
-    int last_line;
-    bool emitted_line_trace;
 }
 sl_compile_state_t;
 
@@ -38,7 +36,6 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->vm = vm;
     cs->vars = sl_st_init_table(vm, &sl_string_hash_type);
     cs->parent = parent;
-    cs->last_line = 0;
     cs->section = sl_alloc(vm->arena, sizeof(sl_vm_section_t));
     if(parent) {
         cs->section->filename = parent->section->filename;
@@ -49,6 +46,9 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
     cs->section->insns_cap = 16;
     cs->section->insns_count = 0;
     cs->section->insns = sl_alloc(vm->arena, sizeof(sl_vm_insn_t) * cs->section->insns_cap);
+    cs->section->line_mappings_cap = 2;
+    cs->section->line_mappings_count = 0;
+    cs->section->line_mappings = sl_alloc_buffer(vm->arena, sizeof(sl_vm_line_mapping_t) * cs->section->line_mappings_cap);
     cs->section->can_stack_alloc_frame = true;
     cs->section->has_try_catch = false;
     cs->section->opt_skip = NULL;
@@ -57,7 +57,6 @@ init_compile_state(sl_compile_state_t* cs, sl_vm_t* vm, sl_compile_state_t* pare
         cs->registers[i] = 1;
     }
     cs->next_last_frames = NULL;
-    cs->emitted_line_trace = false;
 }
 
 static size_t
@@ -146,7 +145,6 @@ _emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
     sl_vm_insn_t insn;
     insn.threaded_opcode = sl_vm_op_addresses[opcode];
-    cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
     return _emit(cs, insn);
 }
 #else
@@ -154,7 +152,6 @@ static size_t
 _emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 {
     sl_vm_insn_t insn;
-    cs->emitted_line_trace = opcode == SL_OP_LINE_TRACE;
     insn.opcode = opcode;
     return _emit(cs, insn);
 }
@@ -993,14 +990,38 @@ NODE(sl_node__register_t, _register)
 static void
 emit_line_trace(sl_compile_state_t* cs, sl_node_base_t* node)
 {
-    if(node->line != cs->last_line && node->line != 0) {
-        if(cs->emitted_line_trace) {
-            insn_at_ip(cs, cs->section->insns_count - 1)->uint = node->line;
-        } else {
-            cs->last_line = node->line;
-            op_line_trace(cs, node->line);
-        }
+    if(!node->line) {
+        return;
     }
+
+    if(cs->section->line_mappings_count == 0) {
+        cs->section->line_mappings[0].offset = 0;
+        cs->section->line_mappings[0].line = node->line;
+        cs->section->line_mappings_count++;
+        return;
+    }
+
+    size_t idx = cs->section->line_mappings_count;
+
+    if(cs->section->line_mappings[idx - 1].line == node->line) {
+        return;
+    }
+
+    if(cs->section->line_mappings[idx - 1].offset == cs->section->insns_count) {
+        cs->section->line_mappings[idx - 1].line = node->line;
+    }
+
+    if(idx + 1 >= cs->section->line_mappings_cap) {
+        cs->section->line_mappings_cap *= 2;
+        cs->section->line_mappings = sl_realloc(cs->vm->arena,
+            cs->section->line_mappings,
+            sizeof(sl_vm_line_mapping_t) * cs->section->line_mappings_cap);
+    }
+
+    cs->section->line_mappings[idx].offset = cs->section->insns_count;
+    cs->section->line_mappings[idx].line = node->line;
+
+    cs->section->line_mappings_count++;
 }
 
 static void
