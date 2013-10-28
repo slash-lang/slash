@@ -5,264 +5,264 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
     SLVAL Errno = sl_define_class3(vm, sl_intern(vm, "Errno"), vm->lib.Object, Posix);
 #define define_errno_code(ERR) \
         sl_class_set_const(vm, Errno, #ERR, sl_make_int(vm, ERR))
-#ifdef	EPERM
+#ifdef EPERM
     define_errno_code(EPERM);
 #endif
-#ifdef	ENOENT
+#ifdef ENOENT
     define_errno_code(ENOENT);
 #endif
-#ifdef	ESRCH
+#ifdef ESRCH
     define_errno_code(ESRCH);
 #endif
-#ifdef	EINTR
+#ifdef EINTR
     define_errno_code(EINTR);
 #endif
-#ifdef	EIO
+#ifdef EIO
     define_errno_code(EIO);
     sl_class_set_const(vm, Errno, "OLD_MAC_DONALD", sl_make_int(vm, EIO));
 #endif
-#ifdef	ENXIO
+#ifdef ENXIO
     define_errno_code(ENXIO);
 #endif
-#ifdef	E2BIG
+#ifdef E2BIG
     define_errno_code(E2BIG);
 #endif
-#ifdef	ENOEXEC
+#ifdef ENOEXEC
     define_errno_code(ENOEXEC);
 #endif
-#ifdef	EBADF
+#ifdef EBADF
     define_errno_code(EBADF);
 #endif
-#ifdef	ECHILD
+#ifdef ECHILD
     define_errno_code(ECHILD);
 #endif
-#ifdef	EDEADLK
+#ifdef EDEADLK
     define_errno_code(EDEADLK);
 #endif
-#ifdef	ENOMEM
+#ifdef ENOMEM
     define_errno_code(ENOMEM);
     sl_class_set_const(vm, Errno, "EMACS", sl_make_int(vm, ENOMEM));
 #endif
-#ifdef	EACCES
+#ifdef EACCES
     define_errno_code(EACCES);
 #endif
-#ifdef	EFAULT
+#ifdef EFAULT
     define_errno_code(EFAULT);
 #endif
-#ifdef	ENOTBLK
+#ifdef ENOTBLK
     define_errno_code(ENOTBLK);
 #endif
-#ifdef	EBUSY
+#ifdef EBUSY
     define_errno_code(EBUSY);
 #endif
-#ifdef	EEXIST
+#ifdef EEXIST
     define_errno_code(EEXIST);
 #endif
-#ifdef	EXDEV
+#ifdef EXDEV
     define_errno_code(EXDEV);
 #endif
-#ifdef	ENODEV
+#ifdef ENODEV
     define_errno_code(ENODEV);
 #endif
-#ifdef	ENOTDIR
+#ifdef ENOTDIR
     define_errno_code(ENOTDIR);
 #endif
-#ifdef	EISDIR
+#ifdef EISDIR
     define_errno_code(EISDIR);
 #endif
-#ifdef	EINVAL
+#ifdef EINVAL
     define_errno_code(EINVAL);
 #endif
-#ifdef	ENFILE
+#ifdef ENFILE
     define_errno_code(ENFILE);
 #endif
-#ifdef	EMFILE
+#ifdef EMFILE
     define_errno_code(EMFILE);
 #endif
-#ifdef	ENOTTY
+#ifdef ENOTTY
     define_errno_code(ENOTTY);
 #endif
-#ifdef	ETXTBSY
+#ifdef ETXTBSY
     define_errno_code(ETXTBSY);
 #endif
-#ifdef	EFBIG
+#ifdef EFBIG
     define_errno_code(EFBIG);
 #endif
-#ifdef	ENOSPC
+#ifdef ENOSPC
     define_errno_code(ENOSPC);
 #endif
-#ifdef	ESPIPE
+#ifdef ESPIPE
     define_errno_code(ESPIPE);
 #endif
-#ifdef	EROFS
+#ifdef EROFS
     define_errno_code(EROFS);
 #endif
-#ifdef	EMLINK
+#ifdef EMLINK
     define_errno_code(EMLINK);
 #endif
-#ifdef	EPIPE
+#ifdef EPIPE
     define_errno_code(EPIPE);
 #endif
-#ifdef	EDOM
+#ifdef EDOM
     define_errno_code(EDOM);
 #endif
-#ifdef	ERANGE
+#ifdef ERANGE
     define_errno_code(ERANGE);
 #endif
-#ifdef	EAGAIN
+#ifdef EAGAIN
     define_errno_code(EAGAIN);
 #endif
-#ifdef	EWOULDBLOCK
+#ifdef EWOULDBLOCK
     define_errno_code(EWOULDBLOCK);
 #endif
-#ifdef	EINPROGRESS
+#ifdef EINPROGRESS
     define_errno_code(EINPROGRESS);
 #endif
-#ifdef	EALREADY
+#ifdef EALREADY
     define_errno_code(EALREADY);
 #endif
-#ifdef	ENOTSOCK
+#ifdef ENOTSOCK
     define_errno_code(ENOTSOCK);
 #endif
-#ifdef	EDESTADDRREQ
+#ifdef EDESTADDRREQ
     define_errno_code(EDESTADDRREQ);
 #endif
-#ifdef	EMSGSIZE
+#ifdef EMSGSIZE
     define_errno_code(EMSGSIZE);
 #endif
-#ifdef	EPROTOTYPE
+#ifdef EPROTOTYPE
     define_errno_code(EPROTOTYPE);
 #endif
-#ifdef	ENOPROTOOPT
+#ifdef ENOPROTOOPT
     define_errno_code(ENOPROTOOPT);
 #endif
-#ifdef	EPROTONOSUPPORT
+#ifdef EPROTONOSUPPORT
     define_errno_code(EPROTONOSUPPORT);
 #endif
-#ifdef	ESOCKTNOSUPPORT
+#ifdef ESOCKTNOSUPPORT
     define_errno_code(ESOCKTNOSUPPORT);
 #endif
 #ifdef ENOTSUP
     define_errno_code(ENOTSUP);
 #endif
-#ifdef	EOPNOTSUPP
+#ifdef EOPNOTSUPP
     define_errno_code(EOPNOTSUPP);
 #endif
-#ifdef	EPFNOSUPPORT
+#ifdef EPFNOSUPPORT
     define_errno_code(EPFNOSUPPORT);
 #endif
-#ifdef	EAFNOSUPPORT
+#ifdef EAFNOSUPPORT
     define_errno_code(EAFNOSUPPORT);
 #endif
-#ifdef	EADDRINUSE
+#ifdef EADDRINUSE
     define_errno_code(EADDRINUSE);
 #endif
-#ifdef	EADDRNOTAVAIL
+#ifdef EADDRNOTAVAIL
     define_errno_code(EADDRNOTAVAIL);
 #endif
-#ifdef	ENETDOWN
+#ifdef ENETDOWN
     define_errno_code(ENETDOWN);
 #endif
-#ifdef	ENETUNREACH
+#ifdef ENETUNREACH
     define_errno_code(ENETUNREACH);
 #endif
-#ifdef	ENETRESET
+#ifdef ENETRESET
     define_errno_code(ENETRESET);
 #endif
-#ifdef	ECONNABORTED
+#ifdef ECONNABORTED
     define_errno_code(ECONNABORTED);
 #endif
-#ifdef	ECONNRESET
+#ifdef ECONNRESET
     define_errno_code(ECONNRESET);
 #endif
-#ifdef	ENOBUFS
+#ifdef ENOBUFS
     define_errno_code(ENOBUFS);
 #endif
-#ifdef	EISCONN
+#ifdef EISCONN
     define_errno_code(EISCONN);
 #endif
-#ifdef	ENOTCONN
+#ifdef ENOTCONN
     define_errno_code(ENOTCONN);
 #endif
-#ifdef	ESHUTDOWN
+#ifdef ESHUTDOWN
     define_errno_code(ESHUTDOWN);
 #endif
-#ifdef	ETOOMANYREFS
+#ifdef ETOOMANYREFS
     define_errno_code(ETOOMANYREFS);
 #endif
-#ifdef	ETIMEDOUT
+#ifdef ETIMEDOUT
     define_errno_code(ETIMEDOUT);
 #endif
-#ifdef	ECONNREFUSED
+#ifdef ECONNREFUSED
     define_errno_code(ECONNREFUSED);
 #endif
-#ifdef	ELOOP
+#ifdef ELOOP
     define_errno_code(ELOOP);
 #endif
-#ifdef	ENAMETOOLONG
+#ifdef ENAMETOOLONG
     define_errno_code(ENAMETOOLONG);
 #endif
-#ifdef	EHOSTDOWN
+#ifdef EHOSTDOWN
     define_errno_code(EHOSTDOWN);
 #endif
-#ifdef	EHOSTUNREACH
+#ifdef EHOSTUNREACH
     define_errno_code(EHOSTUNREACH);
 #endif
-#ifdef	ENOTEMPTY
+#ifdef ENOTEMPTY
     define_errno_code(ENOTEMPTY);
 #endif
-#ifdef	EPROCLIM
+#ifdef EPROCLIM
     define_errno_code(EPROCLIM);
 #endif
-#ifdef	EUSERS
+#ifdef EUSERS
     define_errno_code(EUSERS);
 #endif
-#ifdef	EDQUOT
+#ifdef EDQUOT
     define_errno_code(EDQUOT);
 #endif
-#ifdef	ESTALE
+#ifdef ESTALE
     define_errno_code(ESTALE);
 #endif
-#ifdef	EREMOTE
+#ifdef EREMOTE
     define_errno_code(EREMOTE);
 #endif
-#ifdef	EBADRPC
+#ifdef EBADRPC
     define_errno_code(EBADRPC);
 #endif
-#ifdef	ERPCMISMATCH
+#ifdef ERPCMISMATCH
     define_errno_code(ERPCMISMATCH);
 #endif
-#ifdef	EPROGUNAVAIL
+#ifdef EPROGUNAVAIL
     define_errno_code(EPROGUNAVAIL);
 #endif
-#ifdef	EPROGMISMATCH
+#ifdef EPROGMISMATCH
     define_errno_code(EPROGMISMATCH);
 #endif
-#ifdef	EPROCUNAVAIL
+#ifdef EPROCUNAVAIL
     define_errno_code(EPROCUNAVAIL);
 #endif
-#ifdef	ENOLCK
+#ifdef ENOLCK
     define_errno_code(ENOLCK);
 #endif
-#ifdef	ENOSYS
+#ifdef ENOSYS
     define_errno_code(ENOSYS);
 #endif
-#ifdef	EFTYPE
+#ifdef EFTYPE
     define_errno_code(EFTYPE);
 #endif
-#ifdef	EAUTH
+#ifdef EAUTH
     define_errno_code(EAUTH);
 #endif
-#ifdef	ENEEDAUTH
+#ifdef ENEEDAUTH
     define_errno_code(ENEEDAUTH);
 #endif
-#ifdef	EPWROFF
+#ifdef EPWROFF
     define_errno_code(EPWROFF);
 #endif
-#ifdef	EDEVERR
+#ifdef EDEVERR
     define_errno_code(EDEVERR);
 #endif
-#ifdef	EOVERFLOW
+#ifdef EOVERFLOW
     define_errno_code(EOVERFLOW);
 #endif
 #ifdef EBADEXEC
@@ -277,7 +277,7 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #ifdef EBADMACHO
     define_errno_code(EBADMACHO);
 #endif
-#ifdef	ECANCELED
+#ifdef ECANCELED
     define_errno_code(ECANCELED);
 #endif
 #ifdef EIDRM
@@ -298,7 +298,7 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #ifdef EMULTIHOP
     define_errno_code(EMULTIHOP);
 #endif
-#ifdef	ENODATA
+#ifdef ENODATA
     define_errno_code(ENODATA);
 #endif
 #ifdef ENOLINK
@@ -310,7 +310,7 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #ifdef ENOSTR
     define_errno_code(ENOSTR);
 #endif
-#ifdef	EPROTO
+#ifdef EPROTO
     define_errno_code(EPROTO);
 #endif
 #ifdef ETIME
@@ -325,10 +325,10 @@ sl_init_ext_posix_errno(sl_vm_t* vm, SLVAL Posix)
 #ifdef EOWNERDEAD
     define_errno_code(EOWNERDEAD);
 #endif
-#ifdef	EQFULL
+#ifdef EQFULL
     define_errno_code(EQFULL);
 #endif
-#ifdef	ELAST
+#ifdef ELAST
     define_errno_code(ELAST);
 #endif
 
