@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opcode_enum.inc"
+
 #define MAX_SECTIONS 1024
 
 size_t section_i, section_j;
