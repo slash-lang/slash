@@ -164,3 +164,32 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
     f.puts "}"
   end
 end
+
+# generate disassembler
+File.open("sapi/disasm/dis.inc", "w") do |f|
+  insns.each do |insn|
+    f.puts "case SL_OP_#{insn.name}:"
+    f.puts %{    printf("    %04zu:  %-16s", orig_ip, #{insn.name.inspect});}
+    operand_disassemblers = insn.operands.map { |operand|
+      case operand.type
+      when "REG", "REG*"
+        %{printf(" r%zu", NEXT_UINT());}
+      when "SLVAL"
+        %{printf(" %s", sl_to_cstr(vm, sl_inspect(vm, NEXT_IMM())));}
+      when "size_t"
+        %{printf(" %zu", NEXT_UINT());}
+      when "SLID"
+        %{printf(" :%s", sl_to_cstr(vm, sl_id_to_string(vm, NEXT_ID())));}
+      when "sl_vm_section_t*"
+        %{section_queue[++section_i] = NEXT_SECTION();  printf(" <section %s (%p)>", sl_to_cstr(vm, sl_id_to_string(vm, section_queue[section_i]->name)), section_queue[section_i]);}
+      when "sl_vm_inline_method_cache_t*"
+        %{imc = NEXT_IMC(); printf(" <imc :%s (%d)>", sl_to_cstr(vm, sl_id_to_string(vm, imc->id)), imc->argc);}
+      when "sl_vm_inline_constant_cache_t*"
+        %{(void)NEXT_ICC(); printf(" <icc>");}
+      end
+    }
+    f.puts operand_disassemblers.map { |code| "    #{code}\n" }.join(%{    printf(",");\n})
+    f.puts '    printf("\n");'
+    f.puts '    break;'
+  end
+end
