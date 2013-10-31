@@ -6,7 +6,7 @@
 #include "gen/opcode_enum.inc"
 
 typedef struct label {
-    ssize_t ip;
+    long ip;
     struct fixup {
         struct fixup* next;
         size_t location;
