@@ -181,7 +181,7 @@ _emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
 #endif
 
 static size_t
-_emit_label(sl_compile_state_t* cs, label_t* label)
+_emit_label_operand(sl_compile_state_t* cs, label_t* label)
 {
     sl_vm_insn_t insn = { .uint = 0xdeadbeef };
 
