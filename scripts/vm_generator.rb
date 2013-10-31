@@ -9,6 +9,7 @@ class Operand
     "REG"    => "NEXT_REG()",
     "REG*"   => "&NEXT_REG()",
     "size_t" => "NEXT_UINT()",
+    "IP"     => "NEXT_UINT()",
     "SLID"   => "NEXT_ID()",
     "SLVAL"  => "NEXT_IMM()",
     "sl_vm_section_t*"               => "NEXT_SECTION()",
@@ -26,6 +27,8 @@ class Operand
       "SLVAL"
     when "REG*"
       "SLVAL*"
+    when "IP"
+      "size_t"
     else
       type
     end
@@ -135,15 +138,20 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
         case operand.type
         when "REG"  then "size_t"
         when "REG*" then "size_t"
+        when "IP"   then "label_t*"
         else operand.type
         end
       args << ", #{c_type} #{operand.name}"
     end
     f.puts "static size_t op_#{insn.name.downcase}(#{args})"
     f.puts "{"
-    f.puts "    sl_vm_insn_t insn;" if insn.operands.any?
+    f.puts "    sl_vm_insn_t insn;"
     f.puts "    size_t _ip = _emit_opcode(cs, SL_OP_#{insn.name});"
     insn.operands.each do |operand|
+      if operand.type == "IP"
+        f.puts "    _emit_label(cs, #{operand.name});"
+        next
+      end
       field =
         case operand.type
         when "REG"    then "uint"
@@ -161,6 +169,7 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
       f.puts "    _emit(cs, insn);"
     end
     f.puts "    return _ip;"
+    f.puts "    (void)insn;"
     f.puts "}"
   end
 end
@@ -177,6 +186,8 @@ File.open("sapi/disasm/dis.inc", "w") do |f|
       when "SLVAL"
         %{printf(" %s", sl_to_cstr(vm, sl_inspect(vm, NEXT_IMM())));}
       when "size_t"
+        %{printf(" %zu", NEXT_UINT());}
+      when "IP"
         %{printf(" %zu", NEXT_UINT());}
       when "SLID"
         %{printf(" :%s", sl_to_cstr(vm, sl_id_to_string(vm, NEXT_ID())));}

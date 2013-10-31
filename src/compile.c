@@ -5,16 +5,19 @@
 
 #include "gen/opcode_enum.inc"
 
-typedef struct fixup {
-    struct fixup* next;
-    size_t fixup;
+typedef struct label {
+    ssize_t ip;
+    struct fixup {
+        struct fixup* next;
+        size_t location;
+    }* fixups;
 }
-fixup_t;
+label_t;
 
 typedef struct next_last_frame {
     struct next_last_frame* prev;
-    fixup_t* next_fixups;
-    fixup_t* last_fixups;
+    label_t* next;
+    label_t* last;
     size_t try_catch_blocks;
 }
 next_last_frame_t;
@@ -125,6 +128,26 @@ insn_at_ip(sl_compile_state_t* cs, size_t ip)
     return &cs->section->insns[ip];
 }
 
+static label_t*
+create_label(sl_compile_state_t* cs)
+{
+    label_t* label = sl_alloc(cs->vm->arena, sizeof(*label));
+    label->ip = -1;
+    return label;
+}
+
+static void
+emit_label(sl_compile_state_t* cs, label_t* label)
+{
+    label->ip = cs->section->insns_count;
+    struct fixup* fixup = label->fixups;
+    while(fixup) {
+        insn_at_ip(cs, fixup->location)->uint = label->ip;
+        fixup = fixup->next;
+    }
+    label->fixups = NULL;
+}
+
 static size_t
 _emit(sl_compile_state_t* cs, sl_vm_insn_t insn)
 {
@@ -156,6 +179,24 @@ _emit_opcode(sl_compile_state_t* cs, sl_vm_opcode_t opcode)
     return _emit(cs, insn);
 }
 #endif
+
+static size_t
+_emit_label(sl_compile_state_t* cs, label_t* label)
+{
+    sl_vm_insn_t insn = { .uint = 0xdeadbeef };
+
+    if(label->ip >= 0) {
+        insn.uint = label->ip;
+        return _emit(cs, insn);
+    }
+
+    struct fixup* fixup = sl_alloc(cs->vm->arena, sizeof(*fixup));
+    fixup->location = _emit(cs, insn);
+    fixup->next = label->fixups;
+    label->fixups = fixup;
+
+    return fixup->location;
+}
 
 #include "gen/compile_helper.inc"
 
@@ -395,11 +436,11 @@ NODE(sl_node_lambda_t, lambda)
 
 NODE(sl_node_try_t, try)
 {
-    size_t catch_fixup, after_fixup;
+    label_t *catch = create_label(cs), *after = create_label(cs);
 
     cs->section->has_try_catch = true;
 
-    catch_fixup = op_try(cs, 0xdeadbeef) + 1;
+    op_try(cs, catch);
 
     if(cs->next_last_frames) {
         cs->next_last_frames->try_catch_blocks++;
@@ -413,9 +454,9 @@ NODE(sl_node_try_t, try)
 
     op_end_try(cs);
 
-    after_fixup = op_jump(cs, 0xdeadbeef) + 1;
+    op_jump(cs, after);
 
-    insn_at_ip(cs, catch_fixup)->uint = cs->section->insns_count;
+    emit_label(cs, catch);
 
     op_catch(cs, dest);
     op_end_try(cs);
@@ -425,7 +466,7 @@ NODE(sl_node_try_t, try)
     }
     compile_node(cs, node->catch_body, dest);
 
-    insn_at_ip(cs, after_fixup)->uint = cs->section->insns_count;
+    emit_label(cs, after);
 }
 
 NODE(sl_node_class_t, class)
@@ -448,16 +489,18 @@ NODE(sl_node_class_t, class)
 
 NODE(sl_node_if_t, if)
 {
+    label_t *else_label = create_label(cs), *end_label = create_label(cs);
+
     /* emit a jump over the true branch, keeping a pointer to fixup later */
     compile_node(cs, node->condition, dest);
-    size_t fixup_1 = op_jump_unless(cs, 0x0000CAFE, dest) + 1;
+    op_jump_unless(cs, else_label, dest);
 
     /* true branch */
     compile_node(cs, node->body, dest);
 
-    size_t fixup_2 = op_jump(cs, 0x0000CAFE) + 1;
+    op_jump(cs, end_label);
 
-    insn_at_ip(cs, fixup_1)->uint = cs->section->insns_count;
+    emit_label(cs, else_label);
 
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
@@ -465,48 +508,49 @@ NODE(sl_node_if_t, if)
         op_immediate(cs, cs->vm->lib.nil, dest);
     }
 
-    insn_at_ip(cs, fixup_2)->uint = cs->section->insns_count;
+    emit_label(cs, end_label);
 }
 
 NODE(sl_node_switch_t, switch)
 {
     compile_node(cs, node->value, dest);
-    size_t* fixups = sl_alloc_buffer(cs->vm->arena, sizeof(size_t) * node->case_count);
+    label_t* end_label = create_label(cs);
     for(size_t i = 0; i < node->case_count; i++) {
         size_t cmp_reg = reg_alloc(cs);
         compile_node(cs, node->cases[i].value, cmp_reg);
         emit_send(cs, cmp_reg, sl_intern(cs->vm, "=="), dest, 1, cmp_reg);
-        size_t temp_fixup = op_jump_unless(cs, 0x0000CAFE, cmp_reg) + 1;
+        label_t* next_case_label = create_label(cs);
+        op_jump_unless(cs, next_case_label, cmp_reg);
         reg_free(cs, cmp_reg);
         compile_node(cs, node->cases[i].body, dest);
-        fixups[i] = op_jump(cs, 0x0000CAFE) + 1;
-        insn_at_ip(cs, temp_fixup)->uint = cs->section->insns_count;
+        op_jump(cs, end_label);
+        emit_label(cs, next_case_label);
     }
     if(node->else_body) {
         compile_node(cs, node->else_body, dest);
     } else {
         op_immediate(cs, cs->vm->lib.nil, dest);
     }
-    for(size_t i = 0; i < node->case_count; i++) {
-        insn_at_ip(cs, fixups[i])->uint = cs->section->insns_count;
-    }
+    emit_label(cs, end_label);
 }
 
 NODE(sl_node_while_t, while)
 {
     next_last_frame_t nl;
 
-    size_t begin = cs->section->insns_count;
+    label_t* begin_label = create_label(cs);
+    emit_label(cs, begin_label);
 
     /* loop condition */
     compile_node(cs, node->expr, dest);
 
     /* emit code for !condition: */
-    size_t fixup = op_jump_unless(cs, 0x0000CAFE, dest) + 1;
+    label_t* end_label = create_label(cs);
+    op_jump_unless(cs, end_label, dest);
 
     /* push this loop on to the next/last fixup stack */
-    nl.next_fixups = NULL;
-    nl.last_fixups = NULL;
+    nl.next = begin_label;
+    nl.last = end_label;
     nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
@@ -514,24 +558,10 @@ NODE(sl_node_while_t, while)
     /* loop body */
     compile_node(cs, node->body, dest);
 
-    /* place the right address in the next fixups */
-    cs->next_last_frames = nl.prev;
-    while(nl.next_fixups) {
-        insn_at_ip(cs, nl.next_fixups->fixup)->uint = begin;
-        nl.next_fixups = nl.next_fixups->next;
-    }
-
     /* jump back to condition */
-    op_jump(cs, begin);
+    op_jump(cs, begin_label);
 
-    /* put the current IP into the JUMP_UNLESS fixup */
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_count;
-
-    /* place the right address in the last fixups */
-    while(nl.last_fixups) {
-        insn_at_ip(cs, nl.last_fixups->fixup)->uint = cs->section->insns_count;
-        nl.last_fixups = nl.last_fixups->next;
-    }
+    emit_label(cs, end_label);
 
     op_immediate(cs, cs->vm->lib.nil, dest);
 }
@@ -539,7 +569,6 @@ NODE(sl_node_while_t, while)
 NODE(sl_node_for_t, for)
 {
     size_t expr_reg = reg_alloc(cs), enum_reg = reg_alloc(cs), has_looped_reg = reg_alloc(cs);
-    size_t begin, end_jump_fixup, end_else_fixup;
     next_last_frame_t nl;
 
     compile_node(cs, node->expr, expr_reg);
@@ -548,11 +577,13 @@ NODE(sl_node_for_t, for)
 
     emit_send(cs, expr_reg, sl_intern(cs->vm, "enumerate"), 0, 0, enum_reg);
 
-    begin = cs->section->insns_count;
+    label_t *begin = create_label(cs), *end = create_label(cs);
+
+    emit_label(cs, begin);
 
     emit_send(cs, enum_reg, sl_intern(cs->vm, "next"), 0, 0, dest);
 
-    end_jump_fixup = op_jump_unless(cs, 0x0000CAFE, dest) + 1;
+    op_jump_unless(cs, end, dest);
 
     op_immediate(cs, cs->vm->lib._true, has_looped_reg);
 
@@ -560,8 +591,8 @@ NODE(sl_node_for_t, for)
 
     emit_assignment(cs, node->lval, dest);
 
-    nl.next_fixups = NULL;
-    nl.last_fixups = NULL;
+    nl.next = begin;
+    nl.last = end;
     nl.try_catch_blocks = 0;
     nl.prev = cs->next_last_frames;
     cs->next_last_frames = &nl;
@@ -572,19 +603,10 @@ NODE(sl_node_for_t, for)
 
     cs->next_last_frames = nl.prev;
 
-    while(nl.next_fixups) {
-        insn_at_ip(cs, nl.next_fixups->fixup)->uint = begin;
-        nl.next_fixups = nl.next_fixups->next;
-    }
+    emit_label(cs, end);
 
-    while(nl.last_fixups) {
-        insn_at_ip(cs, nl.last_fixups->fixup)->uint = cs->section->insns_count;
-        nl.last_fixups = nl.last_fixups->next;
-    }
-
-    insn_at_ip(cs, end_jump_fixup)->uint = cs->section->insns_count;
-
-    end_else_fixup = op_jump_if(cs, 0x0000cafe, has_looped_reg) + 1;
+    label_t* end_else = create_label(cs);
+    op_jump_if(cs, end_else, has_looped_reg);
 
     reg_free(cs, has_looped_reg);
     reg_free(cs, enum_reg);
@@ -593,7 +615,7 @@ NODE(sl_node_for_t, for)
         compile_node(cs, node->else_body, dest);
     }
 
-    insn_at_ip(cs, end_else_fixup)->uint = cs->section->insns_count;
+    emit_label(cs, end_else);
 
     op_mov(cs, expr_reg, dest);
 
@@ -643,22 +665,24 @@ NODE(sl_node_binary_t, and)
 {
     compile_node(cs, node->left, dest);
 
-    size_t fixup = op_jump_unless(cs, 0x0000cafe, dest) + 1;
+    label_t* label = create_label(cs);
+    op_jump_unless(cs, label, dest);
 
     compile_node(cs, node->right, dest);
 
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_count;
+    emit_label(cs, label);
 }
 
 NODE(sl_node_binary_t, or)
 {
     compile_node(cs, node->left, dest);
 
-    size_t fixup = op_jump_if(cs, 0x000cafe, dest) + 1;
+    label_t* label = create_label(cs);
+    op_jump_if(cs, label, dest);
 
     compile_node(cs, node->right, dest);
 
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_count;
+    emit_label(cs, label);
 }
 
 NODE(sl_node_unary_t, not)
@@ -723,7 +747,7 @@ static void
 emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lval, sl_node_base_t* rval, sl_vm_opcode_t opcode, size_t dest)
 {
     size_t arg_base, receiver = reg_alloc(cs);
-    size_t fixup, i;
+    size_t i;
 
     compile_node(cs, lval->recv, receiver);
 
@@ -735,10 +759,12 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     /* compile the lval */
     emit_send(cs, receiver, lval->id, arg_base, lval->arg_count, dest);
 
+    label_t* label = create_label(cs);
+
     if(opcode == SL_OP_JUMP_IF) {
-        fixup = op_jump_if(cs, 0xdeadbeef, dest) + 1;
+        op_jump_if(cs, label, dest);
     } else {
-        fixup = op_jump_unless(cs, 0xdeadbeef, dest) + 1;
+        op_jump_unless(cs, label, dest);
     }
 
     /* compile the rval */
@@ -752,7 +778,7 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     /* move the rval back to dest reg */
     op_mov(cs, arg_base + lval->arg_count, dest);
 
-    insn_at_ip(cs, fixup)->uint = cs->section->insns_count;
+    emit_label(cs, label);
 }
 
 NODE(sl_node_assign_send_t, assign_send)
@@ -931,13 +957,10 @@ NODE(sl_node_range_t, range)
 
 NODE(sl_node_base_t, next)
 {
-    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
-    fixup->next = cs->next_last_frames->next_fixups;
-    cs->next_last_frames->next_fixups = fixup;
     for(size_t i = 0; i < cs->next_last_frames->try_catch_blocks; i++) {
         op_end_try(cs);
     }
-    fixup->fixup = op_jump(cs, 0x0000cafe) + 1;
+    op_jump(cs, cs->next_last_frames->next);
 
     (void)node;
     (void)dest;
@@ -945,13 +968,10 @@ NODE(sl_node_base_t, next)
 
 NODE(sl_node_base_t, last)
 {
-    fixup_t* fixup = sl_alloc(cs->vm->arena, sizeof(fixup_t));
-    fixup->next = cs->next_last_frames->last_fixups;
-    cs->next_last_frames->last_fixups = fixup;
     for(size_t i = 0; i < cs->next_last_frames->try_catch_blocks; i++) {
         op_end_try(cs);
     }
-    fixup->fixup = op_jump(cs, 0x0000cafe) + 1;
+    op_jump(cs, cs->next_last_frames->last);
 
     (void)node;
     (void)dest;
