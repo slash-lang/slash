@@ -1,5 +1,7 @@
 <%
 
+use Struct;
+
 class DestructuringAssignmentTest extends Test {
     def test_array_assignment {
         [a, b, c] = [1, 2, 3];
@@ -34,5 +36,15 @@ class DestructuringAssignmentTest extends Test {
 
         assert_equal(1, a);
         assert_equal(nil, b);
+    }
+
+    def test_array_send_assignment {
+        obj = Struct.new(['a, 'b]).new({});
+
+        [[obj.a, b], obj.b] = [[1, 2], [3, 4]];
+
+        assert_equal(1, obj.a);
+        assert_equal(2, b);
+        assert_equal([3, 4], obj.b);
     }
 }
