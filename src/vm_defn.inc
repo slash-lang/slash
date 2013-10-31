@@ -128,19 +128,19 @@ SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
     }
 }
 
-JUMP(size_t new_ip)
+JUMP(IP new_ip)
 {
     ip = section->insns + new_ip;
 }
 
-JUMP_IF(size_t branch_ip, REG val)
+JUMP_IF(IP branch_ip, REG val)
 {
     if(sl_is_truthy(val)) {
         ip = section->insns + branch_ip;
     }
 }
 
-JUMP_UNLESS(size_t branch_ip, REG val)
+JUMP_UNLESS(IP branch_ip, REG val)
 {
     if(!sl_is_truthy(val)) {
         ip = section->insns + branch_ip;
@@ -220,7 +220,7 @@ THROW(REG exception)
     sl_throw(vm, exception);
 }
 
-TRY(size_t catch_ip)
+TRY(IP catch_ip)
 {
     sl_vm_exception_handler_t* eh = sl_alloc(vm->arena, sizeof(sl_vm_exception_handler_t));
     eh->prev = exception_handler;
