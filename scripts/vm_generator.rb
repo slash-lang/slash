@@ -149,7 +149,7 @@ File.open("src/gen/compile_helper.inc", "w") do |f|
     f.puts "    size_t _ip = _emit_opcode(cs, SL_OP_#{insn.name});"
     insn.operands.each do |operand|
       if operand.type == "IP"
-        f.puts "    _emit_label(cs, #{operand.name});"
+        f.puts "    _emit_label_operand(cs, #{operand.name});"
         next
       end
       field =
