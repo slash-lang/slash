@@ -122,7 +122,7 @@ process_arguments(sl_vm_t* vm, int argc, char** argv)
             opt_interactive = true;
             continue;
         }
-        if(strcmp(argv[i], "-h") == 0) {
+        if(strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             print_help(argv[0]);
             shutdown_vm(vm, 0);
         }
