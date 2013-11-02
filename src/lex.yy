@@ -26,8 +26,6 @@
 
 %x SLASH STRING STRE COMMENT_ML_C COMMENT_LINE COMMENT_TAG NKW_ID REGEXP REGEXP_R
 
-/* after each keyword, put '/{KW}' to look ahead for a non-identifier char */
-NKW [^a-zA-Z_0-9]?
 SYM [a-zA-Z0-9_]+
 IDT [a-zA-Z0-9_']*
 ID  [a-z_]{IDT}
@@ -94,33 +92,33 @@ HEX [0-9a-fA-F]
 
 <SLASH>"-"?[0-9]+           { ADD_TOKEN(sl_make_string_token(yyextra, SL_TOK_INTEGER, yytext, yyleng)); }
 
-<SLASH>"nil"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
-<SLASH>"true"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
-<SLASH>"false"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
-<SLASH>"self"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
-<SLASH>"class"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_CLASS)); }
-<SLASH>"extends"/{NKW}  { ADD_TOKEN(sl_make_token(SL_TOK_EXTENDS)); }
-<SLASH>"def"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_DEF)); }
-<SLASH>"if"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_IF)); }
-<SLASH>"elsif"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_ELSIF)); }
-<SLASH>"else"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_ELSE)); }
-<SLASH>"unless"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_UNLESS)); }
-<SLASH>"for"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_FOR)); }
-<SLASH>"in"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_IN)); }
-<SLASH>"while"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_WHILE)); }
-<SLASH>"until"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_UNTIL)); }
-<SLASH>"and"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_LP_AND)); }
-<SLASH>"or"/{NKW}       { ADD_TOKEN(sl_make_token(SL_TOK_LP_OR)); }
-<SLASH>"not"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_LP_NOT)); }
-<SLASH>"lambda"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
-<SLASH>"try"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_TRY)); }
-<SLASH>"catch"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_CATCH)); }
-<SLASH>"return"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_RETURN)); }
-<SLASH>"next"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_NEXT)); }
-<SLASH>"last"/{NKW}     { ADD_TOKEN(sl_make_token(SL_TOK_LAST)); }
-<SLASH>"throw"/{NKW}    { ADD_TOKEN(sl_make_token(SL_TOK_THROW)); }
-<SLASH>"use"/{NKW}      { ADD_TOKEN(sl_make_token(SL_TOK_USE)); }
-<SLASH>"switch"/{NKW}   { ADD_TOKEN(sl_make_token(SL_TOK_SWITCH)); }
+<SLASH>"nil"      { ADD_TOKEN(sl_make_token(SL_TOK_NIL)); }
+<SLASH>"true"     { ADD_TOKEN(sl_make_token(SL_TOK_TRUE)); }
+<SLASH>"false"    { ADD_TOKEN(sl_make_token(SL_TOK_FALSE)); }
+<SLASH>"self"     { ADD_TOKEN(sl_make_token(SL_TOK_SELF)); }
+<SLASH>"class"    { ADD_TOKEN(sl_make_token(SL_TOK_CLASS)); }
+<SLASH>"extends"  { ADD_TOKEN(sl_make_token(SL_TOK_EXTENDS)); }
+<SLASH>"def"      { ADD_TOKEN(sl_make_token(SL_TOK_DEF)); }
+<SLASH>"if"       { ADD_TOKEN(sl_make_token(SL_TOK_IF)); }
+<SLASH>"elsif"    { ADD_TOKEN(sl_make_token(SL_TOK_ELSIF)); }
+<SLASH>"else"     { ADD_TOKEN(sl_make_token(SL_TOK_ELSE)); }
+<SLASH>"unless"   { ADD_TOKEN(sl_make_token(SL_TOK_UNLESS)); }
+<SLASH>"for"      { ADD_TOKEN(sl_make_token(SL_TOK_FOR)); }
+<SLASH>"in"       { ADD_TOKEN(sl_make_token(SL_TOK_IN)); }
+<SLASH>"while"    { ADD_TOKEN(sl_make_token(SL_TOK_WHILE)); }
+<SLASH>"until"    { ADD_TOKEN(sl_make_token(SL_TOK_UNTIL)); }
+<SLASH>"and"      { ADD_TOKEN(sl_make_token(SL_TOK_LP_AND)); }
+<SLASH>"or"       { ADD_TOKEN(sl_make_token(SL_TOK_LP_OR)); }
+<SLASH>"not"      { ADD_TOKEN(sl_make_token(SL_TOK_LP_NOT)); }
+<SLASH>"lambda"   { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
+<SLASH>"try"      { ADD_TOKEN(sl_make_token(SL_TOK_TRY)); }
+<SLASH>"catch"    { ADD_TOKEN(sl_make_token(SL_TOK_CATCH)); }
+<SLASH>"return"   { ADD_TOKEN(sl_make_token(SL_TOK_RETURN)); }
+<SLASH>"next"     { ADD_TOKEN(sl_make_token(SL_TOK_NEXT)); }
+<SLASH>"last"     { ADD_TOKEN(sl_make_token(SL_TOK_LAST)); }
+<SLASH>"throw"    { ADD_TOKEN(sl_make_token(SL_TOK_THROW)); }
+<SLASH>"use"      { ADD_TOKEN(sl_make_token(SL_TOK_USE)); }
+<SLASH>"switch"   { ADD_TOKEN(sl_make_token(SL_TOK_SWITCH)); }
 
 <SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 <SLASH>"λ"              { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
