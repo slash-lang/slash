@@ -115,4 +115,8 @@ class FloatTest extends Test {
     def test_class {
         assert_is_a(Float, 123.0);
     }
+
+    def test_without_leading_zero {
+        assert_equal(.2, 0.2)
+    }
 }
