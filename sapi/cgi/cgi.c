@@ -694,8 +694,7 @@ main(int argc, char** argv)
     init_options(&options, argc > 2 ? 5 : 0);
     process_arguments(&options, argc, argv);
 
-    if((options.fcgi_bind == NULL && options.fcgi_backlog <= 0) &&
-        FCGX_IsCGI()) {
+    if(options.fcgi_bind == NULL && FCGX_IsCGI()) {
         api = slash_api_cgi_new(stdout, stderr, stdin, environ);
         run_slash_script(api, &options, &api);
         slash_api_free(api);
