@@ -7,6 +7,10 @@
 #include <unistd.h>
 #include <errno.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
 #include "api.h"
 #include "http_status.h"
 
@@ -292,6 +296,7 @@ fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
         if(info->path_translated) {
             char* filename = info->path_translated->value;
             char* path_info = NULL;
+            struct stat st;
 
             if(!sl_abs_file_exists(filename)) {
                 size_t filename_len;
@@ -315,8 +320,10 @@ fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
                 }
             }
 
-            info->real_canonical_filename = filename;
-            info->real_path_info = path_info;
+            if(stat(filename, &st) >= 0 && S_ISREG(st.st_mode)) {
+                info->real_canonical_filename = filename;
+                info->real_path_info = path_info;
+            }
         }
     }
 
