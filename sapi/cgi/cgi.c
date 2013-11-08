@@ -693,6 +693,7 @@ main(int argc, char** argv)
         run_slash_script(api, &options, &api);
         slash_api_free(api);
     } else {
+        FCGX_Init();
         if(options.fcgi_bind && 
             options.fcgi_backlog > 0) {
             socket = FCGX_OpenSocket(options.fcgi_bind, options.fcgi_backlog);
