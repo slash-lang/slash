@@ -120,6 +120,7 @@ HEX [0-9a-fA-F]
 <SLASH>"throw"    { ADD_TOKEN(sl_make_token(SL_TOK_THROW)); }
 <SLASH>"use"      { ADD_TOKEN(sl_make_token(SL_TOK_USE)); }
 <SLASH>"switch"   { ADD_TOKEN(sl_make_token(SL_TOK_SWITCH)); }
+<SLASH>"super"    { ADD_TOKEN(sl_make_token(SL_TOK_SUPER)); }
 
 <SLASH>"\\"             { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
 <SLASH>"λ"              { ADD_TOKEN(sl_make_token(SL_TOK_LAMBDA)); }
