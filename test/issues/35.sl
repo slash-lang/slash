@@ -4,6 +4,6 @@
 # different byte length to the original character.
 class Issue35RegressionTest extends Test {
   def test_angstrom_sign_lower {
-    assert_equal("\xC3\xA5", "\xE2\x84\xAB".lower);
+    assert_equal("\uE5", "\u212B".lower);
   }
 }
