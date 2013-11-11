@@ -150,7 +150,7 @@ sl_send_id(sl_vm_t* vm, SLVAL recv, SLID id, int argc, ...)
 }
 
 static SLVAL
-sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
+sl_send_missing(sl_vm_t* vm, SLVAL recv, SLVAL klass, SLID id, int argc, SLVAL* argv)
 {
     /* look for method_missing method */
     SLVAL argv2[argc + 1];
@@ -164,7 +164,7 @@ sl_send_missing(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
 
     /* nope */
 
-    sl_error(vm, vm->lib.NoMethodError, "Undefined method %QI on %X", id, recv);
+    sl_error(vm, vm->lib.NoMethodError, "Undefined method %QI in %X for %X", id, klass, recv);
     return vm->lib.nil; /* shutup gcc */
 }
 
@@ -175,7 +175,7 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
     if(sl_likely(method != NULL)) {
         return sl_apply_method(vm, recv, method, argc, argv);
     }
-    return sl_send_missing(vm, recv, id, argc, argv);
+    return sl_send_missing(vm, recv, sl_real_class(vm, recv), id, argc, argv);
 }
 
 sl_method_t*
@@ -300,6 +300,6 @@ sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLV
         }
         return imc->call(vm, imc, recv, argv);
     } else {
-        return sl_send_missing(vm, recv, imc->id, imc->argc, argv);
+        return sl_send_missing(vm, recv, klass, imc->id, imc->argc, argv);
     }
 }
