@@ -178,8 +178,8 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv)
     return sl_send_missing(vm, recv, id, argc, argv);
 }
 
-static sl_method_t*
-lookup_method_rec(sl_vm_t* vm, SLVAL klass, SLID id)
+sl_method_t*
+sl_lookup_method_in_class(sl_vm_t* vm, SLVAL klass, SLID id)
 {
     sl_class_t* klassp = (sl_class_t*)sl_get_ptr(klass);
     if(klassp->base.primitive_type == SL_T_NIL) {
@@ -191,13 +191,13 @@ lookup_method_rec(sl_vm_t* vm, SLVAL klass, SLID id)
         return method;
     }
 
-    return lookup_method_rec(vm, klassp->super, id);
+    return sl_lookup_method_in_class(vm, klassp->super, id);
 }
 
 sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id)
 {
-    return lookup_method_rec(vm, sl_real_class(vm, recv), id);
+    return sl_lookup_method_in_class(vm, sl_real_class(vm, recv), id);
 }
 
 #define C_FRAME_BEGIN \
@@ -264,7 +264,7 @@ SLVAL
 sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv)
 {
     SLVAL klass = sl_real_class(vm, recv);
-    sl_method_t* method = lookup_method_rec(vm, klass, imc->id);
+    sl_method_t* method = sl_lookup_method_in_class(vm, klass, imc->id);
     if(method) {
         imc->state = vm->state_method;
         imc->klass = klass;

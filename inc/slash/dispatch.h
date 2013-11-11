@@ -24,6 +24,9 @@ sl_send2(sl_vm_t* vm, SLVAL recv, SLID id, int argc, SLVAL* argv);
 sl_method_t*
 sl_lookup_method(sl_vm_t* vm, SLVAL recv, SLID id);
 
+sl_method_t*
+sl_lookup_method_in_class(sl_vm_t* vm, SLVAL klass, SLID id);
+
 SLVAL
 sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL receiver, SLVAL* argv);
 
