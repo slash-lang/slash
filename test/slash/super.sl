@@ -22,12 +22,14 @@ class SuperTest extends Test {
     }
 
     def test_raises_no_method_error_when_no_superclass_method_exists {
-        assert_throws(NoMethodError, \. calls_super());
+        ex = assert_throws(NoMethodError, \. method_calls_super());
+        assert_equal("Undefined method \"method_calls_super\" in Test for #{inspect()}", ex.message);
     }
 
     lambda_calls_super = \. super;
 
-    def test_raises_no_method_error_when_calls_in_non_method_context {
-        assert_throws(NoMethodError, \. lambda_calls_super.call);
+    def test_raises_no_method_error_when_called_in_non_method_context {
+        ex = assert_throws(NoMethodError, \. lambda_calls_super.call);
+        assert_equal("Can't call super outside of method context", ex.message);
     }
 }
