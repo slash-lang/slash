@@ -466,23 +466,34 @@ try_expression(sl_parse_state_t* ps)
     return sl_make_try_node(ps, body, lval, catch_body);
 }
 
-static sl_node_base_t*
-send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id)
+static void
+args_expression(sl_parse_state_t* ps, sl_node_base_t*** args_, size_t* args_count_)
 {
-    size_t argc = 0, cap = 2;
-    sl_node_base_t** argv = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
+    size_t cap = 2, args_count = 0;
+    sl_node_base_t** args = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * cap);
     expect_token(ps, SL_TOK_OPEN_PAREN);
     while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
-        if(argc >= cap) {
+        if(args_count >= cap) {
             cap *= 2;
-            argv = sl_realloc(ps->vm->arena, argv, sizeof(sl_node_base_t*) * cap);
+            args = sl_realloc(ps->vm->arena, args, sizeof(sl_node_base_t*) * cap);
         }
-        argv[argc++] = expression(ps);
+        args[args_count++] = expression(ps);
         if(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
             expect_token(ps, SL_TOK_COMMA);
         }
     }
     expect_token(ps, SL_TOK_CLOSE_PAREN);
+
+    *args_ = args;
+    *args_count_ = args_count;
+}
+
+static sl_node_base_t*
+send_with_args_expression(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id)
+{
+    sl_node_base_t** argv;
+    size_t argc;
+    args_expression(ps, &argv, &argc);
     return sl_make_send_node(ps, recv, id, argc, argv);
 }
 
