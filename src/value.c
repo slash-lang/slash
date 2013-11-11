@@ -124,3 +124,13 @@ sl_hash(sl_vm_t* vm, SLVAL val)
             return 0; /* never reached */
     }
 }
+
+SLVAL
+sl_real_class(sl_vm_t* vm, SLVAL val)
+{
+    if(sl_get_primitive_type(val) == SL_T_INT) {
+        return vm->lib.Int;
+    }
+
+    return sl_get_ptr(val)->klass;
+}

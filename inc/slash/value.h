@@ -196,4 +196,7 @@ sl_to_bool(struct sl_vm* vm, SLVAL val);
 int
 sl_hash(struct sl_vm* vm, SLVAL val);
 
+SLVAL
+sl_real_class(struct sl_vm* vm, SLVAL val);
+
 #endif

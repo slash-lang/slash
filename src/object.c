@@ -301,7 +301,7 @@ static SLVAL
 sl_object_own_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
 {
     SLID mid = sl_intern2(vm, method_name);
-    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
+    SLVAL klass = sl_real_class(vm, self);
     SLVAL method;
     sl_class_t* klassp;
 
@@ -328,7 +328,7 @@ collect_methods_iter(sl_vm_t* vm, SLID id, SLVAL method, SLVAL ary)
 static SLVAL
 sl_object_own_methods(sl_vm_t* vm, SLVAL self)
 {
-    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
+    SLVAL klass = sl_real_class(vm, self);
     sl_class_t* klassp;
 
     SLVAL ary = sl_make_array(vm, 0, NULL);
@@ -345,7 +345,7 @@ sl_object_own_methods(sl_vm_t* vm, SLVAL self)
 static SLVAL
 sl_object_methods(sl_vm_t* vm, SLVAL self)
 {
-    SLVAL klass = SL_IS_INT(self) ? vm->lib.Int : sl_get_ptr(self)->klass;
+    SLVAL klass = sl_real_class(vm, self);
 
     SLVAL ary = sl_make_array(vm, 0, NULL);
 
