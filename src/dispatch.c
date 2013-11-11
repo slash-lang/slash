@@ -74,6 +74,7 @@ call_sl_func(sl_vm_t* vm, SLVAL recv, sl_method_t* method, int argc, SLVAL* argv
         ctx->registers = sl_alloc(vm->arena, sizeof(SLVAL) * ctx->section->max_registers);
     }
     ctx->self = recv;
+    ctx->method = method;
     ctx->parent = method->as.sl.parent_ctx;
 
     memcpy(ctx->registers + 1, argv, sizeof(SLVAL) * ctx->section->arg_registers);

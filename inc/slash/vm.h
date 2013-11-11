@@ -175,6 +175,7 @@ sl_vm_section_t;
 typedef struct sl_vm_exec_ctx {
     sl_vm_t* vm;
     sl_vm_section_t* section;
+    sl_method_t* method;
     SLVAL* registers;
     SLVAL self;
     struct sl_vm_exec_ctx* parent;
