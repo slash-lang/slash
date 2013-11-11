@@ -128,6 +128,23 @@ SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
     }
 }
 
+SUPER(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
+{
+    if(sl_unlikely(ctx->method == NULL)) {
+        sl_throw_message2(vm, vm->lib.NoMethodError, "Can't call super outside of method context");
+    }
+    if(sl_likely(imc->state == vm->state_method && imc->klass.i == ctx->method->extra->klass.i)) {
+        *dest = imc->call(vm, imc, ctx->self, argv);
+    } else {
+        sl_class_t* klassp = (sl_class_t*)sl_get_ptr(ctx->method->extra->klass);
+        if(sl_likely(sl_get_primitive_type(klassp->super) == SL_T_CLASS)) {
+            *dest = sl_imc_setup_call2(vm, imc, ctx->self, klassp->super, argv);
+        } else {
+            sl_error(vm, vm->lib.NoMethodError, "Undefined method %QI in %X for %X", imc->id, klassp->super, ctx->self);
+        }
+    }
+}
+
 JUMP(IP new_ip)
 {
     ip = section->insns + new_ip;

@@ -223,6 +223,17 @@ emit_send_self(sl_compile_state_t* cs, SLID id, size_t arg_base, size_t arg_size
 }
 
 static void
+emit_super(sl_compile_state_t* cs, size_t arg_base, size_t arg_size, size_t return_reg)
+{
+    sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
+    imc->argc = arg_size;
+    imc->id = cs->section->name;
+    imc->call = NULL;
+
+    op_super(cs, imc, arg_base, return_reg);
+}
+
+static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest);
 
 static void
@@ -640,6 +651,16 @@ NODE(sl_node_send_t, send)
     } else {
         emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
     }
+    reg_free_block(cs, arg_base, node->arg_count);
+}
+
+NODE(sl_node_super_t, super)
+{
+    size_t arg_base = node->arg_count ? reg_alloc_block(cs, node->arg_count) : 0;
+    for(size_t i = 0; i < node->arg_count; i++) {
+        compile_node(cs, node->args[i], arg_base + i);
+    }
+    emit_super(cs, arg_base, node->arg_count, dest);
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
@@ -1068,6 +1089,7 @@ compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest)
         COMPILE(sl_node_while_t,         WHILE,          while);
         COMPILE(sl_node_for_t,           FOR,            for);
         COMPILE(sl_node_send_t,          SEND,           send);
+        COMPILE(sl_node_super_t,         SUPER,          super);
         COMPILE(sl_node_bind_method_t,   BIND_METHOD,    bind_method);
         COMPILE(sl_node_const_t,         CONST,          const);
         COMPILE(sl_node_binary_t,        AND,            and);
