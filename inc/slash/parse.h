@@ -78,6 +78,9 @@ sl_node_base_t*
 sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv);
 
 sl_node_base_t*
+sl_make_super_node(sl_parse_state_t* ps, size_t argc, sl_node_base_t** argv);
+
+sl_node_base_t*
 sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id);
 
 sl_node_base_t*

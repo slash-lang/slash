@@ -603,6 +603,18 @@ string_expression(sl_parse_state_t* ps)
 }
 
 static sl_node_base_t*
+super_expression(sl_parse_state_t* ps)
+{
+    sl_node_base_t** argv = NULL;
+    size_t argc = 0;
+    expect_token(ps, SL_TOK_SUPER);
+    if(peek_token(ps)->type == SL_TOK_OPEN_PAREN) {
+        args_expression(ps, &argv, &argc);
+    }
+    return sl_make_super_node(ps, argc, argv);
+}
+
+static sl_node_base_t*
 primary_expression(sl_parse_state_t* ps)
 {
     sl_token_t* tok;
@@ -692,6 +704,8 @@ primary_expression(sl_parse_state_t* ps)
         case SL_TOK_RANGE_EX:
             next_token(ps);
             return sl_make_singleton_node(ps, SL_NODE_YADA_YADA);
+        case SL_TOK_SUPER:
+            return super_expression(ps);
         default:
             unexpected(ps, peek_token(ps));
             return NULL;

@@ -168,6 +168,16 @@ sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t ar
 }
 
 sl_node_base_t*
+sl_make_super_node(sl_parse_state_t* ps, size_t argc, sl_node_base_t** argv)
+{
+    MAKE_NODE(SL_NODE_SUPER, sl_node_super_t, {
+        node->arg_count = argc;
+        node->args = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * argc);
+        memcpy(node->args, argv, sizeof(sl_node_base_t*) * argc);
+    });
+}
+
+sl_node_base_t*
 sl_make_bind_method_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id)
 {
     MAKE_NODE(SL_NODE_BIND_METHOD, sl_node_bind_method_t, {
