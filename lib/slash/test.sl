@@ -53,9 +53,7 @@ class Test {
         try {
             fn.call;
         } catch e {
-            if e.is_a(klass) {
-                return;
-            }
+            return e if e.is_a(klass);
             throw e; # rethrow
         }
         throw Failure.new("Expected callback to throw");
