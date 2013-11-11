@@ -76,7 +76,7 @@ buffer_init(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     if(argc > 0) {
         sl_buffer_t* buff = get_buffer(vm, self);
-        if(SL_IS_INT(argv[0])) {
+        if(sl_get_primitive_type(argv[0]) == SL_T_INT) {
             long cap = sl_get_int(argv[0]);
             if(cap < 0) {
                 sl_throw_message2(vm, vm->lib.ArgumentError, "Initial buffer capacity must be positive");
@@ -105,7 +105,7 @@ buffer_get(sl_vm_t* vm, SLVAL self, SLVAL indexv)
 {
     sl_buffer_t* buff = get_buffer(vm, self);
     ensure_buffer(vm, buff);
-    if(sl_likely(SL_IS_INT(indexv))) {
+    if(sl_likely(sl_get_primitive_type(indexv) == SL_T_INT)) {
         long index = translate_index(buff, sl_get_int(indexv));
         if(index < 0) {
             return vm->lib.nil;
@@ -132,7 +132,7 @@ buffer_set(sl_vm_t* vm, SLVAL self, SLVAL indexv, SLVAL bytev)
     sl_buffer_t* buff = get_buffer(vm, self);
     ensure_buffer(vm, buff);
     uint8_t byte = (uint8_t)sl_get_int(sl_expect(vm, bytev, vm->lib.Int));
-    if(sl_likely(SL_IS_INT(indexv))) {
+    if(sl_likely(sl_get_primitive_type(indexv) == SL_T_INT)) {
         long index = translate_index(buff, sl_get_int(indexv));
         if(index < 0) {
             sl_throw_message2(vm, vm->lib.ArgumentError, "index out of range");

@@ -41,7 +41,7 @@ sl_int_add(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
 
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         int b = sl_get_int(other);
         if(sl_likely(highest_set_bit(a) < 30 && highest_set_bit(b) < 30)) {
             return sl_make_int(vm, a + b);
@@ -66,7 +66,7 @@ sl_int_sub(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int a = sl_get_int(self);
 
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         int b = sl_get_int(other);
         if(sl_likely(highest_set_bit(a) < 30 && highest_set_bit(b) < 30)) {
             return sl_make_int(vm, a - b);
@@ -270,7 +270,7 @@ static SLVAL
 sl_int_lt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int res;
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         res = sl_get_int(self) < sl_get_int(other);
     } else {
         res = sl_cmp(vm, self, other) < 0;
@@ -282,7 +282,7 @@ static SLVAL
 sl_int_gt(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int res;
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         res = sl_get_int(self) > sl_get_int(other);
     } else {
         res = sl_cmp(vm, self, other) > 0;
@@ -294,7 +294,7 @@ static SLVAL
 sl_int_lte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int res;
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         res = sl_get_int(self) <= sl_get_int(other);
     } else {
         res = sl_cmp(vm, self, other) <= 0;
@@ -306,7 +306,7 @@ static SLVAL
 sl_int_gte(sl_vm_t* vm, SLVAL self, SLVAL other)
 {
     int res;
-    if(sl_likely(SL_IS_INT(other))) {
+    if(sl_likely(sl_get_primitive_type(other) == SL_T_INT)) {
         res = sl_get_int(self) >= sl_get_int(other);
     } else {
         res = sl_cmp(vm, self, other) >= 0;

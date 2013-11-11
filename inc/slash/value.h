@@ -158,8 +158,6 @@ typedef struct sl_data {
 }
 sl_data_t;
 
-#define SL_IS_INT(val) ((val).i & 1)
-
 int
 sl_get_int(SLVAL val);
 
