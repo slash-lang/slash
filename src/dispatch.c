@@ -264,6 +264,12 @@ SLVAL
 sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL* argv)
 {
     SLVAL klass = sl_real_class(vm, recv);
+    return sl_imc_setup_call2(vm, imc, recv, klass, argv);
+}
+
+SLVAL
+sl_imc_setup_call2(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL recv, SLVAL klass, SLVAL* argv)
+{
     sl_method_t* method = sl_lookup_method_in_class(vm, klass, imc->id);
     if(method) {
         imc->state = vm->state_method;

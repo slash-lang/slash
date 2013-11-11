@@ -30,4 +30,7 @@ sl_lookup_method_in_class(sl_vm_t* vm, SLVAL klass, SLID id);
 SLVAL
 sl_imc_setup_call(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL receiver, SLVAL* argv);
 
+SLVAL
+sl_imc_setup_call2(sl_vm_t* vm, sl_vm_inline_method_cache_t* imc, SLVAL receiver, SLVAL klass, SLVAL* argv);
+
 #endif
