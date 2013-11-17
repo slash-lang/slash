@@ -26,11 +26,10 @@ slash_api_cgi_new(FILE* out,
                   FILE* in,
                   char** envp);
 
-#ifdef SL_HAS_LIBFCGI
 slash_api_base_t*
 slash_api_fcgi_new(FCGX_Stream * out,
                    FCGX_Stream* err,
                    FCGX_Stream* in,
                    char ** envp);
-#endif /* SL_HAS_LIBFCGI */
+
 #endif /*  SL_SAPI_CGI_API */
