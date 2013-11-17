@@ -454,9 +454,7 @@ read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, slash_request_info_t* info)
         bytes_read = ctx->api->read_in(ctx->api,
             opts->post_data, content_length);
 
-        if(bytes_read >= 0) {
-            opts->post_length = bytes_read;
-        }
+        opts->post_length = bytes_read;
     }
 }
 
