@@ -46,9 +46,9 @@ slash_api_base_t * slash_api_cgi_new(FILE* out, FILE* err, FILE* in, char** envp
     if(result) {
         result->base.type = SLASH_REQUEST_CGI;
         result->base.environ = envp;
-        result->base.writeOut = slash_api_cgi_writeOut;
-        result->base.writeErr = slash_api_cgi_writeErr;
-        result->base.readIn = slash_api_cgi_readIn;
+        result->base.write_out = slash_api_cgi_writeOut;
+        result->base.write_err = slash_api_cgi_writeErr;
+        result->base.read_in = slash_api_cgi_readIn;
         result->out = out;
         result->err = err;
         result->in = in;
@@ -101,9 +101,9 @@ slash_api_base_t * slash_api_fcgi_new(FCGX_Stream * out, FCGX_Stream* err,
     if(result) {
         result->base.type = SLASH_REQUEST_FCGI;
         result->base.environ = envp;
-        result->base.writeOut = slash_api_fcgi_writeOut;
-        result->base.writeErr = slash_api_fcgi_writeErr;
-        result->base.readIn = slash_api_fcgi_readIn;
+        result->base.write_out = slash_api_fcgi_writeOut;
+        result->base.write_err = slash_api_fcgi_writeErr;
+        result->base.read_in = slash_api_fcgi_readIn;
         result->out = out;
         result->err = err;
         result->in = in;
