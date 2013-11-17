@@ -112,11 +112,14 @@ get_hashbang_length(uint8_t* src, size_t len)
              * x\n  (Unix)
              * \rx  (Old MacOS)
              */
-            if(((src[i-1] == '\r' && src[i] == '\n') ||
-                (src[i-1] != '\r' && src[i] == '\n') ||
-                (src[i-1] == '\r' && src[i] != '\n')) &&
-                (i + 1) < len) {
-                length = src[i] != '\n' ? i : i + 1;
+            if(src[i] == '\r' || src[i] == '\n') {
+                if((i + 1) < len && src[i] == '\r' && src[i + 1] == '\n') {
+                    ++i;
+                }
+
+                if((i + 1) <= len) {
+                    length = i + 1;
+                }
                 break;
             }
         }
