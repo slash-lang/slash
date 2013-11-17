@@ -222,7 +222,7 @@ static void write_header(slash_context_t* ctx, char * name, char * value)
      * TODO: maybe handle truncated headers better
      */
     if(len > 0 && len <= SAPI_CGI_MAX_HEADER_LENGTH) {
-        ctx->api->writeOut(ctx->api, buff, len);
+        ctx->api->write_out(ctx->api, buff, len);
     }
 }
 
@@ -266,7 +266,7 @@ flush_headers(slash_context_t* ctx)
         }
 
         // terminate headers
-        ctx->api->writeOut(ctx->api, "\r\n", 2);
+        ctx->api->write_out(ctx->api, "\r\n", 2);
     }
 }
 
@@ -451,7 +451,7 @@ read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, slash_request_info_t* info)
         size_t bytes_read = 0;
         opts->post_data = sl_alloc(vm->arena, content_length);
 
-        bytes_read = ctx->api->readIn(ctx->api,
+        bytes_read = ctx->api->read_in(ctx->api,
             opts->post_data, content_length);
 
         if(bytes_read >= 0) {
@@ -489,7 +489,7 @@ static void output(sl_vm_t* vm, char* buff, size_t len)
 {
     slash_context_t* ctx = vm->data;
     flush_headers(ctx);
-    ctx->api->writeOut(ctx->api, buff, len);
+    ctx->api->write_out(ctx->api, buff, len);
 }
 
 static void

@@ -10,9 +10,9 @@ typedef struct slash_api_base {
     slash_api_type_t type;
     char ** environ;
 
-    size_t (*writeOut)(struct slash_api_base* self, const char * str, size_t n);
-    size_t (*writeErr)(struct slash_api_base* self, const char * str, size_t n);
-    size_t (*readIn)(struct slash_api_base* self, char * str, size_t n);
+    size_t (*write_out)(struct slash_api_base* self, const char * str, size_t n);
+    size_t (*write_err)(struct slash_api_base* self, const char * str, size_t n);
+    size_t (*read_in)(struct slash_api_base* self, char * str, size_t n);
 
 } slash_api_base_t;
 
