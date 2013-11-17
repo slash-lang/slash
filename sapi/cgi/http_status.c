@@ -71,7 +71,7 @@ int
 http_status_format_line(int code, char* buff, size_t len)
 {
     int result;
-    char * text = http_status_get_status_text(code);
+    const char * text = http_status_get_status_text(code);
 
     if(text) {
         result = snprintf(buff, len, "%d %s", code, text);
