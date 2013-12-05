@@ -44,6 +44,10 @@ typedef struct {
     sl_request_key_value_t* request_method;
 } slash_request_info_t;
 
+#ifdef SL_TEST
+static void register_cgi_test_utils(sl_vm_t* vm);
+#endif
+
 typedef struct {
     sl_vm_t* vm;
     slash_api_base_t* api;
@@ -59,6 +63,11 @@ typedef struct {
     char * fcgi_bind;
     int fcgi_backlog;
     int fcgi_num_childs;
+
+    char* arg_script_filename;
+    size_t arg_script_options_capacity;
+    size_t arg_script_options_count;
+    char** arg_script_options;
 } cgi_options;
 
 static sl_request_key_value_list_t*
@@ -243,6 +252,10 @@ static void write_status(slash_context_t* ctx, int status)
 static void
 flush_headers(slash_context_t* ctx)
 {
+#ifdef SL_TEST
+    /* don't write the headers in testing mode */
+    return;
+#endif
     int status;
     sl_response_key_value_t* headers;
     size_t header_count, i;
@@ -274,10 +287,8 @@ flush_headers(slash_context_t* ctx)
 }
 
 static void
-fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
+fix_request_info(sl_vm_t* vm, cgi_options* options, slash_api_base_t* api, slash_request_info_t* info)
 {
-    slash_context_t* ctx = vm->data;
-
     info->real_uri = NULL;
     info->real_path_info = NULL;
     info->real_canonical_filename = NULL;
@@ -295,7 +306,7 @@ fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
         info->real_canonical_filename = info->script_filename->value;
     }
 
-    if(ctx->api->type == SLASH_REQUEST_FCGI) {
+    if(api->type == SLASH_REQUEST_FCGI) { 
         if(info->path_translated) {
             char* filename = info->path_translated->value;
             char* path_info = NULL;
@@ -328,6 +339,10 @@ fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
                 info->real_path_info = path_info;
             }
         }
+    } else if(api->type == SLASH_REQUEST_CGI && options
+        && options->arg_script_filename
+        && !info->real_canonical_filename) {
+        info->real_canonical_filename = options->arg_script_filename;
     }
 
     /* remove the query string from the URI if present */
@@ -368,7 +383,8 @@ fix_request_info(sl_vm_t* vm, slash_request_info_t* info)
 }
 
 static void
-load_request_info(sl_vm_t* vm, char** envp, slash_request_info_t* result)
+load_request_info(sl_vm_t* vm, cgi_options* options, slash_api_base_t* api,
+    slash_request_info_t* result)
 {
     char** env;
 
@@ -385,7 +401,7 @@ load_request_info(sl_vm_t* vm, char** envp, slash_request_info_t* result)
     result->remote_addr = NULL;
     result->request_method = NULL;
 
-    for(env = envp; env && *env != NULL; ++env) {
+    for(env = api->environ; env && *env != NULL; ++env) {
         sl_request_key_value_t* current;
         char* eq = strchr(*env, '=');
 
@@ -433,7 +449,7 @@ load_request_info(sl_vm_t* vm, char** envp, slash_request_info_t* result)
         }
     }
 
-    fix_request_info(vm, result);
+    fix_request_info(vm, options, api, result);
 }
 
 static void
@@ -511,8 +527,15 @@ load_cgi_options(sl_vm_t* vm, cgi_options* options)
 {
     int i = 0;
     for(; options->incpaths && i < options->incpaths_count; i++) {
-        sl_require_path_prepend(vm, options->incpaths[++i]);
+        sl_require_path_prepend(vm, options->incpaths[i]);
     }
+
+    SLVAL vargv = sl_make_array(vm, 0, NULL);
+    for(i = 0; i < options->arg_script_options_count; i++) {
+        SLVAL varg = sl_make_cstring(vm, options->arg_script_options[i]);
+        sl_array_push(vm, vargv, 1, &varg);
+    }
+    sl_class_set_const(vm, vm->lib.Object, "ARGV", vargv);
 }
 
 static void
@@ -535,10 +558,16 @@ run_slash_script(slash_api_base_t* api, cgi_options* options, void* stack_top)
     sl_gc_set_stack_top(vm->arena, stack_top);
 
     load_cgi_options(vm, options);
-    load_request_info(vm, api->environ, &ctx.info);
+    load_request_info(vm, options, api, &ctx.info);
+
+#ifdef SL_TEST
+    register_cgi_test_utils(vm);
+#endif
 
     canonical_filename = ctx.info.real_canonical_filename;
+#ifndef SL_TEST
     vm->cwd = ctx.info.real_canonical_dir;
+#endif
 
     if(canonical_filename) {
         SL_TRY(exit_frame, SL_UNWIND_ALL, {
@@ -579,13 +608,37 @@ static void
 add_incpath_option(cgi_options* options, char * path)
 {
     if(options->incpaths_count == options->incpaths_capacity) {
-        options->incpaths_capacity *= 2;
+        if(options->incpaths_capacity == 0) {
+            options->incpaths_capacity = 5;
+        } else {
+            options->incpaths_capacity *= 2;
+        }
         options->incpaths = realloc(options->incpaths,
-            options->incpaths_capacity);
+            options->incpaths_capacity * sizeof(char*));
     }
 
     if(options->incpaths) {
         options->incpaths[options->incpaths_count++] = path;
+    }
+}
+
+static void
+add_script_option(cgi_options* options, char* option)
+{
+    if(options->arg_script_options_count ==
+        options->arg_script_options_capacity) {
+        if(options->arg_script_options_capacity == 0) {
+            options->arg_script_options_capacity = 5;
+        } else {
+            options->arg_script_options_capacity *= 2;
+        }
+        options->arg_script_options = realloc(options->arg_script_options,
+            options->arg_script_options_capacity * sizeof(char*));
+    }
+
+    if(options->arg_script_options) {
+        options->arg_script_options[options->arg_script_options_count++] =
+            option;
     }
 }
 
@@ -678,7 +731,19 @@ process_arguments(cgi_options* options, int argc, char** argv)
         } else if(strcmp(argv[i], "-h") == 0) {
             print_help(argv[0]);
             process_arguments_exit(options, 0);
-        } 
+        } else if(strcmp(argv[i], "--") == 0) {
+            break;
+        } else {
+            break;
+        }
+    }
+
+    if(i < argc) {
+        options->arg_script_filename = argv[i++];
+
+        for(; i < argc; ++i) {
+            add_script_option(options, argv[i]);
+        }
     }
 }
 
