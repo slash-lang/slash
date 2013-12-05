@@ -165,6 +165,13 @@ sl_error_backtrace(sl_vm_t* vm, SLVAL self)
 }
 
 static SLVAL
+sl_error_throw(sl_vm_t* vm, SLVAL self)
+{
+    sl_throw(vm, self);
+    return vm->lib.nil;
+}
+
+static SLVAL
 sl_error_to_s(sl_vm_t* vm, SLVAL self)
 {
     sl_error_t* error = get_error(vm, self);
@@ -235,7 +242,7 @@ sl_init_error(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Error, "message", 0, sl_error_message);
     sl_define_method(vm, vm->lib.Error, "backtrace", 0, sl_error_backtrace);
     sl_define_method(vm, vm->lib.Error, "to_s", 0, sl_error_to_s);
-    sl_define_method(vm, vm->lib.Error, "throw", 0, (SLVAL(*)())sl_throw);
+    sl_define_method(vm, vm->lib.Error, "throw", 0, sl_error_throw);
     
     vm->lib.Error_Frame = sl_define_class3(vm, sl_intern(vm, "Frame"), vm->lib.Object, vm->lib.Error);
     sl_class_set_allocator(vm, vm->lib.Error_Frame, allocate_error_frame);
