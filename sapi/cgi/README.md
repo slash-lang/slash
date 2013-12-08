@@ -6,13 +6,13 @@ At the moment it's probably not quite production-ready. Use with caution.
 
 ## Requirements
 
-The only requirement for using slash-cgi is the "FastCGI developmen kit".
+The only requirement for using slash-cgi is the "FastCGI development kit".
 
 For *Debian* (and probably *Ubuntu*): 
 
     sudo apt-get install libfcgi-dev
 
-For CentOS/Fedora, you have get it from the EPEL software repsoitory. The
+For CentOS/Fedora, you have get it from the EPEL software repository. The
 easiest way to do this, is by [installing the `epel-release`-package](http://fedoraproject.org/wiki/EPEL/FAQ#How_can_I_install_the_packages_from_the_EPEL_software_repository.3F)
 first. Then you can use `yum` to install the EPEL-packages:
 
@@ -34,7 +34,7 @@ To build slash-cgi you just add `--sapi=cgi` to your `./configure`-line:
     make
     make install
 
-The exact configuration process depends on the Webserver used. The SAPI tries
+The exact configuration process depends on the webserver used. The SAPI tries
 to emulate the behaviour of PHP-cgi, so most of the time the Instructions for
 PHP should also work for slash-cgi.
 
@@ -160,7 +160,7 @@ use cases you can use `nohup`. Sorry.
 * Add Support for pre-forked children
     * Also allow to set a maximum number of requests a children handles before
       it dies (and makes place for a "fresh" children)
-    * Throw in some init-files for Debian/CentOOS and maybe other plattforms
+    * Throw in some init-files for Debian/CentOS and maybe other platforms
 * Clean up the code
     * There are some TODO items spread across the code
     * Additionally there are some inconsistencies in the code (naming,
