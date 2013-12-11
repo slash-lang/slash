@@ -11,7 +11,7 @@ clean:
 	rm -f slash-cli
 
 install:
-	cp slash-cli $(INSTALL_PREFIX)/bin
+	cp slash-cli $(DESTDIR)/$(INSTALL_PREFIX)/bin
 
 uninstall:
-	rm -f $(INSTALL_PREFIX)/bin/slash-cli
+	rm -f $(DESTDIR)/$(INSTALL_PREFIX)/bin/slash-cli
