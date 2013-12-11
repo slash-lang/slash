@@ -97,16 +97,16 @@ clean:
 	for d in $(SAPIS); do make -C sapi/$$d clean; done
 
 install:
-	mkdir -p $(INSTALL_PREFIX)/bin
-	mkdir -p $(INSTALL_PREFIX)/lib
-	mkdir -p $(INSTALL_PREFIX)/include
-	cp libslash.a $(INSTALL_PREFIX)/lib
-	cp -r lib/* $(INSTALL_PREFIX)/lib
-	cp -r inc/* $(INSTALL_PREFIX)/include
+	mkdir -p $(DESTDIR)/$(INSTALL_PREFIX)/bin
+	mkdir -p $(DESTDIR)/$(INSTALL_PREFIX)/lib
+	mkdir -p $(DESTDIR)/$(INSTALL_PREFIX)/include
+	cp libslash.a $(DESTDIR)/$(INSTALL_PREFIX)/lib
+	cp -r lib/* $(DESTDIR)/$(INSTALL_PREFIX)/lib
+	cp -r inc/* $(DESTDIR)/$(INSTALL_PREFIX)/include
 	for sapi in $(SAPIS_ENABLED); do make -C sapi/$$sapi install; done
 
 uninstall:
-	rm -f $(INSTALL_PREFIX)/lib/libslash.a
-	rm -f $(INSTALL_PREFIX)/include/slash.h
-	rm -rf $(INSTALL_PREFIX)/include/slash
+	rm -f $(DESTDIR)/$(INSTALL_PREFIX)/lib/libslash.a
+	rm -f $(DESTDIR)/$(INSTALL_PREFIX)/include/slash.h
+	rm -rf $(DESTDIR)/$(INSTALL_PREFIX)/include/slash
 	for sapi in $(SAPIS_ENABLED); do make -C sapi/$$sapi uninstall; done
