@@ -814,11 +814,11 @@ unary_expression(sl_parse_state_t* ps)
     sl_token_t* tok;
     switch(peek_token(ps)->type) {
         case SL_TOK_MINUS:
-            tok = next_token(ps);
+            next_token(ps);
             expr = unary_expression(ps);
             return sl_make_send_node(ps, expr, sl_intern(ps->vm, "-self"), 0, NULL);
         case SL_TOK_TILDE:
-            tok = next_token(ps);
+            next_token(ps);
             expr = unary_expression(ps);
             return sl_make_send_node(ps, expr, sl_intern(ps->vm, "~self"), 0, NULL);
         case SL_TOK_NOT:
