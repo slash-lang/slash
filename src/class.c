@@ -106,7 +106,6 @@ sl_class_own_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     sl_class_t* klass = get_class(vm, self);
     SLVAL method;
     SLID mid = sl_intern2(vm, method_name);
-    method_name = sl_to_s(vm, method_name);
     if(sl_st_lookup(klass->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
         return method;
     }

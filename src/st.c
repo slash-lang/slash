@@ -434,7 +434,6 @@ sl_st_foreach(sl_st_table_t* table, int (*func)(), sl_st_data_t arg)
                 case SL_ST_STOP:
                     return 0;
                 case SL_ST_DELETE:
-                    tmp = ptr;
                     if (last == 0) {
                         table->bins[i] = ptr->next;
                     }
