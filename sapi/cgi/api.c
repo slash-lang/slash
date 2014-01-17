@@ -1,6 +1,7 @@
 #include <fcgiapp.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h>
 #include "api.h"
 
 void slash_api_free(slash_api_base_t * api)
@@ -65,32 +66,60 @@ typedef struct slash_fcgi_api {
 } slash_fcgi_api_t;
 
 static size_t
+slash_api_fcgi_write_stream(FCGX_Stream* stream, const char* str, size_t n)
+{
+    size_t result = 0;
+
+    while(n > 0) {
+        int towrite = n > INT_MAX ? INT_MAX : n;
+        int written = FCGX_PutStr(str + result, towrite, stream);
+
+        if(written <= 0) {
+            break;
+        } else {
+            result += written;
+            n -= written;
+        }
+    }
+
+    return result;
+}
+static size_t
 slash_api_fcgi_writeOut(slash_api_base_t* self, const char* str, size_t n)
 {
     slash_fcgi_api_t* fcgiSelf = (slash_fcgi_api_t*)self;
-
-    /* TODO: if n > MAX_INT split the call */
-    return FCGX_PutStr(str, (int)n, fcgiSelf->out);
+    return slash_api_fcgi_write_stream(fcgiSelf->out, str, n);
 }
 
 static size_t
 slash_api_fcgi_writeErr(slash_api_base_t* self, const char* str, size_t n)
 {
     slash_fcgi_api_t* fcgiSelf = (slash_fcgi_api_t*)self;
-
-    /* TODO: if n > MAX_INT split the call */
-    return FCGX_PutStr(str, (int)n, fcgiSelf->err);
+    return slash_api_fcgi_write_stream(fcgiSelf->err, str, n);
 }
 
 static size_t
 slash_api_fcgi_readIn(slash_api_base_t* self, char* str, size_t n)
 {
+    size_t result = 0;
     slash_fcgi_api_t* fcgiSelf = (slash_fcgi_api_t*)self;
 
-    /* TODO: FCGX_GetStr expects len as `int`. In case len > MAX_INT split up
-     * the call in two calls or whatever.
-     */
-    return FCGX_GetStr(str, n, fcgiSelf->in);
+    while(n > 0) {
+        int toread = n > INT_MAX ? INT_MAX : n;
+        int read = FCGX_GetStr(str + result, toread, fcgiSelf->in);
+
+        if(read > 0) {
+            result += read;
+            n -= read;
+        }
+
+        if(read < toread) {
+            /* EOF reached! */
+            break;
+        }
+    }
+
+    return result;
 }
 
 slash_api_base_t * slash_api_fcgi_new(FCGX_Stream * out, FCGX_Stream* err,

@@ -6,6 +6,8 @@
 #include <fcgiapp.h>
 #include <unistd.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdbool.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -224,18 +226,28 @@ env_to_http_header_name(sl_vm_t* vm, char* name, size_t len)
 }
 
 #define SAPI_CGI_MAX_HEADER_LENGTH (1024)
+#define SAPI_CGI_HEADER_SEPARATOR_LENGTH (2)
+static const char * SAPI_CGI_HEADER_SEPARATOR  = "\r\n";
+#define SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR_LENGTH (2)
+static const char * SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR = ": ";
+
 static void write_header(slash_context_t* ctx, char * name, char * value)
 {
-    char buff[SAPI_CGI_MAX_HEADER_LENGTH];
-    int len = snprintf(buff, sizeof(buff), "%s: %s\r\n", name, value);
+    int namelen = strlen(name);
+    int valuelen = strlen(value);
 
-    /* write the header only if there was no error in snprintf and it wasn't
-     * truncated.
-     * TODO: maybe handle truncated headers better
+    /* Emit the header withouth buffering. That way no buffer is requried
+     * and there will be no problems if a long header is written.
      */
-    if(len > 0 && len <= SAPI_CGI_MAX_HEADER_LENGTH) {
-        ctx->api->write_out(ctx->api, buff, len);
-    }
+    ctx->api->write_out(ctx->api, name, namelen);
+
+    ctx->api->write_out(ctx->api, SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR,
+        SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR_LENGTH);
+
+    ctx->api->write_out(ctx->api, value, valuelen);
+
+    ctx->api->write_out(ctx->api, SAPI_CGI_HEADER_SEPARATOR,
+        SAPI_CGI_HEADER_SEPARATOR_LENGTH);
 }
 
 #define SAPI_CGI_MAX_STATUS_LINE_LENGTH (64)
@@ -281,8 +293,9 @@ flush_headers(slash_context_t* ctx)
             write_header(ctx, "Content-Type", "text/html; charset=utf-8");
         }
 
-        // terminate headers
-        ctx->api->write_out(ctx->api, "\r\n", 2);
+        /* terminate headers */
+        ctx->api->write_out(ctx->api, SAPI_CGI_HEADER_SEPARATOR,
+            SAPI_CGI_HEADER_SEPARATOR_LENGTH);
     }
 }
 
@@ -452,18 +465,29 @@ load_request_info(sl_vm_t* vm, cgi_options* options, slash_api_base_t* api,
     fix_request_info(vm, options, api, result);
 }
 
-static void
+static bool
 read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, slash_request_info_t* info)
 {
+    bool result = true;
     slash_context_t* ctx = vm->data;
     size_t content_length = 0;
 
     opts->post_length = 0;
 
     if(info->content_length) {
-        content_length = strtol(info->content_length->value, NULL, 10);
-        /*TODO: don't trust the environment variables - check
-         * if content_length isn't too big*/
+        long long int cl;
+        cl = strtoll(info->content_length->value, NULL, 10);
+
+        /* check for underflow/overflow condition */
+        if(!((cl == LLONG_MIN || cl == LLONG_MAX) && errno == ERANGE)) {
+            if(cl > 0 && cl <= SIZE_MAX) {
+                content_length = (size_t) cl;
+            } else if(cl != 0) {
+                result = false;
+            }
+        } else {
+            result = false;
+        }
     }
 
     if(content_length > 0) {
@@ -475,11 +499,14 @@ read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, slash_request_info_t* info)
 
         opts->post_length = bytes_read;
     }
+
+    return result;
 }
 
-static void
+static bool
 setup_request_object(sl_vm_t* vm, slash_request_info_t* info)
 {
+    bool result = true;
     sl_request_opts_t opts;
 
     opts.method       =
@@ -497,9 +524,11 @@ setup_request_object(sl_vm_t* vm, slash_request_info_t* info)
     opts.env_count    = info->environment->count;
     opts.env          = info->environment->kvs;
     
-    read_post_data(vm, &opts, info);
+    result = read_post_data(vm, &opts, info);
 
     sl_request_set_opts(vm, &opts);
+
+    return result;
 }
 
 static void output(sl_vm_t* vm, char* buff, size_t len)
@@ -550,6 +579,7 @@ run_slash_script(slash_api_base_t* api, cgi_options* options, void* stack_top)
     sl_static_init();
     vm = sl_init("cgi-fcgi");
 
+    bzero(&ctx, sizeof(ctx));
     ctx.api = api;
     ctx.headers_sent = 0;
     ctx.vm = vm;
@@ -572,8 +602,14 @@ run_slash_script(slash_api_base_t* api, cgi_options* options, void* stack_top)
     if(canonical_filename) {
         SL_TRY(exit_frame, SL_UNWIND_ALL, {
             SL_TRY(exception_frame, SL_UNWIND_EXCEPTION, {
-                setup_request_object(vm, &ctx.info);
+                bool request_valid = setup_request_object(vm, &ctx.info);
+
                 setup_response_object(vm);
+
+                if(!request_valid) {
+                    sl_error(vm, vm->lib.Error, "Invalid Request");
+                }
+
                 sl_do_file_hashbang(vm, canonical_filename,
                     api->type == SLASH_REQUEST_CGI);
             }, error, {
