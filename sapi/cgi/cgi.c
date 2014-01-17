@@ -16,7 +16,7 @@
 #include "api.h"
 #include "http_status.h"
 
-extern char **environ;
+extern char** environ;
 
 typedef struct {
     sl_request_key_value_t* kvs;
@@ -29,10 +29,10 @@ typedef struct {
     sl_request_key_value_list_t* environment;
     sl_request_key_value_list_t* http_headers;
 
-    char * real_uri;
-    char * real_path_info;
-    char * real_canonical_filename;
-    char * real_canonical_dir;
+    char* real_uri;
+    char* real_path_info;
+    char* real_canonical_filename;
+    char* real_canonical_dir;
 
     sl_request_key_value_t* script_name;
     sl_request_key_value_t* path_translated;
@@ -61,8 +61,8 @@ slash_context_t;
 typedef struct {
     size_t incpaths_capacity;
     size_t incpaths_count;
-    char ** incpaths;
-    char * fcgi_bind;
+    char** incpaths;
+    char* fcgi_bind;
     int fcgi_backlog;
     int fcgi_num_childs;
 
@@ -75,7 +75,7 @@ typedef struct {
 static sl_request_key_value_list_t*
 sl_request_key_value_list_new(sl_vm_t* vm, size_t capacity)
 {
-   sl_request_key_value_list_t * list =
+   sl_request_key_value_list_t* list =
     sl_alloc(vm->arena, sizeof(sl_request_key_value_list_t));
 
    if(list) {
@@ -140,7 +140,7 @@ get_hashbang_length(uint8_t* src, size_t len)
 }
 
 static SLVAL
-sl_do_file_hashbang(sl_vm_t* vm, char * filename, int skip_hashbang)
+sl_do_file_hashbang(sl_vm_t* vm, char* filename, int skip_hashbang)
 {
     FILE* fh;
     uint8_t* src;
@@ -203,8 +203,8 @@ sl_str_dupn(sl_vm_t* vm, char* str, size_t n)
 static char*
 env_to_http_header_name(sl_vm_t* vm, char* name, size_t len)
 {
-    char * result = sl_alloc(vm->arena, len);
-    char * str = result;
+    char* result = sl_alloc(vm->arena, len);
+    char* str = result;
 
     *str++ = *name++;
     while (*name && (str - result) < len) {
@@ -227,11 +227,11 @@ env_to_http_header_name(sl_vm_t* vm, char* name, size_t len)
 
 #define SAPI_CGI_MAX_HEADER_LENGTH (1024)
 #define SAPI_CGI_HEADER_SEPARATOR_LENGTH (2)
-static const char * SAPI_CGI_HEADER_SEPARATOR  = "\r\n";
+static const char* SAPI_CGI_HEADER_SEPARATOR  = "\r\n";
 #define SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR_LENGTH (2)
-static const char * SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR = ": ";
+static const char* SAPI_CGI_HEADER_NAMEVALUE_SEPARATOR = ": ";
 
-static void write_header(slash_context_t* ctx, char * name, char * value)
+static void write_header(slash_context_t* ctx, char* name, char* value)
 {
     int namelen = strlen(name);
     int valuelen = strlen(value);
@@ -641,7 +641,7 @@ print_help(char* program_name)
 
 
 static void 
-add_incpath_option(cgi_options* options, char * path)
+add_incpath_option(cgi_options* options, char* path)
 {
     if(options->incpaths_count == options->incpaths_capacity) {
         if(options->incpaths_capacity == 0) {
@@ -682,7 +682,7 @@ static void
 init_options(cgi_options* options, size_t incpaths_capacity) 
 {
     int children;
-    char * children_raw;
+    char* children_raw;
     bzero(options, sizeof(cgi_options));
 
     options->fcgi_backlog = 5;
