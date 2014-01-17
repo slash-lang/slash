@@ -4,16 +4,16 @@
 #include <limits.h>
 #include "api.h"
 
-void slash_api_free(slash_api_base_t * api)
+void slash_api_free(slash_api_base_t* api)
 {
     free(api);
 }
 
 typedef struct slash_cgi_api {
     slash_api_base_t base;
-    FILE * out;
-    FILE * err;
-    FILE * in;
+    FILE* out;
+    FILE* err;
+    FILE* in;
 } slash_cgi_api_t;
 
 static size_t
@@ -40,9 +40,9 @@ slash_api_cgi_readIn(slash_api_base_t* self, char* str, size_t n)
     return fread(str, n, 1, cgiSelf->in) * n;
 }
 
-slash_api_base_t * slash_api_cgi_new(FILE* out, FILE* err, FILE* in, char** envp)
+slash_api_base_t* slash_api_cgi_new(FILE* out, FILE* err, FILE* in, char** envp)
 {
-    slash_cgi_api_t * result = malloc(sizeof(slash_cgi_api_t));
+    slash_cgi_api_t* result = malloc(sizeof(slash_cgi_api_t));
 
     if(result) {
         result->base.type = SLASH_REQUEST_CGI;
@@ -60,9 +60,9 @@ slash_api_base_t * slash_api_cgi_new(FILE* out, FILE* err, FILE* in, char** envp
 
 typedef struct slash_fcgi_api {
     slash_api_base_t base;
-    FCGX_Stream * out;
-    FCGX_Stream * err;
-    FCGX_Stream * in;
+    FCGX_Stream* out;
+    FCGX_Stream* err;
+    FCGX_Stream* in;
 } slash_fcgi_api_t;
 
 static size_t
@@ -122,10 +122,10 @@ slash_api_fcgi_readIn(slash_api_base_t* self, char* str, size_t n)
     return result;
 }
 
-slash_api_base_t * slash_api_fcgi_new(FCGX_Stream * out, FCGX_Stream* err,
-    FCGX_Stream* in, char ** envp)
+slash_api_base_t* slash_api_fcgi_new(FCGX_Stream* out, FCGX_Stream* err,
+    FCGX_Stream* in, char** envp)
 {
-    slash_fcgi_api_t * result = malloc(sizeof(slash_fcgi_api_t));
+    slash_fcgi_api_t* result = malloc(sizeof(slash_fcgi_api_t));
 
     if(result) {
         result->base.type = SLASH_REQUEST_FCGI;
