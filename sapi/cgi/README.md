@@ -141,7 +141,7 @@ can use the following formats:
 
     # bind to a TCP/IP socket:
 
-    # listens on localhost:1234 (this is the only supporter format on Windows)
+    # listens on localhost:1234 (this is the only supported format on Windows)
     sapi-cgi -b :1234
 
     # listens on a specific interface at port 1234:
@@ -154,17 +154,11 @@ use cases you can use `nohup`. Sorry.
 ## TODO
 
 * Test it (like, a **lot**)
-    * Especially the part which calculates the correct `SCRIPT_FILENAME` to
-      use, since this varies between different webservers/setups.
     * Test it on Windows (maybe even with IIS)
 * Add Support for pre-forked children
     * Also allow to set a maximum number of requests a children handles before
       it dies (and makes place for a "fresh" children)
     * Throw in some init-files for Debian/CentOS and maybe other platforms
-* Clean up the code
-    * There are some TODO items spread across the code
-    * Additionally there are some inconsistencies in the code (naming,
-      code-style).
 * About the FastCGI dev-kit:
     * Maybe ship it with the SAPI?
     * Make it optional, so slash-cgi can be compiled as CGI-only if the dev-kit
