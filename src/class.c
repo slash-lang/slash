@@ -293,7 +293,8 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
     SLVAL vsing = sl_allocate(vm, vm->lib.Class);
     sl_class_t* sing = (sl_class_t*)sl_get_ptr(vsing);
 
-    sl_class_t* super = (sl_class_t*)sl_get_ptr(vsuper);
+    sl_class_t* super = (sl_class_t*)sl_get_ptr(
+        sl_expect(vm, vsuper, vm->lib.Class));
 
     sing->extra->allocator = NULL;
     sing->super = super->base.klass;
