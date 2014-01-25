@@ -13,8 +13,8 @@ typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
     struct sl_gc_alloc* prev;
     size_t size;
+    sl_gc_shape_t* shape;
     char mark_flag;
-    char scan_pointers;
     void(*finalizer)(void*);
 }
 sl_gc_alloc_t;
@@ -34,7 +34,10 @@ alloc_for_ptr(void* ptr)
 static void
 free_alloc(sl_gc_alloc_t* alloc)
 {
-    if(alloc->finalizer) {
+    if(alloc->shape->finalize) {
+        alloc->shape->finalize(ptr_for_alloc(alloc));
+    } else if(alloc->finalizer) {
+        // backwards compat hack
         alloc->finalizer(ptr_for_alloc(alloc));
     }
     if(alloc->prev) {
@@ -128,6 +131,12 @@ sl_gc_find_alloc(sl_gc_arena_t* arena, void* ptr)
 void*
 sl_alloc(sl_gc_arena_t* arena, size_t size)
 {
+    return sl_alloc2(arena, &sl_gc_conservative, size);
+}
+
+void*
+sl_alloc2(sl_gc_arena_t* arena, sl_gc_shape_t* shape, size_t size)
+{
     sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t) + size);
     arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t)) + size;
     void* ptr;
@@ -136,7 +145,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     if(arena->allocs_since_gc > ALLOCS_PER_GC_RUN) {
         sl_gc_run(arena);
     }
-    
+
     ptr = ptr_for_alloc(alloc);
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
@@ -146,9 +155,9 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         alloc->next->prev = alloc;
     }
     alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
-    alloc->finalizer = NULL;
     alloc->mark_flag = arena->mark_flag;
-    alloc->scan_pointers = 1;
+    alloc->shape = shape;
+    alloc->finalizer = NULL;
     arena->table[hash] = alloc;
     arena->alloc_count++;
     arena->allocs_since_gc++;
@@ -158,25 +167,19 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
 void*
 sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 {
-    void* ptr = sl_alloc(arena, size);
-    alloc_for_ptr(ptr)->scan_pointers = 0;
-    return ptr;
+    return sl_alloc2(arena, &sl_gc_pointer_free, size);
 }
 
 void*
 sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
 {
     /* @TODO: more more efficient */
-    if(ptr == NULL) {
-        return sl_alloc(arena, new_size);
-    }
     sl_gc_alloc_t* old_alloc = alloc_for_ptr(ptr);
-    void* new_ptr = sl_alloc(arena, new_size);
-    sl_gc_alloc_t* new_alloc = alloc_for_ptr(new_ptr);
-    new_alloc->scan_pointers = old_alloc->scan_pointers;
+    void* new_ptr = sl_alloc2(arena, old_alloc->shape, new_size);
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
     }
+    alloc_for_ptr(new_ptr)->finalizer = old_alloc->finalizer;
     memcpy(new_ptr, ptr, new_size);
     return new_ptr;
 }
@@ -208,11 +211,12 @@ sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
     if(alloc->mark_flag == arena->mark_flag) {
         return;
     }
+
     alloc->mark_flag = arena->mark_flag;
-    if(!alloc->scan_pointers) {
-        return;
+
+    if(alloc->shape->mark) {
+        alloc->shape->mark(arena, ptr_for_alloc(alloc));
     }
-    sl_gc_mark_region(arena, ptr_for_alloc(alloc), alloc->size);
 }
 
 static void
@@ -265,10 +269,10 @@ sl_gc_run(sl_gc_arena_t* arena)
         arena->allocs_since_gc = 0;
         return;
     }
-    
+
     jmp_buf regs;
     setjmp(regs);
-    
+
     arena->allocs_since_gc = 0;
     arena->mark_flag = !arena->mark_flag;
     sl_gc_mark_region(arena, &regs, sizeof(regs));
@@ -317,3 +321,22 @@ sl_gc_memory_usage(sl_gc_arena_t* arena)
 {
     return arena->memory_usage;
 }
+
+static void
+conservative_mark(sl_gc_arena_t* arena, void* ptr)
+{
+    sl_gc_alloc_t* alloc = alloc_for_ptr(ptr);
+    sl_gc_mark_region(arena, ptr, alloc->size);
+}
+
+sl_gc_shape_t
+sl_gc_conservative = {
+    .mark     = conservative_mark,
+    .finalize = NULL,
+};
+
+sl_gc_shape_t
+sl_gc_pointer_free = {
+    .mark     = NULL,
+    .finalize = NULL,
+};
