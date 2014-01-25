@@ -28,13 +28,18 @@ free_ruby_object(void* vobj)
     rb_gc_unregister_address(&obj->obj);
 }
 
+static sl_gc_shape_t
+ruby_object_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_ruby_object,
+};
+
 static sl_object_t*
 alloc_ruby_object(sl_vm_t* vm)
 {
-    sl_ruby_object_t* obj = sl_alloc(vm->arena, sizeof(sl_ruby_object_t));
+    sl_ruby_object_t* obj = sl_alloc2(vm->arena, &ruby_object_shape, sizeof(sl_ruby_object_t));
     obj->obj = Qnil;
     rb_gc_register_address(&obj->obj);
-    sl_gc_set_finalizer(obj, free_ruby_object);
     return (sl_object_t*)obj;
 }
 

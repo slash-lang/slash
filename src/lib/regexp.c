@@ -57,8 +57,9 @@ get_regexp_match(sl_vm_t* vm, SLVAL matchv)
 }
 
 static void
-free_regexp(sl_regexp_t* re)
+free_regexp(void* ptr)
 {
+    sl_regexp_t* re = ptr;
     /*
     if(re->study) {
         pcre_free_study(re->study);
@@ -69,12 +70,16 @@ free_regexp(sl_regexp_t* re)
     }
 }
 
+static sl_gc_shape_t
+regexp_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_regexp,
+};
+
 static sl_object_t*
 allocate_regexp(sl_vm_t* vm)
 {
-    sl_object_t* re = sl_alloc(vm->arena, sizeof(sl_regexp_t));
-    sl_gc_set_finalizer(re, (void(*)(void*))free_regexp);
-    return re;
+    return sl_alloc2(vm->arena, &regexp_shape, sizeof(sl_regexp_t));
 }
 
 static sl_object_t*
@@ -356,7 +361,7 @@ sl_init_regexp(sl_vm_t* vm)
     sl_class_set_allocator(vm, vm->lib.Regexp, allocate_regexp);
     vm->lib.Regexp_Match = sl_define_class3(vm, sl_intern(vm, "Match"), vm->lib.Object, vm->lib.Regexp);
     sl_class_set_allocator(vm, vm->lib.Regexp_Match, allocate_regexp_match);
-    
+
     sl_define_method(vm, vm->lib.Regexp, "init", -2, sl_regexp_init);
     /*
     sl_define_method(vm, vm->lib.Regexp, "compile", 0, sl_regexp_compile);
@@ -366,11 +371,11 @@ sl_init_regexp(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Regexp, "source", 0, sl_regexp_source);
     sl_define_method(vm, vm->lib.Regexp, "options", 0, sl_regexp_options);
     sl_define_method(vm, vm->lib.Regexp, "==", 1, sl_regexp_eq);
-    
+
     sl_class_set_const(vm, vm->lib.Regexp, "CASELESS", sl_make_int(vm, PCRE_CASELESS));
     sl_class_set_const(vm, vm->lib.Regexp, "EXTENDED", sl_make_int(vm, PCRE_EXTENDED));
     sl_class_set_const(vm, vm->lib.Regexp, "PCRE_VERSION", sl_make_cstring(vm, pcre_version()));
-    
+
     sl_define_method(vm, vm->lib.Regexp_Match, "regexp", 0, sl_regexp_match_regexp);
     sl_define_method(vm, vm->lib.Regexp_Match, "[]", 1, sl_regexp_match_index);
     sl_define_method(vm, vm->lib.Regexp_Match, "byte_offset", 1, sl_regexp_match_byte_offset);

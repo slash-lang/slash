@@ -28,14 +28,19 @@ slash_free(void* obj)
     }
 }
 
+static sl_gc_shape_t
+slash_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = slash_free,
+};
+
 static sl_object_t*
 slash_alloc(sl_vm_t* vm)
 {
-    slash_t* sl = sl_alloc(vm->arena, sizeof(*sl));
+    slash_t* sl = sl_alloc2(vm->arena, &slash_shape, sizeof(*sl));
     sl->vm = NULL;
     sl->host_vm = vm;
     sl->output_handler = vm->lib.nil;
-    sl_gc_set_finalizer(sl, slash_free);
     return (sl_object_t*)sl;
 }
 
@@ -91,7 +96,7 @@ slash_eval(sl_vm_t* host_vm, SLVAL slash, SLVAL code_value)
     sl_vm_frame_t catch_frame;
     SLVAL ex, retval = host_vm->lib._true;
     SL_TRY(catch_frame, SL_UNWIND_ALL, {
-        sl_do_string(vm, code->buff, code->buff_len, "(eval)", 1);  
+        sl_do_string(vm, code->buff, code->buff_len, "(eval)", 1);
     }, ex, {
         retval = host_vm->lib._false;
     });

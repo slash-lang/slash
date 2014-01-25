@@ -10,19 +10,25 @@ typedef struct {
 sl_file_t;
 
 static void
-free_file(sl_file_t* file)
+free_file(void* ptr)
 {
+    sl_file_t* file = ptr;
+
     if(file->file) {
         fclose(file->file);
     }
 }
 
+static sl_gc_shape_t
+file_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_file,
+};
+
 static sl_object_t*
 allocate_file(sl_vm_t* vm)
 {
-    sl_file_t* file = sl_alloc(vm->arena, sizeof(sl_file_t));
-    sl_gc_set_finalizer(file, (void(*)(void*))free_file);
-    return (sl_object_t*)file;
+    return sl_alloc2(vm->arena, &file_shape, sizeof(sl_file_t));
 }
 
 static sl_file_t*

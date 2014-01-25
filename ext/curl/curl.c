@@ -21,16 +21,21 @@ curl_easy_free(void* easy)
     curl_easy_cleanup(((curl_easy_t*)easy)->curl);
 }
 
+static sl_gc_shape_t
+curl_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = curl_easy_free,
+};
+
 static sl_object_t*
 curl_easy_alloc(sl_vm_t* vm)
 {
-    curl_easy_t* c = (void*)sl_alloc(vm->arena, sizeof(curl_easy_t));
+    curl_easy_t* c = sl_alloc2(vm->arena, &curl_shape, sizeof(curl_easy_t));
     c->curl = curl_easy_init();
     c->gc_protect_array = sl_make_array(vm, 0, NULL);
     /* set some good defaults */
     curl_easy_setopt(c->curl, CURLOPT_NOPROGRESS, 1);
     curl_easy_setopt(c->curl, CURLOPT_NOSIGNAL, 1);
-    sl_gc_set_finalizer(c, curl_easy_free);
     return (void*)c;
 }
 

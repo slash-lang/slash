@@ -6,17 +6,23 @@
 #include <slash/string.h>
 
 static void
-free_bignum(sl_bignum_t* bn)
+free_bignum(void* ptr)
 {
+    sl_bignum_t* bn = ptr;
     mpz_clear(bn->mpz);
 }
+
+static sl_gc_shape_t
+bignum_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_bignum,
+};
 
 static sl_object_t*
 allocate_bignum(sl_vm_t* vm)
 {
-    sl_bignum_t* bn = (sl_bignum_t*)sl_alloc(vm->arena, sizeof(sl_bignum_t));
+    sl_bignum_t* bn = sl_alloc2(vm->arena, &bignum_shape, sizeof(sl_bignum_t));
     bn->base.primitive_type = SL_T_BIGNUM;
-    sl_gc_set_finalizer(bn, (void(*)(void*))free_bignum);
     mpz_init(bn->mpz);
     return (sl_object_t*)bn;
 }

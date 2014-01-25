@@ -77,8 +77,10 @@ typedef struct {
 sl_socket_t;
 
 static void
-free_socket(sl_socket_t* sock)
+free_socket(void* ptr)
 {
+    sl_socket_t* sock = ptr;
+
     if(sock->socket != -1) {
         #ifdef __WIN32
             closesocket(sock->socket);
@@ -88,12 +90,17 @@ free_socket(sl_socket_t* sock)
     }
 }
 
+static sl_gc_shape_t
+socket_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_socket,
+};
+
 static sl_object_t*
 allocate_socket(sl_vm_t* vm)
 {
-    sl_socket_t* sock = sl_alloc(vm->arena, sizeof(sl_socket_t));
+    sl_socket_t* sock = sl_alloc2(vm->arena, &socket_shape, sizeof(sl_socket_t));
     sock->socket = -1;
-    sl_gc_set_finalizer(sock, (void(*)(void*))free_socket);
     return (sl_object_t*)sock;
 }
 

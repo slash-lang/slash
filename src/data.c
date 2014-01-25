@@ -8,17 +8,22 @@ free_data(void* data_)
     data->type->free(data->vm, data->data);
 }
 
+static sl_gc_shape_t
+data_shape = {
+    .mark     = sl_gc_conservative_mark,
+    .finalize = free_data,
+};
+
 sl_object_t*
 sl_make_data(sl_vm_t* vm, SLVAL klass, sl_data_type_t* type, void* data)
 {
-    sl_data_t* object = sl_alloc(vm->arena, sizeof(sl_data_t));
+    sl_data_t* object = sl_alloc2(vm->arena, &data_shape, sizeof(sl_data_t));
     object->base.klass = klass;
     object->base.primitive_type = SL_T_DATA;
     object->base.instance_variables = sl_st_init_table(vm, &sl_id_hash_type);
     object->type = type;
     object->data = data;
     object->vm = vm;
-    sl_gc_set_finalizer(object, free_data);
     return (sl_object_t*)object;
 }
 
