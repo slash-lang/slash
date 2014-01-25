@@ -10,7 +10,7 @@
 #include <slash/error.h>
 #include <slash/platform.h>
 #include <slash/method.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 
 static int
 sl_statically_initialized;

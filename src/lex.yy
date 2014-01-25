@@ -2,7 +2,7 @@
     #include <slash/lex.h>
     #include <slash/string.h>
     #include <slash/error.h>
-    #include <slash/mem.h>
+    #include <slash/gc.h>
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive stack

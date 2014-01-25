@@ -1,5 +1,5 @@
-#ifndef SL_MEM_H
-#define SL_MEM_H
+#ifndef SL_GC_H
+#define SL_GC_H
 
 #include <stddef.h>
 
