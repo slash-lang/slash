@@ -322,8 +322,8 @@ sl_gc_memory_usage(sl_gc_arena_t* arena)
     return arena->memory_usage;
 }
 
-static void
-conservative_mark(sl_gc_arena_t* arena, void* ptr)
+void
+sl_gc_conservative_mark(sl_gc_arena_t* arena, void* ptr)
 {
     sl_gc_alloc_t* alloc = alloc_for_ptr(ptr);
     sl_gc_mark_region(arena, ptr, alloc->size);
@@ -331,7 +331,7 @@ conservative_mark(sl_gc_arena_t* arena, void* ptr)
 
 sl_gc_shape_t
 sl_gc_conservative = {
-    .mark     = conservative_mark,
+    .mark     = sl_gc_conservative_mark,
     .finalize = NULL,
 };
 

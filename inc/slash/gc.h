@@ -61,4 +61,7 @@ sl_gc_alloc_count(sl_gc_arena_t* arena);
 size_t
 sl_gc_memory_usage(sl_gc_arena_t* arena);
 
+void
+sl_gc_conservative_mark(sl_gc_arena_t* arena, void* ptr);
+
 #endif
