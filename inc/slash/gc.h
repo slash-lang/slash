@@ -44,9 +44,6 @@ void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr);
 
 void
-sl_gc_set_finalizer(void* ptr, void(*finalizer)(void*));
-
-void
 sl_free_gc_arena(sl_gc_arena_t* arena);
 
 void

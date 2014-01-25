@@ -15,7 +15,6 @@ typedef struct sl_gc_alloc {
     size_t size;
     sl_gc_shape_t* shape;
     char mark_flag;
-    void(*finalizer)(void*);
 }
 sl_gc_alloc_t;
 
@@ -36,9 +35,6 @@ free_alloc(sl_gc_alloc_t* alloc)
 {
     if(alloc->shape->finalize) {
         alloc->shape->finalize(ptr_for_alloc(alloc));
-    } else if(alloc->finalizer) {
-        // backwards compat hack
-        alloc->finalizer(ptr_for_alloc(alloc));
     }
     if(alloc->prev) {
         alloc->prev->next = alloc->next;
@@ -157,7 +153,6 @@ sl_alloc2(sl_gc_arena_t* arena, sl_gc_shape_t* shape, size_t size)
     alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
     alloc->mark_flag = arena->mark_flag;
     alloc->shape = shape;
-    alloc->finalizer = NULL;
     arena->table[hash] = alloc;
     arena->alloc_count++;
     arena->allocs_since_gc++;
@@ -179,7 +174,6 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
     }
-    alloc_for_ptr(new_ptr)->finalizer = old_alloc->finalizer;
     memcpy(new_ptr, ptr, new_size);
     return new_ptr;
 }
@@ -290,12 +284,6 @@ void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 {
     arena->stack_top = (intptr_t)ptr & ~(POINTER_ALIGN_BYTES - 1);
-}
-
-void
-sl_gc_set_finalizer(void* ptr, void(*finalizer)(void*))
-{
-    alloc_for_ptr(ptr)->finalizer = finalizer;
 }
 
 void
