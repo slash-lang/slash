@@ -11,9 +11,9 @@
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
-    size_t size;
+    size_t size : sizeof(size_t) * 8 - 1;
+    size_t marked : 1;
     sl_gc_shape_t* shape;
-    char mark_flag;
 }
 sl_gc_alloc_t;
 
@@ -53,7 +53,6 @@ struct sl_gc_arena {
     size_t memory_usage;
     size_t allocs_since_gc;
     intptr_t stack_top;
-    int mark_flag;
     int enabled;
 };
 
@@ -79,7 +78,6 @@ sl_make_gc_arena()
     arena->alloc_count = 0;
     arena->memory_usage = sizeof(*arena) + (arena->table_count * sizeof(sl_gc_alloc_t*));
     arena->allocs_since_gc = 0;
-    arena->mark_flag = 0;
     arena->enabled = 1;
     return arena;
 }
@@ -138,9 +136,9 @@ sl_alloc2(sl_gc_arena_t* arena, sl_gc_shape_t* shape, size_t size)
     ptr = ptr_for_alloc(alloc);
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
-    alloc->size = size;
     alloc->next = arena->table[hash];
-    alloc->mark_flag = arena->mark_flag;
+    alloc->size = size;
+    alloc->marked = 0;
     alloc->shape = shape;
     arena->table[hash] = alloc;
     arena->alloc_count++;
@@ -191,11 +189,11 @@ sl_gc_mark_region(sl_gc_arena_t* arena, void* ptr, size_t size)
 static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    if(alloc->mark_flag == arena->mark_flag) {
+    if(alloc->marked) {
         return;
     }
 
-    alloc->mark_flag = arena->mark_flag;
+    alloc->marked = 1;
 
     if(alloc->shape->mark) {
         alloc->shape->mark(arena, ptr_for_alloc(alloc));
@@ -232,7 +230,10 @@ sweep_bucket(sl_gc_arena_t* arena, int i)
     while(alloc) {
         sl_gc_alloc_t* next = alloc->next;
 
-        if(alloc->mark_flag != arena->mark_flag) {
+        if(alloc->marked) {
+            alloc->marked = 0;
+            prev = alloc;
+        } else {
             free_alloc(alloc);
 
             if(prev) {
@@ -240,8 +241,6 @@ sweep_bucket(sl_gc_arena_t* arena, int i)
             } else {
                 arena->table[i] = next;
             }
-        } else {
-            prev = alloc;
         }
 
         alloc = next;
@@ -268,7 +267,6 @@ sl_gc_run(sl_gc_arena_t* arena)
     setjmp(regs);
 
     arena->allocs_since_gc = 0;
-    arena->mark_flag = !arena->mark_flag;
     sl_gc_mark_region(arena, &regs, sizeof(regs));
     sl_gc_mark_stack(arena);
     sl_gc_sweep(arena);
