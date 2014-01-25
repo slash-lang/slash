@@ -9,9 +9,11 @@
 #define ALLOCS_PER_GC_RUN (10000)
 #define ALLOC_BUCKET_COUNT (65536)
 
+#define ALLOC_STRUCT_SIZE_BITS (sizeof(size_t) * 8 - 1)
+
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
-    size_t size : sizeof(size_t) * 8 - 1;
+    size_t size : ALLOC_STRUCT_SIZE_BITS;
     size_t marked : 1;
     sl_gc_shape_t* shape;
 }
@@ -124,18 +126,22 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
 void*
 sl_alloc2(sl_gc_arena_t* arena, sl_gc_shape_t* shape, size_t size)
 {
+    if(size >> ALLOC_STRUCT_SIZE_BITS) {
+        // requested size is too big to express in the number of bits we have
+        // in sl_gc_alloc_t::size
+        return NULL;
+    }
+
     sl_gc_alloc_t* alloc = malloc(sizeof(sl_gc_alloc_t) + size);
     arena->memory_usage += sizeof(sizeof(sl_gc_alloc_t)) + size;
-    void* ptr;
-    intptr_t hash;
 
     if(arena->allocs_since_gc > ALLOCS_PER_GC_RUN) {
         sl_gc_run(arena);
     }
 
-    ptr = ptr_for_alloc(alloc);
+    void* ptr = ptr_for_alloc(alloc);
     memset(ptr, 0, size);
-    hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
+    intptr_t hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     alloc->next = arena->table[hash];
     alloc->size = size;
     alloc->marked = 0;
