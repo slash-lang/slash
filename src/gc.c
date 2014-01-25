@@ -11,7 +11,6 @@
 
 typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
-    struct sl_gc_alloc* prev;
     size_t size;
     sl_gc_shape_t* shape;
     char mark_flag;
@@ -35,12 +34,6 @@ free_alloc(sl_gc_alloc_t* alloc)
 {
     if(alloc->shape->finalize) {
         alloc->shape->finalize(ptr_for_alloc(alloc));
-    }
-    if(alloc->prev) {
-        alloc->prev->next = alloc->next;
-    }
-    if(alloc->next) {
-        alloc->next->prev = alloc->prev;
     }
     free(alloc);
 }
@@ -96,8 +89,8 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
 {
     size_t i;
 
-    sl_gc_alloc_t *alloc, *next;
     for(i = 0; i < arena->table_count; i++) {
+        sl_gc_alloc_t *alloc, *next;
         alloc = arena->table[i];
         while(alloc) {
             next = alloc->next;
@@ -105,8 +98,8 @@ sl_free_gc_arena(sl_gc_arena_t* arena)
             alloc = next;
         }
     }
-    free(arena->table);
 
+    free(arena->table);
     free(arena);
 }
 
@@ -147,10 +140,6 @@ sl_alloc2(sl_gc_arena_t* arena, sl_gc_shape_t* shape, size_t size)
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
     alloc->size = size;
     alloc->next = arena->table[hash];
-    if(alloc->next) {
-        alloc->next->prev = alloc;
-    }
-    alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
     alloc->mark_flag = arena->mark_flag;
     alloc->shape = shape;
     arena->table[hash] = alloc;
@@ -235,25 +224,36 @@ sl_gc_mark_stack(sl_gc_arena_t* arena)
 }
 
 static void
+sweep_bucket(sl_gc_arena_t* arena, int i)
+{
+    sl_gc_alloc_t* alloc = arena->table[i];
+    sl_gc_alloc_t* prev = NULL;
+
+    while(alloc) {
+        sl_gc_alloc_t* next = alloc->next;
+
+        if(alloc->mark_flag != arena->mark_flag) {
+            free_alloc(alloc);
+
+            if(prev) {
+                prev->next = next;
+            } else {
+                arena->table[i] = next;
+            }
+        } else {
+            prev = alloc;
+        }
+
+        alloc = next;
+    }
+}
+
+static void
 sl_gc_sweep(sl_gc_arena_t* arena)
 {
-    sl_gc_alloc_t *alloc, *next;
-    size_t i;
-    size_t collected = 0;
-    for(i = 0; i < arena->table_count; i++) {
-        alloc = arena->table[i];
-        while(alloc) {
-            next = alloc->next;
-            if(alloc->mark_flag != arena->mark_flag) {
-                free_alloc(alloc);
-                collected++;
-            }
-            alloc = next;
-        }
+    for(size_t i = 0; i < arena->table_count; i++) {
+        sweep_bucket(arena, i);
     }
-    #ifdef SL_GC_DEBUG
-        printf("made %d collections, %d allocs still alive\n", (int)collected, (int)arena->alloc_count);
-    #endif
 }
 
 void
