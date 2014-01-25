@@ -6,7 +6,7 @@
 #include <slash/class.h>
 #include <slash/method.h>
 #include <slash/object.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/lib/array.h>
 #include <slash/lib/lambda.h>
 

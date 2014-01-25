@@ -1,6 +1,6 @@
 #include <slash/lex.h>
 #include <slash/utf8.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/string.h>
 #include <string.h>
 #include <stdio.h>

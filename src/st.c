@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <slash/st.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/vm.h>
 
 #define ST_DEFAULT_MAX_DENSITY 5
