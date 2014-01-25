@@ -5,7 +5,7 @@
 #include <slash/platform.h>
 #include <stdint.h>
 
-#define POINTER_ALIGN_BYTES (4)
+#define POINTER_ALIGN_BYTES (sizeof(void*))
 #define ALLOCS_PER_GC_RUN (10000)
 #define ALLOC_BUCKET_COUNT (4096)
 
