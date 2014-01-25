@@ -7,7 +7,7 @@
 
 #define POINTER_ALIGN_BYTES (4)
 #define ALLOCS_PER_GC_RUN (10000)
-#define ALLOC_BUCKET_COUNT (65536)
+#define ALLOC_BUCKET_COUNT (4096)
 
 #define ALLOC_STRUCT_SIZE_BITS (sizeof(size_t) * 8 - 1)
 
