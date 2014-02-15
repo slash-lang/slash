@@ -28,6 +28,9 @@ vm_helper_define_singleton_method(sl_vm_exec_ctx_t* ctx, SLVAL on, SLID name, SL
 static SLVAL
 vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count);
 
+static void
+vm_helper_expand_splat(sl_vm_t* vm, SLVAL** vals, size_t* count);
+
 #define NEXT() (*ip++)
 
 #define NEXT_OPCODE()           (NEXT().opcode)
@@ -99,7 +102,7 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t start_ip)
     reset_exception_handler:
         catch_frame.prev = vm->call_stack;
         vm->call_stack = &catch_frame;
-        
+
         if(sl_setjmp(catch_frame.as.handler_frame.env)) {
             vm->call_stack = catch_frame.prev;
             if(exception_handler && (catch_frame.as.handler_frame.unwind_type & SL_UNWIND_EXCEPTION)) {
@@ -202,4 +205,36 @@ vm_helper_build_string(sl_vm_t* vm, SLVAL* vals, size_t count)
         j += str->buff_len;
     }
     return sl_make_string_no_copy(vm, buff, len);
+}
+
+static void
+vm_helper_expand_splat(sl_vm_t* vm, SLVAL** vals, size_t* count)
+{
+    if(*count == 0) {
+        return;
+    }
+
+    SLVAL last_val = (*vals)[*count - 1];
+    sl_primitive_type_t last_val_type = sl_get_primitive_type(last_val);
+
+    if(last_val_type == SL_T_NIL) {
+        --*count;
+        return;
+    }
+
+    if(last_val_type != SL_T_ARRAY) {
+        return;
+    }
+
+    SLVAL* array_elements;
+    size_t array_count = sl_array_items_no_copy(vm, last_val, &array_elements);
+
+    size_t new_count = (*count - 1) + array_count;
+    SLVAL* new_vals = sl_alloc(vm->arena, sizeof(SLVAL) * new_count);
+
+    memcpy(new_vals, *vals, (*count - 1) * sizeof(SLVAL));
+    memcpy(new_vals + (*count - 1), array_elements, array_count * sizeof(SLVAL));
+
+    *count = new_count;
+    *vals = new_vals;
 }
