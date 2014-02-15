@@ -128,6 +128,12 @@ SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
     }
 }
 
+SEND_SPLAT(REG receiver, SLID id, size_t argc, REG* argv, REG* dest)
+{
+    vm_helper_expand_splat(vm, &argv, &argc);
+    *dest = sl_send2(vm, receiver, id, argc, argv);
+}
+
 JUMP(IP new_ip)
 {
     ip = section->insns + new_ip;
