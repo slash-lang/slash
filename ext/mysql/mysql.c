@@ -193,10 +193,10 @@ sl_mysql_stmt_execute(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
     mysql_stmt_t* stmt = get_mysql_stmt(vm, self);
     size_t req = mysql_stmt_param_count(stmt->stmt);
+
     if(argc < req) {
-        char buff[100];
-        sprintf(buff, "Prepared statement has %lu parameter markers, but only %lu parameters were given", req, argc);
-        sl_throw_message2(vm, vm->lib.ArgumentError, buff);
+        sl_error(vm, vm->lib.ArgumentError,
+            "Prepared statement has %d parameter markers, but only %d parameters were given", (int)req, (int)argc);
     }
 
     if(!stmt->bind) {
@@ -330,7 +330,7 @@ sl_mysql_raw_query(sl_vm_t* vm, SLVAL self, SLVAL query)
         for(int i = 0; i < nrows; i++) {
             SLVAL* cells = sl_alloc(vm->arena, sizeof(SLVAL) * ncolumns * 2);
             MYSQL_ROW row = mysql_fetch_row(result);
-            size_t* lengths = mysql_fetch_lengths(result);
+            unsigned long* lengths = mysql_fetch_lengths(result);
             for(int j = 0; j < ncolumns; j++) {
                 cells[j * 2] = sl_make_cstring(vm, fields[j].name);
                 if(row[j]) {
