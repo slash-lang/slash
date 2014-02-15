@@ -42,4 +42,25 @@ class VarArgsTest extends Test {
         assert_equal([9, 8, []], fixed_optional_and_var_arg(9, 8));
         assert_equal([9, 8, [7]], fixed_optional_and_var_arg(9, 8, 7));
     }
+
+    def identity_splat(*x) {
+        x;
+    }
+
+    def test_send_splat {
+        a = nil;
+        assert_equal([1], identity_splat(1, *a));
+
+        a = 2;
+        assert_equal([1, 2], identity_splat(1, *a));
+
+        a = [];
+        assert_equal([1], identity_splat(1, *a));
+
+        a = [2];
+        assert_equal([1, 2], identity_splat(1, *a));
+
+        a = [2, 3];
+        assert_equal([1, 2, 3], identity_splat(1, *a));
+    }
 }
