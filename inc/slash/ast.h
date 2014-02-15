@@ -184,6 +184,7 @@ typedef struct sl_node_send {
     SLID id;
     sl_node_base_t** args;
     size_t arg_count;
+    bool splat_last;
 }
 sl_node_send_t;
 
