@@ -222,7 +222,7 @@ for_expression(sl_parse_state_t* ps)
     }
     expect_token(ps, SL_TOK_IN);
     expr = expression(ps);
-    
+
     scope.prev = ps->scope;
     scope.flags = scope.prev->flags | SL_PF_CAN_NEXT_LAST;
     ps->scope = &scope;
@@ -231,7 +231,7 @@ for_expression(sl_parse_state_t* ps)
     if(scope.flags & SL_PF_SCOPE_CLOSURE) {
         ps->scope->flags |= SL_PF_SCOPE_CLOSURE;
     }
-    
+
     if(peek_token(ps)->type == SL_TOK_ELSE) {
         next_token(ps);
         else_body = body_expression(ps);
@@ -363,16 +363,18 @@ def_expression(sl_parse_state_t* ps)
             error(ps, sl_make_cstring(ps->vm, "not a chance"), peek_token(ps));
         }
         while(peek_token(ps)->type != SL_TOK_CLOSE_PAREN) {
+            if(peek_token(ps)->type == SL_TOK_TIMES) {
+                next_token(ps);
+                tok = expect_token(ps, SL_TOK_IDENTIFIER);
+                rest_arg = (sl_string_t*)sl_get_ptr(
+                    sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
+                break;
+            }
             tok = expect_token(ps, SL_TOK_IDENTIFIER);
             if(peek_token(ps)->type == SL_TOK_EQUALS) {
                 at_opt_args = 1;
             }
-            if(peek_token(ps)->type == SL_TOK_RANGE_EX) {
-                rest_arg = (sl_string_t*)sl_get_ptr(
-                    sl_make_string(ps->vm, tok->as.str.buff, tok->as.str.len));
-                expect_token(ps, SL_TOK_RANGE_EX);
-                break;
-            } else if(at_opt_args) {
+            if(at_opt_args) {
                 expect_token(ps, SL_TOK_EQUALS);
                 if(opt_arg_count >= opt_arg_cap) {
                     opt_arg_cap *= 2;
@@ -999,7 +1001,7 @@ assignment_expression(sl_parse_state_t* ps)
         case SL_TOK_ASSIGN_AND:         op_method = "&&"; break;
         case SL_TOK_ASSIGN_SHIFT_LEFT:  op_method = "<<"; break;
         case SL_TOK_ASSIGN_SHIFT_RIGHT: op_method = ">>"; break;
-        
+
         default:
             return left;
     }
