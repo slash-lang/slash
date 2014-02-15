@@ -626,7 +626,7 @@ NODE(sl_node_send_t, send)
 {
     size_t arg_base, i;
     /* compile the receiver into our 'dest' register */
-    if(node->recv->type != SL_NODE_SELF) {
+    if(node->recv->type != SL_NODE_SELF || node->splat_last) {
         compile_node(cs, node->recv, dest);
     }
 
@@ -635,11 +635,16 @@ NODE(sl_node_send_t, send)
         compile_node(cs, node->args[i], arg_base + i);
     }
 
-    if(node->recv->type == SL_NODE_SELF) {
-        emit_send_self(cs, node->id, arg_base, node->arg_count, dest);
+    if(node->splat_last) {
+        op_send_splat(cs, dest, node->id, node->arg_count, arg_base, dest);
     } else {
-        emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
+        if(node->recv->type == SL_NODE_SELF) {
+            emit_send_self(cs, node->id, arg_base, node->arg_count, dest);
+        } else {
+            emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
+        }
     }
+
     reg_free_block(cs, arg_base, node->arg_count);
 }
 
