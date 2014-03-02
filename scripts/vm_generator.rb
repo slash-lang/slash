@@ -109,24 +109,44 @@ end
 
 # generate a computed goto vm
 File.open("src/gen/goto_vm.inc", "w") do |f|
+  goto_code = <<-C
+    #ifdef __GNUC__
+      #pragma GCC diagnostic push
+      #pragma GCC diagnostic ignored \"-Wpedantic\"
+    #endif
+    goto *NEXT_THREADED_OPCODE();
+    #ifdef __GNUC__
+      #pragma GCC diagnostic pop
+    #endif
+  C
+  f.puts goto_code
   insns.each do |insn|
     f.puts "vm_op_#{insn.name}: {"
     insn.operands.each do |operand|
       f.puts operand.code
     end
     f.puts insn.code
-    f.puts "}"
     f.puts "saved_ip = ip + 1;"
-    f.puts "goto *NEXT_THREADED_OPCODE();"
+    f.puts goto_code
+    f.puts "}"
     f.puts
   end
 end
 
 # generate the setup code for the computed goto vm
 File.open("src/gen/goto_vm_setup.inc", "w") do |f|
+  f.puts "#ifdef __GNUC__"
+  f.puts "  #pragma GCC diagnostic push"
+  f.puts "  #pragma GCC diagnostic ignored \"-Wpedantic\""
+  f.puts "#endif"
+
   insns.each do |insn|
     f.puts "sl_vm_op_addresses[SL_OP_#{insn.name}] = &&vm_op_#{insn.name};"
   end
+
+  f.puts "#ifdef __GNUC__"
+  f.puts "  #pragma GCC diagnostic pop"
+  f.puts "#endif"
 end
 
 # generate emitters for each opcode
