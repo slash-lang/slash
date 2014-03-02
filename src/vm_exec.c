@@ -116,8 +116,6 @@ sl_vm_exec(sl_vm_exec_ctx_t* ctx, size_t start_ip)
     }
 
     #ifdef SL_HAS_COMPUTED_GOTO
-        goto *NEXT_THREADED_OPCODE();
-
         #include "gen/goto_vm.inc"
     #else
         while(1) {
