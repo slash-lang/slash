@@ -616,7 +616,11 @@ NODE(sl_node_send_t, send)
     size_t arg_base, i;
 
     /* compile the receiver into our 'dest' register */
-    compile_node(cs, node->recv, dest);
+    if(node->recv) {
+        compile_node(cs, node->recv, dest);
+    } else {
+        op_self(cs, dest);
+    }
 
     arg_base = node->arg_count ? reg_alloc_block(cs, node->arg_count) : 0;
     for(i = 0; i < node->arg_count; i++) {
@@ -738,7 +742,11 @@ emit_send_compound_conditional_assign(sl_compile_state_t* cs, sl_node_send_t* lv
     size_t arg_base, receiver = reg_alloc(cs);
     size_t i;
 
-    compile_node(cs, lval->recv, receiver);
+    if(lval->recv) {
+        compile_node(cs, lval->recv, receiver);
+    } else {
+        op_self(cs, receiver);
+    }
 
     arg_base = reg_alloc_block(cs, lval->arg_count + 1);
     for(i = 0; i < lval->arg_count; i++) {
@@ -784,7 +792,11 @@ NODE(sl_node_assign_send_t, assign_send)
 
     receiver = reg_alloc(cs);
 
-    compile_node(cs, node->lval->recv, receiver);
+    if(node->lval->recv) {
+        compile_node(cs, node->lval->recv, receiver);
+    } else {
+        op_self(cs, receiver);
+    }
 
     arg_base = reg_alloc_block(cs, node->lval->arg_count + 1);
     for(i = 0; i < node->lval->arg_count; i++) {
@@ -851,7 +863,12 @@ NODE(sl_node_mutate_t, prefix_mutate)
     if(node->lval->type == SL_NODE_SEND) {
         sl_node_send_t* send = (sl_node_send_t*)node->lval;
         size_t recv = reg_alloc(cs);
-        compile_node(cs, send->recv, recv);
+
+        if(send->recv) {
+            compile_node(cs, send->recv, recv);
+        } else {
+            op_self(cs, recv);
+        }
 
         size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
         for(size_t i = 0; i < send->arg_count; i++) {
@@ -880,7 +897,12 @@ NODE(sl_node_mutate_t, postfix_mutate)
     if(node->lval->type == SL_NODE_SEND) {
         sl_node_send_t* send = (sl_node_send_t*)node->lval;
         size_t recv = reg_alloc(cs);
-        compile_node(cs, send->recv, recv);
+
+        if(send->recv) {
+            compile_node(cs, send->recv, recv);
+        } else {
+            op_self(cs, recv);
+        }
 
         size_t args_regs = reg_alloc_block(cs, send->arg_count + 1);
         for(size_t i = 0; i < send->arg_count; i++) {
