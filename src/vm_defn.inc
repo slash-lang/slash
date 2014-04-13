@@ -119,15 +119,6 @@ SEND(REG receiver, sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
     }
 }
 
-SEND_SELF(sl_vm_inline_method_cache_t* imc, REG* argv, REG* dest)
-{
-    if(sl_likely(imc->state == vm->state_method && imc->klass.i == sl_real_class_of(vm, ctx->self).i)) {
-        *dest = imc->call(vm, imc, ctx->self, argv);
-    } else {
-        *dest = sl_imc_setup_call(vm, imc, ctx->self, argv);
-    }
-}
-
 SEND_SPLAT(REG receiver, SLID id, size_t argc, REG* argv, REG* dest)
 {
     vm_helper_expand_splat(vm, &argv, &argc);
