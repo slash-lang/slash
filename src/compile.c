@@ -1,6 +1,7 @@
 #include <slash/compile.h>
 #include <slash/string.h>
 #include <slash/method.h>
+#include <slash/parse.h>
 #include <string.h>
 
 #include "gen/opcode_enum.inc"
@@ -614,6 +615,21 @@ NODE(sl_node_for_t, for)
 NODE(sl_node_send_t, send)
 {
     size_t arg_base, i;
+
+    // is this a method call against implicit self? eg. foo()
+    if(node->recv == NULL) {
+        sl_parse_state_t fake_parse_state = { .vm = cs->vm, .line = node->base.line };
+        // is the method name a visible local variable?
+        for(sl_compile_state_t* i = cs; i; i = i->parent) {
+            SLVAL name = sl_id_to_string(cs->vm, node->id);
+            if(sl_st_lookup(i->vars, (sl_st_data_t)sl_get_ptr(name), NULL)) {
+                // lower this into foo.call()
+                node->recv = sl_make_var_node(&fake_parse_state, SL_NODE_VAR, name);
+                node->id = cs->vm->id.call;
+                break;
+            }
+        }
+    }
 
     /* compile the receiver into our 'dest' register */
     if(node->recv) {
