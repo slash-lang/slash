@@ -718,7 +718,7 @@ call_expression(sl_parse_state_t* ps)
     size_t node_cap;
     sl_token_t* tok;
     if(left->type == SL_NODE_VAR && peek_token(ps)->type == SL_TOK_OPEN_PAREN) {
-        left = send_with_args_expression(ps, sl_make_self_node(ps),
+        left = send_with_args_expression(ps, NULL,
             sl_intern2(ps->vm, sl_make_ptr((sl_object_t*)((sl_node_var_t*)left)->name)));
     }
     while(1) {
