@@ -75,19 +75,29 @@ read_post_data(sl_vm_t* vm, sl_request_opts_t* opts, request_rec* r)
     }
 }
 
+static char*
+remote_ip_from_conn_rec(conn_rec* c)
+{
+    #if AP_SERVER_MAJORVERSION_NUMBER == 2 && AP_SERVER_MINORVERSION_NUMBER >= 4
+        return c->client_ip;
+    #else
+        return c->remote_ip;
+    #endif
+}
+
 static void
 setup_request_object(sl_vm_t* vm, request_rec* r)
 {
     struct iter_args ia;
-    
+
     sl_request_opts_t opts;
     opts.method       = (char*)r->method;
     opts.uri          = r->uri;
     opts.path_info    = r->path_info;
     opts.query_string = r->args;
-    opts.remote_addr  = r->connection->remote_ip;
+    opts.remote_addr  = remote_ip_from_conn_rec(r->connection);
     opts.content_type = (char*)apr_table_get(r->headers_in, "content-type");
-    
+
     ia.count = 0;
     ia.capacity = 4;
     ia.kvs = sl_alloc(vm->arena, sizeof(sl_request_key_value_t) * ia.capacity);
@@ -95,7 +105,7 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     apr_table_do(iterate_apr_table, &ia, r->headers_in, NULL);
     opts.header_count = ia.count;
     opts.headers = ia.kvs;
-    
+
     ap_add_common_vars(r);
     ap_add_cgi_vars(r);
     ia.count = 0;
@@ -105,9 +115,9 @@ setup_request_object(sl_vm_t* vm, request_rec* r)
     apr_table_do(iterate_apr_table, &ia, r->subprocess_env, NULL);
     opts.env_count = ia.count;
     opts.env = ia.kvs;
-    
+
     read_post_data(vm, &opts, r);
-    
+
     sl_request_set_opts(vm, &opts);
 }
 
