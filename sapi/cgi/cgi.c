@@ -11,7 +11,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
+#include <signal.h>
 
 #include "api.h"
 #include "http_status.h"
@@ -65,6 +67,7 @@ typedef struct {
     char* fcgi_bind;
     int fcgi_backlog;
     int fcgi_num_childs;
+    int fcgi_num_requests;
 
     char* arg_script_filename;
     size_t arg_script_options_capacity;
@@ -681,8 +684,8 @@ add_script_option(cgi_options* options, char* option)
 static void 
 init_options(cgi_options* options, size_t incpaths_capacity) 
 {
-    int children;
-    char* children_raw;
+    int env_int;
+    char* env_raw;
     bzero(options, sizeof(cgi_options));
 
     options->fcgi_backlog = 5;
@@ -694,10 +697,17 @@ init_options(cgi_options* options, size_t incpaths_capacity)
         }
     }
 
-    if((children_raw = getenv("SL_FCGI_CHILDREN")) != NULL) {
-        children = atoi(children_raw);
-        if(children > 0) {
-            options->fcgi_num_childs = children;
+    if((env_raw = getenv("SL_FCGI_CHILDREN")) != NULL) {
+        env_int = atoi(env_raw);
+        if(env_int > 0) {
+            options->fcgi_num_childs = env_int;
+        }
+    }
+
+    if((env_raw = getenv("SL_FCGI_MAX_REQUESTS")) != NULL) {
+        env_int = atoi(env_raw);
+        if(env_int > 0) {
+            options->fcgi_num_requests = env_int;
         }
     }
 }
@@ -784,19 +794,116 @@ process_arguments(cgi_options* options, int argc, char** argv)
 }
 
 
+static void fcgi_child_main(int socket, cgi_options* options) {
+    int requests = 0;
+    FCGX_Request request;
+    slash_api_base_t* api;
+
+    FCGX_InitRequest(&request, socket, 0);
+    while((options->fcgi_num_requests == 0 ||
+            (requests++ < options->fcgi_num_requests)) &&
+            FCGX_Accept_r(&request) >= 0) {
+
+        api = slash_api_fcgi_new(request.out, request.err, request.in, request.envp);
+        run_slash_script(api, options, &api);
+        slash_api_free(api);
+        FCGX_Finish_r(&request);
+    }
+}
+
+struct sigaction act, old_term, old_quit, old_int;
+static pid_t pgroup;
+static int parent = 1;
+
+static void fcgi_cleanup(int signal)
+{
+#ifdef DEBUG_FASTCGI
+    fprintf(stderr, "slash-cgi: FastCGI shutdown, pid %d\n", getpid());
+#endif
+
+    sigaction(SIGTERM, &old_term, 0);
+
+    /* Kill all the processes in our process group */
+    kill(-pgroup, SIGTERM);
+
+    if (parent) {
+        /*exit_signal = 1;*/
+    } else {
+        exit(0);
+    }
+}
+
+static void fcgi_parent_main(int socket, cgi_options* options) {
+    int children = 0, status = 0;
+    pid_t pid;
+
+    setsid();
+    pgroup = getpgrp();
+#ifdef DEBUG_FASTCGI
+    fprintf(stderr, "slash-cgi: Process group %d\n", pgroup);
+#endif
+
+    act.sa_flags = 0;
+    act.sa_handler = fcgi_cleanup;
+    if (sigaction(SIGTERM, &act, &old_term) ||
+        sigaction(SIGINT,  &act, &old_int)  ||
+        sigaction(SIGQUIT, &act, &old_quit)
+    ) {
+        fprintf(stderr, "slash-cgi: can't set signals\n");
+        return;
+    }
+
+    while(parent) {
+        for(; children < options->fcgi_num_childs; ++children) {
+            pid = fork();
+
+            if(pid < 0) {
+                fprintf(stderr, "slash-cgi: fork failed!\n");
+                return;
+            } else if(pid == 0) {
+                parent = 0;
+                sigaction(SIGTERM, &old_term, 0);
+                sigaction(SIGQUIT, &old_quit, 0);
+                sigaction(SIGINT,  &old_int,  0);
+                break;
+            }
+        }
+
+        if(parent) {
+#ifdef DEBUG_FASTCGI
+            fprintf(stderr, "slash-cgi: Wait for kids, pid %d\n", getpid());
+#endif
+            while(1) {
+                if(wait(&status) >= 0) {
+                    --children;
+                    break;
+                }
+            }
+        } else {
+#ifdef DEBUG_FASTCGI
+            fprintf(stderr, "slash-cgi: Start of child, pid %d\n", getpid());
+#endif
+
+            fcgi_child_main(socket, options);
+
+#ifdef DEBUG_FASTCGI
+            fprintf(stderr, "slash-cgi: End of child, pid %d\n", getpid());
+#endif
+        }
+    }
+}
 
 int
 main(int argc, char** argv)
 {
     int socket;
     cgi_options options;
-    FCGX_Request request;
-    slash_api_base_t* api;
 
     init_options(&options, argc > 2 ? 5 : 0);
     process_arguments(&options, argc, argv);
 
     if(options.fcgi_bind == NULL && FCGX_IsCGI()) {
+        slash_api_base_t* api;
         api = slash_api_cgi_new(stdout, stderr, stdin, environ);
         run_slash_script(api, &options, &api);
         slash_api_free(api);
@@ -807,7 +914,7 @@ main(int argc, char** argv)
             socket = FCGX_OpenSocket(options.fcgi_bind, options.fcgi_backlog);
 
             if(socket < 0) {
-                fprintf(stderr, "FCGX_OpenSocket failed!\n");
+                fprintf(stderr, "slash-cgi: FCGX_OpenSocket failed!\n");
                 cleanup_options(&options);
                 return 1;
             }
@@ -815,13 +922,10 @@ main(int argc, char** argv)
             socket = 0;
         }
 
-        FCGX_InitRequest(&request, socket, 0);
-
-        while(FCGX_Accept_r(&request) >= 0) {
-            api = slash_api_fcgi_new(request.out, request.err, request.in, request.envp);
-            run_slash_script(api, &options, &api);
-            slash_api_free(api);
-            FCGX_Finish_r(&request);
+        if(options.fcgi_num_childs > 0) {
+            fcgi_parent_main(socket, &options);
+        } else {
+            fcgi_child_main(socket, &options);
         }
     }
 

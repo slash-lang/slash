@@ -155,9 +155,7 @@ use cases you can use `nohup`. Sorry.
 
 * Test it (like, a **lot**)
     * Test it on Windows (maybe even with IIS)
-* Add Support for pre-forked children
-    * Also allow to set a maximum number of requests a children handles before
-      it dies (and makes place for a "fresh" children)
+* Support for pre-forked children
     * Throw in some init-files for Debian/CentOS and maybe other platforms
 * About the FastCGI dev-kit:
     * Maybe ship it with the SAPI?
