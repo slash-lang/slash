@@ -2,7 +2,7 @@ include ../../local.mk
 
 .PHONY: clean install uninstall test
 
-CFLAGS+=-std=c99 -I $(BASE_PATH)/inc
+CFLAGS+=-std=c99 -I $(BASE_PATH)/inc -D_XOPEN_SOURCE
 LDFLAGS+=-lfcgi
 
 CGI_OBJS=http_status.o api.o
