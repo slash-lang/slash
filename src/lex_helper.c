@@ -1,6 +1,6 @@
 #include <slash/lex.h>
 #include <slash/utf8.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/string.h>
 #include <string.h>
 #include <stdio.h>
@@ -93,6 +93,28 @@ sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex)
         }
     }
     sl_lex_append_byte_to_string(st, c);
+}
+
+void
+sl_lex_append_uni_to_string(sl_lex_state_t* st, char* hex, size_t len)
+{
+    if(len > 6) {
+        sl_throw_message2(st->vm, st->vm->lib.SyntaxError, "Too many hex digits after \\u");
+    }
+
+    uint32_t u32;
+    char chars[len + 1];
+    uint8_t utf8[4];
+
+    memcpy(chars, hex, len);
+    chars[len] = 0;
+
+    sscanf(chars, "%x", &u32);
+    size_t utf8_len = sl_utf32_char_to_utf8(st->vm, u32, utf8);
+
+    for(size_t i = 0; i < utf8_len; i++) {
+        sl_lex_append_byte_to_string(st, utf8[i]);
+    }
 }
 
 void

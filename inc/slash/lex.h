@@ -182,6 +182,9 @@ void
 sl_lex_append_hex_to_string(sl_lex_state_t* st, char* hex);
 
 void
+sl_lex_append_uni_to_string(sl_lex_state_t* st, char* hex, size_t leng);
+
+void
 sl_lex_append_byte_to_comment(sl_lex_state_t* st, char c);
 
 void

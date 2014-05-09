@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/platform.h>
 #include <stdint.h>
 

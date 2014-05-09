@@ -131,4 +131,16 @@ class ClassTest extends Test {
         assert_equal("class_test", ClassTest.file_path);
         assert_equal("class_test/foo", ClassTest::Foo.file_path);
     }
+
+    def test_extends_is_a_class {
+        assert_throws(TypeError, \{ class InvalidClass1 extends 1 {} } );
+        assert_throws(TypeError, \{ class InvalidClass2 extends "" {} } );
+
+        try {
+            class ValidClass1 extends 1.class {};
+            assert_is_a(Int, ValidClass1.new);
+        } catch e {
+            assert(false, "Invalid exception on valid class declaration");
+        }
+    }
 }

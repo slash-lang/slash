@@ -8,15 +8,8 @@ APXS=apxs
 SO_EXT=$(shell $(APR)-config --apr-so-ext)
 
 mod_slash.so: mod_slash.c ../../libslash.a
-	$(CC) -o $@ $(CFLAGS) \
-	  -I$(shell apxs -q INCLUDEDIR) \
-	  $(shell apr-1-config --includes) \
-	  $(shell apr-1-config --link-ld) \
-	  $(shell apr-1-config --libs) \
-	  -dynamic \
-	  -undefined suppress \
-	  -flat_namespace \
-	  $< $(LDFLAGS)
+	LTFLAGS="--tag=CC" $(APXS) -c -S CC=$(CC) "-Wc,$(CFLAGS)" "-Wl,$(LDFLAGS)" mod_slash.c
+	cp .libs/mod_slash.so .
 
 clean:
 	rm -f *.o *.so *.$(SO_EXT)
