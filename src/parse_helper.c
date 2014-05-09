@@ -156,13 +156,14 @@ sl_make_interp_string_node(sl_parse_state_t* ps, sl_node_base_t** components, si
 }
 
 sl_node_base_t*
-sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv)
+sl_make_send_node(sl_parse_state_t* ps, sl_node_base_t* recv, SLID id, size_t argc, sl_node_base_t** argv, bool splat_last)
 {
     MAKE_NODE(SL_NODE_SEND, sl_node_send_t, {
         node->recv = recv;
         node->id = id;
         node->arg_count = argc;
         node->args = sl_alloc(ps->vm->arena, sizeof(sl_node_base_t*) * argc);
+        node->splat_last = splat_last;
         memcpy(node->args, argv, sizeof(sl_node_base_t*) * argc);
     });
 }
@@ -375,7 +376,7 @@ sl_make_simple_assign_node(sl_parse_state_t* ps, sl_node_var_t* lval, sl_node_ba
             make_generic_assignment(ps, lval, rval), (sl_node_base_t*)lval);
     }
     return make_generic_assignment(ps, lval,
-        sl_make_send_node(ps, (sl_node_base_t*)lval, sl_intern(ps->vm, op_method), 1, &rval));
+        sl_make_send_node(ps, (sl_node_base_t*)lval, sl_intern(ps->vm, op_method), 1, &rval, false));
 }
 
 sl_node_base_t*

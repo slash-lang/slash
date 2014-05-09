@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <slash/st.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/vm.h>
 
 #define ST_DEFAULT_MAX_DENSITY 5
@@ -434,7 +434,6 @@ sl_st_foreach(sl_st_table_t* table, int (*func)(), sl_st_data_t arg)
                 case SL_ST_STOP:
                     return 0;
                 case SL_ST_DELETE:
-                    tmp = ptr;
                     if (last == 0) {
                         table->bins[i] = ptr->next;
                     }

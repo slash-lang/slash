@@ -212,17 +212,6 @@ emit_send(sl_compile_state_t* cs, size_t recv, SLID id, size_t arg_base, size_t 
 }
 
 static void
-emit_send_self(sl_compile_state_t* cs, SLID id, size_t arg_base, size_t arg_size, size_t return_reg)
-{
-    sl_vm_inline_method_cache_t* imc = sl_alloc(cs->vm->arena, sizeof(sl_vm_inline_method_cache_t));
-    imc->argc = arg_size;
-    imc->id = id;
-    imc->call = NULL;
-
-    op_send_self(cs, imc, arg_base, return_reg);
-}
-
-static void
 compile_node(sl_compile_state_t* cs, sl_node_base_t* node, size_t dest);
 
 static void
@@ -625,21 +614,21 @@ NODE(sl_node_for_t, for)
 NODE(sl_node_send_t, send)
 {
     size_t arg_base, i;
+
     /* compile the receiver into our 'dest' register */
-    if(node->recv->type != SL_NODE_SELF) {
-        compile_node(cs, node->recv, dest);
-    }
+    compile_node(cs, node->recv, dest);
 
     arg_base = node->arg_count ? reg_alloc_block(cs, node->arg_count) : 0;
     for(i = 0; i < node->arg_count; i++) {
         compile_node(cs, node->args[i], arg_base + i);
     }
 
-    if(node->recv->type == SL_NODE_SELF) {
-        emit_send_self(cs, node->id, arg_base, node->arg_count, dest);
+    if(node->splat_last) {
+        op_send_splat(cs, dest, node->id, node->arg_count, arg_base, dest);
     } else {
         emit_send(cs, dest, node->id, arg_base, node->arg_count, dest);
     }
+
     reg_free_block(cs, arg_base, node->arg_count);
 }
 

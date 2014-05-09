@@ -5,7 +5,7 @@
 #include "value.h"
 #include "st.h"
 #include "error.h"
-#include "mem.h"
+#include "gc.h"
 
 struct sl_vm_ids {
     /* operators */

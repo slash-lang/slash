@@ -6,7 +6,7 @@
 #include <slash/class.h>
 #include <slash/method.h>
 #include <slash/object.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 #include <slash/lib/array.h>
 #include <slash/lib/lambda.h>
 
@@ -106,7 +106,6 @@ sl_class_own_instance_method(sl_vm_t* vm, SLVAL self, SLVAL method_name)
     sl_class_t* klass = get_class(vm, self);
     SLVAL method;
     SLID mid = sl_intern2(vm, method_name);
-    method_name = sl_to_s(vm, method_name);
     if(sl_st_lookup(klass->instance_methods, (sl_st_data_t)mid.id, (sl_st_data_t*)&method)) {
         return method;
     }
@@ -294,7 +293,8 @@ sl_make_class(sl_vm_t* vm, SLVAL vsuper)
     SLVAL vsing = sl_allocate(vm, vm->lib.Class);
     sl_class_t* sing = (sl_class_t*)sl_get_ptr(vsing);
 
-    sl_class_t* super = (sl_class_t*)sl_get_ptr(vsuper);
+    sl_class_t* super = (sl_class_t*)sl_get_ptr(
+        sl_expect(vm, vsuper, vm->lib.Class));
 
     sing->extra->allocator = NULL;
     sing->super = super->base.klass;

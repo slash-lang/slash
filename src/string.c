@@ -716,6 +716,8 @@ sl_string_upper(sl_vm_t* vm, SLVAL selfv)
         out_offset += sl_utf32_char_to_utf8(vm, upper_c, retn->buff + out_offset);
     }
 
+    retn->buff_len = out_offset;
+
     return sl_make_ptr((sl_object_t*)retn);
 }
 
@@ -737,6 +739,8 @@ sl_string_lower(sl_vm_t* vm, SLVAL selfv)
         lower_c = sl_unicode_tolower(c);
         out_offset += sl_utf32_char_to_utf8(vm, lower_c, retn->buff + out_offset);
     }
+
+    retn->buff_len = out_offset;
 
     return sl_make_ptr((sl_object_t*)retn);
 }

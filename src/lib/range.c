@@ -4,7 +4,7 @@
 #include <slash/class.h>
 #include <slash/string.h>
 #include <slash/method.h>
-#include <slash/mem.h>
+#include <slash/gc.h>
 
 typedef struct {
     sl_object_t base;

@@ -340,7 +340,13 @@ print "\n";
 for my $sapi (@sapis) {
     print "\e[34;1mConfiguring sapi/$sapi\e[0m\n";
     my $conf = "$path/sapi/$sapi/configure.pl";
-    require $conf if -e $conf;
+    if(-e $conf) {
+        eval { require $conf; };
+        if($@) {
+            print "Skipping installation of sapi/$sapi\n\n";
+            next;
+        }
+    }
     print $mf "TARGETS+= sapi[$sapi]\n";
 }
 

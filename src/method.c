@@ -144,6 +144,18 @@ method_inspect(sl_vm_t* vm, SLVAL method)
 }
 
 static SLVAL
+bound_method_inspect(sl_vm_t* vm, SLVAL method)
+{
+    sl_method_t* methp = (sl_method_t*)sl_get_ptr(method);
+    if(!(methp->base.user_flags & SL_FLAG_METHOD_INITIALIZED)) {
+        return sl_object_inspect(vm, method);
+    }
+
+    return sl_make_formatted_string(vm, "#<BoundMethod: %V#%I(%d) bound to %V>",
+        methp->extra->klass, methp->extra->name, methp->arity, methp->extra->bound_self);
+}
+
+static SLVAL
 method_eq(sl_vm_t* vm, SLVAL method, SLVAL other)
 {
     if(sl_get_ptr(sl_class_of(vm, other)) != sl_get_ptr(vm->lib.Method)) {
@@ -184,8 +196,9 @@ sl_init_method(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.Method, "doc", 0, sl_method_doc);
     sl_define_method(vm, vm->lib.Method, "inspect", 0, method_inspect);
     sl_define_method(vm, vm->lib.Method, "==", 1, method_eq);
-    
+
     vm->lib.BoundMethod = sl_define_class(vm, "BoundMethod", vm->lib.Method);
+    sl_define_method(vm, vm->lib.BoundMethod, "inspect", 0, bound_method_inspect);
     sl_define_method(vm, vm->lib.BoundMethod, "unbind", 0, bound_method_unbind);
     sl_define_method(vm, vm->lib.BoundMethod, "call", -1, bound_method_call);
     sl_define_method(vm, vm->lib.BoundMethod, "==", 1, bound_method_eq);

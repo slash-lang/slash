@@ -2,7 +2,7 @@
     #include <slash/lex.h>
     #include <slash/string.h>
     #include <slash/error.h>
-    #include <slash/mem.h>
+    #include <slash/gc.h>
 %}
 
 %option noyywrap yylineno reentrant nounistd never-interactive stack
@@ -64,6 +64,7 @@ HEX [0-9a-fA-F]
 <STRE>"r"           { sl_lex_append_byte_to_string(yyextra, '\r');                    BEGIN(STRING); }
 <STRE>"e"           { sl_lex_append_byte_to_string(yyextra, '\033');                  BEGIN(STRING); }
 <STRE>"x"{HEX}{2}   { sl_lex_append_hex_to_string(yyextra, yytext + 1);               BEGIN(STRING); }
+<STRE>"u"{HEX}+     { sl_lex_append_uni_to_string(yyextra, yytext + 1, yyleng);       BEGIN(STRING); }
 <STRE>\n            { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); yyextra->line++; }
 <STRE>.             { sl_lex_append_byte_to_string(yyextra, yytext[0]);               BEGIN(STRING); }
 

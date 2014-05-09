@@ -2,7 +2,7 @@
 #define SL_SLASH_H
 
 #include "slash/version.h"
-#include "slash/mem.h"
+#include "slash/gc.h"
 #include "slash/value.h"
 #include "slash/vm.h"
 #include "slash/method.h"
