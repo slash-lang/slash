@@ -206,7 +206,7 @@ sl_str_dupn(sl_vm_t* vm, char* str, size_t n)
 static char*
 env_to_http_header_name(sl_vm_t* vm, char* name, size_t len)
 {
-    char* result = sl_alloc(vm->arena, len);
+    char* result = sl_alloc(vm->arena, len + 1);
     char* str = result;
 
     *str++ = *name++;
