@@ -151,4 +151,30 @@ class RequestInfoTest extends Test {
 
         assert_equal(http_header, info_fcgi["http_headers"]);
     }
+
+    # Header names whose length is a multiple of eight have caused
+    # a crash due to a off-by-one error - just check this won't happen again.
+    # Bugfix in commit a18d1b420e384311414487ab4fe4356aff570a24
+    def test_http_header_crash_a18d1b4 {
+        http_header = {
+            "Accept-Language" => "en",
+            "Cookie" => "ab=cd; x=y",
+            "Host" => "example-host.com",
+            "X-123456" => "fail1",
+            "X-12345678901234" => "fail2",
+        }
+
+        env_http_header = {
+            "HTTP_ACCEPT_LANGUAGE" => "en",
+            "HTTP_COOKIE" => "ab=cd; x=y",
+            "HTTP_HOST" => "example-host.com",
+            "HTTP_X_123456" => "fail1",
+            "HTTP_X_12345678901234" => "fail2",
+        }
+
+        info_cgi = CgiTest.load_request_info(
+            CgiTest::SLASH_REQUEST_CGI, env_http_header);
+
+        assert_equal(http_header, info_cgi["http_headers"]);
+    }
 }
