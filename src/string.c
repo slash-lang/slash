@@ -536,9 +536,9 @@ sl_string_char_at_index(sl_vm_t* vm, SLVAL self, SLVAL index)
 SLVAL
 sl_string_split(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
 {
-    SLVAL substr = argv[0];
+    SLVAL substr;
     sl_string_t* haystack = sl_get_string(vm, self);
-    sl_string_t* needle = sl_get_string(vm, substr);
+    sl_string_t* needle;
     SLVAL ret = sl_make_array(vm, 0, NULL), piece;
     uint8_t* haystack_buff = haystack->buff;
     uint8_t* start_ptr = haystack_buff;
@@ -547,6 +547,15 @@ sl_string_split(sl_vm_t* vm, SLVAL self, size_t argc, SLVAL* argv)
     size_t buff_len;
     uint32_t c;
     long limit = 0;
+
+    if(argc > 0) {
+        substr = argv[0];
+    } else {
+        substr = sl_make_cstring(vm, " ");
+    }
+
+    needle = sl_get_string(vm, substr);
+
     if(argc > 1) {
         limit = sl_get_int(sl_expect(vm, argv[1], vm->lib.Int));
         if(limit < 0) {
@@ -764,7 +773,7 @@ sl_init_string(sl_vm_t* vm)
     sl_define_method(vm, vm->lib.String, "url_encode", 0, sl_string_url_encode);
     sl_define_method(vm, vm->lib.String, "index", 1, sl_string_index);
     sl_define_method(vm, vm->lib.String, "[]", 1, sl_string_char_at_index);
-    sl_define_method(vm, vm->lib.String, "split", -2, sl_string_split);
+    sl_define_method(vm, vm->lib.String, "split", -1, sl_string_split);
     sl_define_method(vm, vm->lib.String, "==", 1, sl_string_eq);
     sl_define_method(vm, vm->lib.String, "~", 1, sl_string_is_match);
     sl_define_method(vm, vm->lib.String, "<=>", 1, sl_string_spaceship);
