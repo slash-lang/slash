@@ -6,6 +6,9 @@
 typedef struct sl_gc_arena
 sl_gc_arena_t;
 
+typedef void(
+sl_gc_finalizer_t)(void*);
+
 sl_gc_arena_t*
 sl_make_gc_arena();
 
@@ -28,7 +31,7 @@ void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr);
 
 void
-sl_gc_set_finalizer(void* ptr, void(*finalizer)(void*));
+sl_gc_set_finalizer(void* ptr, sl_gc_finalizer_t* finalizer);
 
 void
 sl_free_gc_arena(sl_gc_arena_t* arena);

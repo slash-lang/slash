@@ -13,11 +13,15 @@ typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
     struct sl_gc_alloc* prev;
     size_t size;
-    char mark_flag;
-    char scan_pointers;
-    void(*finalizer)(void*);
+    union {
+        sl_gc_finalizer_t* finalizer;
+        size_t flags;
+    } u;
 }
 sl_gc_alloc_t;
+
+#define MARK_FLAG 1
+#define SCAN_POINTERS 2
 
 static void*
 ptr_for_alloc(sl_gc_alloc_t* alloc)
@@ -31,11 +35,26 @@ alloc_for_ptr(void* ptr)
     return (sl_gc_alloc_t*)ptr - 1;
 }
 
+static sl_gc_finalizer_t*
+finalizer_for_alloc(sl_gc_alloc_t* alloc)
+{
+    return (sl_gc_finalizer_t*)(alloc->u.flags & ~(MARK_FLAG | SCAN_POINTERS));
+}
+
+void
+sl_gc_set_finalizer(void* ptr, sl_gc_finalizer_t* finalizer)
+{
+    sl_gc_alloc_t* alloc = alloc_for_ptr(ptr);
+    alloc->u.flags &= (MARK_FLAG | SCAN_POINTERS);
+    alloc->u.flags |= (size_t)finalizer;
+}
+
 static void
 free_alloc(sl_gc_alloc_t* alloc)
 {
-    if(alloc->finalizer) {
-        alloc->finalizer(ptr_for_alloc(alloc));
+    sl_gc_finalizer_t* finalizer = finalizer_for_alloc(alloc);
+    if(finalizer) {
+        finalizer(ptr_for_alloc(alloc));
     }
     if(alloc->prev) {
         alloc->prev->next = alloc->next;
@@ -136,7 +155,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
     if(arena->allocs_since_gc > ALLOCS_PER_GC_RUN) {
         sl_gc_run(arena);
     }
-    
+
     ptr = ptr_for_alloc(alloc);
     memset(ptr, 0, size);
     hash = remove_insignificant_bits(ptr) & arena->pointer_mask;
@@ -146,9 +165,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         alloc->next->prev = alloc;
     }
     alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
-    alloc->finalizer = NULL;
-    alloc->mark_flag = arena->mark_flag;
-    alloc->scan_pointers = 1;
+    alloc->u.flags = SCAN_POINTERS | arena->mark_flag;
     arena->table[hash] = alloc;
     arena->alloc_count++;
     arena->allocs_since_gc++;
@@ -159,7 +176,7 @@ void*
 sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 {
     void* ptr = sl_alloc(arena, size);
-    alloc_for_ptr(ptr)->scan_pointers = 0;
+    alloc_for_ptr(ptr)->u.flags &= ~SCAN_POINTERS;
     return ptr;
 }
 
@@ -173,7 +190,7 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
     sl_gc_alloc_t* old_alloc = alloc_for_ptr(ptr);
     void* new_ptr = sl_alloc(arena, new_size);
     sl_gc_alloc_t* new_alloc = alloc_for_ptr(new_ptr);
-    new_alloc->scan_pointers = old_alloc->scan_pointers;
+    new_alloc->u.flags = old_alloc->u.flags;
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
     }
@@ -205,11 +222,11 @@ sl_gc_mark_region(sl_gc_arena_t* arena, void* ptr, size_t size)
 static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    if(alloc->mark_flag == arena->mark_flag) {
+    if((alloc->u.flags & MARK_FLAG) == arena->mark_flag) {
         return;
     }
-    alloc->mark_flag = arena->mark_flag;
-    if(!alloc->scan_pointers) {
+    alloc->u.flags ^= MARK_FLAG;
+    if(!(alloc->u.flags & SCAN_POINTERS)) {
         return;
     }
     sl_gc_mark_region(arena, ptr_for_alloc(alloc), alloc->size);
@@ -246,7 +263,7 @@ sl_gc_sweep(sl_gc_arena_t* arena)
         alloc = arena->table[i];
         while(alloc) {
             next = alloc->next;
-            if(alloc->mark_flag != arena->mark_flag) {
+            if((alloc->u.flags & MARK_FLAG) != arena->mark_flag) {
                 free_alloc(alloc);
                 collected++;
             }
@@ -265,12 +282,12 @@ sl_gc_run(sl_gc_arena_t* arena)
         arena->allocs_since_gc = 0;
         return;
     }
-    
+
     jmp_buf regs;
     setjmp(regs);
-    
+
     arena->allocs_since_gc = 0;
-    arena->mark_flag = !arena->mark_flag;
+    arena->mark_flag = arena->mark_flag ^ MARK_FLAG;
     sl_gc_mark_region(arena, &regs, sizeof(regs));
     sl_gc_mark_stack(arena);
     sl_gc_sweep(arena);
@@ -286,12 +303,6 @@ void
 sl_gc_set_stack_top(sl_gc_arena_t* arena, void* ptr)
 {
     arena->stack_top = (intptr_t)ptr & ~(POINTER_ALIGN_BYTES - 1);
-}
-
-void
-sl_gc_set_finalizer(void* ptr, void(*finalizer)(void*))
-{
-    alloc_for_ptr(ptr)->finalizer = finalizer;
 }
 
 void
