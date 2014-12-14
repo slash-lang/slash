@@ -13,10 +13,7 @@ typedef struct sl_gc_alloc {
     struct sl_gc_alloc* next;
     struct sl_gc_alloc* prev;
     size_t size;
-    union {
-        sl_gc_finalizer_t* finalizer;
-        size_t flags;
-    } u;
+    size_t finalizer_flags;
 }
 sl_gc_alloc_t;
 
@@ -38,15 +35,15 @@ alloc_for_ptr(void* ptr)
 static sl_gc_finalizer_t*
 finalizer_for_alloc(sl_gc_alloc_t* alloc)
 {
-    return (sl_gc_finalizer_t*)(alloc->u.flags & ~(MARK_FLAG | SCAN_POINTERS));
+    return (sl_gc_finalizer_t*)(alloc->finalizer_flags & ~(MARK_FLAG | SCAN_POINTERS));
 }
 
 void
 sl_gc_set_finalizer(void* ptr, sl_gc_finalizer_t* finalizer)
 {
     sl_gc_alloc_t* alloc = alloc_for_ptr(ptr);
-    alloc->u.flags &= (MARK_FLAG | SCAN_POINTERS);
-    alloc->u.flags |= (size_t)finalizer;
+    alloc->finalizer_flags &= (MARK_FLAG | SCAN_POINTERS);
+    alloc->finalizer_flags |= (size_t)finalizer;
 }
 
 static void
@@ -165,7 +162,7 @@ sl_alloc(sl_gc_arena_t* arena, size_t size)
         alloc->next->prev = alloc;
     }
     alloc->prev = (sl_gc_alloc_t*)&arena->table[hash];
-    alloc->u.flags = SCAN_POINTERS | arena->mark_flag;
+    alloc->finalizer_flags = SCAN_POINTERS | arena->mark_flag;
     arena->table[hash] = alloc;
     arena->alloc_count++;
     arena->allocs_since_gc++;
@@ -176,7 +173,7 @@ void*
 sl_alloc_buffer(sl_gc_arena_t* arena, size_t size)
 {
     void* ptr = sl_alloc(arena, size);
-    alloc_for_ptr(ptr)->u.flags &= ~SCAN_POINTERS;
+    alloc_for_ptr(ptr)->finalizer_flags &= ~SCAN_POINTERS;
     return ptr;
 }
 
@@ -190,7 +187,7 @@ sl_realloc(sl_gc_arena_t* arena, void* ptr, size_t new_size)
     sl_gc_alloc_t* old_alloc = alloc_for_ptr(ptr);
     void* new_ptr = sl_alloc(arena, new_size);
     sl_gc_alloc_t* new_alloc = alloc_for_ptr(new_ptr);
-    new_alloc->u.flags = old_alloc->u.flags;
+    new_alloc->finalizer_flags = old_alloc->finalizer_flags;
     if(old_alloc->size < new_size) {
         new_size = old_alloc->size;
     }
@@ -222,11 +219,11 @@ sl_gc_mark_region(sl_gc_arena_t* arena, void* ptr, size_t size)
 static void
 sl_gc_mark_allocation(sl_gc_arena_t* arena, sl_gc_alloc_t* alloc)
 {
-    if((alloc->u.flags & MARK_FLAG) == arena->mark_flag) {
+    if((alloc->finalizer_flags & MARK_FLAG) == arena->mark_flag) {
         return;
     }
-    alloc->u.flags ^= MARK_FLAG;
-    if(!(alloc->u.flags & SCAN_POINTERS)) {
+    alloc->finalizer_flags ^= MARK_FLAG;
+    if(!(alloc->finalizer_flags & SCAN_POINTERS)) {
         return;
     }
     sl_gc_mark_region(arena, ptr_for_alloc(alloc), alloc->size);
@@ -263,7 +260,7 @@ sl_gc_sweep(sl_gc_arena_t* arena)
         alloc = arena->table[i];
         while(alloc) {
             next = alloc->next;
-            if((alloc->u.flags & MARK_FLAG) != arena->mark_flag) {
+            if((alloc->finalizer_flags & MARK_FLAG) != arena->mark_flag) {
                 free_alloc(alloc);
                 collected++;
             }
