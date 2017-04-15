@@ -15,7 +15,7 @@ clean:
 	rm -f slash-dis
 
 install:
-	cp slash-dis $(INSTALL_PREFIX)/bin
+	cp slash-dis $(DESTDIR)/$(INSTALL_PREFIX)/bin
 
 uninstall:
-	rm -f $(INSTALL_PREFIX)/bin/slash-dis
+	rm -f $(DESTDIR)/$(INSTALL_PREFIX)/bin/slash-dis
